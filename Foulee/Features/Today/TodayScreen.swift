@@ -92,13 +92,13 @@ struct TodayScreen: View {
 }
 
 #Preview("With data") {
-    let _ = prepareDependencies { $0.healthKit = .previewValue }
-    TodayScreen()
+    _ = prepareDependencies { $0.healthKit = .previewValue }
+    return TodayScreen()
         .preferredColorScheme(.light)
 }
 
 #Preview("Loading") {
-    let _ = prepareDependencies {
+    _ = prepareDependencies {
         $0.healthKit = HealthKitClient(
             isAvailable: { true },
             requestAuthorization: {
@@ -108,11 +108,11 @@ struct TodayScreen: View {
             todayMetrics: { .zero }
         )
     }
-    TodayScreen()
+    return TodayScreen()
 }
 
 #Preview("Dark") {
-    let _ = prepareDependencies { $0.healthKit = .previewValue }
-    TodayScreen()
+    _ = prepareDependencies { $0.healthKit = .previewValue }
+    return TodayScreen()
         .preferredColorScheme(.dark)
 }

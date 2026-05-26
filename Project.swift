@@ -45,11 +45,11 @@ let project = Project(
                 "NSHealthUpdateUsageDescription":
                     "Foulée enregistre tes marches du midi comme séances dans Santé."
             ]),
-            entitlements: .file(path: "Foulee/Resources/Foulee.entitlements"),
             sources: ["Foulee/**"],
             resources: [
                 .glob(pattern: "Foulee/Resources/**", excluding: ["Foulee/Resources/Foulee.entitlements"])
             ],
+            entitlements: .file(path: "Foulee/Resources/Foulee.entitlements"),
             dependencies: [
                 .package(product: "Dependencies")
             ]
