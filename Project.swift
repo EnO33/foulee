@@ -43,7 +43,9 @@ let project = Project(
                 "NSHealthShareUsageDescription":
                     "Foulée lit tes pas, ta distance et tes minutes d'activité pour t'aider à suivre tes marches du midi.",
                 "NSHealthUpdateUsageDescription":
-                    "Foulée enregistre tes marches du midi comme séances dans Santé."
+                    "Foulée enregistre tes marches du midi comme séances dans Santé.",
+                "NSMotionUsageDescription":
+                    "Foulée compte tes pas en direct pendant la marche du midi."
             ]),
             sources: ["Foulee/**"],
             resources: [

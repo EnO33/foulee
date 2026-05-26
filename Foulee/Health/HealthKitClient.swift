@@ -20,6 +20,11 @@ struct HealthKitClient: Sendable {
     /// Sum of pas + distance + minutes + active kcal between midnight today
     /// and now, in the user's current calendar.
     var todayMetrics: @Sendable () async throws -> HealthMetrics
+
+    /// Persists a finished walk as an `HKWorkout` (activity type: walking,
+    /// location: outdoor). Idempotent at the call site — duplicate saves on
+    /// the same session are caller-controlled, not deduplicated here.
+    var saveWalkingWorkout: @Sendable (_ session: WalkSession) async throws -> Void
 }
 
 extension HealthKitClient: DependencyKey {
@@ -31,13 +36,15 @@ extension HealthKitClient: DependencyKey {
         requestAuthorization: { true },
         todayMetrics: {
             HealthMetrics(steps: 4_218, distanceKm: 1.8, activeMinutes: 24, activeCalories: 142)
-        }
+        },
+        saveWalkingWorkout: { _ in }
     )
 
     static let testValue = HealthKitClient(
         isAvailable: { false },
         requestAuthorization: { false },
-        todayMetrics: { .zero }
+        todayMetrics: { .zero },
+        saveWalkingWorkout: { _ in }
     )
 }
 

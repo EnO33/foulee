@@ -19,7 +19,8 @@ struct TodayStoreTests {
                         activeMinutes: 10,
                         activeCalories: 50
                     )
-                }
+                },
+                saveWalkingWorkout: { _ in }
             )
         } operation: {
             let store = TodayStore()
@@ -48,7 +49,8 @@ struct TodayStoreTests {
                         activeMinutes: 25,
                         activeCalories: 120
                     )
-                }
+                },
+                saveWalkingWorkout: { _ in }
             )
         } operation: {
             let store = TodayStore()
@@ -68,7 +70,8 @@ struct TodayStoreTests {
             $0.healthKit = HealthKitClient(
                 isAvailable: { true },
                 requestAuthorization: { true },
-                todayMetrics: { throw Boom() }
+                todayMetrics: { throw Boom() },
+                saveWalkingWorkout: { _ in }
             )
         } operation: {
             let store = TodayStore()
@@ -89,7 +92,8 @@ struct TodayStoreTests {
                 todayMetrics: {
                     Issue.record("todayMetrics should not run when auth is denied")
                     return .zero
-                }
+                },
+                saveWalkingWorkout: { _ in }
             )
         } operation: {
             let store = TodayStore()

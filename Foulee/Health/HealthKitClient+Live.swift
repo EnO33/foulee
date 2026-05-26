@@ -42,6 +42,37 @@ extension HealthKitClient {
                     activeMinutes: Int(minutes),
                     activeCalories: Int(calories)
                 )
+            },
+            saveWalkingWorkout: { session in
+                guard let endedAt = session.endedAt else { return }
+                let config = HKWorkoutConfiguration()
+                config.activityType = .walking
+                config.locationType = .outdoor
+
+                let builder = HKWorkoutBuilder(
+                    healthStore: store,
+                    configuration: config,
+                    device: .local()
+                )
+
+                try await builder.beginCollection(at: session.startedAt)
+
+                let distanceSample = HKQuantitySample(
+                    type: distanceType,
+                    quantity: HKQuantity(unit: .meter(), doubleValue: session.distanceMeters),
+                    start: session.startedAt,
+                    end: endedAt
+                )
+                let stepsSample = HKQuantitySample(
+                    type: stepsType,
+                    quantity: HKQuantity(unit: .count(), doubleValue: Double(session.steps)),
+                    start: session.startedAt,
+                    end: endedAt
+                )
+                try await builder.addSamples([distanceSample, stepsSample])
+
+                try await builder.endCollection(at: endedAt)
+                _ = try await builder.finishWorkout()
             }
         )
     }()

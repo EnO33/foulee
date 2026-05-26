@@ -7,6 +7,7 @@ import SwiftUI
 struct TodayScreen: View {
     @State private var store = TodayStore()
     @State private var activeTab: BottomNavTab = .today
+    @State private var isWalking = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -17,6 +18,12 @@ struct TodayScreen: View {
                 .padding(.bottom, 32)
         }
         .task { await store.bootstrap() }
+        .fullScreenCover(isPresented: $isWalking) {
+            ActiveWalkScreen(minutesGoal: store.minutesGoal) {
+                isWalking = false
+                Task { await store.refresh() }
+            }
+        }
     }
 
     @ViewBuilder
@@ -36,7 +43,7 @@ struct TodayScreen: View {
                     .padding(.top, 8)
                 TodayHeroCard(
                     snapshot: snapshot,
-                    onPrimaryTap: { Task { await store.refresh() } },
+                    onPrimaryTap: { isWalking = true },
                     onReminderTap: {}
                 )
                 .padding(.horizontal, 20)
@@ -91,28 +98,43 @@ struct TodayScreen: View {
     }
 }
 
-#Preview("With data") {
-    _ = prepareDependencies { $0.healthKit = .previewValue }
-    return TodayScreen()
-        .preferredColorScheme(.light)
-}
-
-#Preview("Loading") {
-    _ = prepareDependencies {
-        $0.healthKit = HealthKitClient(
-            isAvailable: { true },
-            requestAuthorization: {
-                try await Task.sleep(for: .seconds(60))
-                return true
-            },
-            todayMetrics: { .zero }
-        )
+private struct TodayPreviewWithData: View {
+    init() {
+        prepareDependencies { $0.healthKit = .previewValue }
     }
-    return TodayScreen()
+    var body: some View {
+        TodayScreen().preferredColorScheme(.light)
+    }
 }
 
-#Preview("Dark") {
-    _ = prepareDependencies { $0.healthKit = .previewValue }
-    return TodayScreen()
-        .preferredColorScheme(.dark)
+private struct TodayPreviewLoading: View {
+    init() {
+        prepareDependencies {
+            $0.healthKit = HealthKitClient(
+                isAvailable: { true },
+                requestAuthorization: {
+                    try await Task.sleep(for: .seconds(60))
+                    return true
+                },
+                todayMetrics: { .zero },
+                saveWalkingWorkout: { _ in }
+            )
+        }
+    }
+    var body: some View {
+        TodayScreen()
+    }
 }
+
+private struct TodayPreviewDark: View {
+    init() {
+        prepareDependencies { $0.healthKit = .previewValue }
+    }
+    var body: some View {
+        TodayScreen().preferredColorScheme(.dark)
+    }
+}
+
+#Preview("With data") { TodayPreviewWithData() }
+#Preview("Loading") { TodayPreviewLoading() }
+#Preview("Dark") { TodayPreviewDark() }
