@@ -1,18 +1,10 @@
 import SwiftUI
 
+/// Top-level container — for now just hosts the Today screen.
+/// Tab switching is wired in PR#8 (Stats) and PR#10 (Settings).
 struct RootView: View {
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "figure.walk.motion")
-                .font(.system(size: 64, weight: .semibold))
-                .foregroundStyle(.tint)
-            Text("Foulée")
-                .font(.system(size: 40, weight: .heavy))
-            Text("Bouge un peu, chaque midi.")
-                .font(.title3)
-                .foregroundStyle(.secondary)
-        }
-        .padding()
+        TodayScreen()
     }
 }
 
