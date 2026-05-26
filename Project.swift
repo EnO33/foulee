@@ -39,10 +39,17 @@ let project = Project(
                 "CFBundleShortVersionString": "0.1.0",
                 "CFBundleVersion": "1",
                 "UILaunchScreen": [:],
-                "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"]
+                "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
+                "NSHealthShareUsageDescription":
+                    "Foulée lit tes pas, ta distance et tes minutes d'activité pour t'aider à suivre tes marches du midi.",
+                "NSHealthUpdateUsageDescription":
+                    "Foulée enregistre tes marches du midi comme séances dans Santé."
             ]),
             sources: ["Foulee/**"],
-            resources: ["Foulee/Resources/**"],
+            resources: [
+                .glob(pattern: "Foulee/Resources/**", excluding: ["Foulee/Resources/Foulee.entitlements"])
+            ],
+            entitlements: .file(path: "Foulee/Resources/Foulee.entitlements"),
             dependencies: [
                 .package(product: "Dependencies")
             ]
