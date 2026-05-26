@@ -1,0 +1,51 @@
+included:
+  - Foulee
+  - FouleeTests
+  - Project.swift
+  - Tuist.swift
+
+excluded:
+  - Derived
+  - .build
+  - DerivedData
+  - "**/*.generated.swift"
+
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - first_where
+  - last_where
+  - sorted_first_last
+  - contains_over_first_not_nil
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - explicit_init
+  - fatal_error_message
+  - implicit_return
+  - lower_acl_than_parent
+  - modifier_order
+  - prefer_self_type_over_type_of_self
+  - redundant_nil_coalescing
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+
+disabled_rules:
+  - trailing_comma          # Tuist manifest uses Apple style
+  - todo                    # noisy on a work-in-progress repo
+
+line_length:
+  warning: 140
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+identifier_name:
+  min_length: 2
+  excluded: [id, t, x, y, i, j]
+
+type_name:
+  min_length: 3
+
+file_length:
+  warning: 500
+  error: 800

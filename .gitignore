@@ -1,0 +1,54 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+xcuserdata/
+*.perspectivev3
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.resolved
+
+# Tuist generated artifacts (re-generated via `tuist generate`)
+*.xcodeproj
+*.xcworkspace
+Derived/
+.tuist-bin/
+.tuist-cache/
+graph.png
+
+# CocoaPods / Carthage (not used, but ignored for safety)
+Pods/
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Secrets
+*.env
+*.env.local
+secrets/
+
+# Local tooling state
+.claude/
+.cursor/
+.aider*
+.idea/
+.vscode/

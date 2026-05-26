@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Run SwiftLint (strict)
+        run: swiftlint lint --strict --reporter github-actions-logging
+
+  build:
+    name: Build & Test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: sudo xcode-select -switch /Applications/Xcode_26.0.app/Contents/Developer
+
+      - name: Install Tuist
+        run: brew install --cask tuist
+
+      - name: Fetch dependencies
+        run: tuist install
+
+      - name: Generate project
+        run: tuist generate --no-open
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace Foulee.xcworkspace \
+            -scheme Foulee \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=26.0' \
+            -configuration Debug \
+            build | xcbeautify || true
+
+      - name: Test
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace Foulee.xcworkspace \
+            -scheme Foulee \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=26.0' \
+            -configuration Debug \
+            test | xcbeautify || true
