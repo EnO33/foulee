@@ -7,6 +7,7 @@ import SwiftUI
 struct TodayScreen: View {
     @State private var store = TodayStore()
     @State private var activeTab: BottomNavTab = .today
+    @State private var isWalking = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -17,6 +18,12 @@ struct TodayScreen: View {
                 .padding(.bottom, 32)
         }
         .task { await store.bootstrap() }
+        .fullScreenCover(isPresented: $isWalking) {
+            ActiveWalkScreen(minutesGoal: store.minutesGoal) {
+                isWalking = false
+                Task { await store.refresh() }
+            }
+        }
     }
 
     @ViewBuilder
@@ -36,7 +43,7 @@ struct TodayScreen: View {
                     .padding(.top, 8)
                 TodayHeroCard(
                     snapshot: snapshot,
-                    onPrimaryTap: { Task { await store.refresh() } },
+                    onPrimaryTap: { isWalking = true },
                     onReminderTap: {}
                 )
                 .padding(.horizontal, 20)
