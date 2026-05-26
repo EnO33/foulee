@@ -55,7 +55,7 @@ struct ActiveWalkScreen: View {
             VStack(spacing: 4) {
                 Text(format(elapsed: session.elapsed))
                     .font(FouleeFont.numeric(size: 48))
-                Text("\(session.steps.formattedFR) pas · \(String(format: "%.2f km", session.distanceKm).replacingOccurrences(of: ".", with: ","))")
+                Text(finishedSummary(session: session))
                     .font(FouleeFont.callout)
                     .foregroundStyle(.secondary)
             }
@@ -71,6 +71,12 @@ struct ActiveWalkScreen: View {
                 .padding(.horizontal, 24)
         }
         .padding(.bottom, 32)
+    }
+
+    private func finishedSummary(session: WalkSession) -> String {
+        let distance = String(format: "%.2f km", session.distanceKm)
+            .replacingOccurrences(of: ".", with: ",")
+        return "\(session.steps.formattedFR) pas · \(distance)"
     }
 
     private var header: some View {
@@ -215,10 +221,16 @@ struct ActiveWalkScreen: View {
     }
 }
 
-#Preview("Active") {
-    _ = prepareDependencies {
-        $0.healthKit = .previewValue
-        $0.pedometer = .previewValue
+private struct ActiveWalkPreview: View {
+    init() {
+        prepareDependencies {
+            $0.healthKit = .previewValue
+            $0.pedometer = .previewValue
+        }
     }
-    return ActiveWalkScreen(minutesGoal: 20, onDismiss: {})
+    var body: some View {
+        ActiveWalkScreen(minutesGoal: 20, onDismiss: {})
+    }
 }
+
+#Preview("Active") { ActiveWalkPreview() }
