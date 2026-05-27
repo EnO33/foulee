@@ -34,6 +34,10 @@ struct TodayScreen: View {
                 header(date: snapshot.date)
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
+                if let lastError = store.lastError {
+                    errorBanner(message: lastError)
+                        .padding(.horizontal, 20)
+                }
                 TodayHeroCard(
                     snapshot: snapshot,
                     onPrimaryTap: { isWalking = true },
@@ -61,14 +65,25 @@ struct TodayScreen: View {
             Text("Connexion à Santé…")
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
-            if let lastError = store.lastError {
-                Text(lastError)
-                    .font(FouleeFont.caption)
-                    .foregroundStyle(FouleeColor.danger)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
         }
+    }
+
+    private func errorBanner(message: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 16))
+                .foregroundStyle(FouleeColor.warning)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Données partiellement indisponibles")
+                    .font(FouleeFont.footnote.weight(.semibold))
+                Text(message)
+                    .font(FouleeFont.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .fouleeGlass(cornerRadius: 16)
     }
 
     private func header(date: Date) -> some View {
