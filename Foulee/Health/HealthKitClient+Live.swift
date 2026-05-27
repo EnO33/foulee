@@ -73,9 +73,63 @@ extension HealthKitClient {
 
                 try await builder.endCollection(at: endedAt)
                 _ = try await builder.finishWorkout()
+            },
+            dailyMinutes: { daysBack in
+                try await dailyExerciseMinutes(
+                    store: store,
+                    type: minutesType,
+                    daysBack: daysBack
+                )
             }
         )
     }()
+}
+
+/// Continuation-based bridge to `HKStatisticsCollectionQuery`. Buckets the
+/// minutes type by calendar day from `daysBack` days ago through today.
+/// Days with no samples land as `0` so the chart shows the gap.
+private func dailyExerciseMinutes(
+    store: HKHealthStore,
+    type: HKQuantityType,
+    daysBack: Int
+) async throws -> [DailyMinutes] {
+    let calendar = Calendar.current
+    let endOfToday = calendar.startOfDay(for: .now)
+        .addingTimeInterval(24 * 60 * 60)
+    guard let startOfRange = calendar.date(
+        byAdding: .day, value: -(daysBack - 1), to: calendar.startOfDay(for: .now)
+    ) else { return [] }
+
+    let predicate = HKQuery.predicateForSamples(
+        withStart: startOfRange, end: endOfToday, options: .strictStartDate
+    )
+    let interval = DateComponents(day: 1)
+
+    return try await withCheckedThrowingContinuation { continuation in
+        let query = HKStatisticsCollectionQuery(
+            quantityType: type,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum,
+            anchorDate: startOfRange,
+            intervalComponents: interval
+        )
+        query.initialResultsHandler = { _, results, error in
+            if let error {
+                continuation.resume(throwing: error)
+                return
+            }
+            var output: [DailyMinutes] = []
+            results?.enumerateStatistics(from: startOfRange, to: endOfToday) { statistic, _ in
+                let minutes = statistic.sumQuantity()?.doubleValue(for: .minute()) ?? 0
+                output.append(DailyMinutes(
+                    date: statistic.startDate,
+                    minutes: Int(minutes)
+                ))
+            }
+            continuation.resume(returning: output)
+        }
+        store.execute(query)
+    }
 }
 
 /// Continuation-based bridge to `HKStatisticsQuery`. Sums the cumulative

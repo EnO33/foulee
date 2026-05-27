@@ -20,7 +20,8 @@ struct TodayStoreTests {
                         activeCalories: 50
                     )
                 },
-                saveWalkingWorkout: { _ in }
+                saveWalkingWorkout: { _ in },
+                dailyMinutes: { _ in [] }
             )
         } operation: {
             let store = TodayStore()
@@ -50,7 +51,8 @@ struct TodayStoreTests {
                         activeCalories: 120
                     )
                 },
-                saveWalkingWorkout: { _ in }
+                saveWalkingWorkout: { _ in },
+                dailyMinutes: { _ in [] }
             )
         } operation: {
             let store = TodayStore()
@@ -71,7 +73,8 @@ struct TodayStoreTests {
                 isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: { throw Boom() },
-                saveWalkingWorkout: { _ in }
+                saveWalkingWorkout: { _ in },
+                dailyMinutes: { _ in [] }
             )
         } operation: {
             let store = TodayStore()
@@ -92,7 +95,8 @@ struct TodayStoreTests {
                 todayMetrics: {
                     HealthMetrics(steps: 100, distanceKm: 0.05, activeMinutes: 1, activeCalories: 4)
                 },
-                saveWalkingWorkout: { _ in }
+                saveWalkingWorkout: { _ in },
+                dailyMinutes: { _ in [] }
             )
             $0.location = .previewValue
             $0.weather = WeatherClient(
@@ -124,7 +128,8 @@ struct TodayStoreTests {
                 todayMetrics: {
                     HealthMetrics(steps: 100, distanceKm: 0.05, activeMinutes: 1, activeCalories: 4)
                 },
-                saveWalkingWorkout: { _ in }
+                saveWalkingWorkout: { _ in },
+                dailyMinutes: { _ in [] }
             )
             $0.location = .testValue
             $0.weather = WeatherClient(
@@ -153,7 +158,8 @@ struct TodayStoreTests {
                     Issue.record("todayMetrics should not run when auth is denied")
                     return .zero
                 },
-                saveWalkingWorkout: { _ in }
+                saveWalkingWorkout: { _ in },
+                dailyMinutes: { _ in [] }
             )
         } operation: {
             let store = TodayStore()

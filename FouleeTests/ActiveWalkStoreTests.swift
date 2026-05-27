@@ -55,7 +55,8 @@ struct ActiveWalkStoreTests {
                 isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
-                saveWalkingWorkout: { session in saved.set(session) }
+                saveWalkingWorkout: { session in saved.set(session) },
+                dailyMinutes: { _ in [] }
             )
         } operation: {
             let store = ActiveWalkStore()
@@ -87,7 +88,8 @@ struct ActiveWalkStoreTests {
                 isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
-                saveWalkingWorkout: { _ in throw Boom() }
+                saveWalkingWorkout: { _ in throw Boom() },
+                dailyMinutes: { _ in [] }
             )
         } operation: {
             let store = ActiveWalkStore()

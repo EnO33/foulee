@@ -40,9 +40,10 @@ final class TodayStore {
         await refresh()
     }
 
-    /// Re-fetches today's metrics + midday weather in parallel.
-    /// Weather failure is non-fatal: snapshot keeps the previous value
-    /// (or fallback) and `lastError` records the message.
+    /// Re-fetches today's metrics + midday weather + 30-day history in
+    /// parallel. Weather and history failures are non-fatal: snapshot
+    /// keeps the previous value (or fallback) and `lastError` records the
+    /// message.
     func refresh() async {
         isLoading = true
         defer { isLoading = false }
@@ -51,11 +52,15 @@ final class TodayStore {
             try await healthKit.todayMetrics()
         }
         async let weatherTask: WeatherSnapshot? = fetchWeatherIfAuthorized()
+        async let historyTask: [DailyMinutes]? = runOrTrap {
+            try await healthKit.dailyMinutes(30)
+        }
 
         let metrics = await metricsTask
         let weatherSnapshot = await weatherTask
+        let history = await historyTask ?? []
         guard let metrics else { return }
-        snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot)
+        snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot, history: history)
     }
 
     private func fetchWeatherIfAuthorized() async -> WeatherSnapshot? {
@@ -65,9 +70,19 @@ final class TodayStore {
 
     private func makeSnapshot(
         from metrics: HealthMetrics,
-        weather: WeatherSnapshot?
+        weather: WeatherSnapshot?,
+        history: [DailyMinutes]
     ) -> TodaySnapshot {
-        TodaySnapshot(
+        let currentStreak = StreakCalculator.current(
+            history: history,
+            goalMinutes: minutesGoal,
+            today: .now
+        )
+        let bestStreak = StreakCalculator.best(
+            history: history,
+            goalMinutes: minutesGoal
+        )
+        return TodaySnapshot(
             date: .now,
             steps: metrics.steps,
             stepsGoal: stepsGoal,
@@ -75,14 +90,20 @@ final class TodayStore {
             minutesGoal: minutesGoal,
             distanceKm: metrics.distanceKm,
             calories: metrics.activeCalories,
-            streak: 0,
-            bestStreak: 0,
+            streak: currentStreak,
+            bestStreak: bestStreak,
             weather: weather ?? snapshot?.weather ?? fallbackWeather,
-            weekMinutes: [0, 0, 0, 0, 0, 0, 0],
+            weekMinutes: lastSevenMinutes(history: history),
             weekGoal: minutesGoal,
             walkWindowStart: DateComponents(hour: 12, minute: 0),
             hasWalkedToday: metrics.activeMinutes >= minutesGoal
         )
+    }
+
+    private func lastSevenMinutes(history: [DailyMinutes]) -> [Int] {
+        let tail = Array(history.suffix(7))
+        let padding = Array(repeating: 0, count: max(0, 7 - tail.count))
+        return padding + tail.map(\.minutes)
     }
 
     private func runOrTrap<T: Sendable>(_ body: () async throws -> T) async -> T? {
