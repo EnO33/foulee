@@ -67,7 +67,8 @@ let project = Project(
                 "NSMotionUsageDescription":
                     "Foulée compte tes pas en direct pendant la marche du midi.",
                 "NSLocationWhenInUseUsageDescription":
-                    "Foulée utilise ta position pour afficher la météo de midi à ton endroit."
+                    "Foulée utilise ta position pour afficher la météo de midi à ton endroit.",
+                "NSSupportsLiveActivities": true
             ]),
             sources: ["Foulee/**"],
             resources: [
@@ -75,8 +76,36 @@ let project = Project(
             ],
             entitlements: .file(path: "Foulee/Resources/Foulee.entitlements"),
             dependencies: [
-                .package(product: "Dependencies")
+                .package(product: "Dependencies"),
+                .target(name: "FouleeLiveActivity")
             ]
+        ),
+        .target(
+            name: "FouleeLiveActivity",
+            destinations: .iOS,
+            product: .appExtension,
+            bundleId: "\(bundleIdBase).liveactivity",
+            deploymentTargets: deploymentTargets,
+            infoPlist: .extendingDefault(with: [
+                "CFBundleDisplayName": "Foulée Marche",
+                "CFBundleShortVersionString": "0.1.0",
+                "CFBundleVersion": "1",
+                "NSExtension": [
+                    "NSExtensionPointIdentifier": "com.apple.widgetkit-extension"
+                ]
+            ]),
+            sources: [
+                "FouleeLiveActivity/**",
+                "Foulee/Walk/WalkActivityAttributes.swift"
+            ],
+            resources: [
+                .glob(
+                    pattern: "FouleeLiveActivity/Resources/**",
+                    excluding: ["FouleeLiveActivity/Resources/FouleeLiveActivity.entitlements"]
+                )
+            ],
+            entitlements: .file(path: "FouleeLiveActivity/Resources/FouleeLiveActivity.entitlements"),
+            dependencies: []
         ),
         .target(
             name: "FouleeWatch",
