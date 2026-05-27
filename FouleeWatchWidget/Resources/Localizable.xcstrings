@@ -1,0 +1,11 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "%lld j" : {},
+    "%lld j d'affilée" : {},
+    "Le nombre de jours d'affilée où tu as marché." : {},
+    "Série" : {},
+    "série Foulée" : {}
+  },
+  "version" : "1.0"
+}

@@ -1,0 +1,17 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "%lld pas · %@" : {},
+    "Allons-y dehors,\nmême 10 minutes." : {},
+    "Arrêter" : {},
+    "bpm" : {},
+    "Bravo" : {},
+    "Démarrer" : {},
+    "kcal" : {},
+    "km" : {},
+    "Marche du midi" : {},
+    "pas" : {},
+    "Terminer" : {}
+  },
+  "version" : "1.0"
+}
