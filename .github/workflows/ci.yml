@@ -37,6 +37,9 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Download watchOS platform (not pre-installed on the runner)
+        run: sudo xcodebuild -downloadPlatform watchOS
+
       - name: Install toolchain (Tuist) from mise.toml
         uses: jdx/mise-action@v4
 
@@ -52,6 +55,16 @@ jobs:
             xcrun simctl create "iPhone 17 Pro" "$DEVICETYPE" "$RUNTIME"
           fi
           xcrun simctl list devices available | grep -E "iPhone 17"
+
+      - name: Ensure Apple Watch simulator exists
+        run: |
+          if ! xcrun simctl list devices available | grep -q "Apple Watch"; then
+            RUNTIME=$(xcrun simctl list runtimes available -j | jq -r '.runtimes[] | select(.platform == "watchOS") | .identifier' | sort -V | tail -1)
+            DEVICETYPE=$(xcrun simctl list devicetypes -j | jq -r '.devicetypes[] | select(.productFamily == "Apple Watch") | .identifier' | tail -1)
+            echo "Creating Apple Watch on runtime $RUNTIME (devicetype $DEVICETYPE)"
+            xcrun simctl create "Apple Watch" "$DEVICETYPE" "$RUNTIME"
+          fi
+          xcrun simctl list devices available | grep -E "Apple Watch"
 
       - name: Cache Tuist + SPM artefacts
         uses: actions/cache@v5
@@ -70,7 +83,7 @@ jobs:
       - name: Tuist generate (Foulee.xcworkspace)
         run: tuist generate --no-open
 
-      - name: Build
+      - name: Build (iOS)
         run: |
           set -o pipefail
           xcodebuild \
@@ -80,7 +93,17 @@ jobs:
             -configuration Debug \
             build | xcbeautify
 
-      - name: Test
+      - name: Build (watchOS)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace Foulee.xcworkspace \
+            -scheme FouleeWatch \
+            -destination 'generic/platform=watchOS Simulator' \
+            -configuration Debug \
+            build | xcbeautify
+
+      - name: Test (iOS)
         run: |
           set -o pipefail
           xcodebuild \

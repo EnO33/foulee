@@ -1,0 +1,182 @@
+@preconcurrency import HealthKit
+import Observation
+import SwiftUI
+
+/// Drives the live walking workout on watchOS via `HKWorkoutSession` +
+/// `HKLiveWorkoutBuilder` — the same APIs the Workouts app uses, which
+/// gives us real heart-rate, distance and calorie samples instead of the
+/// CMPedometer estimates the iPhone target relies on.
+///
+/// State is a tiny three-case enum so the view binds declaratively.
+/// Errors funnel through a single boundary (`runOrTrap`); the rest of the
+/// store is happy-path.
+@MainActor
+@Observable
+final class WatchWorkoutStore: NSObject {
+    enum State: Equatable {
+        case idle
+        case active(WatchWorkoutMetrics)
+        case ended(WatchWorkoutMetrics)
+    }
+
+    private(set) var state: State = .idle
+    private(set) var lastError: String?
+
+    @ObservationIgnored private let store = HKHealthStore()
+    @ObservationIgnored private var session: HKWorkoutSession?
+    @ObservationIgnored private var builder: HKLiveWorkoutBuilder?
+
+    private static let writeTypes: Set<HKSampleType> = [HKWorkoutType.workoutType()]
+    private static let readTypes: Set<HKObjectType> = [
+        HKQuantityType(.stepCount),
+        HKQuantityType(.distanceWalkingRunning),
+        HKQuantityType(.activeEnergyBurned),
+        HKQuantityType(.heartRate),
+        HKWorkoutType.workoutType()
+    ]
+
+    /// Begin a fresh walking session. Idempotent: no-op when already active.
+    func start() async {
+        guard case .idle = state else { return }
+        guard HKHealthStore.isHealthDataAvailable() else {
+            lastError = "HealthKit n'est pas disponible sur ce device."
+            return
+        }
+        let granted = await runOrTrap {
+            try await store.requestAuthorization(
+                toShare: Self.writeTypes,
+                read: Self.readTypes
+            )
+            return true
+        }
+        guard granted == true else { return }
+        await beginSession()
+    }
+
+    /// End the session, save the workout and surface a summary.
+    func stop() async {
+        guard case .active(let metrics) = state, let session, let builder else { return }
+        session.end()
+        _ = await runOrTrap {
+            try await builder.endCollection(at: .now)
+            _ = try await builder.finishWorkout()
+            return true as Bool
+        }
+        self.session = nil
+        self.builder = nil
+        state = .ended(metrics)
+    }
+
+    /// Return to idle so a new session can start.
+    func reset() {
+        session = nil
+        builder = nil
+        lastError = nil
+        state = .idle
+    }
+
+    private func beginSession() async {
+        let configuration = HKWorkoutConfiguration()
+        configuration.activityType = .walking
+        configuration.locationType = .outdoor
+
+        let started = await runOrTrap {
+            let session = try HKWorkoutSession(
+                healthStore: store,
+                configuration: configuration
+            )
+            let builder = session.associatedWorkoutBuilder()
+            builder.dataSource = HKLiveWorkoutDataSource(
+                healthStore: store,
+                workoutConfiguration: configuration
+            )
+            session.delegate = self
+            builder.delegate = self
+
+            let startDate = Date()
+            session.startActivity(with: startDate)
+            try await builder.beginCollection(at: startDate)
+
+            self.session = session
+            self.builder = builder
+            return true
+        }
+        guard started == true else { return }
+        state = .active(.zero)
+    }
+
+    fileprivate func ingest(builder: HKLiveWorkoutBuilder) {
+        guard case .active(var metrics) = state else { return }
+        metrics.elapsed = builder.elapsedTime(at: .now)
+        metrics.steps = Int(sumDouble(builder.statistics(for: HKQuantityType(.stepCount)), unit: .count()))
+        metrics.distanceMeters = sumDouble(
+            builder.statistics(for: HKQuantityType(.distanceWalkingRunning)),
+            unit: .meter()
+        )
+        metrics.activeCalories = Int(sumDouble(
+            builder.statistics(for: HKQuantityType(.activeEnergyBurned)),
+            unit: .kilocalorie()
+        ))
+        metrics.heartRate = mostRecent(
+            builder.statistics(for: HKQuantityType(.heartRate)),
+            unit: HKUnit(from: "count/min")
+        )
+        state = .active(metrics)
+    }
+
+    private func sumDouble(_ statistics: HKStatistics?, unit: HKUnit) -> Double {
+        statistics?.sumQuantity()?.doubleValue(for: unit) ?? 0
+    }
+
+    private func mostRecent(_ statistics: HKStatistics?, unit: HKUnit) -> Int? {
+        guard let value = statistics?.mostRecentQuantity()?.doubleValue(for: unit) else {
+            return nil
+        }
+        return Int(value)
+    }
+
+    private func runOrTrap<T: Sendable>(_ body: () async throws -> T) async -> T? {
+        do {
+            return try await body()
+        } catch {
+            lastError = error.localizedDescription
+            return nil
+        }
+    }
+}
+
+extension WatchWorkoutStore: HKWorkoutSessionDelegate {
+    nonisolated func workoutSession(
+        _ workoutSession: HKWorkoutSession,
+        didChangeTo toState: HKWorkoutSessionState,
+        from fromState: HKWorkoutSessionState,
+        date: Date
+    ) {
+        // No-op: state transitions are driven from start/stop on the store.
+    }
+
+    nonisolated func workoutSession(
+        _ workoutSession: HKWorkoutSession,
+        didFailWithError error: Error
+    ) {
+        let message = error.localizedDescription
+        Task { @MainActor [weak self] in
+            self?.lastError = message
+        }
+    }
+}
+
+extension WatchWorkoutStore: HKLiveWorkoutBuilderDelegate {
+    nonisolated func workoutBuilder(
+        _ workoutBuilder: HKLiveWorkoutBuilder,
+        didCollectDataOf collectedTypes: Set<HKSampleType>
+    ) {
+        Task { @MainActor [weak self] in
+            self?.ingest(builder: workoutBuilder)
+        }
+    }
+
+    nonisolated func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {
+        // No event-specific UI; ignore.
+    }
+}
