@@ -57,7 +57,10 @@ struct ActiveWalkStoreTests {
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { session in saved.set(session) },
                 dailyMinutes: { _ in [] },
-                recentWorkouts: { _ in [] }
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
             )
         } operation: {
             let store = ActiveWalkStore()
@@ -91,7 +94,10 @@ struct ActiveWalkStoreTests {
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in throw Boom() },
                 dailyMinutes: { _ in [] },
-                recentWorkouts: { _ in [] }
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
             )
         } operation: {
             let store = ActiveWalkStore()

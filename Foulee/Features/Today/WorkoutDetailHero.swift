@@ -1,0 +1,59 @@
+import SwiftUI
+
+/// Hero card at the top of `WorkoutDetailSheet` — icon, date label,
+/// big duration, then a one-liner with time range + source name.
+struct WorkoutDetailHero: View {
+    let detail: WorkoutDetail
+
+    var body: some View {
+        VStack(spacing: 10) {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(FouleeColor.accentMid.opacity(0.18))
+                .frame(width: 64, height: 64)
+                .overlay {
+                    Image(systemName: "figure.walk.motion")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundStyle(FouleeColor.accentMid)
+                }
+            Text(dateLabel)
+                .font(FouleeFont.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .tracking(1.1)
+            Text(durationText)
+                .font(FouleeFont.numeric(size: 44))
+            Text("\(timeRange) · \(detail.summary.sourceName)")
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 22)
+        .padding(.horizontal, 18)
+        .fouleeGlass(cornerRadius: 26)
+    }
+
+    private var dateLabel: String {
+        let calendar = Calendar.current
+        let date = detail.summary.startedAt
+        if calendar.isDateInToday(date) { return "Aujourd'hui" }
+        if calendar.isDateInYesterday(date) { return "Hier" }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "EEEE d MMMM"
+        return formatter.string(from: date).uppercased()
+    }
+
+    private var timeRange: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "HH:mm"
+        return "\(formatter.string(from: detail.summary.startedAt)) → \(formatter.string(from: detail.summary.endedAt))"
+    }
+
+    private var durationText: String {
+        let total = Int(detail.summary.durationSeconds)
+        let minutes = total / 60
+        let secs = total % 60
+        return String(format: "%d:%02d", minutes, secs)
+    }
+}

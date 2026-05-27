@@ -36,6 +36,13 @@ struct HealthKitClient: Sendable {
     /// from Foulée, Forme and the Apple Watch — anything in HealthKit.
     /// Pass `1` for today only.
     var recentWorkouts: @Sendable (_ daysBack: Int) async throws -> [WorkoutSummary]
+
+    /// Drill-down for a single workout — heart-rate samples + steps
+    /// scoped on the workout's exact window. Re-fetches the underlying
+    /// `HKWorkout` by UUID so the queries can use
+    /// `predicateForObjects(from: workout)` and avoid catching samples
+    /// from before or after the session.
+    var workoutDetail: @Sendable (_ summary: WorkoutSummary) async throws -> WorkoutDetail
 }
 
 extension HealthKitClient: DependencyKey {
@@ -50,7 +57,8 @@ extension HealthKitClient: DependencyKey {
         },
         saveWalkingWorkout: { _ in },
         dailyMinutes: { daysBack in previewDailyMinutes(daysBack: daysBack) },
-        recentWorkouts: { daysBack in previewRecentWorkouts(daysBack: daysBack) }
+        recentWorkouts: { daysBack in previewRecentWorkouts(daysBack: daysBack) },
+        workoutDetail: { summary in previewWorkoutDetail(summary: summary) }
     )
 
     static let testValue = HealthKitClient(
@@ -59,8 +67,31 @@ extension HealthKitClient: DependencyKey {
         todayMetrics: { .zero },
         saveWalkingWorkout: { _ in },
         dailyMinutes: { _ in [] },
-        recentWorkouts: { _ in [] }
+        recentWorkouts: { _ in [] },
+        workoutDetail: { summary in
+            WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+        }
     )
+
+    /// Mock detail used in `#Preview`: linear HR ramp from ~95 bpm to
+    /// ~115 bpm over the workout, 5 samples per minute, plus a
+    /// proportional step count (≈115 steps/min for casual walking).
+    private static func previewWorkoutDetail(summary: WorkoutSummary) -> WorkoutDetail {
+        let totalSeconds = Int(summary.durationSeconds)
+        let sampleStride = 12
+        let samples = stride(from: 0, through: totalSeconds, by: sampleStride).map { offset in
+            let date = summary.startedAt.addingTimeInterval(TimeInterval(offset))
+            let progress = Double(offset) / Double(max(totalSeconds, 1))
+            let bpm = Int(95 + progress * 20 + sin(progress * 6) * 4)
+            return HeartRateSample(id: UUID(), date: date, bpm: bpm)
+        }
+        let estimatedSteps = Int(summary.durationSeconds / 60 * 115)
+        return WorkoutDetail(
+            summary: summary,
+            heartRateSamples: samples,
+            stepsCount: estimatedSteps
+        )
+    }
 
     /// Mock history that covers a full week — today + 2 random "miss"
     /// days in the past so the sheet can showcase both populated days

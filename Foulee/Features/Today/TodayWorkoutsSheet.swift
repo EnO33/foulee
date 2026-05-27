@@ -15,6 +15,7 @@ struct TodayWorkoutsSheet: View {
     @State private var workouts: [WorkoutSummary] = []
     @State private var isLoading = true
     @State private var lastError: String?
+    @State private var selectedWorkout: WorkoutSummary?
 
     var body: some View {
         NavigationStack {
@@ -32,6 +33,9 @@ struct TodayWorkoutsSheet: View {
             }
         }
         .task { await load() }
+        .sheet(item: $selectedWorkout) { workout in
+            WorkoutDetailSheet(summary: workout)
+        }
     }
 
     @ViewBuilder
@@ -74,7 +78,12 @@ struct TodayWorkoutsSheet: View {
                 emptyDayCard
             } else {
                 ForEach(workouts) { workout in
-                    workoutCard(workout)
+                    Button {
+                        selectedWorkout = workout
+                    } label: {
+                        workoutCard(workout)
+                    }
+                    .buttonStyle(.pressable)
                 }
             }
         }

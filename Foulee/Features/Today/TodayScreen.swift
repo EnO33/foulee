@@ -154,7 +154,10 @@ private struct TodayPreviewLoading: View {
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                recentWorkouts: { _ in [] }
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
             )
         }
     }
