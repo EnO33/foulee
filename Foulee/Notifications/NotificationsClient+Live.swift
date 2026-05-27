@@ -1,5 +1,5 @@
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 
 extension NotificationsClient {
     /// `UNUserNotificationCenter`-backed implementation. `replaceWalkReminders`
