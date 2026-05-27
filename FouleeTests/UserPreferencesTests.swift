@@ -27,6 +27,8 @@ struct UserPreferencesTests {
         first.minutesGoal = 30
         first.stepsGoal = 8_000
         first.hasCompletedOnboarding = true
+        first.notificationsEnabled = false
+        first.themeMode = .dark
 
         let second = UserPreferences(defaults: defaults)
         #expect(second.activeDays == [.monday, .wednesday, .friday])
@@ -35,6 +37,15 @@ struct UserPreferencesTests {
         #expect(second.minutesGoal == 30)
         #expect(second.stepsGoal == 8_000)
         #expect(second.hasCompletedOnboarding == true)
+        #expect(second.notificationsEnabled == false)
+        #expect(second.themeMode == .dark)
+    }
+
+    @Test("Notifications default to enabled and theme to system")
+    func defaultsForNewFields() {
+        let prefs = UserPreferences(defaults: cleanDefaults())
+        #expect(prefs.notificationsEnabled == true)
+        #expect(prefs.themeMode == .system)
     }
 
     @Test("Weekday bitmask round-trips for every subset")

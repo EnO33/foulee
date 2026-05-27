@@ -38,32 +38,14 @@ struct OnboardingGoalView: View {
             sectionLabel("Jours")
             HStack(spacing: 8) {
                 ForEach(Weekday.allCases) { day in
-                    dayChip(for: day)
+                    DayChip(
+                        day: day,
+                        active: preferences.activeDays.contains(day),
+                        toggle: { toggle(day: day) }
+                    )
                 }
             }
         }
-    }
-
-    private func dayChip(for day: Weekday) -> some View {
-        let active = preferences.activeDays.contains(day)
-        return Button {
-            toggle(day: day)
-        } label: {
-            Text(day.shortLabel)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(active ? AnyShapeStyle(Color.white) : AnyShapeStyle(Color.primary))
-                .frame(width: 40, height: 40)
-                .background(
-                    Circle()
-                        .fill(active ? AnyShapeStyle(FouleeColor.accentGradient) : AnyShapeStyle(Color.clear))
-                )
-                .overlay(
-                    Circle()
-                        .stroke(Color.gray.opacity(active ? 0 : 0.25), lineWidth: 1)
-                )
-                .shadow(color: FouleeColor.accentMid.opacity(active ? 0.35 : 0), radius: 10, x: 0, y: 4)
-        }
-        .buttonStyle(.pressable)
     }
 
     private func toggle(day: Weekday) {

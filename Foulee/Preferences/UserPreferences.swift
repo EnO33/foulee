@@ -28,6 +28,12 @@ final class UserPreferences {
     var hasCompletedOnboarding: Bool {
         didSet { defaults.set(hasCompletedOnboarding, forKey: Keys.hasCompletedOnboarding) }
     }
+    var notificationsEnabled: Bool {
+        didSet { defaults.set(notificationsEnabled, forKey: Keys.notificationsEnabled) }
+    }
+    var themeMode: ThemeMode {
+        didSet { defaults.set(themeMode.rawValue, forKey: Keys.themeMode) }
+    }
 
     @ObservationIgnored
     private let defaults: UserDefaults
@@ -43,6 +49,9 @@ final class UserPreferences {
         self.minutesGoal = (defaults.object(forKey: Keys.minutesGoal) as? Int) ?? 20
         self.stepsGoal = (defaults.object(forKey: Keys.stepsGoal) as? Int) ?? 6_000
         self.hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)
+        self.notificationsEnabled = (defaults.object(forKey: Keys.notificationsEnabled) as? Bool) ?? true
+        let rawTheme = defaults.string(forKey: Keys.themeMode)
+        self.themeMode = rawTheme.flatMap(ThemeMode.init(rawValue:)) ?? .system
     }
 }
 
@@ -53,4 +62,6 @@ private enum Keys {
     static let minutesGoal = "preferences.minutesGoal"
     static let stepsGoal = "preferences.stepsGoal"
     static let hasCompletedOnboarding = "preferences.hasCompletedOnboarding"
+    static let notificationsEnabled = "preferences.notificationsEnabled"
+    static let themeMode = "preferences.themeMode"
 }

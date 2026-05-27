@@ -58,6 +58,15 @@ struct WalkReminderSchedulerTests {
         }
     }
 
+    @Test("Disabling notifications produces an empty schedule")
+    @MainActor
+    func disabledFlagEmptiesSchedule() {
+        let prefs = UserPreferences(defaults: cleanDefaults())
+        prefs.notificationsEnabled = false
+        prefs.activeDays = [.monday, .tuesday]
+        #expect(WalkReminderScheduler.reminders(for: prefs).isEmpty)
+    }
+
     @Test("A throwing client is swallowed at the scheduler boundary")
     @MainActor
     func syncSwallowsErrors() async {

@@ -19,9 +19,12 @@ struct WalkReminderScheduler {
     }
 
     /// Produce one reminder per active day of the week. `@MainActor` because
-    /// `UserPreferences` is main-isolated.
+    /// `UserPreferences` is main-isolated. Returns an empty array when the
+    /// user has flipped notifications off — the live client then wipes the
+    /// pending queue on the next `sync(with:)`.
     @MainActor
     static func reminders(for preferences: UserPreferences) -> [WalkReminder] {
+        guard preferences.notificationsEnabled else { return [] }
         let time = reminderTime(forWindowStart: preferences.walkWindowStart)
         return preferences.activeDays
             .sorted(by: { $0.rawValue < $1.rawValue })
