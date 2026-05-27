@@ -102,7 +102,7 @@ extension HealthKitClient {
                 try await recentWalkingWorkouts(store: store, daysBack: daysBack)
             },
             workoutDetail: { summary in
-                try await workoutDetail(for: summary, store: store)
+                try await fetchWorkoutDetail(for: summary, store: store)
             }
         )
     }()
@@ -112,7 +112,7 @@ extension HealthKitClient {
 /// + step samples scoped to that exact workout via
 /// `predicateForObjects(from: workout)` — keeps results clean even when
 /// the user wore their Watch outside the walk window.
-private func workoutDetail(
+private func fetchWorkoutDetail(
     for summary: WorkoutSummary,
     store: HKHealthStore
 ) async throws -> WorkoutDetail {
