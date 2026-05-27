@@ -62,9 +62,9 @@ struct TodayStoreTests {
         }
     }
 
-    @Test("A throwing HealthKit surfaces lastError and leaves snapshot nil")
+    @Test("A throwing HealthKit surfaces lastError and falls back to zero metrics")
     @MainActor
-    func failureSurfacesAsLastError() async {
+    func failureFallsBackAndSurfacesError() async {
         struct Boom: Error, LocalizedError {
             var errorDescription: String? { "Santé en feu" }
         }
@@ -80,7 +80,10 @@ struct TodayStoreTests {
             let store = TodayStore()
             await store.refresh()
 
-            #expect(store.snapshot == nil)
+            // Snapshot is always set so the UI never hangs on the placeholder;
+            // failure surfaces via lastError for an in-screen banner.
+            #expect(store.snapshot?.steps == 0)
+            #expect(store.snapshot?.minutes == 0)
             #expect(store.lastError == "Santé en feu")
         }
     }
@@ -147,17 +150,14 @@ struct TodayStoreTests {
         }
     }
 
-    @Test("Bootstrap short-circuits when authorization is denied")
+    @Test("Bootstrap still populates the snapshot when authorization is denied")
     @MainActor
-    func bootstrapStopsWhenDenied() async {
+    func bootstrapPopulatesEvenWhenDenied() async {
         await withDependencies {
             $0.healthKit = HealthKitClient(
                 isAvailable: { true },
                 requestAuthorization: { false },
-                todayMetrics: {
-                    Issue.record("todayMetrics should not run when auth is denied")
-                    return .zero
-                },
+                todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] }
             )
@@ -165,7 +165,10 @@ struct TodayStoreTests {
             let store = TodayStore()
             await store.bootstrap()
 
-            #expect(store.snapshot == nil)
+            // Auth denied is not a deadlock — UI must render with zeros so
+            // the user can navigate to Settings and re-enable HealthKit.
+            #expect(store.snapshot?.steps == 0)
+            #expect(store.snapshot?.minutes == 0)
         }
     }
 }

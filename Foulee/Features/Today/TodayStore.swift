@@ -33,17 +33,20 @@ final class TodayStore {
 
     /// Ask for HealthKit + Location authorization and trigger an initial
     /// refresh. Idempotent — safe to call from `.task` on every appear.
+    /// Always refreshes regardless of whether authorization succeeded, so
+    /// the UI never gets stuck on the placeholder.
     func bootstrap() async {
-        let healthGranted = await runOrTrap { try await healthKit.requestAuthorization() }
-        guard healthGranted == true else { return }
+        _ = await runOrTrap { try await healthKit.requestAuthorization() }
         _ = await location.requestWhenInUse()
         await refresh()
     }
 
     /// Re-fetches today's metrics + midday weather + 30-day history in
-    /// parallel. Weather and history failures are non-fatal: snapshot
-    /// keeps the previous value (or fallback) and `lastError` records the
-    /// message.
+    /// parallel. Always sets `snapshot` — falling back to zeros for
+    /// metrics and an empty history when a fetch fails — so the UI
+    /// renders even when HealthKit/WeatherKit are unavailable (sim, free
+    /// dev signing, denied perms). Failures are surfaced via `lastError`
+    /// for an in-screen banner.
     func refresh() async {
         isLoading = true
         defer { isLoading = false }
@@ -56,10 +59,9 @@ final class TodayStore {
             try await healthKit.dailyMinutes(30)
         }
 
-        let metrics = await metricsTask
+        let metrics = await metricsTask ?? .zero
         let weatherSnapshot = await weatherTask
         let history = await historyTask ?? []
-        guard let metrics else { return }
         snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot, history: history)
     }
 
