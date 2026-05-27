@@ -108,9 +108,15 @@ final class WatchWorkoutStore: NSObject {
     fileprivate func ingest(builder: HKLiveWorkoutBuilder) {
         guard case .active(var metrics) = state else { return }
         metrics.elapsed = builder.elapsedTime(at: .now)
-        metrics.steps = sum(builder.statistics(for: HKQuantityType(.stepCount)), unit: .count())
-        metrics.distanceMeters = sum(builder.statistics(for: HKQuantityType(.distanceWalkingRunning)), unit: .meter())
-        metrics.activeCalories = sum(builder.statistics(for: HKQuantityType(.activeEnergyBurned)), unit: .kilocalorie())
+        metrics.steps = Int(sumDouble(builder.statistics(for: HKQuantityType(.stepCount)), unit: .count()))
+        metrics.distanceMeters = sumDouble(
+            builder.statistics(for: HKQuantityType(.distanceWalkingRunning)),
+            unit: .meter()
+        )
+        metrics.activeCalories = Int(sumDouble(
+            builder.statistics(for: HKQuantityType(.activeEnergyBurned)),
+            unit: .kilocalorie()
+        ))
         metrics.heartRate = mostRecent(
             builder.statistics(for: HKQuantityType(.heartRate)),
             unit: HKUnit(from: "count/min")
@@ -118,8 +124,8 @@ final class WatchWorkoutStore: NSObject {
         state = .active(metrics)
     }
 
-    private func sum(_ statistics: HKStatistics?, unit: HKUnit) -> Int {
-        Int(statistics?.sumQuantity()?.doubleValue(for: unit) ?? 0)
+    private func sumDouble(_ statistics: HKStatistics?, unit: HKUnit) -> Double {
+        statistics?.sumQuantity()?.doubleValue(for: unit) ?? 0
     }
 
     private func mostRecent(_ statistics: HKStatistics?, unit: HKUnit) -> Int? {
