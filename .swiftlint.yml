@@ -2,6 +2,7 @@ included:
   - Foulee
   - FouleeTests
   - FouleeWatch
+  - FouleeWatchWidget
   - Project.swift
   - Tuist.swift
 

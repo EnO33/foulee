@@ -98,6 +98,30 @@ let project = Project(
                 )
             ],
             entitlements: .file(path: "FouleeWatch/Resources/FouleeWatch.entitlements"),
+            dependencies: [
+                .target(name: "FouleeWatchWidget")
+            ]
+        ),
+        .target(
+            name: "FouleeWatchWidget",
+            destinations: [.appleWatch],
+            product: .appExtension,
+            bundleId: "\(bundleIdBase).watchkitapp.widget",
+            deploymentTargets: .watchOS("26.0"),
+            infoPlist: .extendingDefault(with: [
+                "CFBundleDisplayName": "Foulée Série",
+                "CFBundleShortVersionString": "0.1.0",
+                "CFBundleVersion": "1",
+                "NSExtension": [
+                    "NSExtensionPointIdentifier": "com.apple.widgetkit-extension"
+                ]
+            ]),
+            sources: [
+                "FouleeWatchWidget/**",
+                "Foulee/Streak/StreakCalculator.swift",
+                "Foulee/Health/DailyMinutes.swift"
+            ],
+            entitlements: .file(path: "FouleeWatchWidget/Resources/FouleeWatchWidget.entitlements"),
             dependencies: []
         ),
         .target(
