@@ -74,6 +74,33 @@ let project = Project(
             ]
         ),
         .target(
+            name: "FouleeWatch",
+            destinations: [.appleWatch],
+            product: .app,
+            bundleId: "\(bundleIdBase).watchkitapp",
+            deploymentTargets: .watchOS("26.0"),
+            infoPlist: .extendingDefault(with: [
+                "CFBundleDisplayName": "Foulée",
+                "CFBundleShortVersionString": "0.1.0",
+                "CFBundleVersion": "1",
+                "WKApplication": true,
+                "WKWatchOnly": false,
+                "NSHealthShareUsageDescription":
+                    "Foulée lit tes pas, ta distance et tes minutes d'activité pour t'aider à suivre tes marches du midi.",
+                "NSHealthUpdateUsageDescription":
+                    "Foulée enregistre tes marches du midi comme séances dans Santé."
+            ]),
+            sources: ["FouleeWatch/**"],
+            resources: [
+                .glob(
+                    pattern: "FouleeWatch/Resources/**",
+                    excluding: ["FouleeWatch/Resources/FouleeWatch.entitlements"]
+                )
+            ],
+            entitlements: .file(path: "FouleeWatch/Resources/FouleeWatch.entitlements"),
+            dependencies: []
+        ),
+        .target(
             name: "FouleeTests",
             destinations: .iOS,
             product: .unitTests,
@@ -92,6 +119,12 @@ let project = Project(
             buildAction: .buildAction(targets: ["Foulee"]),
             testAction: .targets(["FouleeTests"]),
             runAction: .runAction(executable: "Foulee")
+        ),
+        .scheme(
+            name: "FouleeWatch",
+            shared: true,
+            buildAction: .buildAction(targets: ["FouleeWatch"]),
+            runAction: .runAction(executable: "FouleeWatch")
         )
     ]
 )
