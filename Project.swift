@@ -77,8 +77,40 @@ let project = Project(
             entitlements: .file(path: "Foulee/Resources/Foulee.entitlements"),
             dependencies: [
                 .package(product: "Dependencies"),
-                .target(name: "FouleeLiveActivity")
+                .target(name: "FouleeLiveActivity"),
+                .target(name: "FouleeWidget")
             ]
+        ),
+        .target(
+            name: "FouleeWidget",
+            destinations: .iOS,
+            product: .appExtension,
+            bundleId: "\(bundleIdBase).widget",
+            deploymentTargets: deploymentTargets,
+            infoPlist: .extendingDefault(with: [
+                "CFBundleDisplayName": "Foulée Série",
+                "CFBundleShortVersionString": "0.1.0",
+                "CFBundleVersion": "1",
+                "NSExtension": [
+                    "NSExtensionPointIdentifier": "com.apple.widgetkit-extension"
+                ]
+            ]),
+            sources: [
+                "FouleeWidget/**",
+                "Foulee/Streak/StreakCalculator.swift",
+                "Foulee/Health/DailyMinutes.swift",
+                "FouleeWatchWidget/StreakProvider.swift",
+                "FouleeWatchWidget/StreakEntry.swift",
+                "FouleeWatchWidget/SendableBox.swift"
+            ],
+            resources: [
+                .glob(
+                    pattern: "FouleeWidget/Resources/**",
+                    excluding: ["FouleeWidget/Resources/FouleeWidget.entitlements"]
+                )
+            ],
+            entitlements: .file(path: "FouleeWidget/Resources/FouleeWidget.entitlements"),
+            dependencies: []
         ),
         .target(
             name: "FouleeLiveActivity",
