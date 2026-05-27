@@ -25,6 +25,11 @@ struct HealthKitClient: Sendable {
     /// location: outdoor). Idempotent at the call site — duplicate saves on
     /// the same session are caller-controlled, not deduplicated here.
     var saveWalkingWorkout: @Sendable (_ session: WalkSession) async throws -> Void
+
+    /// Active minutes per calendar day for the last `daysBack` days,
+    /// including today. Returns entries from oldest to newest with `0`
+    /// minutes for days that had no exercise (so charts/streaks see gaps).
+    var dailyMinutes: @Sendable (_ daysBack: Int) async throws -> [DailyMinutes]
 }
 
 extension HealthKitClient: DependencyKey {
@@ -37,15 +42,30 @@ extension HealthKitClient: DependencyKey {
         todayMetrics: {
             HealthMetrics(steps: 4_218, distanceKm: 1.8, activeMinutes: 24, activeCalories: 142)
         },
-        saveWalkingWorkout: { _ in }
+        saveWalkingWorkout: { _ in },
+        dailyMinutes: { daysBack in previewDailyMinutes(daysBack: daysBack) }
     )
 
     static let testValue = HealthKitClient(
         isAvailable: { false },
         requestAuthorization: { false },
         todayMetrics: { .zero },
-        saveWalkingWorkout: { _ in }
+        saveWalkingWorkout: { _ in },
+        dailyMinutes: { _ in [] }
     )
+
+    /// Deterministic pseudo-history for `#Preview`s: 12-day current streak,
+    /// 18-day historical record, mild noise around the 20 min goal.
+    private static func previewDailyMinutes(daysBack: Int) -> [DailyMinutes] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let pattern = [24, 22, 21, 26, 23, 22, 25, 0, 28, 24, 23, 22, 24, 21, 0, 0, 25, 22, 24, 26, 23, 22, 21]
+        return (0..<daysBack).reversed().map { offset in
+            let date = calendar.date(byAdding: .day, value: -offset, to: today) ?? today
+            let minutes = pattern[offset % pattern.count]
+            return DailyMinutes(date: date, minutes: minutes)
+        }
+    }
 }
 
 extension DependencyValues {

@@ -24,27 +24,8 @@ struct RootTabView: View {
     private var content: some View {
         switch activeTab {
         case .today: TodayScreen()
-        case .stats: StatsPlaceholderScreen()
+        case .stats: StatsScreen(preferences: preferences)
         case .settings: SettingsScreen(preferences: preferences)
         }
-    }
-}
-
-/// Holding place until PR#8 ships the real Stats screen.
-struct StatsPlaceholderScreen: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: FouleeIcon.calendar)
-                .font(.system(size: 48, weight: .semibold))
-                .foregroundStyle(FouleeColor.accentMid)
-            Text("Statistiques bientôt")
-                .font(FouleeFont.title3)
-            Text("Tes séries et l'évolution des marches arrivent dans la prochaine version.")
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
