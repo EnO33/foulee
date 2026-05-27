@@ -57,6 +57,9 @@ extension HealthKitClient {
 
                 try await builder.beginCollection(at: session.startedAt)
 
+                let elapsedMinutes = max(session.elapsed / 60, 0)
+                let estimatedCalories = Double(session.estimatedCalories)
+
                 let distanceSample = HKQuantitySample(
                     type: distanceType,
                     quantity: HKQuantity(unit: .meter(), doubleValue: session.distanceMeters),
@@ -69,7 +72,21 @@ extension HealthKitClient {
                     start: session.startedAt,
                     end: endedAt
                 )
-                try await builder.addSamples([distanceSample, stepsSample])
+                let caloriesSample = HKQuantitySample(
+                    type: caloriesType,
+                    quantity: HKQuantity(unit: .kilocalorie(), doubleValue: estimatedCalories),
+                    start: session.startedAt,
+                    end: endedAt
+                )
+                let minutesSample = HKQuantitySample(
+                    type: minutesType,
+                    quantity: HKQuantity(unit: .minute(), doubleValue: elapsedMinutes),
+                    start: session.startedAt,
+                    end: endedAt
+                )
+                try await builder.addSamples([
+                    distanceSample, stepsSample, caloriesSample, minutesSample
+                ])
 
                 try await builder.endCollection(at: endedAt)
                 _ = try await builder.finishWorkout()
