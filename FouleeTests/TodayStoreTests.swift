@@ -22,7 +22,10 @@ struct TodayStoreTests {
                 },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                recentWorkouts: { _ in [] }
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
             )
         } operation: {
             let store = TodayStore()
@@ -54,7 +57,10 @@ struct TodayStoreTests {
                 },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                recentWorkouts: { _ in [] }
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
             )
         } operation: {
             let store = TodayStore()
@@ -77,7 +83,10 @@ struct TodayStoreTests {
                 todayMetrics: { throw Boom() },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                recentWorkouts: { _ in [] }
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
             )
         } operation: {
             let store = TodayStore()
@@ -103,7 +112,10 @@ struct TodayStoreTests {
                 },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                recentWorkouts: { _ in [] }
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
             )
             $0.location = .previewValue
             $0.weather = WeatherClient(
@@ -137,7 +149,10 @@ struct TodayStoreTests {
                 },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                recentWorkouts: { _ in [] }
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
             )
             $0.location = .testValue
             $0.weather = WeatherClient(
@@ -186,7 +201,10 @@ struct TodayStoreTests {
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in crafted },
-                recentWorkouts: { _ in [] }
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
             )
         } operation: {
             let store = TodayStore()
@@ -211,7 +229,10 @@ struct TodayStoreTests {
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                recentWorkouts: { _ in [] }
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
             )
         } operation: {
             let store = TodayStore()

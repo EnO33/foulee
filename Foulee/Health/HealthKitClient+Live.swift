@@ -100,9 +100,109 @@ extension HealthKitClient {
             },
             recentWorkouts: { daysBack in
                 try await recentWalkingWorkouts(store: store, daysBack: daysBack)
+            },
+            workoutDetail: { summary in
+                try await fetchWorkoutDetail(for: summary, store: store)
             }
         )
     }()
+}
+
+/// Re-fetches the `HKWorkout` matching `summary.id` and pulls heart-rate
+/// + step samples scoped to that exact workout via
+/// `predicateForObjects(from: workout)` — keeps results clean even when
+/// the user wore their Watch outside the walk window.
+private func fetchWorkoutDetail(
+    for summary: WorkoutSummary,
+    store: HKHealthStore
+) async throws -> WorkoutDetail {
+    guard let workout = try await fetchWorkout(uuid: summary.id, store: store) else {
+        // Workout disappeared between summary and detail fetch — return a
+        // detail with the summary alone so the UI can still render.
+        return WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+    }
+    async let hrTask = fetchHeartRateSamples(for: workout, store: store)
+    async let stepsTask = fetchStepsCount(for: workout, store: store)
+    return try await WorkoutDetail(
+        summary: summary,
+        heartRateSamples: hrTask,
+        stepsCount: stepsTask
+    )
+}
+
+private func fetchWorkout(uuid: UUID, store: HKHealthStore) async throws -> HKWorkout? {
+    let predicate = HKQuery.predicateForObject(with: uuid)
+    return try await withCheckedThrowingContinuation { continuation in
+        let query = HKSampleQuery(
+            sampleType: .workoutType(),
+            predicate: predicate,
+            limit: 1,
+            sortDescriptors: nil
+        ) { _, samples, error in
+            if let error {
+                continuation.resume(throwing: error)
+                return
+            }
+            continuation.resume(returning: (samples as? [HKWorkout])?.first)
+        }
+        store.execute(query)
+    }
+}
+
+private func fetchHeartRateSamples(
+    for workout: HKWorkout,
+    store: HKHealthStore
+) async throws -> [HeartRateSample] {
+    let predicate = HKQuery.predicateForObjects(from: workout)
+    let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+    let bpmUnit = HKUnit(from: "count/min")
+
+    return try await withCheckedThrowingContinuation { continuation in
+        let query = HKSampleQuery(
+            sampleType: HKQuantityType(.heartRate),
+            predicate: predicate,
+            limit: HKObjectQueryNoLimit,
+            sortDescriptors: [sort]
+        ) { _, samples, error in
+            if let error {
+                continuation.resume(throwing: error)
+                return
+            }
+            let quantitySamples = (samples as? [HKQuantitySample]) ?? []
+            let mapped = quantitySamples.map {
+                HeartRateSample(
+                    id: $0.uuid,
+                    date: $0.startDate,
+                    bpm: Int($0.quantity.doubleValue(for: bpmUnit).rounded())
+                )
+            }
+            continuation.resume(returning: mapped)
+        }
+        store.execute(query)
+    }
+}
+
+private func fetchStepsCount(
+    for workout: HKWorkout,
+    store: HKHealthStore
+) async throws -> Int {
+    let predicate = HKQuery.predicateForObjects(from: workout)
+
+    return try await withCheckedThrowingContinuation { continuation in
+        let query = HKStatisticsQuery(
+            quantityType: HKQuantityType(.stepCount),
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum
+        ) { _, statistics, error in
+            if let error {
+                continuation.resume(throwing: error)
+                return
+            }
+            let count = statistics?.sumQuantity()?.doubleValue(for: .count()) ?? 0
+            continuation.resume(returning: Int(count))
+        }
+        store.execute(query)
+    }
 }
 
 /// All walking workouts (activityType `.walking`) started in the last
