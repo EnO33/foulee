@@ -22,7 +22,7 @@ struct TodayStoreTests {
                 },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                todayWorkouts: { [] }
+                recentWorkouts: { _ in [] }
             )
         } operation: {
             let store = TodayStore()
@@ -54,7 +54,7 @@ struct TodayStoreTests {
                 },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                todayWorkouts: { [] }
+                recentWorkouts: { _ in [] }
             )
         } operation: {
             let store = TodayStore()
@@ -77,7 +77,7 @@ struct TodayStoreTests {
                 todayMetrics: { throw Boom() },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                todayWorkouts: { [] }
+                recentWorkouts: { _ in [] }
             )
         } operation: {
             let store = TodayStore()
@@ -103,7 +103,7 @@ struct TodayStoreTests {
                 },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                todayWorkouts: { [] }
+                recentWorkouts: { _ in [] }
             )
             $0.location = .previewValue
             $0.weather = WeatherClient(
@@ -137,7 +137,7 @@ struct TodayStoreTests {
                 },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                todayWorkouts: { [] }
+                recentWorkouts: { _ in [] }
             )
             $0.location = .testValue
             $0.weather = WeatherClient(
@@ -186,7 +186,7 @@ struct TodayStoreTests {
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in crafted },
-                todayWorkouts: { [] }
+                recentWorkouts: { _ in [] }
             )
         } operation: {
             let store = TodayStore()
@@ -211,7 +211,7 @@ struct TodayStoreTests {
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                todayWorkouts: { [] }
+                recentWorkouts: { _ in [] }
             )
         } operation: {
             let store = TodayStore()

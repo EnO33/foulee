@@ -31,10 +31,11 @@ struct HealthKitClient: Sendable {
     /// minutes for days that had no exercise (so charts/streaks see gaps).
     var dailyMinutes: @Sendable (_ daysBack: Int) async throws -> [DailyMinutes]
 
-    /// Walking workouts (HKWorkoutActivityType.walking) started since
-    /// midnight today, newest first. Covers walks from Foulée, Forme
-    /// and the Apple Watch — anything that's in HealthKit.
-    var todayWorkouts: @Sendable () async throws -> [WorkoutSummary]
+    /// Walking workouts (HKWorkoutActivityType.walking) started in the
+    /// last `daysBack` days (today included), newest first. Covers walks
+    /// from Foulée, Forme and the Apple Watch — anything in HealthKit.
+    /// Pass `1` for today only.
+    var recentWorkouts: @Sendable (_ daysBack: Int) async throws -> [WorkoutSummary]
 }
 
 extension HealthKitClient: DependencyKey {
@@ -49,7 +50,7 @@ extension HealthKitClient: DependencyKey {
         },
         saveWalkingWorkout: { _ in },
         dailyMinutes: { daysBack in previewDailyMinutes(daysBack: daysBack) },
-        todayWorkouts: { previewTodayWorkouts() }
+        recentWorkouts: { daysBack in previewRecentWorkouts(daysBack: daysBack) }
     )
 
     static let testValue = HealthKitClient(
@@ -58,23 +59,34 @@ extension HealthKitClient: DependencyKey {
         todayMetrics: { .zero },
         saveWalkingWorkout: { _ in },
         dailyMinutes: { _ in [] },
-        todayWorkouts: { [] }
+        recentWorkouts: { _ in [] }
     )
 
-    private static func previewTodayWorkouts() -> [WorkoutSummary] {
-        let noon = Calendar.current.date(bySettingHour: 12, minute: 5, second: 0, of: .now) ?? .now
-        let ended = noon.addingTimeInterval(24 * 60)
-        return [
-            WorkoutSummary(
-                id: UUID(),
-                startedAt: noon,
-                endedAt: ended,
-                durationSeconds: 24 * 60,
-                distanceKm: 1.8,
-                activeCalories: 142,
-                sourceName: "Apple Watch de Matthieu"
-            )
-        ]
+    /// Mock history that covers a full week — today + 2 random "miss"
+    /// days in the past so the sheet can showcase both populated days
+    /// and the empty-day placeholder.
+    private static func previewRecentWorkouts(daysBack: Int) -> [WorkoutSummary] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let skipOffsets: Set<Int> = [3, 5]
+        return (0..<daysBack).flatMap { offset -> [WorkoutSummary] in
+            guard !skipOffsets.contains(offset) else { return [] }
+            let day = calendar.date(byAdding: .day, value: -offset, to: today) ?? today
+            let start = calendar.date(bySettingHour: 12, minute: 5, second: 0, of: day) ?? day
+            let durationMinutes = 22 + offset % 4
+            let end = start.addingTimeInterval(TimeInterval(durationMinutes * 60))
+            return [
+                WorkoutSummary(
+                    id: UUID(),
+                    startedAt: start,
+                    endedAt: end,
+                    durationSeconds: TimeInterval(durationMinutes * 60),
+                    distanceKm: 1.6 + Double(offset % 3) * 0.2,
+                    activeCalories: 120 + offset * 6,
+                    sourceName: offset == 0 ? "Foulée" : "Apple Watch de Matthieu"
+                )
+            ]
+        }
     }
 
     /// Deterministic pseudo-history for `#Preview`s: 12-day current streak,

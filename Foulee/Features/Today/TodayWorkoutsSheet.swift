@@ -1,11 +1,13 @@
 import Dependencies
 import SwiftUI
 
-/// Modal sheet presented when the user taps "Voir le résumé" — lists every
-/// walking workout HealthKit has recorded today, no matter the source.
-/// Lets the user see what got logged by Foulée, Forme or the Watch without
-/// leaving the app.
+/// Modal sheet presented when the user taps "Voir le résumé" — shows the
+/// last 7 days of walking workouts, grouped by day with today first.
+/// Days without a recorded walk get a discreet placeholder so the user
+/// also sees what they missed.
 struct TodayWorkoutsSheet: View {
+    private static let daysBack = 7
+
     @Environment(\.dismiss) private var dismiss
 
     @Dependency(\.healthKit) private var healthKit
@@ -20,7 +22,7 @@ struct TodayWorkoutsSheet: View {
                 Wallpaper()
                 content
             }
-            .navigationTitle("Résumé du jour")
+            .navigationTitle("Résumé 7 jours")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -38,16 +40,14 @@ struct TodayWorkoutsSheet: View {
             ProgressView()
                 .controlSize(.large)
                 .tint(FouleeColor.accentMid)
-        } else if workouts.isEmpty {
-            emptyState
         } else {
             ScrollView {
-                VStack(spacing: 14) {
-                    ForEach(workouts) { workout in
-                        workoutCard(workout)
+                VStack(spacing: 22) {
+                    ForEach(daySections, id: \.day) { section in
+                        daySectionView(day: section.day, workouts: section.workouts)
                     }
                     healthAppLink
-                        .padding(.top, 8)
+                        .padding(.top, 4)
                     if let lastError {
                         Text(lastError)
                             .font(FouleeFont.footnote)
@@ -62,21 +62,36 @@ struct TodayWorkoutsSheet: View {
         }
     }
 
-    private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "tray")
-                .font(.system(size: 48, weight: .semibold))
-                .foregroundStyle(FouleeColor.accentMid)
-            Text("Aucune marche enregistrée aujourd'hui")
-                .font(FouleeFont.headline)
-            Text("Lance ta marche depuis Foulée, Forme ou ta Watch — elle apparaîtra ici.")
+    private func daySectionView(day: Date, workouts: [WorkoutSummary]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(dayLabel(day).uppercased())
+                .font(FouleeFont.footnote.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .tracking(1.1)
+                .padding(.leading, 4)
+
+            if workouts.isEmpty {
+                emptyDayCard
+            } else {
+                ForEach(workouts) { workout in
+                    workoutCard(workout)
+                }
+            }
+        }
+    }
+
+    private var emptyDayCard: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "moon.zzz")
+                .font(.system(size: 18))
+                .foregroundStyle(.secondary)
+            Text("Aucune marche enregistrée")
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-            healthAppLink
-                .padding(.top, 12)
+            Spacer()
         }
+        .padding(14)
+        .fouleeGlass(cornerRadius: 18)
     }
 
     private func workoutCard(_ workout: WorkoutSummary) -> some View {
@@ -165,11 +180,39 @@ struct TodayWorkoutsSheet: View {
         isLoading = true
         defer { isLoading = false }
         do {
-            workouts = try await healthKit.todayWorkouts()
+            workouts = try await healthKit.recentWorkouts(Self.daysBack)
         } catch {
             lastError = error.localizedDescription
             workouts = []
         }
+    }
+
+    // MARK: - Grouping
+
+    private var daySections: [(day: Date, workouts: [WorkoutSummary])] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let dayStarts = (0..<Self.daysBack).compactMap { offset in
+            calendar.date(byAdding: .day, value: -offset, to: today)
+        }
+        let byDay = Dictionary(grouping: workouts) {
+            calendar.startOfDay(for: $0.startedAt)
+        }
+        return dayStarts.map { day in
+            (day: day, workouts: byDay[day] ?? [])
+        }
+    }
+
+    // MARK: - Formatting
+
+    private func dayLabel(_ date: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) { return "Aujourd'hui" }
+        if calendar.isDateInYesterday(date) { return "Hier" }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "EEEE d MMMM"
+        return formatter.string(from: date)
     }
 
     private func timeRange(_ workout: WorkoutSummary) -> String {
