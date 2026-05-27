@@ -3,8 +3,26 @@ import SwiftUI
 
 /// HR section of `WorkoutDetailSheet` — min/avg/max trio + a small line
 /// chart of the HR samples over the workout's duration.
+///
+/// Apple Watch records HR every few seconds, so a 30-min walk easily
+/// produces 300+ samples. Swift Charts with `.catmullRom` interpolation
+/// stays fluid up to ~100 points; past that the sheet feels sluggish
+/// to open. We downsample to `maxChartPoints` evenly-spaced samples
+/// for rendering only — min/avg/max are still computed on the full
+/// set in `WorkoutDetail`, so accuracy isn't affected.
 struct WorkoutDetailHeartRate: View {
+    private static let maxChartPoints = 80
+
     let detail: WorkoutDetail
+
+    private var chartSamples: [HeartRateSample] {
+        let all = detail.heartRateSamples
+        guard all.count > Self.maxChartPoints else { return all }
+        let step = max(all.count / Self.maxChartPoints, 1)
+        return all.enumerated().compactMap { offset, sample in
+            offset % step == 0 ? sample : nil
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -58,7 +76,7 @@ struct WorkoutDetailHeartRate: View {
     }
 
     private var chart: some View {
-        Chart(detail.heartRateSamples) { sample in
+        Chart(chartSamples) { sample in
             LineMark(
                 x: .value("Temps", sample.date),
                 y: .value("BPM", sample.bpm)
