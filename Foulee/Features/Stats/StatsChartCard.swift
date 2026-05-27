@@ -56,7 +56,7 @@ struct StatsChartCard: View {
             }
         }
         .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: range.axisCount)) { value in
+            AxisMarks(values: .automatic(desiredCount: range.axisCount)) { _ in
                 AxisGridLine()
                 AxisValueLabel(format: range.dateFormat)
             }
