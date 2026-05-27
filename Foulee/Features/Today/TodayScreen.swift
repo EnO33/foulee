@@ -40,7 +40,7 @@ struct TodayScreen: View {
                 }
                 TodayHeroCard(
                     snapshot: snapshot,
-                    onPrimaryTap: { isWalking = true },
+                    onPrimaryTap: { handlePrimaryTap(snapshot: snapshot) },
                     onReminderTap: {}
                 )
                 .padding(.horizontal, 20)
@@ -103,6 +103,22 @@ struct TodayScreen: View {
         formatter.locale = Locale(identifier: "fr_FR")
         formatter.dateFormat = "EEEE d MMMM"
         return formatter.string(from: date).uppercased()
+    }
+
+    /// "Démarrer la marche" → push the active walk sheet.
+    /// "Voir le résumé" (already walked today) → open Apple Santé so the
+    /// user can review the workout details. `x-apple-health://` is the
+    /// only public-ish way to deeplink into the Health app and silently
+    /// no-ops if iOS ever drops support — preferable to launching another
+    /// walk session by accident (the bug this replaces).
+    private func handlePrimaryTap(snapshot: TodaySnapshot) {
+        if snapshot.hasWalkedToday {
+            if let url = URL(string: "x-apple-health://") {
+                UIApplication.shared.open(url)
+            }
+        } else {
+            isWalking = true
+        }
     }
 }
 

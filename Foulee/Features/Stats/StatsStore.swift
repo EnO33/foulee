@@ -41,9 +41,36 @@ final class StatsStore {
     @ObservationIgnored
     @Dependency(\.healthKit) private var healthKit
 
+    /// Slice of history matching the active range. For `.week` we align on
+    /// the **current ISO week (Mon → Sun)** so the chart's weekday labels
+    /// match what users expect, instead of a rolling 7-day window starting
+    /// mid-week. `.month` and `.year` stay as rolling windows.
     func filteredHistory(goalMinutes: Int) -> [DailyMinutes] {
-        let cutoff = max(history.count - range.daysBack, 0)
-        return Array(history[cutoff...])
+        switch range {
+        case .week: currentWeekSlice()
+        case .month, .year:
+            Array(history[max(history.count - range.daysBack, 0)...])
+        }
+    }
+
+    private func currentWeekSlice() -> [DailyMinutes] {
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.firstWeekday = 2
+        let today = calendar.startOfDay(for: .now)
+        let weekday = calendar.component(.weekday, from: today)
+        let mondayOffset = -((weekday + 5) % 7)
+        guard let monday = calendar.date(byAdding: .day, value: mondayOffset, to: today) else {
+            return []
+        }
+        let byDay = Dictionary(uniqueKeysWithValues: history.map {
+            (calendar.startOfDay(for: $0.date), $0.minutes)
+        })
+        return (0..<7).compactMap { offset in
+            guard let dayStart = calendar.date(byAdding: .day, value: offset, to: monday) else {
+                return nil
+            }
+            return DailyMinutes(date: dayStart, minutes: byDay[dayStart] ?? 0)
+        }
     }
 
     func currentStreak(goalMinutes: Int, today: Date = .now) -> Int {

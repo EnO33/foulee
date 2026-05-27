@@ -150,6 +150,51 @@ struct TodayStoreTests {
         }
     }
 
+    @Test("Refresh aligns weekMinutes on the current ISO week (Mon → Sun)")
+    @MainActor
+    func weekMinutesAlignedToCurrentWeek() async {
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.firstWeekday = 2
+        let today = calendar.startOfDay(for: .now)
+        let weekday = calendar.component(.weekday, from: today)
+        let mondayOffset = -((weekday + 5) % 7)
+        guard let monday = calendar.date(byAdding: .day, value: mondayOffset, to: today) else {
+            Issue.record("could not derive Monday from current week")
+            return
+        }
+        // Synthesise: 10 minutes on Monday, 20 on Tuesday, 30 on Wednesday.
+        let crafted: [DailyMinutes] = [
+            DailyMinutes(date: monday, minutes: 10),
+            DailyMinutes(
+                date: calendar.date(byAdding: .day, value: 1, to: monday) ?? monday,
+                minutes: 20
+            ),
+            DailyMinutes(
+                date: calendar.date(byAdding: .day, value: 2, to: monday) ?? monday,
+                minutes: 30
+            )
+        ]
+        await withDependencies {
+            $0.healthKit = HealthKitClient(
+                isAvailable: { true },
+                requestAuthorization: { true },
+                todayMetrics: { .zero },
+                saveWalkingWorkout: { _ in },
+                dailyMinutes: { _ in crafted }
+            )
+        } operation: {
+            let store = TodayStore()
+            await store.refresh()
+
+            // First three slots match Mon/Tue/Wed; remaining are zero.
+            #expect(store.snapshot?.weekMinutes[0] == 10) // Mon
+            #expect(store.snapshot?.weekMinutes[1] == 20) // Tue
+            #expect(store.snapshot?.weekMinutes[2] == 30) // Wed
+            #expect(store.snapshot?.weekMinutes[3] == 0)
+            #expect(store.snapshot?.weekMinutes[6] == 0)  // Sun
+        }
+    }
+
     @Test("Bootstrap still populates the snapshot when authorization is denied")
     @MainActor
     func bootstrapPopulatesEvenWhenDenied() async {
