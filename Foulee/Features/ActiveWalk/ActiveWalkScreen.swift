@@ -15,7 +15,7 @@ struct ActiveWalkScreen: View {
             Wallpaper()
             content
         }
-        .onAppear { store.start() }
+        .onAppear { store.start(minutesGoal: minutesGoal) }
         .onDisappear { store.reset() }
     }
 
