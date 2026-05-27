@@ -32,6 +32,20 @@ open Foulee.xcworkspace
 
 Then pick the **Foulee** scheme and run on an iOS 26 simulator.
 
+### Signing (required for WeatherKit)
+
+Code signing with your Apple Developer team is required for **WeatherKit** to authenticate. Without it the midday weather card falls back to `—`.
+
+```sh
+cp Local.xcconfig.template Local.xcconfig
+# Edit Local.xcconfig — set DEVELOPMENT_TEAM to your 10-char team ID
+tuist generate   # picks up the new xcconfig
+```
+
+Your **Team ID** is at <https://developer.apple.com/account> (top-right) or in Xcode → Settings → Accounts → your account → Team. The file is gitignored, so each developer (and CI) gets their own.
+
+For the first WeatherKit build to succeed you also need the App ID `com.eno33.foulee` registered in the [Apple Developer portal](https://developer.apple.com/account/resources/identifiers/list) with the **WeatherKit** capability enabled (Xcode does this automatically the first time you build with "Automatically manage signing").
+
 ## Layout
 
 ```
