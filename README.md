@@ -61,6 +61,27 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 └── .github/workflows/     # CI (lint + build)
 ```
 
+## Localization
+
+Strings are localized via **String Catalogs** (`.xcstrings`) — one per target:
+- `Foulee/Resources/Localizable.xcstrings` (iPhone app, ~100 strings)
+- `FouleeWatch/Resources/Localizable.xcstrings` (Watch app)
+- `FouleeWatchWidget/Resources/Localizable.xcstrings` (Watch widget)
+
+`Project.swift` enables:
+- `SWIFT_EMIT_LOC_STRINGS` — Xcode extracts `Text("…")` into the catalog on every build (any key you forgot gets added automatically).
+- `STRING_CATALOG_GENERATE_SYMBOLS` — generates type-safe accessors (`Text(.welcomeTitle)` works once a key is in the catalog).
+- `LOCALIZATION_PREFERS_STRING_CATALOGS` — makes `.xcstrings` the canonical store.
+
+Source language is **French**. To add English (or any other locale):
+
+1. Open the relevant `.xcstrings` in Xcode
+2. Click the **+** at the bottom-left → pick **English** (or any language)
+3. Translate entries inline — Xcode marks untranslated keys in yellow
+4. Build the app — Xcode swaps the strings based on device language
+
+Existing `Text("…")` calls don't need any change — SwiftUI's `Text` already accepts `LocalizedStringKey`, so the catalog lookup is automatic.
+
 ## Conventions
 
 - **Commits** — [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`, `ci:`)

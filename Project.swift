@@ -38,7 +38,12 @@ let project = Project(
         base: [
             "SWIFT_VERSION": "6.2",
             "SWIFT_STRICT_CONCURRENCY": "complete",
-            "ENABLE_USER_SCRIPT_SANDBOXING": "YES"
+            "ENABLE_USER_SCRIPT_SANDBOXING": "YES",
+            // String catalog: extract Text("…") into Localizable.xcstrings at
+            // build-time and generate type-safe Swift symbols for each key.
+            "SWIFT_EMIT_LOC_STRINGS": "YES",
+            "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+            "LOCALIZATION_PREFERS_STRING_CATALOGS": "YES"
         ],
         configurations: configurations
     ),
@@ -120,6 +125,12 @@ let project = Project(
                 "FouleeWatchWidget/**",
                 "Foulee/Streak/StreakCalculator.swift",
                 "Foulee/Health/DailyMinutes.swift"
+            ],
+            resources: [
+                .glob(
+                    pattern: "FouleeWatchWidget/Resources/**",
+                    excluding: ["FouleeWatchWidget/Resources/FouleeWatchWidget.entitlements"]
+                )
             ],
             entitlements: .file(path: "FouleeWatchWidget/Resources/FouleeWatchWidget.entitlements"),
             dependencies: []
