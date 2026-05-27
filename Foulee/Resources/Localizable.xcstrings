@@ -4,6 +4,9 @@
     "" : {
 
     },
+    "—" : {
+
+    },
     "%@ · %@" : {
       "localizations" : {
         "fr" : {
@@ -15,6 +18,9 @@
       }
     },
     "%lld" : {
+
+    },
+    "%lld bpm" : {
 
     },
     "%lld min" : {
@@ -44,10 +50,13 @@
     "60 min" : {
 
     },
+    "Activer les rappels" : {
+
+    },
     "Aucun record pour l'instant — c'est ta chance." : {
 
     },
-    "Aucune marche enregistrée aujourd'hui" : {
+    "Aucune marche enregistrée" : {
 
     },
     "Aujourd'hui" : {
@@ -57,6 +66,9 @@
 
     },
     "Bouge un peu,\nchaque midi." : {
+
+    },
+    "BPM" : {
 
     },
     "Bravo, %@ de marche" : {
@@ -75,6 +87,21 @@
 
     },
     "Connexion à Santé…" : {
+
+    },
+    "Dans 1 heure" : {
+
+    },
+    "Dans 30 minutes" : {
+
+    },
+    "Désactiver les rappels" : {
+
+    },
+    "Détail" : {
+
+    },
+    "Détail indisponible" : {
 
     },
     "Données partiellement indisponibles" : {
@@ -98,6 +125,9 @@
     "Foulée lit uniquement tes pas et marches.\nAucune donnée n'est partagée." : {
 
     },
+    "Fréquence cardiaque" : {
+
+    },
     "Headline" : {
 
     },
@@ -111,9 +141,6 @@
 
     },
     "jours d'affilée" : {
-
-    },
-    "Lance ta marche depuis Foulée, Forme ou ta Watch — elle apparaîtra ici." : {
 
     },
     "Large title" : {
@@ -152,6 +179,9 @@
     "On t'enverra un petit rappel juste avant." : {
 
     },
+    "Ouvrir dans Santé" : {
+
+    },
     "pas" : {
 
     },
@@ -159,6 +189,9 @@
 
     },
     "Plage" : {
+
+    },
+    "Plus tard" : {
 
     },
     "Préférences" : {
@@ -176,7 +209,7 @@
     "RÉGLAGES" : {
 
     },
-    "Résumé du jour" : {
+    "Résumé 7 jours" : {
 
     },
     "SÉRIE" : {
@@ -191,10 +224,16 @@
     "STATISTIQUES" : {
 
     },
+    "STATS" : {
+
+    },
     "Streak prolongée à %lld jours" : {
 
     },
     "Ta fenêtre de marche s'ouvre à %@" : {
+
+    },
+    "Temps" : {
 
     },
     "Thème" : {

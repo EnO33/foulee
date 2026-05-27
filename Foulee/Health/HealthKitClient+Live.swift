@@ -14,10 +14,15 @@ extension HealthKitClient {
         let distanceType = HKQuantityType(.distanceWalkingRunning)
         let minutesType = HKQuantityType(.appleExerciseTime)
         let caloriesType = HKQuantityType(.activeEnergyBurned)
+        let heartRateType = HKQuantityType(.heartRate)
         let walkingWorkoutType = HKWorkoutType.workoutType()
 
+        // Heart rate is read-only and only surfaces in WorkoutDetailSheet
+        // (HR samples scoped to a single HKWorkout) — without it the
+        // workoutDetail query fails with "Authorization not determined".
         let readTypes: Set<HKObjectType> = [
-            stepsType, distanceType, minutesType, caloriesType, walkingWorkoutType
+            stepsType, distanceType, minutesType, caloriesType,
+            heartRateType, walkingWorkoutType
         ]
         let writeTypes: Set<HKSampleType> = [walkingWorkoutType]
 
