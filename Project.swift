@@ -1,7 +1,25 @@
+import Foundation
 import ProjectDescription
 
 let bundleIdBase = "com.eno33.foulee"
 let deploymentTargets: DeploymentTargets = .iOS("26.0")
+
+// Per-developer signing — read DEVELOPMENT_TEAM from Local.xcconfig if it
+// exists (gitignored). On CI the file is absent and the build targets the
+// simulator with no signing, so the default empty value is fine.
+let manifestDirectory = (#filePath as NSString).deletingLastPathComponent
+let localXcconfigPath = "\(manifestDirectory)/Local.xcconfig"
+let hasLocalXcconfig = FileManager.default.fileExists(atPath: localXcconfigPath)
+
+let configurations: [Configuration] = hasLocalXcconfig
+    ? [
+        .debug(name: "Debug", xcconfig: "Local.xcconfig"),
+        .release(name: "Release", xcconfig: "Local.xcconfig")
+    ]
+    : [
+        .debug(name: "Debug"),
+        .release(name: "Release")
+    ]
 
 let project = Project(
     name: "Foulee",
@@ -22,10 +40,7 @@ let project = Project(
             "SWIFT_STRICT_CONCURRENCY": "complete",
             "ENABLE_USER_SCRIPT_SANDBOXING": "YES"
         ],
-        configurations: [
-            .debug(name: "Debug"),
-            .release(name: "Release")
-        ]
+        configurations: configurations
     ),
     targets: [
         .target(

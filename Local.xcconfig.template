@@ -1,0 +1,13 @@
+// Copy this file to `Local.xcconfig` (gitignored) and fill in your Apple
+// Developer team ID. Tuist picks it up at generate-time so signing,
+// HealthKit + WeatherKit capabilities all bind to the right team.
+//
+//   $ cp Local.xcconfig.template Local.xcconfig
+//   $ # edit Local.xcconfig with your team ID
+//   $ tuist generate
+//
+// Find your Team ID at https://developer.apple.com/account (top-right)
+// or in Xcode → Settings → Accounts → your account → Team.
+
+DEVELOPMENT_TEAM = YOUR_TEAM_ID_HERE
+CODE_SIGN_STYLE = Automatic
