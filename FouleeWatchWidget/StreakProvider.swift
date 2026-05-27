@@ -17,32 +17,34 @@ struct StreakProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (StreakEntry) -> Void) {
+        let box = SendableBox(value: completion)
         Task {
-            let streak = await fetchCurrentStreak()
-            completion(StreakEntry(date: .now, streak: streak))
+            let streak = await Self.fetchCurrentStreak()
+            box.value(StreakEntry(date: .now, streak: streak))
         }
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<StreakEntry>) -> Void) {
+        let box = SendableBox(value: completion)
         Task {
-            let streak = await fetchCurrentStreak()
+            let streak = await Self.fetchCurrentStreak()
             let entry = StreakEntry(date: .now, streak: streak)
             let nextRefresh = Date(timeIntervalSinceNow: Self.refreshInterval)
-            completion(Timeline(entries: [entry], policy: .after(nextRefresh)))
+            box.value(Timeline(entries: [entry], policy: .after(nextRefresh)))
         }
     }
 
-    private func fetchCurrentStreak() async -> Int {
+    private static func fetchCurrentStreak() async -> Int {
         guard HKHealthStore.isHealthDataAvailable() else { return 0 }
         let history = await loadHistory()
         return StreakCalculator.current(
             history: history,
-            goalMinutes: Self.goalMinutes,
+            goalMinutes: goalMinutes,
             today: .now
         )
     }
 
-    private func loadHistory() async -> [DailyMinutes] {
+    private static func loadHistory() async -> [DailyMinutes] {
         do {
             return try await dailyExerciseMinutes(daysBack: Self.historyDays)
         } catch {
@@ -50,7 +52,7 @@ struct StreakProvider: TimelineProvider {
         }
     }
 
-    private func dailyExerciseMinutes(daysBack: Int) async throws -> [DailyMinutes] {
+    private static func dailyExerciseMinutes(daysBack: Int) async throws -> [DailyMinutes] {
         let store = HKHealthStore()
         let minutesType = HKQuantityType(.appleExerciseTime)
         let calendar = Calendar.current
