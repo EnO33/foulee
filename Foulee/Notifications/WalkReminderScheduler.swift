@@ -18,7 +18,9 @@ struct WalkReminderScheduler {
         return TimeOfDay(rawMinutes: raw)
     }
 
-    /// Produce one reminder per active day of the week.
+    /// Produce one reminder per active day of the week. `@MainActor` because
+    /// `UserPreferences` is main-isolated.
+    @MainActor
     static func reminders(for preferences: UserPreferences) -> [WalkReminder] {
         let time = reminderTime(forWindowStart: preferences.walkWindowStart)
         return preferences.activeDays
@@ -38,6 +40,7 @@ struct WalkReminderScheduler {
     /// Single error boundary: a denied authorization (or any scheduling
     /// hiccup) is absorbed here; the Settings screen exposes the toggle
     /// the user would actually use to recover.
+    @MainActor
     func sync(with preferences: UserPreferences) async {
         let reminders = Self.reminders(for: preferences)
         do {
