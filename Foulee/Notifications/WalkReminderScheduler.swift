@@ -1,0 +1,50 @@
+import Dependencies
+import Foundation
+
+/// Computes the set of `WalkReminder`s implied by the current
+/// `UserPreferences` and pushes them to `NotificationsClient`. Pure logic
+/// helpers (`reminders(for:)`, `reminderTime(forWindowStart:)`) are
+/// `static` so they can be unit-tested without spinning up the client.
+struct WalkReminderScheduler {
+    @Dependency(\.notifications) private var notifications
+
+    /// Minutes before `walkWindowStart` the reminder fires.
+    static let leadMinutes = 10
+
+    /// Build the reminder time (start − 10 min, clamped to the same hour
+    /// when the subtraction would cross midnight backwards).
+    static func reminderTime(forWindowStart start: TimeOfDay) -> TimeOfDay {
+        let raw = max(start.rawMinutes - leadMinutes, 0)
+        return TimeOfDay(rawMinutes: raw)
+    }
+
+    /// Produce one reminder per active day of the week.
+    static func reminders(for preferences: UserPreferences) -> [WalkReminder] {
+        let time = reminderTime(forWindowStart: preferences.walkWindowStart)
+        return preferences.activeDays
+            .sorted(by: { $0.rawValue < $1.rawValue })
+            .map { day in
+                WalkReminder(
+                    weekday: day,
+                    time: time,
+                    title: "Foulée",
+                    body: "C'est l'heure de bouger — direction la pause marche."
+                )
+            }
+    }
+
+    /// Push the current preferences' implied schedule to iOS. Safe to call
+    /// repeatedly — the client replaces the previous Foulée requests.
+    /// Single error boundary: a denied authorization (or any scheduling
+    /// hiccup) is absorbed here; the Settings screen exposes the toggle
+    /// the user would actually use to recover.
+    func sync(with preferences: UserPreferences) async {
+        let reminders = Self.reminders(for: preferences)
+        do {
+            try await notifications.replaceWalkReminders(reminders)
+        } catch {
+            // Intentionally silent: there is no UX surface for a scheduling
+            // failure at the moment the app launches.
+        }
+    }
+}
