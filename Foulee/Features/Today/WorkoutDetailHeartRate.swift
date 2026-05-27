@@ -37,6 +37,11 @@ struct WorkoutDetailHeartRate: View {
             chart
                 .frame(height: 120)
                 .padding(.top, 4)
+                // Flatten the chart's rendering into an offscreen bitmap
+                // so the sheet's slide-up animation composites a single
+                // texture instead of recomputing Swift Charts marks per
+                // frame.
+                .drawingGroup()
         }
         .padding(18)
         .fouleeGlass(cornerRadius: 22)

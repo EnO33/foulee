@@ -27,7 +27,13 @@ struct WorkoutDetailSheet: View {
                 }
         }
         .presentationBackground { SheetBackground() }
-        .task { await load() }
+        .task {
+            // Same anti-stutter as TodayWorkoutsSheet: wait for the
+            // slide animation to finish before hitting HealthKit so the
+            // query doesn't compete with the animation on the MainActor.
+            try? await Task.sleep(for: .milliseconds(300))
+            await load()
+        }
     }
 
     @ViewBuilder

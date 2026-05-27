@@ -30,7 +30,13 @@ struct TodayWorkoutsSheet: View {
                 }
         }
         .presentationBackground { SheetBackground() }
-        .task { await load() }
+        .task {
+            // Let the slide-up animation finish before kicking off the
+            // HealthKit query — otherwise the query competes with the
+            // animation's MainActor work and visibly stutters the slide.
+            try? await Task.sleep(for: .milliseconds(300))
+            await load()
+        }
         .sheet(item: $selectedWorkout) { workout in
             WorkoutDetailSheet(summary: workout)
         }
