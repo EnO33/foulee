@@ -16,19 +16,17 @@ struct WorkoutDetailSheet: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Wallpaper()
-                content
-            }
-            .navigationTitle("Détail")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fermer") { dismiss() }
-                        .foregroundStyle(FouleeColor.accentMid)
+            content
+                .navigationTitle("Détail")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Fermer") { dismiss() }
+                            .foregroundStyle(FouleeColor.accentMid)
+                    }
                 }
-            }
         }
+        .presentationBackground { SheetBackground() }
         .task { await load() }
     }
 
