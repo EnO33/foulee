@@ -97,9 +97,68 @@ extension HealthKitClient {
                     type: minutesType,
                     daysBack: daysBack
                 )
+            },
+            todayWorkouts: {
+                try await todayWalkingWorkouts(store: store)
             }
         )
     }()
+}
+
+/// All walking workouts (activityType `.walking`) started since midnight
+/// today, regardless of which app or device wrote them. Newest first.
+private func todayWalkingWorkouts(store: HKHealthStore) async throws -> [WorkoutSummary] {
+    let calendar = Calendar.current
+    let start = calendar.startOfDay(for: .now)
+    let endOfDay = start.addingTimeInterval(24 * 60 * 60)
+    let activityPredicate = HKQuery.predicateForWorkouts(with: .walking)
+    let datePredicate = HKQuery.predicateForSamples(
+        withStart: start, end: endOfDay, options: .strictStartDate
+    )
+    let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+        activityPredicate, datePredicate
+    ])
+    let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+
+    return try await withCheckedThrowingContinuation { continuation in
+        let query = HKSampleQuery(
+            sampleType: .workoutType(),
+            predicate: predicate,
+            limit: HKObjectQueryNoLimit,
+            sortDescriptors: [sort]
+        ) { _, samples, error in
+            if let error {
+                continuation.resume(throwing: error)
+                return
+            }
+            let workouts = (samples as? [HKWorkout]) ?? []
+            let summaries = workouts.map(WorkoutSummary.init(workout:))
+            continuation.resume(returning: summaries)
+        }
+        store.execute(query)
+    }
+}
+
+extension WorkoutSummary {
+    fileprivate init(workout: HKWorkout) {
+        let distanceMeters = workout
+            .statistics(for: HKQuantityType(.distanceWalkingRunning))?
+            .sumQuantity()?
+            .doubleValue(for: .meter()) ?? 0
+        let kcal = workout
+            .statistics(for: HKQuantityType(.activeEnergyBurned))?
+            .sumQuantity()?
+            .doubleValue(for: .kilocalorie()) ?? 0
+        self.init(
+            id: workout.uuid,
+            startedAt: workout.startDate,
+            endedAt: workout.endDate,
+            durationSeconds: workout.duration,
+            distanceKm: distanceMeters / 1_000,
+            activeCalories: Int(kcal),
+            sourceName: workout.sourceRevision.source.name
+        )
+    }
 }
 
 /// Continuation-based bridge to `HKStatisticsCollectionQuery`. Buckets the
