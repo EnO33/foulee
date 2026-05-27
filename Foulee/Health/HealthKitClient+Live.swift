@@ -154,11 +154,23 @@ private func fetchWorkout(uuid: UUID, store: HKHealthStore) async throws -> HKWo
     }
 }
 
+/// Heart-rate samples that landed during the workout's time window.
+///
+/// We deliberately use a date-range predicate rather than
+/// `predicateForObjects(from: workout)` because Apple's Workouts app
+/// (Forme) doesn't always attach HR samples to the parent workout — the
+/// samples live independently in the HR store. Date-range catches them
+/// either way. `HKError.noDataAvailable` is treated as an empty array,
+/// not an error.
 private func fetchHeartRateSamples(
     for workout: HKWorkout,
     store: HKHealthStore
 ) async throws -> [HeartRateSample] {
-    let predicate = HKQuery.predicateForObjects(from: workout)
+    let predicate = HKQuery.predicateForSamples(
+        withStart: workout.startDate,
+        end: workout.endDate,
+        options: .strictStartDate
+    )
     let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
     let bpmUnit = HKUnit(from: "count/min")
 
@@ -169,6 +181,10 @@ private func fetchHeartRateSamples(
             limit: HKObjectQueryNoLimit,
             sortDescriptors: [sort]
         ) { _, samples, error in
+            if isNoDataAvailable(error) {
+                continuation.resume(returning: [])
+                return
+            }
             if let error {
                 continuation.resume(throwing: error)
                 return
@@ -187,11 +203,20 @@ private func fetchHeartRateSamples(
     }
 }
 
+/// Total steps recorded during the workout window. Same rationale as
+/// `fetchHeartRateSamples`: date-range predicate so we catch steps even
+/// when the recording app didn't link them to the workout; treat
+/// `HKError.noDataAvailable` as 0 since "0 steps" is the right UI
+/// answer when nothing matched.
 private func fetchStepsCount(
     for workout: HKWorkout,
     store: HKHealthStore
 ) async throws -> Int {
-    let predicate = HKQuery.predicateForObjects(from: workout)
+    let predicate = HKQuery.predicateForSamples(
+        withStart: workout.startDate,
+        end: workout.endDate,
+        options: .strictStartDate
+    )
 
     return try await withCheckedThrowingContinuation { continuation in
         let query = HKStatisticsQuery(
@@ -199,6 +224,10 @@ private func fetchStepsCount(
             quantitySamplePredicate: predicate,
             options: .cumulativeSum
         ) { _, statistics, error in
+            if isNoDataAvailable(error) {
+                continuation.resume(returning: 0)
+                return
+            }
             if let error {
                 continuation.resume(throwing: error)
                 return
@@ -208,6 +237,15 @@ private func fetchStepsCount(
         }
         store.execute(query)
     }
+}
+
+/// `HKError.Code.noDataAvailable` (= 11) is the framework's way of
+/// saying "your predicate matched zero samples". Empty result, not a
+/// real failure — bubble it back as the type-appropriate zero value
+/// instead of letting the sheet show "Détail indisponible".
+private func isNoDataAvailable(_ error: (any Error)?) -> Bool {
+    guard let hkError = error as? HKError else { return false }
+    return hkError.code == .errorNoData
 }
 
 /// All walking workouts (activityType `.walking`) started in the last
