@@ -1,10 +1,22 @@
 import SwiftUI
 
-/// Top-level container — for now just hosts the Today screen.
-/// Tab switching is wired in PR#8 (Stats) and PR#10 (Settings).
+/// Gates the rest of the app on `UserPreferences.hasCompletedOnboarding`.
+/// First-launch users see the 3-step onboarding; everyone else lands on
+/// the Today screen.
 struct RootView: View {
+    @State private var preferences = UserPreferences()
+
     var body: some View {
-        TodayScreen()
+        Group {
+            if preferences.hasCompletedOnboarding {
+                TodayScreen()
+            } else {
+                OnboardingFlow(preferences: preferences) {
+                    preferences.hasCompletedOnboarding = true
+                }
+            }
+        }
+        .environment(preferences)
     }
 }
 
