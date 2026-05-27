@@ -47,6 +47,23 @@ extension NotificationsClient {
                     .map(\.identifier)
                     .filter { $0.hasPrefix("foulee.walk.reminder.") }
                     .sorted()
+            },
+            scheduleSnooze: { interval in
+                let content = UNMutableNotificationContent()
+                content.title = "Foulée"
+                content.body = "C'est l'heure de bouger — direction la pause marche."
+                content.sound = .default
+
+                let trigger = UNTimeIntervalNotificationTrigger(
+                    timeInterval: interval,
+                    repeats: false
+                )
+                let request = UNNotificationRequest(
+                    identifier: "foulee.walk.snooze.\(Date().timeIntervalSince1970)",
+                    content: content,
+                    trigger: trigger
+                )
+                try await center.add(request)
             }
         )
     }()

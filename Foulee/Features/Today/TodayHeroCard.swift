@@ -2,11 +2,15 @@ import SwiftUI
 
 /// The big top card of the Today screen. Switches between
 /// "marche à venir" and "marche terminée" presentations driven by
-/// `snapshot.hasWalkedToday`.
+/// `snapshot.hasWalkedToday`. The bell next to the primary CTA opens
+/// a menu to snooze the reminder or flip the global notifications
+/// toggle without leaving the screen.
 struct TodayHeroCard: View {
     var snapshot: TodaySnapshot
+    var notificationsEnabled: Bool
     var onPrimaryTap: () -> Void
-    var onReminderTap: () -> Void
+    var onSnooze: (TimeInterval) -> Void
+    var onToggleNotifications: () -> Void
 
     private var progress: Double {
         guard snapshot.stepsGoal > 0 else { return 0 }
@@ -93,15 +97,40 @@ struct TodayHeroCard: View {
                 systemIcon: snapshot.hasWalkedToday ? FouleeIcon.sparkle : FouleeIcon.play,
                 action: onPrimaryTap
             )
-            Button(action: onReminderTap) {
-                Image(systemName: FouleeIcon.bell)
-                    .font(.system(size: 20))
-                    .foregroundStyle(.primary)
-                    .frame(width: 50, height: 50)
-                    .background(Color.gray.opacity(0.16), in: Circle())
-            }
-            .buttonStyle(.pressable)
+            reminderMenu
         }
+    }
+
+    private var reminderMenu: some View {
+        Menu {
+            Section("Plus tard") {
+                Button {
+                    onSnooze(30 * 60)
+                } label: {
+                    Label("Dans 30 minutes", systemImage: "clock")
+                }
+                Button {
+                    onSnooze(60 * 60)
+                } label: {
+                    Label("Dans 1 heure", systemImage: "clock")
+                }
+            }
+            Button(role: notificationsEnabled ? .destructive : nil) {
+                onToggleNotifications()
+            } label: {
+                Label(
+                    notificationsEnabled ? "Désactiver les rappels" : "Activer les rappels",
+                    systemImage: notificationsEnabled ? "bell.slash" : "bell"
+                )
+            }
+        } label: {
+            Image(systemName: notificationsEnabled ? "bell.fill" : "bell.slash.fill")
+                .font(.system(size: 20))
+                .foregroundStyle(notificationsEnabled ? .primary : .secondary)
+                .frame(width: 50, height: 50)
+                .background(Color.gray.opacity(0.16), in: Circle())
+        }
+        .menuOrder(.fixed)
     }
 }
 

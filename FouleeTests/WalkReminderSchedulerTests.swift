@@ -43,7 +43,8 @@ struct WalkReminderSchedulerTests {
             $0.notifications = NotificationsClient(
                 requestAuthorization: { true },
                 replaceWalkReminders: { captured.set($0) },
-                pendingReminderIdentifiers: { [] }
+                pendingReminderIdentifiers: { [] },
+                scheduleSnooze: { _ in }
             )
         } operation: {
             let prefs = UserPreferences(defaults: cleanDefaults())
@@ -75,12 +76,47 @@ struct WalkReminderSchedulerTests {
             $0.notifications = NotificationsClient(
                 requestAuthorization: { true },
                 replaceWalkReminders: { _ in throw Boom() },
-                pendingReminderIdentifiers: { [] }
+                pendingReminderIdentifiers: { [] },
+                scheduleSnooze: { _ in }
             )
         } operation: {
             let prefs = UserPreferences(defaults: cleanDefaults())
             await WalkReminderScheduler().sync(with: prefs)
             // No assertion needed: the test passes by not propagating.
+        }
+    }
+
+    @Test("snooze(after:) forwards the interval to the client and absorbs throws")
+    @MainActor
+    func snoozeForwardsInterval() async {
+        let captured = LockedRef<TimeInterval?>(nil)
+        await withDependencies {
+            $0.notifications = NotificationsClient(
+                requestAuthorization: { true },
+                replaceWalkReminders: { _ in },
+                pendingReminderIdentifiers: { [] },
+                scheduleSnooze: { interval in captured.set(interval) }
+            )
+        } operation: {
+            await WalkReminderScheduler().snooze(after: 1_800)
+            #expect(captured.value == 1_800)
+        }
+    }
+
+    @Test("snooze swallows scheduling errors")
+    @MainActor
+    func snoozeSwallowsErrors() async {
+        struct Boom: Error {}
+        await withDependencies {
+            $0.notifications = NotificationsClient(
+                requestAuthorization: { true },
+                replaceWalkReminders: { _ in },
+                pendingReminderIdentifiers: { [] },
+                scheduleSnooze: { _ in throw Boom() }
+            )
+        } operation: {
+            await WalkReminderScheduler().snooze(after: 30)
+            // Passes by not propagating.
         }
     }
 
