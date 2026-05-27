@@ -15,13 +15,15 @@ struct TodayWorkoutsSheet: View {
     @State private var workouts: [WorkoutSummary] = []
     @State private var isLoading = true
     @State private var lastError: String?
-    @State private var selectedWorkout: WorkoutSummary?
 
     var body: some View {
         NavigationStack {
             content
                 .navigationTitle("Résumé 7 jours")
                 .navigationBarTitleDisplayMode(.inline)
+                .navigationDestination(for: WorkoutSummary.self) { workout in
+                    WorkoutDetailSheet(summary: workout)
+                }
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Fermer") { dismiss() }
@@ -36,9 +38,6 @@ struct TodayWorkoutsSheet: View {
             // animation's MainActor work and visibly stutters the slide.
             try? await Task.sleep(for: .milliseconds(300))
             await load()
-        }
-        .sheet(item: $selectedWorkout) { workout in
-            WorkoutDetailSheet(summary: workout)
         }
     }
 
@@ -82,9 +81,7 @@ struct TodayWorkoutsSheet: View {
                 emptyDayCard
             } else {
                 ForEach(workouts) { workout in
-                    Button {
-                        selectedWorkout = workout
-                    } label: {
+                    NavigationLink(value: workout) {
                         workoutCard(workout)
                     }
                     .buttonStyle(.pressable)
