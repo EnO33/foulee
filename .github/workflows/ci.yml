@@ -37,6 +37,9 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Download watchOS platform (not pre-installed on the runner)
+        run: sudo xcodebuild -downloadPlatform watchOS
+
       - name: Install toolchain (Tuist) from mise.toml
         uses: jdx/mise-action@v4
 
