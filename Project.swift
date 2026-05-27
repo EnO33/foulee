@@ -119,6 +119,7 @@ let project = Project(
                 "CFBundleVersion": "1",
                 "WKApplication": true,
                 "WKWatchOnly": false,
+                "WKCompanionAppBundleIdentifier": .string(bundleIdBase),
                 "NSHealthShareUsageDescription":
                     "Foulée lit tes pas, ta distance et tes minutes d'activité pour t'aider à suivre tes marches du midi.",
                 "NSHealthUpdateUsageDescription":
