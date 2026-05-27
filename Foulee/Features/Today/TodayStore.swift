@@ -16,30 +16,57 @@ final class TodayStore {
     @ObservationIgnored
     @Dependency(\.healthKit) private var healthKit
 
+    @ObservationIgnored
+    @Dependency(\.location) private var location
+
+    @ObservationIgnored
+    @Dependency(\.weather) private var weather
+
     /// Defaults that don't (yet) come from HealthKit — overridable later
     /// by the onboarding goal (PR#6).
     var stepsGoal = 6_000
     var minutesGoal = 20
 
-    /// Ask for authorization and trigger an initial refresh. Idempotent —
-    /// safe to call from `.task` on every appear.
+    private var fallbackWeather: WeatherSnapshot {
+        WeatherSnapshot(temperatureCelsius: 0, condition: "—", advice: "")
+    }
+
+    /// Ask for HealthKit + Location authorization and trigger an initial
+    /// refresh. Idempotent — safe to call from `.task` on every appear.
     func bootstrap() async {
-        let granted = await runOrTrap { try await healthKit.requestAuthorization() }
-        guard granted == true else { return }
+        let healthGranted = await runOrTrap { try await healthKit.requestAuthorization() }
+        guard healthGranted == true else { return }
+        _ = await location.requestWhenInUse()
         await refresh()
     }
 
-    /// Re-fetches today's metrics. Surfaces failure via `lastError`.
+    /// Re-fetches today's metrics + midday weather in parallel.
+    /// Weather failure is non-fatal: snapshot keeps the previous value
+    /// (or fallback) and `lastError` records the message.
     func refresh() async {
         isLoading = true
         defer { isLoading = false }
 
-        let metrics = await runOrTrap { try await healthKit.todayMetrics() }
+        async let metricsTask: HealthMetrics? = runOrTrap {
+            try await healthKit.todayMetrics()
+        }
+        async let weatherTask: WeatherSnapshot? = fetchWeatherIfAuthorized()
+
+        let metrics = await metricsTask
+        let weatherSnapshot = await weatherTask
         guard let metrics else { return }
-        snapshot = makeSnapshot(from: metrics)
+        snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot)
     }
 
-    private func makeSnapshot(from metrics: HealthMetrics) -> TodaySnapshot {
+    private func fetchWeatherIfAuthorized() async -> WeatherSnapshot? {
+        guard let coordinate = await location.currentLocation() else { return nil }
+        return await runOrTrap { try await weather.middayForecast(coordinate) }
+    }
+
+    private func makeSnapshot(
+        from metrics: HealthMetrics,
+        weather: WeatherSnapshot?
+    ) -> TodaySnapshot {
         TodaySnapshot(
             date: .now,
             steps: metrics.steps,
@@ -50,7 +77,7 @@ final class TodayStore {
             calories: metrics.activeCalories,
             streak: 0,
             bestStreak: 0,
-            weather: WeatherSnapshot(temperatureCelsius: 21, condition: "—", advice: ""),
+            weather: weather ?? snapshot?.weather ?? fallbackWeather,
             weekMinutes: [0, 0, 0, 0, 0, 0, 0],
             weekGoal: minutesGoal,
             walkWindowStart: DateComponents(hour: 12, minute: 0),

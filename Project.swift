@@ -45,7 +45,9 @@ let project = Project(
                 "NSHealthUpdateUsageDescription":
                     "Foulée enregistre tes marches du midi comme séances dans Santé.",
                 "NSMotionUsageDescription":
-                    "Foulée compte tes pas en direct pendant la marche du midi."
+                    "Foulée compte tes pas en direct pendant la marche du midi.",
+                "NSLocationWhenInUseUsageDescription":
+                    "Foulée utilise ta position pour afficher la météo de midi à ton endroit."
             ]),
             sources: ["Foulee/**"],
             resources: [
