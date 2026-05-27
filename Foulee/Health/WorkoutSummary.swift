@@ -2,7 +2,7 @@ import Foundation
 
 /// Plain bag describing a walking `HKWorkout` for the summary sheet —
 /// keeps `HKWorkout` (non-`Sendable`, framework-specific) out of view code.
-struct WorkoutSummary: Equatable, Sendable, Identifiable {
+struct WorkoutSummary: Equatable, Hashable, Sendable, Identifiable {
     var id: UUID
     var startedAt: Date
     var endedAt: Date

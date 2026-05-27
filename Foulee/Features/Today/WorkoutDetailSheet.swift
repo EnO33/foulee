@@ -1,13 +1,17 @@
 import Dependencies
 import SwiftUI
 
-/// Detail view for a single workout — opened by tapping a row in
-/// `TodayWorkoutsSheet`. Pulls HR samples + step count from HealthKit
-/// for the workout's exact window, plus derives pace from the summary.
+/// Detail view for a single workout — pushed onto `TodayWorkoutsSheet`'s
+/// NavigationStack via `NavigationLink(value:)`. Sheet-on-sheet was
+/// painful to animate (iOS 26 has to composite two stacked sheet
+/// containers per frame); a native push is hardware-accelerated and
+/// matches what Apple Santé does for the same drill-down.
+///
+/// Pulls HR samples + step count from HealthKit for the workout's exact
+/// window, derives pace from the summary.
 struct WorkoutDetailSheet: View {
     let summary: WorkoutSummary
 
-    @Environment(\.dismiss) private var dismiss
     @Dependency(\.healthKit) private var healthKit
 
     @State private var detail: WorkoutDetail?
@@ -15,22 +19,15 @@ struct WorkoutDetailSheet: View {
     @State private var lastError: String?
 
     var body: some View {
-        NavigationStack {
+        ZStack {
+            SheetBackground()
             content
-                .navigationTitle("Détail")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Fermer") { dismiss() }
-                            .foregroundStyle(FouleeColor.accentMid)
-                    }
-                }
         }
-        .presentationBackground { SheetBackground() }
+        .navigationTitle("Détail")
+        .navigationBarTitleDisplayMode(.inline)
         .task {
-            // Same anti-stutter as TodayWorkoutsSheet: wait for the
-            // slide animation to finish before hitting HealthKit so the
-            // query doesn't compete with the animation on the MainActor.
+            // Let the push animation finish before hitting HealthKit so
+            // the query doesn't compete with the slide on the MainActor.
             try? await Task.sleep(for: .milliseconds(300))
             await load()
         }
@@ -200,7 +197,7 @@ private struct WorkoutDetailPreview: View {
             activeCalories: 142,
             sourceName: "Apple Watch de Matthieu"
         )
-        return Color.clear.sheet(isPresented: .constant(true)) {
+        return NavigationStack {
             WorkoutDetailSheet(summary: summary)
         }
     }
