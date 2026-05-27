@@ -47,6 +47,9 @@
     "Aucun record pour l'instant — c'est ta chance." : {
 
     },
+    "Aucune marche enregistrée aujourd'hui" : {
+
+    },
     "Aujourd'hui" : {
 
     },
@@ -83,6 +86,9 @@
     "Fait" : {
 
     },
+    "Fermer" : {
+
+    },
     "Footnote" : {
 
     },
@@ -105,6 +111,9 @@
 
     },
     "jours d'affilée" : {
+
+    },
+    "Lance ta marche depuis Foulée, Forme ou ta Watch — elle apparaîtra ici." : {
 
     },
     "Large title" : {
@@ -167,6 +176,9 @@
     "RÉGLAGES" : {
 
     },
+    "Résumé du jour" : {
+
+    },
     "SÉRIE" : {
 
     },
@@ -198,6 +210,9 @@
 
     },
     "Tu tiens ton record : %lld jours" : {
+
+    },
+    "Voir dans Santé" : {
 
     }
   },
