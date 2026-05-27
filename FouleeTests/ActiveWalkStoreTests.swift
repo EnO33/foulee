@@ -1,3 +1,4 @@
+import Clocks
 import Dependencies
 import Foundation
 import Testing
@@ -13,6 +14,7 @@ struct ActiveWalkStoreTests {
             $0.date = .constant(frozen)
             $0.pedometer = .testValue
             $0.healthKit = .testValue
+            $0.continuousClock = TestClock()
         } operation: {
             let store = ActiveWalkStore()
             store.start()
@@ -29,6 +31,7 @@ struct ActiveWalkStoreTests {
             $0.date = .constant(frozen)
             $0.pedometer = .testValue
             $0.healthKit = .testValue
+            $0.continuousClock = TestClock()
         } operation: {
             let store = ActiveWalkStore()
             store.start()
@@ -47,6 +50,7 @@ struct ActiveWalkStoreTests {
         await withDependencies {
             $0.date = .constant(frozen)
             $0.pedometer = .testValue
+            $0.continuousClock = TestClock()
             $0.healthKit = HealthKitClient(
                 isAvailable: { true },
                 requestAuthorization: { true },
@@ -78,6 +82,7 @@ struct ActiveWalkStoreTests {
         await withDependencies {
             $0.date = .constant(frozen)
             $0.pedometer = .testValue
+            $0.continuousClock = TestClock()
             $0.healthKit = HealthKitClient(
                 isAvailable: { true },
                 requestAuthorization: { true },
