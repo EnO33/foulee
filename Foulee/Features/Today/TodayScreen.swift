@@ -154,7 +154,7 @@ private struct TodayPreviewLoading: View {
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in },
                 dailyMinutes: { _ in [] },
-                todayWorkouts: { [] }
+                recentWorkouts: { _ in [] }
             )
         }
     }

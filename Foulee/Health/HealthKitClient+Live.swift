@@ -98,19 +98,26 @@ extension HealthKitClient {
                     daysBack: daysBack
                 )
             },
-            todayWorkouts: {
-                try await todayWalkingWorkouts(store: store)
+            recentWorkouts: { daysBack in
+                try await recentWalkingWorkouts(store: store, daysBack: daysBack)
             }
         )
     }()
 }
 
-/// All walking workouts (activityType `.walking`) started since midnight
-/// today, regardless of which app or device wrote them. Newest first.
-private func todayWalkingWorkouts(store: HKHealthStore) async throws -> [WorkoutSummary] {
+/// All walking workouts (activityType `.walking`) started in the last
+/// `daysBack` days (today included), regardless of which app or device
+/// wrote them. Newest first.
+private func recentWalkingWorkouts(
+    store: HKHealthStore,
+    daysBack: Int
+) async throws -> [WorkoutSummary] {
     let calendar = Calendar.current
-    let start = calendar.startOfDay(for: .now)
-    let endOfDay = start.addingTimeInterval(24 * 60 * 60)
+    let endOfDay = calendar.startOfDay(for: .now).addingTimeInterval(24 * 60 * 60)
+    guard let start = calendar.date(
+        byAdding: .day, value: -(daysBack - 1), to: calendar.startOfDay(for: .now)
+    ) else { return [] }
+
     let activityPredicate = HKQuery.predicateForWorkouts(with: .walking)
     let datePredicate = HKQuery.predicateForSamples(
         withStart: start, end: endOfDay, options: .strictStartDate
