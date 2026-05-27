@@ -1,29 +1,22 @@
 import Dependencies
 import SwiftUI
 
-/// Pre/post-walk dashboard. Hosts the wallpaper, a scrollable column of
-/// cards and the floating bottom nav. Data comes from `TodayStore`, which
-/// reads HealthKit through the `healthKit` dependency.
+/// Pre/post-walk dashboard. Content-only: the wallpaper + bottom nav are
+/// provided by `RootTabView`. Data comes from `TodayStore`, which reads
+/// HealthKit through the `healthKit` dependency.
 struct TodayScreen: View {
     @State private var store = TodayStore()
-    @State private var activeTab: BottomNavTab = .today
     @State private var isWalking = false
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Wallpaper()
-            content
-            BottomNav(active: $activeTab)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 32)
-        }
-        .task { await store.bootstrap() }
-        .fullScreenCover(isPresented: $isWalking) {
-            ActiveWalkScreen(minutesGoal: store.minutesGoal) {
-                isWalking = false
-                Task { await store.refresh() }
+        content
+            .task { await store.bootstrap() }
+            .fullScreenCover(isPresented: $isWalking) {
+                ActiveWalkScreen(minutesGoal: store.minutesGoal) {
+                    isWalking = false
+                    Task { await store.refresh() }
+                }
             }
-        }
     }
 
     @ViewBuilder
