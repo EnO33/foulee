@@ -7,6 +7,7 @@ import SwiftUI
 struct TodayScreen: View {
     @State private var store = TodayStore()
     @State private var isWalking = false
+    @State private var isShowingSummary = false
 
     var body: some View {
         content
@@ -16,6 +17,9 @@ struct TodayScreen: View {
                     isWalking = false
                     Task { await store.refresh() }
                 }
+            }
+            .sheet(isPresented: $isShowingSummary) {
+                TodayWorkoutsSheet()
             }
     }
 
@@ -106,16 +110,12 @@ struct TodayScreen: View {
     }
 
     /// "Démarrer la marche" → push the active walk sheet.
-    /// "Voir le résumé" (already walked today) → open Apple Santé so the
-    /// user can review the workout details. `x-apple-health://` is the
-    /// only public-ish way to deeplink into the Health app and silently
-    /// no-ops if iOS ever drops support — preferable to launching another
-    /// walk session by accident (the bug this replaces).
+    /// "Voir le résumé" (already walked today) → present an in-app sheet
+    /// listing all walking workouts HealthKit recorded today, regardless
+    /// of source (Foulée, Forme, the Watch).
     private func handlePrimaryTap(snapshot: TodaySnapshot) {
         if snapshot.hasWalkedToday {
-            if let url = URL(string: "x-apple-health://") {
-                UIApplication.shared.open(url)
-            }
+            isShowingSummary = true
         } else {
             isWalking = true
         }
@@ -142,7 +142,8 @@ private struct TodayPreviewLoading: View {
                 },
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in },
-                dailyMinutes: { _ in [] }
+                dailyMinutes: { _ in [] },
+                todayWorkouts: { [] }
             )
         }
     }

@@ -30,6 +30,11 @@ struct HealthKitClient: Sendable {
     /// including today. Returns entries from oldest to newest with `0`
     /// minutes for days that had no exercise (so charts/streaks see gaps).
     var dailyMinutes: @Sendable (_ daysBack: Int) async throws -> [DailyMinutes]
+
+    /// Walking workouts (HKWorkoutActivityType.walking) started since
+    /// midnight today, newest first. Covers walks from Foulée, Forme
+    /// and the Apple Watch — anything that's in HealthKit.
+    var todayWorkouts: @Sendable () async throws -> [WorkoutSummary]
 }
 
 extension HealthKitClient: DependencyKey {
@@ -43,7 +48,8 @@ extension HealthKitClient: DependencyKey {
             HealthMetrics(steps: 4_218, distanceKm: 1.8, activeMinutes: 24, activeCalories: 142)
         },
         saveWalkingWorkout: { _ in },
-        dailyMinutes: { daysBack in previewDailyMinutes(daysBack: daysBack) }
+        dailyMinutes: { daysBack in previewDailyMinutes(daysBack: daysBack) },
+        todayWorkouts: { previewTodayWorkouts() }
     )
 
     static let testValue = HealthKitClient(
@@ -51,8 +57,25 @@ extension HealthKitClient: DependencyKey {
         requestAuthorization: { false },
         todayMetrics: { .zero },
         saveWalkingWorkout: { _ in },
-        dailyMinutes: { _ in [] }
+        dailyMinutes: { _ in [] },
+        todayWorkouts: { [] }
     )
+
+    private static func previewTodayWorkouts() -> [WorkoutSummary] {
+        let noon = Calendar.current.date(bySettingHour: 12, minute: 5, second: 0, of: .now) ?? .now
+        let ended = noon.addingTimeInterval(24 * 60)
+        return [
+            WorkoutSummary(
+                id: UUID(),
+                startedAt: noon,
+                endedAt: ended,
+                durationSeconds: 24 * 60,
+                distanceKm: 1.8,
+                activeCalories: 142,
+                sourceName: "Apple Watch de Matthieu"
+            )
+        ]
+    }
 
     /// Deterministic pseudo-history for `#Preview`s: 12-day current streak,
     /// 18-day historical record, mild noise around the 20 min goal.
