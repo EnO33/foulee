@@ -82,6 +82,66 @@ struct TodayStoreTests {
         }
     }
 
+    @Test("Refresh fills weather when location is granted and WeatherKit responds")
+    @MainActor
+    func refreshPopulatesWeather() async {
+        await withDependencies {
+            $0.healthKit = HealthKitClient(
+                isAvailable: { true },
+                requestAuthorization: { true },
+                todayMetrics: {
+                    HealthMetrics(steps: 100, distanceKm: 0.05, activeMinutes: 1, activeCalories: 4)
+                },
+                saveWalkingWorkout: { _ in }
+            )
+            $0.location = .previewValue
+            $0.weather = WeatherClient(
+                middayForecast: { _ in
+                    WeatherSnapshot(
+                        temperatureCelsius: 18,
+                        condition: "Partiellement nuageux",
+                        advice: "idéal"
+                    )
+                }
+            )
+        } operation: {
+            let store = TodayStore()
+            await store.refresh()
+
+            #expect(store.snapshot?.weather.temperatureCelsius == 18)
+            #expect(store.snapshot?.weather.condition == "Partiellement nuageux")
+            #expect(store.snapshot?.weather.advice == "idéal")
+        }
+    }
+
+    @Test("Refresh still completes when location is denied — weather stays on fallback")
+    @MainActor
+    func refreshSkipsWeatherWithoutLocation() async {
+        await withDependencies {
+            $0.healthKit = HealthKitClient(
+                isAvailable: { true },
+                requestAuthorization: { true },
+                todayMetrics: {
+                    HealthMetrics(steps: 100, distanceKm: 0.05, activeMinutes: 1, activeCalories: 4)
+                },
+                saveWalkingWorkout: { _ in }
+            )
+            $0.location = .testValue
+            $0.weather = WeatherClient(
+                middayForecast: { _ in
+                    Issue.record("middayForecast should not run without location")
+                    return WeatherSnapshot(temperatureCelsius: 0, condition: "", advice: "")
+                }
+            )
+        } operation: {
+            let store = TodayStore()
+            await store.refresh()
+
+            #expect(store.snapshot != nil)
+            #expect(store.snapshot?.weather.condition == "—")
+        }
+    }
+
     @Test("Bootstrap short-circuits when authorization is denied")
     @MainActor
     func bootstrapStopsWhenDenied() async {

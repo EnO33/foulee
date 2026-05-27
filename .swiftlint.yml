@@ -49,3 +49,7 @@ type_name:
 file_length:
   warning: 500
   error: 800
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25
