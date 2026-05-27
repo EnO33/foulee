@@ -53,4 +53,17 @@ struct WalkReminderScheduler {
             // failure at the moment the app launches.
         }
     }
+
+    /// Add a one-shot reminder in `interval` seconds (bell-menu "Plus tard"
+    /// actions). Independent of the recurring weekly schedule. Errors are
+    /// absorbed — the bell visually flips to confirm the tap, that's the
+    /// only feedback the user needs.
+    @MainActor
+    func snooze(after interval: TimeInterval) async {
+        do {
+            try await notifications.scheduleSnooze(interval)
+        } catch {
+            // Silent on purpose, see comment on `sync(with:)`.
+        }
+    }
 }

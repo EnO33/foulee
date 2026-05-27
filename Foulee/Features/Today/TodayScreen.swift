@@ -9,6 +9,9 @@ struct TodayScreen: View {
     @State private var isWalking = false
     @State private var isShowingSummary = false
 
+    @Environment(UserPreferences.self) private var preferences
+    private let scheduler = WalkReminderScheduler()
+
     var body: some View {
         content
             .task { await store.bootstrap() }
@@ -44,8 +47,14 @@ struct TodayScreen: View {
                 }
                 TodayHeroCard(
                     snapshot: snapshot,
+                    notificationsEnabled: preferences.notificationsEnabled,
                     onPrimaryTap: { handlePrimaryTap(snapshot: snapshot) },
-                    onReminderTap: {}
+                    onSnooze: { interval in
+                        Task { await scheduler.snooze(after: interval) }
+                    },
+                    onToggleNotifications: {
+                        preferences.notificationsEnabled.toggle()
+                    }
                 )
                 .padding(.horizontal, 20)
                 .padding(.top, 4)
@@ -127,7 +136,9 @@ private struct TodayPreviewWithData: View {
         prepareDependencies { $0.healthKit = .previewValue }
     }
     var body: some View {
-        TodayScreen().preferredColorScheme(.light)
+        TodayScreen()
+            .environment(UserPreferences(defaults: previewDefaults(suite: "preview-today-light")))
+            .preferredColorScheme(.light)
     }
 }
 
@@ -149,6 +160,7 @@ private struct TodayPreviewLoading: View {
     }
     var body: some View {
         TodayScreen()
+            .environment(UserPreferences(defaults: previewDefaults(suite: "preview-today-loading")))
     }
 }
 
@@ -157,8 +169,17 @@ private struct TodayPreviewDark: View {
         prepareDependencies { $0.healthKit = .previewValue }
     }
     var body: some View {
-        TodayScreen().preferredColorScheme(.dark)
+        TodayScreen()
+            .environment(UserPreferences(defaults: previewDefaults(suite: "preview-today-dark")))
+            .preferredColorScheme(.dark)
     }
+}
+
+@MainActor
+private func previewDefaults(suite: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: suite) ?? .standard
+    defaults.removePersistentDomain(forName: suite)
+    return defaults
 }
 
 #Preview("With data") { TodayPreviewWithData() }
