@@ -19,19 +19,17 @@ struct TodayWorkoutsSheet: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Wallpaper()
-                content
-            }
-            .navigationTitle("Résumé 7 jours")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fermer") { dismiss() }
-                        .foregroundStyle(FouleeColor.accentMid)
+            content
+                .navigationTitle("Résumé 7 jours")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Fermer") { dismiss() }
+                            .foregroundStyle(FouleeColor.accentMid)
+                    }
                 }
-            }
         }
+        .presentationBackground { SheetBackground() }
         .task { await load() }
         .sheet(item: $selectedWorkout) { workout in
             WorkoutDetailSheet(summary: workout)

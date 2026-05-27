@@ -12,7 +12,7 @@ struct ActiveWalkScreen: View {
 
     var body: some View {
         ZStack {
-            Wallpaper()
+            SheetBackground()
             content
         }
         .onAppear { store.start(minutesGoal: minutesGoal) }
