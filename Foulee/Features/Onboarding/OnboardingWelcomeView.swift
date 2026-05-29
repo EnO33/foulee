@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// First onboarding screen — brand logo + tagline + 3 value bullets +
-/// "Commencer" CTA. The "J'ai déjà un compte" ghost button is a no-op
-/// placeholder for a future account flow.
+/// "Commencer" CTA. Foulée is local-only (HealthKit + on-device
+/// preferences), so there's no account step.
 struct OnboardingWelcomeView: View {
     var onContinue: () -> Void
 
@@ -77,17 +77,6 @@ struct OnboardingWelcomeView: View {
     }
 
     private var footer: some View {
-        VStack(spacing: 8) {
-            PrimaryButton(title: "Commencer", systemIcon: nil, action: onContinue)
-            Button {
-                // Account flow lands in a later PR.
-            } label: {
-                Text("J'ai déjà un compte")
-                    .font(FouleeFont.headline)
-                    .foregroundStyle(FouleeColor.accentMid)
-                    .frame(maxWidth: .infinity, minHeight: 40)
-            }
-            .buttonStyle(.pressable)
-        }
+        PrimaryButton(title: "Commencer", systemIcon: nil, action: onContinue)
     }
 }

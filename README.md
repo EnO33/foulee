@@ -10,9 +10,11 @@ iOS 26 app that helps you keep a daily lunchtime walk streak going. Reads from H
 - **HealthKit** — steps, distance, calories, walking workouts
 - **ActivityKit** — Live Activity for the active walk (Dynamic Island + Lock Screen)
 - **WeatherKit** — midday weather card
-- **WidgetKit** — Watch complications
+- **WidgetKit** — iPhone + Watch streak widgets and complications
 - **UserNotifications** — pre-walk reminder
-- **SwiftData** — local preferences + session history
+- **CoreLocation / MapKit** — walk route recording + map
+- **UserDefaults** — on-device preferences (goal, walk window, theme). Walk
+  history isn't stored locally — it's read live from HealthKit.
 - **Tuist** — project generation (no `.xcodeproj` churn in git)
 - **swift-dependencies** ([Point-Free](https://github.com/pointfreeco/swift-dependencies)) — testable wrappers around system frameworks
 
