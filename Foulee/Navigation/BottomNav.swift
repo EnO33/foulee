@@ -24,6 +24,15 @@ enum BottomNavTab: String, CaseIterable, Identifiable {
         case .settings: FouleeIcon.settings
         }
     }
+
+    /// Spoken name — the visible labels are abbreviated to fit the pill.
+    var accessibilityLabel: String {
+        switch self {
+        case .today: "Aujourd'hui"
+        case .stats: "Statistiques"
+        case .settings: "Réglages"
+        }
+    }
 }
 
 struct BottomNav: View {
@@ -56,6 +65,8 @@ struct BottomNav: View {
                     )
                 }
                 .buttonStyle(.pressable)
+                .accessibilityLabel(tab.accessibilityLabel)
+                .accessibilityAddTraits(active == tab ? [.isButton, .isSelected] : .isButton)
             }
         }
         .padding(.horizontal, 10)

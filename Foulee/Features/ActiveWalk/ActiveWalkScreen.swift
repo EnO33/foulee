@@ -134,6 +134,13 @@ struct ActiveWalkScreen: View {
         }
         .frame(width: 232, height: 232)
         .padding(.top, 22)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Marche en cours")
+        .accessibilityValue(
+            "\(session.steps.formattedFR) pas, "
+            + "\(session.distanceKm.kmText(fractionDigits: 1)), "
+            + "\(session.estimatedCalories) kilocalories"
+        )
     }
 
     private func metric(value: String, label: String) -> some View {
@@ -208,9 +215,11 @@ struct ActiveWalkScreen: View {
                     )
             }
             .buttonStyle(.pressable)
+            .accessibilityLabel(label)
             Text(label)
                 .font(FouleeFont.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
         }
     }
 

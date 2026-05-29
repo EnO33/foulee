@@ -15,6 +15,13 @@ struct WorkoutDetailHeartRate: View {
 
     let detail: WorkoutDetail
 
+    private var heartRateSummary: String {
+        func bpm(_ value: Int?) -> String { value.map { "\($0)" } ?? "indisponible" }
+        return "Minimum \(bpm(detail.minHeartRate)), "
+            + "moyenne \(bpm(detail.averageHeartRate)), "
+            + "maximum \(bpm(detail.maxHeartRate)) battements par minute"
+    }
+
     private var chartSamples: [HeartRateSample] {
         let all = detail.heartRateSamples
         guard all.count > Self.maxChartPoints else { return all }
@@ -40,8 +47,12 @@ struct WorkoutDetailHeartRate: View {
                 // Flatten the chart's rendering into an offscreen bitmap
                 // so the sheet's slide-up animation composites a single
                 // texture instead of recomputing Swift Charts marks per
-                // frame.
+                // frame. `drawingGroup()` drops the marks' own a11y, so we
+                // describe the curve at the container level instead.
                 .drawingGroup()
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Courbe de fréquence cardiaque")
+                .accessibilityValue(heartRateSummary)
         }
         .padding(18)
         .fouleeGlass(cornerRadius: 22)
@@ -72,6 +83,9 @@ struct WorkoutDetailHeartRate: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityValue(value.map { "\($0) battements par minute" } ?? "indisponible")
     }
 
     private var divider: some View {

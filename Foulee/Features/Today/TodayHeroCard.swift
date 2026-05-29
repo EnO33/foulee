@@ -60,6 +60,11 @@ struct TodayHeroCard: View {
             }
         }
         .frame(width: 132, height: 132)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(snapshot.hasWalkedToday ? "Objectif du jour atteint" : "Progression du jour")
+        .accessibilityValue(snapshot.hasWalkedToday
+            ? "Marche faite"
+            : "\(snapshot.steps.formattedFR) pas sur \(snapshot.stepsGoal.formattedFR)")
     }
 
     @ViewBuilder
@@ -175,6 +180,9 @@ struct TodayHeroCard: View {
                 .background(Color.gray.opacity(0.16), in: Circle())
         }
         .menuOrder(.fixed)
+        .accessibilityLabel("Rappels de marche")
+        .accessibilityValue(notificationsEnabled ? "activés" : "désactivés")
+        .accessibilityHint("Reporter le rappel ou activer les rappels")
     }
 }
 

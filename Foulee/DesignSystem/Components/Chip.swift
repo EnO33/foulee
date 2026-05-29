@@ -21,5 +21,7 @@ struct Chip: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(fill, in: Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
     }
 }

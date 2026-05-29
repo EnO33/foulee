@@ -36,6 +36,7 @@ struct StreakHeroCard: View {
                     .foregroundStyle(.white)
             }
             .shadow(color: Color(hex: 0xFF6B00).opacity(0.35), radius: 24, x: 0, y: 12)
+            .accessibilityHidden(true)
     }
 
     private var heroText: some View {
@@ -93,5 +94,6 @@ struct StreakHeroCard: View {
                     .frame(height: 6)
             }
         }
+        .accessibilityHidden(true)
     }
 }

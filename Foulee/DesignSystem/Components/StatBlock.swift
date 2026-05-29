@@ -29,5 +29,8 @@ struct StatBlock: View {
                 }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityValue(sub.map { "\(value) \($0)" } ?? value)
     }
 }
