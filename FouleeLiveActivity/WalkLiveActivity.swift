@@ -19,7 +19,7 @@ struct WalkLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     Label {
-                        Text(format(elapsed: context.state.elapsed))
+                        Text(context.state.elapsed.walkClockText)
                             .font(.system(.title2, design: .rounded, weight: .semibold))
                             .monospacedDigit()
                     } icon: {
@@ -28,7 +28,7 @@ struct WalkLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(formattedDistance(km: context.state.distanceKm))
+                    Text(context.state.distanceKm.kmText())
                         .font(.system(.title3, design: .rounded, weight: .semibold))
                         .monospacedDigit()
                 }
@@ -55,7 +55,7 @@ struct WalkLiveActivity: Widget {
                 Image(systemName: "figure.walk")
                     .foregroundStyle(.tint)
             } compactTrailing: {
-                Text(format(elapsed: context.state.elapsed))
+                Text(context.state.elapsed.walkClockText)
                     .font(.system(.caption, design: .rounded, weight: .semibold))
                     .monospacedDigit()
             } minimal: {
@@ -79,17 +79,6 @@ struct WalkLiveActivity: Widget {
         }
         .frame(maxWidth: .infinity)
     }
-
-    private func format(elapsed: TimeInterval) -> String {
-        let totalSeconds = Int(elapsed)
-        let minutes = totalSeconds / 60
-        let seconds = totalSeconds % 60
-        return String(format: "%02d:%02d", minutes, seconds)
-    }
-
-    private func formattedDistance(km: Double) -> String {
-        String(format: "%.2f km", km).replacingOccurrences(of: ".", with: ",")
-    }
 }
 
 struct LockScreenView: View {
@@ -109,10 +98,10 @@ struct LockScreenView: View {
                 Label("Marche du midi", systemImage: "figure.walk")
                     .font(.system(.callout, weight: .semibold))
                     .foregroundStyle(.primary)
-                Text(format(elapsed: state.elapsed))
+                Text(state.elapsed.walkClockText)
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                Text("\(state.steps) pas · \(formattedDistance(km: state.distanceKm))")
+                Text("\(state.steps) pas · \(state.distanceKm.kmText())")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -133,16 +122,5 @@ struct LockScreenView: View {
                 .monospacedDigit()
         }
         .frame(width: 62, height: 62)
-    }
-
-    private func format(elapsed: TimeInterval) -> String {
-        let totalSeconds = Int(elapsed)
-        let minutes = totalSeconds / 60
-        let seconds = totalSeconds % 60
-        return String(format: "%02d:%02d", minutes, seconds)
-    }
-
-    private func formattedDistance(km: Double) -> String {
-        String(format: "%.2f km", km).replacingOccurrences(of: ".", with: ",")
     }
 }

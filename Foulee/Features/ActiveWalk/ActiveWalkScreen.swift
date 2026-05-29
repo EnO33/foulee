@@ -53,7 +53,7 @@ struct ActiveWalkScreen: View {
             Text("Marche terminée")
                 .font(FouleeFont.title2)
             VStack(spacing: 4) {
-                Text(format(elapsed: session.elapsed))
+                Text(session.elapsed.walkClockText)
                     .font(FouleeFont.numeric(size: 48))
                 Text(finishedSummary(session: session))
                     .font(FouleeFont.callout)
@@ -74,9 +74,7 @@ struct ActiveWalkScreen: View {
     }
 
     private func finishedSummary(session: WalkSession) -> String {
-        let distance = String(format: "%.2f km", session.distanceKm)
-            .replacingOccurrences(of: ".", with: ",")
-        return "\(session.steps.formattedFR) pas · \(distance)"
+        "\(session.steps.formattedFR) pas · \(session.distanceKm.kmText())"
     }
 
     private var header: some View {
@@ -96,7 +94,7 @@ struct ActiveWalkScreen: View {
 
     private func timer(session: WalkSession) -> some View {
         VStack(spacing: 6) {
-            Text(format(elapsed: session.elapsed))
+            Text(session.elapsed.walkClockText)
                 .font(.system(size: 86, weight: .ultraLight, design: .rounded))
                 .monospacedDigit()
                 .kerning(-2)
@@ -119,7 +117,7 @@ struct ActiveWalkScreen: View {
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
                 HStack(spacing: 16) {
-                    metric(value: distanceText(session: session), label: "Distance")
+                    metric(value: session.distanceKm.kmText(fractionDigits: 1), label: "Distance")
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
                         .frame(width: 1, height: 28)
@@ -204,21 +202,6 @@ struct ActiveWalkScreen: View {
         }
     }
 
-    private func distanceText(session: WalkSession) -> String {
-        String(format: "%.1f km", session.distanceKm)
-            .replacingOccurrences(of: ".", with: ",")
-    }
-
-    private func format(elapsed: TimeInterval) -> String {
-        let totalSeconds = Int(elapsed)
-        let hours = totalSeconds / 3_600
-        let minutes = (totalSeconds % 3_600) / 60
-        let seconds = totalSeconds % 60
-        if hours > 0 {
-            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
-        }
-        return String(format: "%02d:%02d", minutes, seconds)
-    }
 }
 
 private struct ActiveWalkPreview: View {

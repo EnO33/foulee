@@ -10,13 +10,13 @@ struct WatchActiveWalkView: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             VStack(spacing: 8) {
-                Text(format(elapsed: metrics.elapsed))
+                Text(metrics.elapsed.walkClockText)
                     .font(.system(size: 38, weight: .semibold, design: .rounded))
                     .monospacedDigit()
 
                 HStack(spacing: 10) {
                     metric(value: "\(metrics.steps)", label: "pas", icon: "shoe")
-                    metric(value: distanceText, label: "km", icon: "location.fill")
+                    metric(value: metrics.distanceKm.kmValue(), label: "km", icon: "location.fill")
                 }
                 HStack(spacing: 10) {
                     metric(
@@ -44,11 +44,6 @@ struct WatchActiveWalkView: View {
         }
     }
 
-    private var distanceText: String {
-        String(format: "%.2f", metrics.distanceKm)
-            .replacingOccurrences(of: ".", with: ",")
-    }
-
     private func metric(value: String, label: String, icon: String) -> some View {
         VStack(spacing: 2) {
             Image(systemName: icon)
@@ -62,12 +57,5 @@ struct WatchActiveWalkView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-    }
-
-    private func format(elapsed: TimeInterval) -> String {
-        let totalSeconds = Int(elapsed)
-        let minutes = totalSeconds / 60
-        let seconds = totalSeconds % 60
-        return String(format: "%02d:%02d", minutes, seconds)
     }
 }

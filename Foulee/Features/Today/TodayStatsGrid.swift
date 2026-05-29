@@ -10,11 +10,6 @@ struct TodayStatsGrid: View {
         GridItem(.flexible(), spacing: 18)
     ]
 
-    private var distanceText: String {
-        String(format: "%.1f km", snapshot.distanceKm)
-            .replacingOccurrences(of: ".", with: ",")
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -43,7 +38,7 @@ struct TodayStatsGrid: View {
                 StatBlock(
                     systemIcon: FouleeIcon.distance,
                     label: "Distance",
-                    value: distanceText,
+                    value: snapshot.distanceKm.kmText(fractionDigits: 1),
                     sub: nil,
                     tint: Color(hex: 0x0A84FF)
                 )

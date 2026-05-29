@@ -129,7 +129,7 @@ struct TodayWorkoutsSheet: View {
             HStack(spacing: 0) {
                 metricCell(
                     icon: FouleeIcon.distance,
-                    value: distanceText(workout.distanceKm),
+                    value: workout.distanceKm.kmText(),
                     label: "Distance"
                 )
                 divider
@@ -243,9 +243,6 @@ struct TodayWorkoutsSheet: View {
         "\(Int(seconds / 60)) min"
     }
 
-    private func distanceText(_ km: Double) -> String {
-        String(format: "%.2f km", km).replacingOccurrences(of: ".", with: ",")
-    }
 }
 
 private struct TodayWorkoutsSheetPreview: View {
