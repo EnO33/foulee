@@ -113,6 +113,9 @@
     "Fermer" : {
 
     },
+    "Fermer la carte" : {
+
+    },
     "Footnote" : {
 
     },
@@ -250,6 +253,12 @@
 
     },
     "Ton activité" : {
+
+    },
+    "Ton parcours apparaîtra ici dès les premiers points GPS." : {
+
+    },
+    "Tracé en attente" : {
 
     },
     "Tu peux changer ces autorisations dans Réglages à tout moment." : {

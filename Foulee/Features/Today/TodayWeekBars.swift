@@ -5,6 +5,13 @@ import SwiftUI
 struct TodayWeekBars: View {
     var snapshot: TodaySnapshot
     private let labels = ["L", "M", "M", "J", "V", "S", "D"]
+    private let dayNames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+
+    private var weekSpokenSummary: String {
+        zip(dayNames, snapshot.weekMinutes)
+            .map { "\($0): \($1) minutes" }
+            .joined(separator: ", ")
+    }
 
     private var todayIndex: Int {
         let weekday = Calendar(identifier: .iso8601).component(.weekday, from: snapshot.date)
@@ -34,6 +41,7 @@ struct TodayWeekBars: View {
         }
         .padding(18)
         .fouleeGlass(cornerRadius: 24)
+        .accessibilityElement(children: .contain)
     }
 
     private var bars: some View {
@@ -49,6 +57,9 @@ struct TodayWeekBars: View {
             }
         }
         .frame(height: 84)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Minutes de marche par jour cette semaine")
+        .accessibilityValue(weekSpokenSummary)
     }
 
     private func bar(height: CGFloat, isToday: Bool) -> some View {
@@ -81,5 +92,6 @@ struct TodayWeekBars: View {
                     .frame(maxWidth: .infinity)
             }
         }
+        .accessibilityHidden(true)
     }
 }

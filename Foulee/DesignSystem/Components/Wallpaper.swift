@@ -20,6 +20,7 @@ struct Wallpaper: View {
             }
         }
         .ignoresSafeArea()
+        .accessibilityHidden(true)
     }
 
     private var blobs: [Blob] {

@@ -43,6 +43,8 @@ struct StatsChartCard: View {
                     ? AnyShapeStyle(FouleeColor.accentGradient)
                     : AnyShapeStyle(Color.gray.opacity(0.25)))
                 .cornerRadius(4)
+                .accessibilityLabel(entry.date.formatted(.dateTime.weekday(.wide).day().month()))
+                .accessibilityValue("\(entry.minutes) minutes")
             }
             if goalMinutes > 0 {
                 RuleMark(y: .value("Objectif", goalMinutes))
