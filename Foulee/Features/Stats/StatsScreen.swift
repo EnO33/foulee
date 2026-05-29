@@ -21,7 +21,7 @@ struct StatsScreen: View {
                 )
                 .padding(.horizontal, 20)
                 StatsChartCard(
-                    data: store.filteredHistory(goalMinutes: preferences.minutesGoal),
+                    data: store.filteredHistory(),
                     goalMinutes: preferences.minutesGoal,
                     range: store.range
                 )
