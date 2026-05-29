@@ -80,7 +80,11 @@ base64 -i Distribution.p12 | pbcopy   # → DIST_CERT_P12_BASE64
 
 [Users and Access → Integrations → App Store Connect API → Team Keys → +](https://appstoreconnect.apple.com/access/integrations/api):
 
-- **Access**: `App Manager` (enough to upload + manage builds).
+- **Access**: `Admin`. App Manager is **not** enough — the CI uses the key for
+  cloud signing (`-allowProvisioningUpdates` creates the distribution
+  provisioning profiles), and managing certificates/profiles requires Admin.
+  An App Manager key fails export with *"Cloud signing permission error /
+  No profiles … were found"*.
 - Download the `.p8` **once** (you can't re-download it) and note the
   **Key ID** and the team **Issuer ID** shown on that page.
 
@@ -141,9 +145,10 @@ deliberate, manual action:
 
 ## Troubleshooting
 
-- **"No profiles for 'com.eno33.foulee…'"** — an App ID from step 2 is missing
-  or lacks a capability. Register/fix it; `-allowProvisioningUpdates` creates
-  the profile on the next run.
+- **"Cloud signing permission error" / "No profiles … were found"** — almost
+  always the API key role: it must be **Admin** (step 6), not App Manager.
+  Failing that, an App ID from step 2 is missing or lacks a capability —
+  register/fix it and `-allowProvisioningUpdates` creates the profile next run.
 - **"The build number must be higher"** — shouldn't happen (commit count only
   grows), but if you rewrote history, push an empty commit to bump it.
 - **First upload rejected for missing privacy policy** — complete step 4.
