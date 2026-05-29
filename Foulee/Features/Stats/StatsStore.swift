@@ -45,7 +45,7 @@ final class StatsStore {
     /// the **current ISO week (Mon → Sun)** so the chart's weekday labels
     /// match what users expect, instead of a rolling 7-day window starting
     /// mid-week. `.month` and `.year` stay as rolling windows.
-    func filteredHistory(goalMinutes: Int) -> [DailyMinutes] {
+    func filteredHistory() -> [DailyMinutes] {
         switch range {
         case .week: currentWeekSlice()
         case .month, .year:
@@ -72,14 +72,14 @@ final class StatsStore {
     }
 
     func totalWalks(goalMinutes: Int) -> Int {
-        filteredHistory(goalMinutes: goalMinutes)
+        filteredHistory()
             .lazy
             .filter { $0.minutes >= goalMinutes }
             .count
     }
 
     func averageMinutes() -> Int {
-        let entries = filteredHistory(goalMinutes: 0)
+        let entries = filteredHistory()
         guard !entries.isEmpty else { return 0 }
         let sum = entries.reduce(0) { $0 + $1.minutes }
         return sum / entries.count
