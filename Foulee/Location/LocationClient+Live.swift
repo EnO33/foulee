@@ -72,9 +72,59 @@ extension LocationBridge {
     @MainActor static let shared = LocationBridge()
 }
 
+/// Continuous fix recorder used to draw the walk's route. Kept separate from
+/// `LocationBridge` so the walk's high-accuracy streaming never disturbs the
+/// kilometre-accuracy one-shot the weather card relies on.
+@MainActor
+private final class RouteRecorder: NSObject, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+    private var continuation: AsyncStream<Coordinate>.Continuation?
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.distanceFilter = 8 // metres — enough fidelity for a walk path
+        manager.activityType = .fitness
+    }
+
+    /// Adopt a new stream (finishing any prior one) and start streaming fixes.
+    func begin(yielding continuation: AsyncStream<Coordinate>.Continuation) {
+        self.continuation?.finish()
+        self.continuation = continuation
+        manager.startUpdatingLocation()
+    }
+
+    func end() {
+        manager.stopUpdatingLocation()
+        continuation = nil
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        let coords = locations.map {
+            Coordinate(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
+        }
+        Task { @MainActor in
+            for coord in coords { self.continuation?.yield(coord) }
+        }
+    }
+
+    @MainActor static let shared = RouteRecorder()
+}
+
 extension LocationClient {
     static let liveValue: LocationClient = LocationClient(
         requestWhenInUse: { await LocationBridge.shared.requestAuth() },
-        currentLocation: { await LocationBridge.shared.currentLocation() }
+        currentLocation: { await LocationBridge.shared.currentLocation() },
+        routeUpdates: {
+            // Hop to the main actor for all CLLocationManager work; the stream
+            // itself can be built and returned from any thread.
+            AsyncStream { continuation in
+                Task { @MainActor in RouteRecorder.shared.begin(yielding: continuation) }
+                continuation.onTermination = { _ in
+                    Task { @MainActor in RouteRecorder.shared.end() }
+                }
+            }
+        }
     )
 }

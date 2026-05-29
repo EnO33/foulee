@@ -24,8 +24,15 @@ final class ActiveWalkStore {
     private(set) var state: State = .idle
     private(set) var lastError: String?
 
+    /// Fixes recorded since the walk started, drawn by the route map. Keeps
+    /// recording across pauses — a pause just leaves a straight gap.
+    private(set) var route: [Coordinate] = []
+
     @ObservationIgnored
     @Dependency(\.pedometer) private var pedometer
+
+    @ObservationIgnored
+    @Dependency(\.location) private var location
 
     @ObservationIgnored
     @Dependency(\.healthKit) private var healthKit
@@ -41,6 +48,9 @@ final class ActiveWalkStore {
 
     @ObservationIgnored
     private var tickerTask: Task<Void, Never>?
+
+    @ObservationIgnored
+    private var routeTask: Task<Void, Never>?
 
     @ObservationIgnored
     private var liveActivity: Activity<WalkActivityAttributes>?
@@ -64,7 +74,9 @@ final class ActiveWalkStore {
         bankedElapsed = 0
         bankedSteps = 0
         bankedDistance = 0
+        route = []
         beginSegment()
+        routeTask = makeRouteTask()
         state = .active(session)
         tickerTask = makeTickerTask()
         startLiveActivity(startedAt: session.startedAt, minutesGoal: minutesGoal)
@@ -110,6 +122,7 @@ final class ActiveWalkStore {
             return
         }
         cancelObservers()
+        routeTask?.cancel()
         state = .finished(session)
         await runOrTrap { try await healthKit.saveWalkingWorkout(session) }
         await endLiveActivity(with: session)
@@ -123,11 +136,13 @@ final class ActiveWalkStore {
     /// Return to idle so a second walk can be started in the same screen.
     func reset() {
         cancelObservers()
+        routeTask?.cancel()
         bankedElapsed = 0
         bankedSteps = 0
         bankedDistance = 0
         segmentSteps = 0
         segmentDistance = 0
+        route = []
         state = .idle
         lastError = nil
     }
@@ -170,6 +185,17 @@ final class ActiveWalkStore {
                     self.state = .active(session)
                     Task { await self.pushLiveActivity(session: session, isPaused: false) }
                 }
+            }
+        }
+    }
+
+    private func makeRouteTask() -> Task<Void, Never> {
+        // Build the stream on the main actor (we're @MainActor here), then
+        // drain it off the hot path, appending each fix back on the main actor.
+        let updates = location.routeUpdates()
+        return Task {
+            for await coordinate in updates {
+                await MainActor.run { self.route.append(coordinate) }
             }
         }
     }
