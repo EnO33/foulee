@@ -112,6 +112,81 @@ struct ActiveWalkStoreTests {
             }
         }
     }
+
+    @Test("pause transitions active → paused, resume goes back to active")
+    @MainActor
+    func pauseResumeRoundTrip() async {
+        let frozen = Date(timeIntervalSince1970: 1_700_000_000)
+        await withDependencies {
+            $0.date = .constant(frozen)
+            $0.pedometer = .testValue
+            $0.healthKit = .testValue
+            $0.continuousClock = TestClock()
+        } operation: {
+            let store = ActiveWalkStore()
+            store.start()
+            await store.pause()
+            #expect(store.state == .paused(WalkSession(startedAt: frozen)))
+
+            store.resume()
+            #expect(store.state == .active(WalkSession(startedAt: frozen)))
+        }
+    }
+
+    @Test("pause is a no-op unless a session is active")
+    @MainActor
+    func pauseIgnoredWhenNotActive() async {
+        await withDependencies {
+            $0.date = .constant(Date(timeIntervalSince1970: 1_700_000_000))
+            $0.pedometer = .testValue
+            $0.healthKit = .testValue
+            $0.continuousClock = TestClock()
+        } operation: {
+            let store = ActiveWalkStore()
+            await store.pause()
+            #expect(store.state == .idle)
+
+            // resume from idle is a no-op too
+            store.resume()
+            #expect(store.state == .idle)
+        }
+    }
+
+    @Test("stop from a paused session still finalises and saves it")
+    @MainActor
+    func stopFromPausedSaves() async {
+        let frozen = Date(timeIntervalSince1970: 1_700_000_000)
+        let saved = LockedRef<WalkSession?>(nil)
+        await withDependencies {
+            $0.date = .constant(frozen)
+            $0.pedometer = .testValue
+            $0.continuousClock = TestClock()
+            $0.healthKit = HealthKitClient(
+                isAvailable: { true },
+                requestAuthorization: { true },
+                todayMetrics: { .zero },
+                saveWalkingWorkout: { session in saved.set(session) },
+                dailyMinutes: { _ in [] },
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
+            )
+        } operation: {
+            let store = ActiveWalkStore()
+            store.start()
+            await store.pause()
+            await store.stop()
+
+            guard case .finished(let session) = store.state else {
+                Issue.record("expected .finished state, got \(store.state)")
+                return
+            }
+            #expect(session.endedAt == frozen)
+            #expect(saved.value?.startedAt == frozen)
+            #expect(store.lastError == nil)
+        }
+    }
 }
 
 /// Tiny actor wrapper for capturing values across `@Sendable` closures

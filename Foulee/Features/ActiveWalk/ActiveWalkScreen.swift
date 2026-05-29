@@ -25,20 +25,22 @@ struct ActiveWalkScreen: View {
         case .idle:
             ProgressView()
         case .active(let session):
-            activeBody(session: session)
+            walkBody(session: session, paused: false)
+        case .paused(let session):
+            walkBody(session: session, paused: true)
         case .finished(let session):
             finishedBody(session: session)
         }
     }
 
-    private func activeBody(session: WalkSession) -> some View {
+    private func walkBody(session: WalkSession, paused: Bool) -> some View {
         VStack(spacing: 0) {
-            header
+            header(paused: paused)
             timer(session: session)
             ring(session: session)
             heartRatePlaceholder
             Spacer(minLength: 0)
-            controls
+            controls(paused: paused)
         }
         .padding(.top, 60)
         .padding(.bottom, 56)
@@ -77,13 +79,13 @@ struct ActiveWalkScreen: View {
         "\(session.steps.formattedFR) pas · \(session.distanceKm.kmText())"
     }
 
-    private var header: some View {
+    private func header(paused: Bool) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Chip(
-                label: "EN COURS",
-                systemIcon: nil,
-                tint: FouleeColor.success,
-                fill: FouleeColor.success.opacity(0.16)
+                label: paused ? "EN PAUSE" : "EN COURS",
+                systemIcon: paused ? FouleeIcon.pause : nil,
+                tint: paused ? FouleeColor.warning : FouleeColor.success,
+                fill: (paused ? FouleeColor.warning : FouleeColor.success).opacity(0.16)
             )
             Text("Marche du midi")
                 .font(FouleeFont.largeTitle)
@@ -156,13 +158,19 @@ struct ActiveWalkScreen: View {
         .padding(.top, 32)
     }
 
-    private var controls: some View {
+    private func controls(paused: Bool) -> some View {
         HStack(spacing: 28) {
             controlButton(icon: FouleeIcon.stop, color: FouleeColor.danger, label: "Arrêter") {
                 Task { await store.stop() }
             }
-            controlButton(icon: FouleeIcon.pause, color: FouleeColor.accentMid, label: "Pause", big: true) {
-                // Pause behaviour ships with PR#5b alongside the Live Activity.
+            if paused {
+                controlButton(icon: FouleeIcon.play, color: FouleeColor.accentMid, label: "Reprendre", big: true) {
+                    store.resume()
+                }
+            } else {
+                controlButton(icon: FouleeIcon.pause, color: FouleeColor.accentMid, label: "Pause", big: true) {
+                    Task { await store.pause() }
+                }
             }
             controlButton(icon: FouleeIcon.location, color: Color(hex: 0x0A84FF), label: "Carte") {
                 // Map view ships in a later PR.

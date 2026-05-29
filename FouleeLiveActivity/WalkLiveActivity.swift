@@ -23,7 +23,7 @@ struct WalkLiveActivity: Widget {
                             .font(.system(.title2, design: .rounded, weight: .semibold))
                             .monospacedDigit()
                     } icon: {
-                        Image(systemName: "figure.walk")
+                        Image(systemName: context.state.isPaused ? "pause.fill" : "figure.walk")
                             .foregroundStyle(.tint)
                     }
                 }
@@ -52,14 +52,15 @@ struct WalkLiveActivity: Widget {
                     }
                 }
             } compactLeading: {
-                Image(systemName: "figure.walk")
+                Image(systemName: context.state.isPaused ? "pause.fill" : "figure.walk")
                     .foregroundStyle(.tint)
             } compactTrailing: {
                 Text(context.state.elapsed.walkClockText)
                     .font(.system(.caption, design: .rounded, weight: .semibold))
                     .monospacedDigit()
+                    .foregroundStyle(context.state.isPaused ? .secondary : .primary)
             } minimal: {
-                Image(systemName: "figure.walk")
+                Image(systemName: context.state.isPaused ? "pause.fill" : "figure.walk")
                     .foregroundStyle(.tint)
             }
         }
@@ -95,12 +96,16 @@ struct LockScreenView: View {
         HStack(spacing: 14) {
             ring
             VStack(alignment: .leading, spacing: 4) {
-                Label("Marche du midi", systemImage: "figure.walk")
-                    .font(.system(.callout, weight: .semibold))
-                    .foregroundStyle(.primary)
+                Label(
+                    state.isPaused ? "Marche du midi · En pause" : "Marche du midi",
+                    systemImage: state.isPaused ? "pause.fill" : "figure.walk"
+                )
+                .font(.system(.callout, weight: .semibold))
+                .foregroundStyle(.primary)
                 Text(state.elapsed.walkClockText)
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .monospacedDigit()
+                    .foregroundStyle(state.isPaused ? .secondary : .primary)
                 Text("\(state.steps) pas · \(state.distanceKm.kmText())")
                     .font(.footnote)
                     .foregroundStyle(.secondary)

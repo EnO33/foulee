@@ -5,9 +5,10 @@ import Observation
 import WidgetKit
 
 /// Owns the in-flight walk: starts/stops the pedometer stream, ticks the
-/// elapsed timer once a second, saves a `HKWorkout` on stop.
+/// elapsed timer once a second, saves a `HKWorkout` on stop. Supports
+/// pausing — the clock and pedometer freeze and paused time never counts.
 ///
-/// State is a simple three-case enum so the view binds against it
+/// State is a simple four-case enum so the view binds against it
 /// declaratively (no flag soup). Errors funnel through a single
 /// `runOrTrap` boundary; the rest of the file is happy-path.
 @MainActor
@@ -16,6 +17,7 @@ final class ActiveWalkStore {
     enum State: Equatable {
         case idle
         case active(WalkSession)
+        case paused(WalkSession)
         case finished(WalkSession)
     }
 
@@ -43,25 +45,71 @@ final class ActiveWalkStore {
     @ObservationIgnored
     private var liveActivity: Activity<WalkActivityAttributes>?
 
+    // A pause splits the walk into segments. `banked*` carries the totals
+    // from finished segments; the live segment (started at `segmentStart`,
+    // counting `segment*`) is added on top. Paused wall-time — and any
+    // steps taken while paused — never make it into the banked totals.
+    @ObservationIgnored private var bankedElapsed: TimeInterval = 0
+    @ObservationIgnored private var bankedSteps = 0
+    @ObservationIgnored private var bankedDistance: Double = 0
+    @ObservationIgnored private var segmentStart = Date.distantPast
+    @ObservationIgnored private var segmentSteps = 0
+    @ObservationIgnored private var segmentDistance: Double = 0
+
     /// Begin a fresh session. No-op when already active or finished — call
     /// `reset()` first to start a second walk in the same screen lifetime.
     func start(minutesGoal: Int = 20) {
         guard case .idle = state else { return }
         let session = WalkSession(startedAt: date.now)
+        bankedElapsed = 0
+        bankedSteps = 0
+        bankedDistance = 0
+        beginSegment()
         state = .active(session)
-        pedometerTask = makePedometerTask(from: session.startedAt)
         tickerTask = makeTickerTask()
         startLiveActivity(startedAt: session.startedAt, minutesGoal: minutesGoal)
     }
 
-    /// Stop, cancel observers and persist the workout in HealthKit.
-    func stop() async {
+    /// Freeze the clock + pedometer without ending the walk.
+    func pause() async {
         guard case .active(var session) = state else { return }
-        pedometerTask?.cancel()
-        tickerTask?.cancel()
-        pedometer.stop()
-        session.endedAt = date.now
-        session.elapsed = date.now.timeIntervalSince(session.startedAt)
+        bankSegment()
+        cancelObservers()
+        session.elapsed = bankedElapsed
+        session.steps = bankedSteps
+        session.distanceMeters = bankedDistance
+        state = .paused(session)
+        await pushLiveActivity(session: session, isPaused: true)
+    }
+
+    /// Resume after a pause: open a fresh segment and restart the observers.
+    func resume() {
+        guard case .paused(let session) = state else { return }
+        beginSegment()
+        state = .active(session)
+        tickerTask = makeTickerTask()
+        Task { await self.pushLiveActivity(session: session, isPaused: false) }
+    }
+
+    /// Stop, cancel observers and persist the workout in HealthKit. Works
+    /// from both the active and paused states.
+    func stop() async {
+        let session: WalkSession
+        switch state {
+        case .active(var live):
+            bankSegment()
+            live.elapsed = bankedElapsed
+            live.steps = bankedSteps
+            live.distanceMeters = bankedDistance
+            live.endedAt = date.now
+            session = live
+        case .paused(var held):
+            held.endedAt = date.now
+            session = held
+        default:
+            return
+        }
+        cancelObservers()
         state = .finished(session)
         await runOrTrap { try await healthKit.saveWalkingWorkout(session) }
         await endLiveActivity(with: session)
@@ -74,11 +122,40 @@ final class ActiveWalkStore {
 
     /// Return to idle so a second walk can be started in the same screen.
     func reset() {
+        cancelObservers()
+        bankedElapsed = 0
+        bankedSteps = 0
+        bankedDistance = 0
+        segmentSteps = 0
+        segmentDistance = 0
+        state = .idle
+        lastError = nil
+    }
+
+    // MARK: - Segments
+
+    /// Open a fresh live segment starting now and (re)start the pedometer
+    /// from that instant so its cumulative counts are segment-relative.
+    private func beginSegment() {
+        segmentStart = date.now
+        segmentSteps = 0
+        segmentDistance = 0
+        pedometerTask = makePedometerTask(from: segmentStart)
+    }
+
+    /// Fold the live segment's totals into the running tally.
+    private func bankSegment() {
+        bankedElapsed += date.now.timeIntervalSince(segmentStart)
+        bankedSteps += segmentSteps
+        bankedDistance += segmentDistance
+        segmentSteps = 0
+        segmentDistance = 0
+    }
+
+    private func cancelObservers() {
         pedometerTask?.cancel()
         tickerTask?.cancel()
         pedometer.stop()
-        state = .idle
-        lastError = nil
     }
 
     private func makePedometerTask(from start: Date) -> Task<Void, Never> {
@@ -86,10 +163,12 @@ final class ActiveWalkStore {
             for await sample in pedometer.startUpdates(start) {
                 await MainActor.run {
                     guard case .active(var session) = self.state else { return }
-                    session.steps = sample.steps
-                    session.distanceMeters = sample.distanceMeters
+                    self.segmentSteps = sample.steps
+                    self.segmentDistance = sample.distanceMeters
+                    session.steps = self.bankedSteps + sample.steps
+                    session.distanceMeters = self.bankedDistance + sample.distanceMeters
                     self.state = .active(session)
-                    Task { await self.pushLiveActivity(session: session) }
+                    Task { await self.pushLiveActivity(session: session, isPaused: false) }
                 }
             }
         }
@@ -101,13 +180,16 @@ final class ActiveWalkStore {
                 try? await clock.sleep(for: .seconds(1))
                 await MainActor.run {
                     guard case .active(var session) = self.state else { return }
-                    session.elapsed = self.date.now.timeIntervalSince(session.startedAt)
+                    session.elapsed = self.bankedElapsed
+                        + self.date.now.timeIntervalSince(self.segmentStart)
                     self.state = .active(session)
-                    Task { await self.pushLiveActivity(session: session) }
+                    Task { await self.pushLiveActivity(session: session, isPaused: false) }
                 }
             }
         }
     }
+
+    // MARK: - Live Activity
 
     private func startLiveActivity(startedAt: Date, minutesGoal: Int) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
@@ -121,13 +203,14 @@ final class ActiveWalkStore {
         )
     }
 
-    private func pushLiveActivity(session: WalkSession) async {
+    private func pushLiveActivity(session: WalkSession, isPaused: Bool) async {
         guard let liveActivity else { return }
         let state = WalkActivityAttributes.WalkActivityState(
             elapsed: session.elapsed,
             steps: session.steps,
             distanceKm: session.distanceKm,
-            activeCalories: session.estimatedCalories
+            activeCalories: session.estimatedCalories,
+            isPaused: isPaused
         )
         await liveActivity.update(ActivityContent(state: state, staleDate: nil))
     }
@@ -138,7 +221,8 @@ final class ActiveWalkStore {
             elapsed: session.elapsed,
             steps: session.steps,
             distanceKm: session.distanceKm,
-            activeCalories: session.estimatedCalories
+            activeCalories: session.estimatedCalories,
+            isPaused: false
         )
         await liveActivity.end(
             ActivityContent(state: finalState, staleDate: nil),
