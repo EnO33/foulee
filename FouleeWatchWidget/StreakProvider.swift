@@ -10,7 +10,13 @@ import WidgetKit
 struct StreakProvider: TimelineProvider {
     private static let goalMinutes = 20
     private static let historyDays = 30
-    private static let refreshInterval: TimeInterval = 2 * 60 * 60
+    /// Background refresh cadence. Widgets prefer apps to call
+    /// `WidgetCenter.shared.reloadAllTimelines()` from inside the app
+    /// when the underlying data changes; this fallback exists for the
+    /// case where the user never opens the app for a while. 1 h is a
+    /// reasonable upper bound for a streak counter — anything fresher
+    /// burns battery for marginal benefit.
+    private static let refreshInterval: TimeInterval = 60 * 60
 
     func placeholder(in context: Context) -> StreakEntry {
         .placeholder

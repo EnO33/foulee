@@ -2,6 +2,7 @@
 import Dependencies
 import Foundation
 import Observation
+import WidgetKit
 
 /// Owns the in-flight walk: starts/stops the pedometer stream, ticks the
 /// elapsed timer once a second, saves a `HKWorkout` on stop.
@@ -64,6 +65,11 @@ final class ActiveWalkStore {
         state = .finished(session)
         await runOrTrap { try await healthKit.saveWalkingWorkout(session) }
         await endLiveActivity(with: session)
+
+        // Today's walk just landed in HealthKit — push the streak +
+        // exercise-minute widgets to refresh right away rather than
+        // waiting for the next 1 h tick.
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     /// Return to idle so a second walk can be started in the same screen.

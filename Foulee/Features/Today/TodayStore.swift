@@ -1,6 +1,7 @@
 import Dependencies
 import Foundation
 import Observation
+import WidgetKit
 
 /// Owns the Today snapshot and refreshes it from HealthKit.
 ///
@@ -63,6 +64,12 @@ final class TodayStore {
         let weatherSnapshot = await weatherTask
         let history = await historyTask ?? []
         snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot, history: history)
+
+        // Force the streak widgets (iPhone Lock Screen + Home Screen +
+        // Watch complication) to refresh their timelines now that we
+        // have fresh history — otherwise they sit on the cached 0 for
+        // up to an hour after a walk.
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private func fetchWeatherIfAuthorized() async -> WeatherSnapshot? {
