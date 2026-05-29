@@ -23,13 +23,53 @@ final class TodayStore {
     @ObservationIgnored
     @Dependency(\.weather) private var weather
 
-    /// Defaults that don't (yet) come from HealthKit — overridable later
-    /// by the onboarding goal (PR#6).
-    var stepsGoal = 6_000
-    var minutesGoal = 20
+    /// Mirror of the user's preferences. TodayScreen calls
+    /// `apply(preferences:)` on mount and on every change so the hero
+    /// card, streak threshold and walk-window countdown stay in sync
+    /// with what the user picked in Onboarding / Settings.
+    private(set) var stepsGoal = 6_000
+    private(set) var minutesGoal = 20
+    private(set) var walkWindowStart = DateComponents(hour: 12, minute: 0)
 
     private var fallbackWeather: WeatherSnapshot {
         WeatherSnapshot(temperatureCelsius: 0, condition: "—", advice: "")
+    }
+
+    /// Copy goal + window from the user's preferences. Re-derives the
+    /// snapshot from the cached HealthKit history if any of them changed
+    /// so the ring, streak and countdown update immediately — no need to
+    /// wait for the next refresh.
+    func apply(preferences: UserPreferences) {
+        let newStepsGoal = preferences.stepsGoal
+        let newMinutesGoal = preferences.minutesGoal
+        let newWindow = DateComponents(
+            hour: preferences.walkWindowStart.hour,
+            minute: preferences.walkWindowStart.minute
+        )
+        let changed = newStepsGoal != stepsGoal
+            || newMinutesGoal != minutesGoal
+            || newWindow != walkWindowStart
+        stepsGoal = newStepsGoal
+        minutesGoal = newMinutesGoal
+        walkWindowStart = newWindow
+        if changed, let snapshot {
+            self.snapshot = TodaySnapshot(
+                date: snapshot.date,
+                steps: snapshot.steps,
+                stepsGoal: stepsGoal,
+                minutes: snapshot.minutes,
+                minutesGoal: minutesGoal,
+                distanceKm: snapshot.distanceKm,
+                calories: snapshot.calories,
+                streak: snapshot.streak,
+                bestStreak: snapshot.bestStreak,
+                weather: snapshot.weather,
+                weekMinutes: snapshot.weekMinutes,
+                weekGoal: minutesGoal,
+                walkWindowStart: walkWindowStart,
+                hasWalkedToday: snapshot.minutes >= minutesGoal
+            )
+        }
     }
 
     /// Ask for HealthKit + Location authorization and trigger an initial
@@ -104,7 +144,7 @@ final class TodayStore {
             weather: weather ?? snapshot?.weather ?? fallbackWeather,
             weekMinutes: currentWeekMinutes(history: history),
             weekGoal: minutesGoal,
-            walkWindowStart: DateComponents(hour: 12, minute: 0),
+            walkWindowStart: walkWindowStart,
             hasWalkedToday: metrics.activeMinutes >= minutesGoal
         )
     }
