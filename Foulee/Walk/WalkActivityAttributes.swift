@@ -18,6 +18,7 @@ struct WalkActivityAttributes: ActivityAttributes {
         var steps: Int
         var distanceKm: Double
         var activeCalories: Int
+        var isPaused = false
 
         static let zero = WalkActivityState(
             elapsed: 0,
