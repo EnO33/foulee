@@ -1,0 +1,82 @@
+name: Release
+
+# Push a tag like `v0.1.0` to build the app and ship it to TestFlight.
+# The marketing version comes from the tag; the build number is the commit
+# count (monotonic). See docs/RELEASE.md for the required secrets.
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    name: Build & upload to TestFlight
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # full history so the build number (commit count) is stable
+
+      - name: Select Xcode 26
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.0'
+
+      - name: Download watchOS platform (the iOS app embeds the Watch app)
+        run: |
+          for attempt in 1 2 3 4; do
+            echo "Attempt $attempt — downloading watchOS platform"
+            if sudo xcodebuild -downloadPlatform watchOS; then
+              exit 0
+            fi
+            echo "Attempt $attempt failed, sleeping 30s before retry"
+            sleep 30
+          done
+          echo "watchOS platform download failed after 4 attempts"
+          exit 1
+
+      - name: Install toolchain (Tuist) from mise.toml
+        uses: jdx/mise-action@v4
+
+      - name: Derive version + build number
+        id: ver
+        run: |
+          echo "marketing=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          echo "build=$(git rev-list --count HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Materialise signing assets from secrets
+        env:
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          DIST_CERT_P12_BASE64: ${{ secrets.DIST_CERT_P12_BASE64 }}
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+        run: |
+          set -euo pipefail
+          mkdir -p fastlane
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > fastlane/asc_key.p8
+          echo "$DIST_CERT_P12_BASE64" | base64 --decode > fastlane/dist_cert.p12
+          printf 'DEVELOPMENT_TEAM = %s\n' "$DEVELOPMENT_TEAM" > Local.xcconfig
+
+      - name: Tuist install + generate
+        run: |
+          tuist install
+          tuist generate --no-open
+
+      - name: Build & upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: ${{ github.workspace }}/fastlane/asc_key.p8
+          DIST_CERT_PATH: ${{ github.workspace }}/fastlane/dist_cert.p12
+          DIST_CERT_PASSWORD: ${{ secrets.DIST_CERT_PASSWORD }}
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+          FOULEE_MARKETING_VERSION: ${{ steps.ver.outputs.marketing }}
+          FOULEE_BUILD_NUMBER: ${{ steps.ver.outputs.build }}
+        run: fastlane release
+
+      - name: Tidy signing assets
+        if: always()
+        run: rm -f fastlane/asc_key.p8 fastlane/dist_cert.p12 Local.xcconfig
