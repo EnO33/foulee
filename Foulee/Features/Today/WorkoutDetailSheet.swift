@@ -100,7 +100,7 @@ struct WorkoutDetailSheet: View {
                     icon: FouleeIcon.distance,
                     tint: Color(hex: 0x0A84FF),
                     label: "Distance",
-                    value: distanceText(detail.summary.distanceKm)
+                    value: detail.summary.distanceKm.kmText()
                 )
                 metricCard(
                     icon: FouleeIcon.footsteps,
@@ -170,10 +170,6 @@ struct WorkoutDetailSheet: View {
     }
 
     // MARK: - Formatting
-
-    private func distanceText(_ km: Double) -> String {
-        String(format: "%.2f km", km).replacingOccurrences(of: ".", with: ",")
-    }
 
     private func paceText(_ detail: WorkoutDetail) -> String {
         guard let minPerKm = detail.paceMinPerKm else { return "—" }

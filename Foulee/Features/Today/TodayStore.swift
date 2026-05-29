@@ -153,22 +153,13 @@ final class TodayStore {
     /// the labels `L M M J V S D` in `TodayWeekBars`. Days that haven't
     /// happened yet (and days missing from the history) come out as 0.
     private func currentWeekMinutes(history: [DailyMinutes]) -> [Int] {
-        var calendar = Calendar(identifier: .iso8601)
-        calendar.firstWeekday = 2 // Monday (defensive: matches ISO 8601)
-        let today = calendar.startOfDay(for: .now)
-        let weekday = calendar.component(.weekday, from: today)
-        // ISO weekday: 1 = Sunday → offset 6 days back. 2 = Monday → 0. etc.
-        let mondayOffset = -((weekday + 5) % 7)
-        guard let monday = calendar.date(byAdding: .day, value: mondayOffset, to: today) else {
-            return Array(repeating: 0, count: 7)
-        }
+        let calendar = Calendar.iso8601Monday
         let byDay = Dictionary(uniqueKeysWithValues: history.map {
             (calendar.startOfDay(for: $0.date), $0.minutes)
         })
-        return (0..<7).map { offset in
-            let dayStart = calendar.date(byAdding: .day, value: offset, to: monday) ?? monday
-            return byDay[dayStart] ?? 0
-        }
+        let days = ISOWeek.days(containing: .now, calendar: calendar)
+        guard days.count == 7 else { return Array(repeating: 0, count: 7) }
+        return days.map { byDay[$0] ?? 0 }
     }
 
     private func runOrTrap<T: Sendable>(_ body: () async throws -> T) async -> T? {

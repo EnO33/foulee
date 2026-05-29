@@ -54,22 +54,12 @@ final class StatsStore {
     }
 
     private func currentWeekSlice() -> [DailyMinutes] {
-        var calendar = Calendar(identifier: .iso8601)
-        calendar.firstWeekday = 2
-        let today = calendar.startOfDay(for: .now)
-        let weekday = calendar.component(.weekday, from: today)
-        let mondayOffset = -((weekday + 5) % 7)
-        guard let monday = calendar.date(byAdding: .day, value: mondayOffset, to: today) else {
-            return []
-        }
+        let calendar = Calendar.iso8601Monday
         let byDay = Dictionary(uniqueKeysWithValues: history.map {
             (calendar.startOfDay(for: $0.date), $0.minutes)
         })
-        return (0..<7).compactMap { offset in
-            guard let dayStart = calendar.date(byAdding: .day, value: offset, to: monday) else {
-                return nil
-            }
-            return DailyMinutes(date: dayStart, minutes: byDay[dayStart] ?? 0)
+        return ISOWeek.days(containing: .now, calendar: calendar).map {
+            DailyMinutes(date: $0, minutes: byDay[$0] ?? 0)
         }
     }
 

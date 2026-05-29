@@ -128,7 +128,8 @@ let project = Project(
             ]),
             sources: [
                 "FouleeLiveActivity/**",
-                "Foulee/Walk/WalkActivityAttributes.swift"
+                "Foulee/Walk/WalkActivityAttributes.swift",
+                "Foulee/Shared/WalkFormatting.swift"
             ],
             resources: [
                 .glob(
@@ -157,7 +158,10 @@ let project = Project(
                 "NSHealthUpdateUsageDescription":
                     "Foulée enregistre tes marches du midi comme séances dans Santé."
             ]),
-            sources: ["FouleeWatch/**"],
+            sources: [
+                "FouleeWatch/**",
+                "Foulee/Shared/WalkFormatting.swift"
+            ],
             resources: [
                 .glob(
                     pattern: "FouleeWatch/Resources/**",
