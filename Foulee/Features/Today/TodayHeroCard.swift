@@ -12,11 +12,16 @@ struct TodayHeroCard: View {
     var onSnooze: (TimeInterval) -> Void
     var onToggleNotifications: () -> Void
 
+    /// 0 → 1 fill of the ring. Once the walk goal is hit for the day,
+    /// the ring is full regardless of step count (the `hasWalkedToday`
+    /// criterion is minute-based, but visually the user expects the
+    /// circle closed once they're done). Pending state is clamped so a
+    /// step count past the daily goal doesn't overshoot.
     private var progress: Double {
+        if snapshot.hasWalkedToday { return 1 }
         guard snapshot.stepsGoal > 0 else { return 0 }
-        return snapshot.hasWalkedToday
-            ? 0.86
-            : Double(snapshot.steps) / Double(snapshot.stepsGoal)
+        let ratio = Double(snapshot.steps) / Double(snapshot.stepsGoal)
+        return min(max(ratio, 0), 1)
     }
 
     var body: some View {
@@ -76,17 +81,56 @@ struct TodayHeroCard: View {
         } else {
             VStack(alignment: .leading, spacing: 10) {
                 Chip(
-                    label: "Marche dans 18 min",
+                    label: countdownLabel,
                     systemIcon: FouleeIcon.timer,
                     tint: FouleeColor.accentMid,
                     fill: FouleeColor.accentMid.opacity(0.16)
                 )
-                Text("Ta fenêtre de marche s'ouvre à \(Text("12:00").foregroundStyle(FouleeColor.accentMid))")
+                windowSentence
                     .font(FouleeFont.title3)
-                Text("Objectif : \(snapshot.minutesGoal) min · \(2_000) pas")
+                Text("Objectif : \(snapshot.minutesGoal) min · \(snapshot.stepsGoal.formattedFR) pas")
                     .font(FouleeFont.footnote)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    // MARK: - Walk window countdown
+
+    /// Minutes between `Date.now` and `snapshot.walkWindowStart` (today).
+    /// Negative when the window already opened today.
+    private var minutesUntilWindow: Int? {
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: .now)
+        components.hour = snapshot.walkWindowStart.hour
+        components.minute = snapshot.walkWindowStart.minute
+        guard let windowStart = calendar.date(from: components) else { return nil }
+        return Int(windowStart.timeIntervalSinceNow / 60)
+    }
+
+    private var formattedWindowStart: String {
+        guard let hour = snapshot.walkWindowStart.hour,
+              let minute = snapshot.walkWindowStart.minute else { return "—" }
+        return String(format: "%02d:%02d", hour, minute)
+    }
+
+    private var countdownLabel: String {
+        guard let minutes = minutesUntilWindow else { return "Marche du midi" }
+        if minutes <= 0 { return "C'est l'heure de bouger" }
+        if minutes < 60 { return "Marche dans \(minutes) min" }
+        let hours = minutes / 60
+        let remaining = minutes % 60
+        if remaining == 0 { return "Marche dans \(hours) h" }
+        return "Marche dans \(hours) h \(remaining)"
+    }
+
+    @ViewBuilder
+    private var windowSentence: some View {
+        let accent = Text(formattedWindowStart).foregroundStyle(FouleeColor.accentMid)
+        if let minutes = minutesUntilWindow, minutes <= 0 {
+            Text("Ta fenêtre est ouverte — départ depuis \(accent)")
+        } else {
+            Text("Ta fenêtre de marche s'ouvre à \(accent)")
         }
     }
 
