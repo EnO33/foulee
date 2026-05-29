@@ -152,6 +152,43 @@ struct ActiveWalkStoreTests {
         }
     }
 
+    @Test("the route records the fixes the location client streams")
+    @MainActor
+    func routeRecordsFixes() async {
+        let frozen = Date(timeIntervalSince1970: 1_700_000_000)
+        let fixes = [
+            Coordinate(latitude: 48.860, longitude: 2.330),
+            Coordinate(latitude: 48.861, longitude: 2.331),
+            Coordinate(latitude: 48.862, longitude: 2.332)
+        ]
+        await withDependencies {
+            $0.date = .constant(frozen)
+            $0.pedometer = .testValue
+            $0.healthKit = .testValue
+            $0.continuousClock = TestClock()
+            $0.location = LocationClient(
+                requestWhenInUse: { true },
+                currentLocation: { nil },
+                routeUpdates: {
+                    AsyncStream { continuation in
+                        for fix in fixes { continuation.yield(fix) }
+                        continuation.finish()
+                    }
+                }
+            )
+        } operation: {
+            let store = ActiveWalkStore()
+            store.start()
+            // Drain the immediate, finite route stream.
+            var spins = 0
+            while store.route.count < fixes.count, spins < 1_000 {
+                await Task.yield()
+                spins += 1
+            }
+            #expect(store.route == fixes)
+        }
+    }
+
     @Test("stop from a paused session still finalises and saves it")
     @MainActor
     func stopFromPausedSaves() async {

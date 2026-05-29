@@ -9,6 +9,7 @@ struct ActiveWalkScreen: View {
     var onDismiss: () -> Void
 
     @State private var store = ActiveWalkStore()
+    @State private var showRoute = false
 
     var body: some View {
         ZStack {
@@ -17,6 +18,9 @@ struct ActiveWalkScreen: View {
         }
         .onAppear { store.start(minutesGoal: minutesGoal) }
         .onDisappear { store.reset() }
+        .sheet(isPresented: $showRoute) {
+            WalkRouteMapView(route: store.route) { showRoute = false }
+        }
     }
 
     @ViewBuilder
@@ -173,7 +177,7 @@ struct ActiveWalkScreen: View {
                 }
             }
             controlButton(icon: FouleeIcon.location, color: Color(hex: 0x0A84FF), label: "Carte") {
-                // Map view ships in a later PR.
+                showRoute = true
             }
         }
         .padding(.bottom, 40)
