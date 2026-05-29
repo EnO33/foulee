@@ -46,6 +46,13 @@ fastlane/test_output
 *.env.local
 secrets/
 
+# Signing material decoded by the release workflow (never commit these)
+*.p8
+*.p12
+*.mobileprovision
+fastlane/asc_key.p8
+fastlane/dist_cert.p12
+
 # Local tooling state
 .claude/
 .cursor/

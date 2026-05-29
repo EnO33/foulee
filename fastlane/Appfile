@@ -1,0 +1,6 @@
+app_identifier("com.eno33.foulee")
+
+# Apple ID / team IDs aren't hard-coded: CI authenticates with an App Store
+# Connect API key (issuer + key id + .p8), and the Developer Portal team is
+# read from the DEVELOPMENT_TEAM env var. See docs/RELEASE.md.
+team_id(ENV["DEVELOPMENT_TEAM"]) if ENV["DEVELOPMENT_TEAM"]

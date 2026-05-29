@@ -1,0 +1,58 @@
+default_platform(:ios)
+
+# Foulée ships from CI only: `git tag v1.2.3 && git push --tags` runs the
+# release workflow, which calls `fastlane release`. Everything is driven by
+# environment variables set in .github/workflows/release.yml — see
+# docs/RELEASE.md for the secrets each one maps to.
+platform :ios do
+  desc "Build the iOS app (with its extensions + Watch app) and upload to TestFlight"
+  lane :release do
+    # Creates and unlocks a throwaway keychain on CI (no-op locally).
+    setup_ci
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: ENV.fetch("ASC_KEY_PATH"),
+      in_house: false
+    )
+
+    # Import the distribution certificate (.p12) into the CI keychain. The
+    # App Store provisioning profiles themselves are created/refreshed by
+    # Xcode via the API key (`-allowProvisioningUpdates` below), so we don't
+    # have to manage one profile per target by hand.
+    import_certificate(
+      certificate_path: ENV.fetch("DIST_CERT_PATH"),
+      certificate_password: ENV.fetch("DIST_CERT_PASSWORD"),
+      keychain_name: ENV.fetch("MATCH_KEYCHAIN_NAME", "fastlane_tmp_keychain"),
+      keychain_password: ENV.fetch("MATCH_KEYCHAIN_PASSWORD", "")
+    )
+
+    build_app(
+      workspace: "Foulee.xcworkspace",
+      scheme: "Foulee",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build",
+      output_name: "Foulee.ipa",
+      xcargs: [
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath", ENV.fetch("ASC_KEY_PATH"),
+        "-authenticationKeyID", ENV.fetch("ASC_KEY_ID"),
+        "-authenticationKeyIssuerID", ENV.fetch("ASC_ISSUER_ID"),
+        "MARKETING_VERSION=#{ENV.fetch('FOULEE_MARKETING_VERSION')}",
+        "CURRENT_PROJECT_VERSION=#{ENV.fetch('FOULEE_BUILD_NUMBER')}"
+      ].join(" "),
+      export_options: {
+        signingStyle: "automatic",
+        teamID: ENV.fetch("DEVELOPMENT_TEAM")
+      }
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true,
+      skip_submission: true
+    )
+  end
+end

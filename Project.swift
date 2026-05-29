@@ -39,6 +39,12 @@ let project = Project(
             "SWIFT_VERSION": "6.2",
             "SWIFT_STRICT_CONCURRENCY": "complete",
             "ENABLE_USER_SCRIPT_SANDBOXING": "YES",
+            // Version + build number shared by every target. The release CI
+            // overrides these on the xcodebuild command line (version from the
+            // git tag, build number from the commit count); locally they stay
+            // at the values below. Targets reference them via $(…) in Info.plist.
+            "MARKETING_VERSION": "0.1.0",
+            "CURRENT_PROJECT_VERSION": "1",
             // String catalog: extract Text("…") into Localizable.xcstrings at
             // build-time and generate type-safe Swift symbols for each key.
             "SWIFT_EMIT_LOC_STRINGS": "YES",
@@ -56,8 +62,8 @@ let project = Project(
             deploymentTargets: deploymentTargets,
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Foulée",
-                "CFBundleShortVersionString": "0.1.0",
-                "CFBundleVersion": "1",
+                "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+                "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
                 "UILaunchScreen": [:],
                 "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
                 "NSHealthShareUsageDescription":
@@ -68,7 +74,11 @@ let project = Project(
                     "Foulée compte tes pas en direct pendant la marche du midi.",
                 "NSLocationWhenInUseUsageDescription":
                     "Foulée utilise ta position pour afficher la météo de midi à ton endroit.",
-                "NSSupportsLiveActivities": true
+                "NSSupportsLiveActivities": true,
+                // Only standard HTTPS/system crypto — declare export-compliance
+                // exemption so TestFlight builds skip the manual encryption
+                // question on every upload.
+                "ITSAppUsesNonExemptEncryption": false
             ]),
             sources: ["Foulee/**"],
             resources: [
@@ -78,7 +88,10 @@ let project = Project(
             dependencies: [
                 .package(product: "Dependencies"),
                 .target(name: "FouleeLiveActivity"),
-                .target(name: "FouleeWidget")
+                .target(name: "FouleeWidget"),
+                // Embeds the watchOS companion app into the iOS app so it
+                // ships in the same App Store submission.
+                .target(name: "FouleeWatch")
             ]
         ),
         .target(
@@ -89,8 +102,8 @@ let project = Project(
             deploymentTargets: deploymentTargets,
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Foulée Série",
-                "CFBundleShortVersionString": "0.1.0",
-                "CFBundleVersion": "1",
+                "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+                "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
                 "NSExtension": [
                     "NSExtensionPointIdentifier": "com.apple.widgetkit-extension"
                 ]
@@ -120,8 +133,8 @@ let project = Project(
             deploymentTargets: deploymentTargets,
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Foulée Marche",
-                "CFBundleShortVersionString": "0.1.0",
-                "CFBundleVersion": "1",
+                "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+                "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
                 "NSExtension": [
                     "NSExtensionPointIdentifier": "com.apple.widgetkit-extension"
                 ]
@@ -148,8 +161,8 @@ let project = Project(
             deploymentTargets: .watchOS("26.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Foulée",
-                "CFBundleShortVersionString": "0.1.0",
-                "CFBundleVersion": "1",
+                "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+                "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
                 "WKApplication": true,
                 "WKWatchOnly": false,
                 "WKCompanionAppBundleIdentifier": .string(bundleIdBase),
@@ -181,8 +194,8 @@ let project = Project(
             deploymentTargets: .watchOS("26.0"),
             infoPlist: .extendingDefault(with: [
                 "CFBundleDisplayName": "Foulée Série",
-                "CFBundleShortVersionString": "0.1.0",
-                "CFBundleVersion": "1",
+                "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+                "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
                 "NSExtension": [
                     "NSExtensionPointIdentifier": "com.apple.widgetkit-extension"
                 ]

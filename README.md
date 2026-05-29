@@ -98,6 +98,19 @@ Source language is **French**. To add English (or any other locale):
 
 Existing `Text("…")` calls don't need any change — SwiftUI's `Text` already accepts `LocalizedStringKey`, so the catalog lookup is automatic.
 
+## Release
+
+Foulée ships to **TestFlight automatically** when you push a version tag:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The version comes from the tag, the build number from the commit count. See
+[docs/RELEASE.md](docs/RELEASE.md) for the one-time App Store Connect setup and
+the GitHub secrets the workflow needs.
+
 ## Conventions
 
 - **Commits** — [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`, `ci:`)
