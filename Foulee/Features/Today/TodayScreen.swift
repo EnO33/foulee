@@ -15,6 +15,13 @@ struct TodayScreen: View {
     var body: some View {
         content
             .task { await store.bootstrap() }
+            .task(id: preferencesKey) {
+                // Push the user's current goals + walk-window into the
+                // store on first appear and whenever they change.
+                // `apply` re-derives the snapshot from cached history
+                // so the ring, streak and countdown update immediately.
+                store.apply(preferences: preferences)
+            }
             .fullScreenCover(isPresented: $isWalking) {
                 ActiveWalkScreen(minutesGoal: store.minutesGoal) {
                     isWalking = false
@@ -24,6 +31,12 @@ struct TodayScreen: View {
             .sheet(isPresented: $isShowingSummary) {
                 TodayWorkoutsSheet()
             }
+    }
+
+    /// Single value that flips whenever any preference the store reads
+    /// changes — drives the `.task(id:)` re-sync.
+    private var preferencesKey: String {
+        "\(preferences.stepsGoal)-\(preferences.minutesGoal)-\(preferences.walkWindowStart.rawMinutes)"
     }
 
     @ViewBuilder

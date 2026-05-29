@@ -44,9 +44,6 @@
     "10 minutes avant ta fenêtre, sur les jours actifs." : {
 
     },
-    "12:00" : {
-
-    },
     "60 min" : {
 
     },
@@ -170,8 +167,15 @@
     "Objectif" : {
 
     },
-    "Objectif : %lld min · %lld pas" : {
-
+    "Objectif : %lld min · %@ pas" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Objectif : %1$lld min · %2$@ pas"
+          }
+        }
+      }
     },
     "Objectif %lld min" : {
 
@@ -231,6 +235,9 @@
 
     },
     "Ta fenêtre de marche s'ouvre à %@" : {
+
+    },
+    "Ta fenêtre est ouverte — départ depuis %@" : {
 
     },
     "Temps" : {
