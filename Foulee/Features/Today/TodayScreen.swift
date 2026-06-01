@@ -54,8 +54,14 @@ struct TodayScreen: View {
                 header(date: snapshot.date)
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
-                if let lastError = store.lastError {
-                    errorBanner(message: lastError)
+                if snapshot.hasNoActivity {
+                    emptyStateCard
+                        .padding(.horizontal, 20)
+                } else if store.lastError != nil {
+                    // A real fetch failed while we *do* have something to show.
+                    // The empty case is handled by the card above, so we never
+                    // surface both at once.
+                    errorBanner
                         .padding(.horizontal, 20)
                 }
                 TodayHeroCard(
@@ -94,7 +100,7 @@ struct TodayScreen: View {
         }
     }
 
-    private func errorBanner(message: String) -> some View {
+    private var errorBanner: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 16))
@@ -102,7 +108,7 @@ struct TodayScreen: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Données partiellement indisponibles")
                     .font(FouleeFont.footnote.weight(.semibold))
-                Text(message)
+                Text("Vérifie l'accès à Santé dans Réglages, puis réessaie.")
                     .font(FouleeFont.caption)
                     .foregroundStyle(.secondary)
             }
@@ -110,6 +116,35 @@ struct TodayScreen: View {
         }
         .padding(12)
         .fouleeGlass(cornerRadius: 16)
+    }
+
+    /// Shown on a fresh install / denied access / no activity yet, instead of
+    /// a screen full of muted zeros.
+    private var emptyStateCard: some View {
+        VStack(spacing: 12) {
+            Image(systemName: FouleeIcon.walkMotion)
+                .font(.system(size: 40, weight: .semibold))
+                .foregroundStyle(FouleeColor.accentMid)
+            Text("Pas encore de données")
+                .font(FouleeFont.headline)
+            Text("Connecte Santé et fais quelques pas — ta marche du midi s'affichera ici.")
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button {
+                if let url = URL(string: "x-apple-health://") {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                Text("Ouvrir Santé")
+                    .font(FouleeFont.footnote.weight(.semibold))
+                    .foregroundStyle(FouleeColor.accentMid)
+            }
+            .buttonStyle(.pressable)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(24)
+        .fouleeGlass(cornerRadius: 24)
     }
 
     private func header(date: Date) -> some View {
