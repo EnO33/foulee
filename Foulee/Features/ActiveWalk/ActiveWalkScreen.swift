@@ -21,6 +21,20 @@ struct ActiveWalkScreen: View {
         .sheet(isPresented: $showRoute) {
             WalkRouteMapView(route: store.route) { showRoute = false }
         }
+        // Haptics: a tap when the walk starts or resumes, a success buzz when
+        // it's finished. The closure form fires only on the rising edge.
+        .sensoryFeedback(trigger: isActiveState) { _, now in now ? .impact(weight: .medium) : nil }
+        .sensoryFeedback(trigger: isFinishedState) { _, now in now ? .success : nil }
+    }
+
+    private var isActiveState: Bool {
+        if case .active = store.state { return true }
+        return false
+    }
+
+    private var isFinishedState: Bool {
+        if case .finished = store.state { return true }
+        return false
     }
 
     @ViewBuilder
@@ -53,9 +67,13 @@ struct ActiveWalkScreen: View {
     private func finishedBody(session: WalkSession) -> some View {
         VStack(spacing: 24) {
             Spacer()
-            Image(systemName: FouleeIcon.check)
-                .font(.system(size: 84, weight: .bold))
-                .foregroundStyle(FouleeColor.accentGradient)
+            ZStack {
+                CelebrationBurst()
+                Image(systemName: FouleeIcon.check)
+                    .font(.system(size: 84, weight: .bold))
+                    .foregroundStyle(FouleeColor.accentGradient)
+                    .symbolEffect(.bounce, value: isFinishedState)
+            }
             Text("Marche terminée")
                 .font(FouleeFont.title2)
             VStack(spacing: 4) {
