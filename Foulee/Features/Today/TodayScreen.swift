@@ -36,7 +36,7 @@ struct TodayScreen: View {
     /// Single value that flips whenever any preference the store reads
     /// changes — drives the `.task(id:)` re-sync.
     private var preferencesKey: String {
-        "\(preferences.stepsGoal)-\(preferences.minutesGoal)-\(preferences.walkWindowStart.rawMinutes)"
+        "\(preferences.stepsGoal)-\(preferences.minutesGoal)-\(preferences.walkWindowStart.rawMinutes)-\(preferences.activeDays.bitmask)"
     }
 
     @ViewBuilder
@@ -81,7 +81,7 @@ struct TodayScreen: View {
                     .padding(.horizontal, 20)
                 TodayStatsGrid(snapshot: snapshot)
                     .padding(.horizontal, 20)
-                TodayWeekBars(snapshot: snapshot)
+                TodayWeekBars(snapshot: snapshot, activeDays: preferences.activeDays)
                     .padding(.horizontal, 20)
             }
             .padding(.bottom, 120)

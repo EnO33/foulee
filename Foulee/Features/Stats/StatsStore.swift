@@ -63,12 +63,21 @@ final class StatsStore {
         }
     }
 
-    func currentStreak(goalMinutes: Int, today: Date = .now) -> Int {
-        StreakCalculator.current(history: history, goalMinutes: goalMinutes, today: today)
+    func currentStreak(goalMinutes: Int, activeDays: Set<Weekday>, today: Date = .now) -> Int {
+        StreakCalculator.current(
+            history: history,
+            goalMinutes: goalMinutes,
+            activeWeekdays: activeDays.calendarWeekdays,
+            today: today
+        )
     }
 
-    func bestStreak(goalMinutes: Int) -> Int {
-        StreakCalculator.best(history: history, goalMinutes: goalMinutes)
+    func bestStreak(goalMinutes: Int, activeDays: Set<Weekday>) -> Int {
+        StreakCalculator.best(
+            history: history,
+            goalMinutes: goalMinutes,
+            activeWeekdays: activeDays.calendarWeekdays
+        )
     }
 
     func totalWalks(goalMinutes: Int) -> Int {

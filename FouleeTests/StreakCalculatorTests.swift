@@ -51,6 +51,51 @@ struct StreakCalculatorTests {
         #expect(StreakCalculator.best(history: history, goalMinutes: 20) == 0)
     }
 
+    // Monday → Friday in Calendar's weekday numbering (Sunday = 1).
+    private let workWeekdays: Set<Int> = [2, 3, 4, 5, 6]
+
+    @Test("Weekend rest days don't break a Mon–Fri streak")
+    func restDaysSkip() {
+        // 10 days up to Monday: Sat, Sun, Mon…Fri, Sat, Sun, Mon(today).
+        let values = [0, 0, 25, 25, 25, 25, 25, 0, 0, 25]
+        let history = days(values: values, endingAt: today)
+        // Mon(today) + Fri…Mon = 6 active days met; weekends are skipped.
+        #expect(
+            StreakCalculator.current(
+                history: history, goalMinutes: 20, activeWeekdays: workWeekdays,
+                today: today, calendar: calendar
+            ) == 6
+        )
+        // Without active-day awareness the Sunday gap breaks it at 1.
+        #expect(
+            StreakCalculator.current(history: history, goalMinutes: 20, today: today, calendar: calendar) == 1
+        )
+    }
+
+    @Test("A missed active day still breaks the streak")
+    func missedActiveDayBreaks() {
+        // Same window, but Friday is missed.
+        let values = [0, 0, 25, 25, 25, 25, 0, 0, 0, 25]
+        let history = days(values: values, endingAt: today)
+        #expect(
+            StreakCalculator.current(
+                history: history, goalMinutes: 20, activeWeekdays: workWeekdays,
+                today: today, calendar: calendar
+            ) == 1
+        )
+    }
+
+    @Test("best counts the longest active-day run across weekends")
+    func bestSkipsWeekends() {
+        let values = [0, 0, 25, 25, 25, 25, 25, 0, 0, 25]
+        let history = days(values: values, endingAt: today)
+        #expect(
+            StreakCalculator.best(
+                history: history, goalMinutes: 20, activeWeekdays: workWeekdays, calendar: calendar
+            ) == 6
+        )
+    }
+
     private func days(values: [Int], endingAt today: Date) -> [DailyMinutes] {
         let startOfToday = calendar.startOfDay(for: today)
         return values.enumerated().map { offset, minutes in

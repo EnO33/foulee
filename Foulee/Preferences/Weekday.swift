@@ -27,6 +27,10 @@ enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
 
     /// Default "weekday" set used at onboarding (Mon → Fri).
     static let workWeek: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
+
+    /// This day in `Calendar`'s numbering (1 = Sunday … 7 = Saturday), to feed
+    /// `StreakCalculator` and `Calendar.component(.weekday:)`.
+    var calendarWeekday: Int { (rawValue % 7) + 1 }
 }
 
 extension Set where Element == Weekday {
@@ -37,5 +41,13 @@ extension Set where Element == Weekday {
 
     init(bitmask: Int) {
         self = Set(Weekday.allCases.filter { bitmask & (1 << ($0.rawValue - 1)) != 0 })
+    }
+
+    /// The set mapped to `Calendar` weekday numbers — what `StreakCalculator`
+    /// expects for `activeWeekdays`.
+    var calendarWeekdays: Set<Int> {
+        var result = Set<Int>()
+        for day in self { result.insert(day.calendarWeekday) }
+        return result
     }
 }

@@ -4,8 +4,14 @@ import SwiftUI
 /// "X / 5 marches" chip and weekday labels.
 struct TodayWeekBars: View {
     var snapshot: TodaySnapshot
+    var activeDays: Set<Weekday>
     private let labels = ["L", "M", "M", "J", "V", "S", "D"]
     private let dayNames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+
+    /// weekMinutes is Monday-first, so index 0 maps to `Weekday.monday` (raw 1).
+    private func isActive(dayIndex index: Int) -> Bool {
+        Weekday(rawValue: index + 1).map(activeDays.contains) ?? false
+    }
 
     private var weekSpokenSummary: String {
         zip(dayNames, snapshot.weekMinutes)
@@ -19,8 +25,11 @@ struct TodayWeekBars: View {
         return weekday == 1 ? 6 : weekday - 2
     }
 
+    /// Active days this week whose goal was met — the numerator of the chip.
     private var completedCount: Int {
-        snapshot.weekMinutes.filter { $0 >= snapshot.weekGoal }.count
+        snapshot.weekMinutes.enumerated().filter { index, minutes in
+            isActive(dayIndex: index) && minutes >= snapshot.weekGoal
+        }.count
     }
 
     var body: some View {
@@ -30,7 +39,7 @@ struct TodayWeekBars: View {
                     .font(FouleeFont.headline)
                 Spacer()
                 Chip(
-                    label: "\(completedCount) / 5 marches",
+                    label: "\(completedCount) / \(activeDays.count) marches",
                     systemIcon: FouleeIcon.check,
                     tint: FouleeColor.success,
                     fill: Color.gray.opacity(0.16)
@@ -52,7 +61,7 @@ struct TodayWeekBars: View {
                     let height = maxValue > 0
                         ? CGFloat(value) / CGFloat(maxValue) * proxy.size.height
                         : 0
-                    bar(height: height, isToday: index == todayIndex)
+                    bar(height: height, isToday: index == todayIndex, isActive: isActive(dayIndex: index))
                 }
             }
         }
@@ -62,13 +71,14 @@ struct TodayWeekBars: View {
         .accessibilityValue(weekSpokenSummary)
     }
 
-    private func bar(height: CGFloat, isToday: Bool) -> some View {
+    private func bar(height: CGFloat, isToday: Bool, isActive: Bool) -> some View {
         ZStack(alignment: .bottom) {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Color.gray.opacity(0.12))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(FouleeColor.accentGradient)
+                // Rest days are muted grey so the planned (active) days pop.
+                .fill(isActive ? AnyShapeStyle(FouleeColor.accentGradient) : AnyShapeStyle(Color.gray.opacity(0.3)))
                 .frame(maxWidth: .infinity)
                 .frame(height: max(height, 4))
                 .opacity(height > 0 ? 1 : 0)

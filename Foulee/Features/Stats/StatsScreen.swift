@@ -16,8 +16,14 @@ struct StatsScreen: View {
                 rangePicker
                     .padding(.horizontal, 20)
                 StreakHeroCard(
-                    currentStreak: store.currentStreak(goalMinutes: preferences.minutesGoal),
-                    bestStreak: store.bestStreak(goalMinutes: preferences.minutesGoal)
+                    currentStreak: store.currentStreak(
+                        goalMinutes: preferences.minutesGoal,
+                        activeDays: preferences.activeDays
+                    ),
+                    bestStreak: store.bestStreak(
+                        goalMinutes: preferences.minutesGoal,
+                        activeDays: preferences.activeDays
+                    )
                 )
                 .padding(.horizontal, 20)
                 StatsChartCard(
