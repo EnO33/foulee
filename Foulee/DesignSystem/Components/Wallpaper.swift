@@ -20,6 +20,10 @@ struct Wallpaper: View {
             }
         }
         .ignoresSafeArea()
+        // Flatten the four 70pt-blurred circles into one cached Metal texture
+        // so the glass materials on top sample a flat layer instead of forcing
+        // a live blur composite on every scroll frame.
+        .drawingGroup()
         .accessibilityHidden(true)
     }
 

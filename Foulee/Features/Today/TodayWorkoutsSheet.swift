@@ -12,9 +12,15 @@ struct TodayWorkoutsSheet: View {
 
     @Dependency(\.healthKit) private var healthKit
 
-    @State private var workouts: [WorkoutSummary] = []
+    @State private var sections: [DaySection] = []
     @State private var isLoading = true
     @State private var lastError: String?
+
+    struct DaySection: Identifiable {
+        let day: Date
+        let workouts: [WorkoutSummary]
+        var id: Date { day }
+    }
 
     var body: some View {
         NavigationStack {
@@ -50,7 +56,7 @@ struct TodayWorkoutsSheet: View {
         } else {
             ScrollView {
                 VStack(spacing: 22) {
-                    ForEach(daySections, id: \.day) { section in
+                    ForEach(sections) { section in
                         daySectionView(day: section.day, workouts: section.workouts)
                     }
                     healthAppLink
@@ -190,46 +196,56 @@ struct TodayWorkoutsSheet: View {
         isLoading = true
         defer { isLoading = false }
         do {
-            workouts = try await healthKit.recentWorkouts(Self.daysBack)
+            let workouts = try await healthKit.recentWorkouts(Self.daysBack)
+            // Group once, here — not in a `body`-evaluated computed property.
+            sections = Self.groupByDay(workouts)
         } catch {
             lastError = error.localizedDescription
-            workouts = []
+            sections = []
         }
     }
 
     // MARK: - Grouping
 
-    private var daySections: [(day: Date, workouts: [WorkoutSummary])] {
+    private static func groupByDay(_ workouts: [WorkoutSummary]) -> [DaySection] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
-        let dayStarts = (0..<Self.daysBack).compactMap { offset in
+        let dayStarts = (0..<daysBack).compactMap { offset in
             calendar.date(byAdding: .day, value: -offset, to: today)
         }
         let byDay = Dictionary(grouping: workouts) {
             calendar.startOfDay(for: $0.startedAt)
         }
         return dayStarts.map { day in
-            (day: day, workouts: byDay[day] ?? [])
+            DaySection(day: day, workouts: byDay[day] ?? [])
         }
     }
 
     // MARK: - Formatting
 
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "EEEE d MMMM"
+        return formatter
+    }()
+
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
+
     private func dayLabel(_ date: Date) -> String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) { return "Aujourd'hui" }
         if calendar.isDateInYesterday(date) { return "Hier" }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "EEEE d MMMM"
-        return formatter.string(from: date)
+        return Self.dayFormatter.string(from: date)
     }
 
     private func timeRange(_ workout: WorkoutSummary) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "HH:mm"
-        return "\(formatter.string(from: workout.startedAt)) → \(formatter.string(from: workout.endedAt))"
+        "\(Self.timeFormatter.string(from: workout.startedAt)) → \(Self.timeFormatter.string(from: workout.endedAt))"
     }
 
     private func durationText(_ seconds: TimeInterval) -> String {

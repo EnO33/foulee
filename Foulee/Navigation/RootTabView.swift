@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Top-level tab container. Owns the wallpaper + bottom nav and keeps
-/// the three feature screens mounted simultaneously, flipping opacity
-/// instead of swapping the view tree. This avoids destroying/recreating
-/// each screen (and re-running their `.task` data fetches) on every tab
-/// tap — what made the nav feel sluggish.
+/// Top-level tab container. A `TabView` renders only the **selected** screen
+/// each frame (the previous design kept all three mounted and composited at
+/// once, tripling the glass/shadow cost), while still preserving each tab's
+/// state between visits — so there's no re-fetch on tab taps. The system tab
+/// bar is hidden in favour of the custom `BottomNav`, and the shared
+/// `Wallpaper` sits behind the transparent tab content.
 struct RootTabView: View {
     @Bindable var preferences: UserPreferences
     @State private var activeTab: BottomNavTab = .today
@@ -12,27 +13,20 @@ struct RootTabView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             Wallpaper()
-            screen(.today) { TodayScreen() }
-            screen(.stats) { StatsScreen(preferences: preferences) }
-            screen(.settings) { SettingsScreen(preferences: preferences) }
+            TabView(selection: $activeTab) {
+                TodayScreen()
+                    .tag(BottomNavTab.today)
+                    .toolbar(.hidden, for: .tabBar)
+                StatsScreen(preferences: preferences)
+                    .tag(BottomNavTab.stats)
+                    .toolbar(.hidden, for: .tabBar)
+                SettingsScreen(preferences: preferences)
+                    .tag(BottomNavTab.settings)
+                    .toolbar(.hidden, for: .tabBar)
+            }
             BottomNav(active: $activeTab)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 32)
         }
-        .animation(.easeOut(duration: 0.2), value: activeTab)
-    }
-
-    /// Wraps a feature screen in an `opacity` + `allowsHitTesting` pair
-    /// keyed on whether it's the active tab. Inactive screens stay in
-    /// the view tree (no re-fetch on next visit) but don't intercept
-    /// touches.
-    private func screen<Content: View>(
-        _ tab: BottomNavTab,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        let isActive = activeTab == tab
-        return content()
-            .opacity(isActive ? 1 : 0)
-            .allowsHitTesting(isActive)
     }
 }

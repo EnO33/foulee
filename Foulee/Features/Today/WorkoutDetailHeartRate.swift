@@ -11,24 +11,31 @@ import SwiftUI
 /// for rendering only — min/avg/max are still computed on the full
 /// set in `WorkoutDetail`, so accuracy isn't affected.
 struct WorkoutDetailHeartRate: View {
-    private static let maxChartPoints = 80
+    private static let maxChartPoints = 60
 
     let detail: WorkoutDetail
+
+    /// Downsampled once at init — not recomputed on every `body` evaluation.
+    private let chartSamples: [HeartRateSample]
+
+    init(detail: WorkoutDetail) {
+        self.detail = detail
+        self.chartSamples = Self.downsample(detail.heartRateSamples)
+    }
+
+    private static func downsample(_ all: [HeartRateSample]) -> [HeartRateSample] {
+        guard all.count > maxChartPoints else { return all }
+        let step = max(all.count / maxChartPoints, 1)
+        return all.enumerated().compactMap { offset, sample in
+            offset % step == 0 ? sample : nil
+        }
+    }
 
     private var heartRateSummary: String {
         func bpm(_ value: Int?) -> String { value.map { "\($0)" } ?? "indisponible" }
         return "Minimum \(bpm(detail.minHeartRate)), "
             + "moyenne \(bpm(detail.averageHeartRate)), "
             + "maximum \(bpm(detail.maxHeartRate)) battements par minute"
-    }
-
-    private var chartSamples: [HeartRateSample] {
-        let all = detail.heartRateSamples
-        guard all.count > Self.maxChartPoints else { return all }
-        let step = max(all.count / Self.maxChartPoints, 1)
-        return all.enumerated().compactMap { offset, sample in
-            offset % step == 0 ? sample : nil
-        }
     }
 
     var body: some View {

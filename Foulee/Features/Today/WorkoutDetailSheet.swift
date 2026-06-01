@@ -19,18 +19,19 @@ struct WorkoutDetailSheet: View {
     @State private var lastError: String?
 
     var body: some View {
-        ZStack {
-            SheetBackground()
-            content
-        }
-        .navigationTitle("Détail")
-        .navigationBarTitleDisplayMode(.inline)
-        .task {
-            // Let the push animation finish before hitting HealthKit so
-            // the query doesn't compete with the slide on the MainActor.
-            try? await Task.sleep(for: .milliseconds(300))
-            await load()
-        }
+        // No background here on purpose: this view is pushed inside the
+        // summary sheet's NavigationStack, which already provides the opaque
+        // `SheetBackground` via `.presentationBackground`. Drawing a second
+        // full-screen gradient here just doubled the work each frame.
+        content
+            .navigationTitle("Détail")
+            .navigationBarTitleDisplayMode(.inline)
+            .task {
+                // Let the push animation finish before hitting HealthKit so
+                // the query doesn't compete with the slide on the MainActor.
+                try? await Task.sleep(for: .milliseconds(300))
+                await load()
+            }
     }
 
     @ViewBuilder
