@@ -30,6 +30,11 @@ final class TodayStore {
     private(set) var stepsGoal = 6_000
     private(set) var minutesGoal = 20
     private(set) var walkWindowStart = DateComponents(hour: 12, minute: 0)
+    private(set) var activeDays: Set<Weekday> = Weekday.workWeek
+
+    /// Last fetched history, kept so `apply(preferences:)` can re-derive the
+    /// streaks immediately when the goal or active days change.
+    @ObservationIgnored private var cachedHistory: [DailyMinutes] = []
 
     private var fallbackWeather: WeatherSnapshot {
         WeatherSnapshot(temperatureCelsius: 0, condition: "—", advice: "")
@@ -49,9 +54,14 @@ final class TodayStore {
         let changed = newStepsGoal != stepsGoal
             || newMinutesGoal != minutesGoal
             || newWindow != walkWindowStart
+            || preferences.activeDays != activeDays
         stepsGoal = newStepsGoal
         minutesGoal = newMinutesGoal
         walkWindowStart = newWindow
+        activeDays = preferences.activeDays
+        // Re-derive from the cached history: changing the goal or the active
+        // days changes both the ring threshold and which missed days break the
+        // streak, so recompute the streaks rather than copying the old ones.
         if changed, let snapshot {
             self.snapshot = TodaySnapshot(
                 date: snapshot.date,
@@ -61,8 +71,17 @@ final class TodayStore {
                 minutesGoal: minutesGoal,
                 distanceKm: snapshot.distanceKm,
                 calories: snapshot.calories,
-                streak: snapshot.streak,
-                bestStreak: snapshot.bestStreak,
+                streak: StreakCalculator.current(
+                    history: cachedHistory,
+                    goalMinutes: minutesGoal,
+                    activeWeekdays: activeDays.calendarWeekdays,
+                    today: .now
+                ),
+                bestStreak: StreakCalculator.best(
+                    history: cachedHistory,
+                    goalMinutes: minutesGoal,
+                    activeWeekdays: activeDays.calendarWeekdays
+                ),
                 weather: snapshot.weather,
                 weekMinutes: snapshot.weekMinutes,
                 weekGoal: minutesGoal,
@@ -103,6 +122,7 @@ final class TodayStore {
         let metrics = await metricsTask ?? .zero
         let weatherSnapshot = await weatherTask
         let history = await historyTask ?? []
+        cachedHistory = history
         snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot, history: history)
 
         // Force the streak widgets (iPhone Lock Screen + Home Screen +
@@ -125,11 +145,13 @@ final class TodayStore {
         let currentStreak = StreakCalculator.current(
             history: history,
             goalMinutes: minutesGoal,
+            activeWeekdays: activeDays.calendarWeekdays,
             today: .now
         )
         let bestStreak = StreakCalculator.best(
             history: history,
-            goalMinutes: minutesGoal
+            goalMinutes: minutesGoal,
+            activeWeekdays: activeDays.calendarWeekdays
         )
         return TodaySnapshot(
             date: .now,
