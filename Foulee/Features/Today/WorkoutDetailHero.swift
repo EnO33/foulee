@@ -32,22 +32,30 @@ struct WorkoutDetailHero: View {
         .fouleeGlass(cornerRadius: 26)
     }
 
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "EEEE d MMMM"
+        return formatter
+    }()
+
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
+
     private var dateLabel: String {
         let calendar = Calendar.current
         let date = detail.summary.startedAt
         if calendar.isDateInToday(date) { return "Aujourd'hui" }
         if calendar.isDateInYesterday(date) { return "Hier" }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "EEEE d MMMM"
-        return formatter.string(from: date).uppercased()
+        return Self.dayFormatter.string(from: date).uppercased()
     }
 
     private var timeRange: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "HH:mm"
-        return "\(formatter.string(from: detail.summary.startedAt)) → \(formatter.string(from: detail.summary.endedAt))"
+        "\(Self.timeFormatter.string(from: detail.summary.startedAt)) → \(Self.timeFormatter.string(from: detail.summary.endedAt))"
     }
 
     private var durationText: String {

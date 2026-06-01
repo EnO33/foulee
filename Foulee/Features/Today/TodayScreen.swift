@@ -124,11 +124,15 @@ struct TodayScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func formatted(date: Date) -> String {
+    private static let headerDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "fr_FR")
         formatter.dateFormat = "EEEE d MMMM"
-        return formatter.string(from: date).uppercased()
+        return formatter
+    }()
+
+    private func formatted(date: Date) -> String {
+        Self.headerDateFormatter.string(from: date).uppercased()
     }
 
     /// "Démarrer la marche" → push the active walk sheet.

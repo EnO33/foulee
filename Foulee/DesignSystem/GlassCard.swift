@@ -27,8 +27,13 @@ struct GlassCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(
+                // A single shadow cast by the *shape* (not the whole content):
+                // the offscreen pass rasterises only this rounded rectangle, not
+                // the material + text on top of it. Halves the offscreen passes
+                // per card and keeps the look. Big win when many cards scroll.
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(material)
+                    .shadow(color: .black.opacity(shadowOpacity), radius: 12, x: 0, y: 6)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -44,8 +49,6 @@ struct GlassCardModifier: ViewModifier {
                         lineWidth: 0.5
                     )
             )
-            .shadow(color: .black.opacity(shadowOpacity), radius: 18, x: 0, y: 8)
-            .shadow(color: .black.opacity(shadowOpacity / 2), radius: 2, x: 0, y: 1)
     }
 }
 
