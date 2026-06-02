@@ -7,14 +7,16 @@ enum MetricRange: String, CaseIterable, Identifiable, Sendable {
     case today
     case week
     case month
+    case year
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .today: "Aujourd'hui"
+        case .today: "Auj."
         case .week: "Semaine"
         case .month: "Mois"
+        case .year: "Année"
         }
     }
 
@@ -24,6 +26,7 @@ enum MetricRange: String, CaseIterable, Identifiable, Sendable {
         case .today: 1
         case .week: 7
         case .month: 30
+        case .year: 365
         }
     }
 }
@@ -54,7 +57,7 @@ final class MetricStatsStore {
         switch range {
         case .today:
             loaded = await runOrTrap { try await healthKit.hourlyToday(metric) }
-        case .week, .month:
+        case .week, .month, .year:
             loaded = await runOrTrap { try await healthKit.metricSeries(metric, range.daysBack) }
         }
         points = loaded ?? []
