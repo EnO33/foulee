@@ -108,9 +108,105 @@ extension HealthKitClient {
             },
             workoutDetail: { summary in
                 try await fetchWorkoutDetail(for: summary, store: store)
+            },
+            metricSeries: { metric, daysBack in
+                try await metricCollection(store: store, metric: metric, daysBack: daysBack)
+            },
+            hourlyToday: { metric in
+                try await metricHourlyToday(store: store, metric: metric)
             }
         )
     }()
+}
+
+/// HealthKit quantity type, unit and scale factor for a `WalkMetric`. The
+/// scale converts the raw HK unit into the metric's display unit (distance:
+/// metres → km).
+private struct HKMetricMapping {
+    let type: HKQuantityType
+    let unit: HKUnit
+    let scale: Double
+}
+
+private func hkMapping(for metric: WalkMetric) -> HKMetricMapping {
+    switch metric {
+    case .steps: HKMetricMapping(type: HKQuantityType(.stepCount), unit: .count(), scale: 1)
+    case .minutes: HKMetricMapping(type: HKQuantityType(.appleExerciseTime), unit: .minute(), scale: 1)
+    case .distance: HKMetricMapping(type: HKQuantityType(.distanceWalkingRunning), unit: .meter(), scale: 1.0 / 1_000)
+    case .calories: HKMetricMapping(type: HKQuantityType(.activeEnergyBurned), unit: .kilocalorie(), scale: 1)
+    }
+}
+
+/// Daily buckets of `metric` over the last `daysBack` days (today included).
+private func metricCollection(
+    store: HKHealthStore,
+    metric: WalkMetric,
+    daysBack: Int
+) async throws -> [MetricPoint] {
+    let calendar = Calendar.current
+    let endOfToday = calendar.startOfDay(for: .now).addingTimeInterval(24 * 60 * 60)
+    guard let start = calendar.date(
+        byAdding: .day, value: -(daysBack - 1), to: calendar.startOfDay(for: .now)
+    ) else { return [] }
+    return try await statisticsCollection(
+        store: store, metric: metric, start: start, end: endOfToday,
+        interval: DateComponents(day: 1)
+    )
+}
+
+/// Hourly buckets of `metric` from midnight today through now.
+private func metricHourlyToday(
+    store: HKHealthStore,
+    metric: WalkMetric
+) async throws -> [MetricPoint] {
+    let calendar = Calendar.current
+    let start = calendar.startOfDay(for: .now)
+    return try await statisticsCollection(
+        store: store, metric: metric, start: start, end: .now,
+        interval: DateComponents(hour: 1)
+    )
+}
+
+/// Shared `HKStatisticsCollectionQuery` bridge: cumulative-sum buckets of
+/// `metric` from `start` to `end` at `interval`, mapped to the metric's
+/// display unit and zero-filled for empty buckets.
+private func statisticsCollection(
+    store: HKHealthStore,
+    metric: WalkMetric,
+    start: Date,
+    end: Date,
+    interval: DateComponents
+) async throws -> [MetricPoint] {
+    let mapping = hkMapping(for: metric)
+    let predicate = HKQuery.predicateForSamples(
+        withStart: start, end: end, options: .strictStartDate
+    )
+    return try await withCheckedThrowingContinuation { continuation in
+        let query = HKStatisticsCollectionQuery(
+            quantityType: mapping.type,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum,
+            anchorDate: start,
+            intervalComponents: interval
+        )
+        query.initialResultsHandler = { _, results, error in
+            if isNoDataAvailable(error) {
+                continuation.resume(returning: [])
+                return
+            }
+            if let error {
+                continuation.resume(throwing: error)
+                return
+            }
+            var output: [MetricPoint] = []
+            results?.enumerateStatistics(from: start, to: end) { statistic, _ in
+                let value = (statistic.sumQuantity()?.doubleValue(for: mapping.unit) ?? 0) * mapping.scale
+                output.append(MetricPoint(date: statistic.startDate, value: value))
+            }
+            continuation.resume(returning: output)
+        }
+        store.execute(query)
+    }
 }
 
 /// Re-fetches the `HKWorkout` matching `summary.id` and pulls heart-rate
