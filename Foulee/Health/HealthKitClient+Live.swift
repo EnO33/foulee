@@ -114,6 +114,9 @@ extension HealthKitClient {
             },
             hourlyToday: { metric in
                 try await metricHourlyToday(store: store, metric: metric)
+            },
+            observeChanges: {
+                healthChangeStream(store: store, types: [stepsType, distanceType, minutesType, caloriesType])
             }
         )
     }()

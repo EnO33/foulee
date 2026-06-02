@@ -125,17 +125,21 @@ struct MetricStatsScreen: View {
             }
             if let selectedPoint {
                 RuleMark(x: .value("Temps", selectedPoint.date, unit: chartUnit))
-                    .foregroundStyle(Color.primary.opacity(0.25))
+                    .foregroundStyle(metric.tint.opacity(0.55))
+                    .lineStyle(StrokeStyle(lineWidth: 1.5))
                     .annotation(
                         position: .top,
                         spacing: 6,
-                        overflowResolution: .init(x: .fit(to: .chart), y: .disabled)
+                        overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
                     ) {
                         callout(selectedPoint)
                     }
             }
         }
         .chartXSelection(value: $selectedDate)
+        // ~25% headroom above the tallest bar so the scrub tooltip floats in
+        // free space instead of clipping the chart's top edge.
+        .chartYScale(domain: 0...yMax)
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: 6)) { _ in
                 AxisGridLine()
@@ -145,22 +149,29 @@ struct MetricStatsScreen: View {
         .chartYAxis { AxisMarks(position: .leading) }
     }
 
-    /// Tooltip shown above the scrubbed bar.
+    private var yMax: Double {
+        let dataMax = store.points.map(\.value).max() ?? 0
+        let goalMax = store.range == .today ? 0 : (dailyGoal ?? 0)
+        let top = max(dataMax, goalMax)
+        return top > 0 ? top * 1.25 : 1
+    }
+
+    /// Tooltip shown above the scrubbed bar. Solid metric-coloured pill with
+    /// white text — translucent materials washed out over the pale light-mode
+    /// gradient, so this stays unmistakable in both themes.
     private func callout(_ point: MetricPoint) -> some View {
         VStack(spacing: 1) {
             Text(point.date, format: calloutFormat)
-                .font(FouleeFont.caption)
-                .foregroundStyle(.secondary)
+                .font(FouleeFont.caption.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.85))
             Text(metric.formattedWithUnit(point.value))
                 .font(FouleeFont.numeric(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
-        )
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(metric.tint, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .shadow(color: metric.tint.opacity(0.45), radius: 8, y: 3)
         .fixedSize()
     }
 

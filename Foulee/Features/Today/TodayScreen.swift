@@ -13,7 +13,18 @@ struct TodayScreen: View {
     @State private var isShowingWeather = false
 
     @Environment(UserPreferences.self) private var preferences
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.colorScheme) private var systemColorScheme
     private let scheduler = WalkReminderScheduler()
+
+    /// The app theme, applied to every modal — sheets/covers don't inherit the
+    /// root `.preferredColorScheme`, so without this they'd render in the
+    /// system appearance and ignore the user's Clair/Sombre choice. `.system`
+    /// is resolved to the live system scheme so we never pass `nil` (which
+    /// fails to reset an already-dark sheet back to light).
+    private var preferredScheme: ColorScheme {
+        preferences.themeMode.colorScheme ?? systemColorScheme
+    }
 
     var body: some View {
         content
@@ -25,23 +36,41 @@ struct TodayScreen: View {
                 // so the ring, streak and countdown update immediately.
                 store.apply(preferences: preferences)
             }
+            // `.task` runs once; re-query whenever the app returns to the
+            // foreground so the dashboard isn't stuck on stale (or zero)
+            // values after the user walked and came back.
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { Task { await store.refresh() } }
+            }
             .fullScreenCover(isPresented: $isWalking) {
                 ActiveWalkScreen(minutesGoal: store.minutesGoal) {
                     isWalking = false
                     Task { await store.refresh() }
                 }
+                .preferredColorScheme(preferredScheme)
             }
-            .sheet(isPresented: $isShowingSummary) {
-                TodayWorkoutsSheet()
-            }
-            .sheet(item: $selectedMetric) { metric in
-                MetricStatsScreen(metric: metric, dailyGoal: dailyGoal(for: metric)) {
-                    selectedMetric = nil
+            .sheet(
+                isPresented: $isShowingSummary,
+                onDismiss: { Task { await store.refresh() } },
+                content: {
+                    TodayWorkoutsSheet()
+                        .preferredColorScheme(preferredScheme)
                 }
-            }
+            )
+            .sheet(
+                item: $selectedMetric,
+                onDismiss: { Task { await store.refresh() } },
+                content: { metric in
+                    MetricStatsScreen(metric: metric, dailyGoal: dailyGoal(for: metric)) {
+                        selectedMetric = nil
+                    }
+                    .preferredColorScheme(preferredScheme)
+                }
+            )
             .sheet(isPresented: $isShowingWeather) {
                 if let weather = store.snapshot?.weather {
                     WeatherDetailSheet(weather: weather) { isShowingWeather = false }
+                        .preferredColorScheme(preferredScheme)
                 }
             }
             .sheet(isPresented: $isShowingSettings) {
@@ -59,6 +88,7 @@ struct TodayScreen: View {
                         .accessibilityLabel("Fermer")
                     }
                     .presentationBackground { SheetBackground() }
+                    .preferredColorScheme(preferredScheme)
             }
     }
 
