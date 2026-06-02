@@ -36,6 +36,9 @@ final class TodayStore {
     /// streaks immediately when the goal or active days change.
     @ObservationIgnored private var cachedHistory: [DailyMinutes] = []
 
+    /// Long-lived subscription to HealthKit changes (live step updates).
+    @ObservationIgnored private var observerTask: Task<Void, Never>?
+
     private var fallbackWeather: WeatherSnapshot {
         WeatherSnapshot(temperatureCelsius: 0, condition: "—", advice: "")
     }
@@ -99,6 +102,19 @@ final class TodayStore {
         _ = await runOrTrap { try await healthKit.requestAuthorization() }
         _ = await location.requestWhenInUse()
         await refresh()
+        startObservingHealthChanges()
+    }
+
+    /// Refresh the dashboard whenever HealthKit reports new data, so passive
+    /// steps/distance/calories show up live without reopening the app.
+    private func startObservingHealthChanges() {
+        guard observerTask == nil else { return }
+        let changes = healthKit.observeChanges()
+        observerTask = Task { [weak self] in
+            for await _ in changes {
+                await self?.refresh()
+            }
+        }
     }
 
     /// Re-fetches today's metrics + midday weather + 30-day history in

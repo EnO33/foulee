@@ -56,6 +56,12 @@ struct HealthKitClient: Sendable {
     /// Drives the "Aujourd'hui" curve.
     var hourlyToday: @Sendable (_ metric: WalkMetric) async throws -> [MetricPoint]
         = { _ in [] }
+
+    /// Emits whenever the user's step/distance/exercise/energy data changes, so
+    /// the Today dashboard can refresh live as steps accumulate — no need to
+    /// reopen the app or start a walk. Defaults to a stream that never fires.
+    var observeChanges: @Sendable () -> AsyncStream<Void>
+        = { AsyncStream { $0.finish() } }
 }
 
 extension HealthKitClient: DependencyKey {
