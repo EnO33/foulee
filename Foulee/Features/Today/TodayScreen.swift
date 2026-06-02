@@ -49,16 +49,24 @@ struct TodayScreen: View {
                 }
                 .preferredColorScheme(preferredScheme)
             }
-            .sheet(isPresented: $isShowingSummary, onDismiss: { Task { await store.refresh() } }) {
-                TodayWorkoutsSheet()
-                    .preferredColorScheme(preferredScheme)
-            }
-            .sheet(item: $selectedMetric, onDismiss: { Task { await store.refresh() } }) { metric in
-                MetricStatsScreen(metric: metric, dailyGoal: dailyGoal(for: metric)) {
-                    selectedMetric = nil
+            .sheet(
+                isPresented: $isShowingSummary,
+                onDismiss: { Task { await store.refresh() } },
+                content: {
+                    TodayWorkoutsSheet()
+                        .preferredColorScheme(preferredScheme)
                 }
-                .preferredColorScheme(preferredScheme)
-            }
+            )
+            .sheet(
+                item: $selectedMetric,
+                onDismiss: { Task { await store.refresh() } },
+                content: { metric in
+                    MetricStatsScreen(metric: metric, dailyGoal: dailyGoal(for: metric)) {
+                        selectedMetric = nil
+                    }
+                    .preferredColorScheme(preferredScheme)
+                }
+            )
             .sheet(isPresented: $isShowingWeather) {
                 if let weather = store.snapshot?.weather {
                     WeatherDetailSheet(weather: weather) { isShowingWeather = false }
