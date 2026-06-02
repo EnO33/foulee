@@ -12,6 +12,7 @@ struct MetricStatsScreen: View {
     var onClose: () -> Void
 
     @State private var store: MetricStatsStore
+    @State private var selectedDate: Date?
 
     init(metric: WalkMetric, dailyGoal: Double?, onClose: @escaping () -> Void) {
         self.metric = metric
@@ -89,14 +90,27 @@ struct MetricStatsScreen: View {
         .fouleeGlass(cornerRadius: 24)
     }
 
+    private var chartUnit: Calendar.Component {
+        store.range == .today ? .hour : .day
+    }
+
+    /// The bucket nearest the finger while scrubbing.
+    private var selectedPoint: MetricPoint? {
+        guard let selectedDate else { return nil }
+        return store.points.min {
+            abs($0.date.timeIntervalSince(selectedDate)) < abs($1.date.timeIntervalSince(selectedDate))
+        }
+    }
+
     private var chart: some View {
         Chart {
             ForEach(store.points) { point in
                 BarMark(
-                    x: .value("Temps", point.date, unit: store.range == .today ? .hour : .day),
+                    x: .value("Temps", point.date, unit: chartUnit),
                     y: .value(metric.title, point.value)
                 )
                 .foregroundStyle(barStyle(for: point.value))
+                .opacity(selectedPoint == nil || selectedPoint?.id == point.id ? 1 : 0.4)
                 .cornerRadius(3)
             }
             if let dailyGoal, store.range != .today {
@@ -109,7 +123,19 @@ struct MetricStatsScreen: View {
                             .foregroundStyle(FouleeColor.success)
                     }
             }
+            if let selectedPoint {
+                RuleMark(x: .value("Temps", selectedPoint.date, unit: chartUnit))
+                    .foregroundStyle(Color.primary.opacity(0.25))
+                    .annotation(
+                        position: .top,
+                        spacing: 6,
+                        overflowResolution: .init(x: .fit(to: .chart), y: .disabled)
+                    ) {
+                        callout(selectedPoint)
+                    }
+            }
         }
+        .chartXSelection(value: $selectedDate)
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: 6)) { _ in
                 AxisGridLine()
@@ -117,6 +143,31 @@ struct MetricStatsScreen: View {
             }
         }
         .chartYAxis { AxisMarks(position: .leading) }
+    }
+
+    /// Tooltip shown above the scrubbed bar.
+    private func callout(_ point: MetricPoint) -> some View {
+        VStack(spacing: 1) {
+            Text(point.date, format: calloutFormat)
+                .font(FouleeFont.caption)
+                .foregroundStyle(.secondary)
+            Text(metric.formattedWithUnit(point.value))
+                .font(FouleeFont.numeric(size: 15, weight: .semibold))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
+        )
+        .fixedSize()
+    }
+
+    private var calloutFormat: Date.FormatStyle {
+        store.range == .today
+            ? .dateTime.hour()
+            : .dateTime.weekday(.abbreviated).day().month(.abbreviated)
     }
 
     private func barStyle(for value: Double) -> AnyShapeStyle {

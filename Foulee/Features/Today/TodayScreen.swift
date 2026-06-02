@@ -10,6 +10,7 @@ struct TodayScreen: View {
     @State private var isShowingSummary = false
     @State private var isShowingSettings = false
     @State private var selectedMetric: WalkMetric?
+    @State private var isShowingWeather = false
 
     @Environment(UserPreferences.self) private var preferences
     private let scheduler = WalkReminderScheduler()
@@ -36,6 +37,11 @@ struct TodayScreen: View {
             .sheet(item: $selectedMetric) { metric in
                 MetricStatsScreen(metric: metric, dailyGoal: dailyGoal(for: metric)) {
                     selectedMetric = nil
+                }
+            }
+            .sheet(isPresented: $isShowingWeather) {
+                if let weather = store.snapshot?.weather {
+                    WeatherDetailSheet(weather: weather) { isShowingWeather = false }
                 }
             }
             .sheet(isPresented: $isShowingSettings) {
@@ -100,8 +106,12 @@ struct TodayScreen: View {
                 )
                 .padding(.horizontal, 20)
                 .padding(.top, 4)
-                TodayStreakWeatherRow(snapshot: snapshot)
-                    .padding(.horizontal, 20)
+                TodayStreakWeatherRow(
+                    snapshot: snapshot,
+                    onStreakTap: { selectedMetric = .minutes },
+                    onWeatherTap: { isShowingWeather = true }
+                )
+                .padding(.horizontal, 20)
                 TodayStatsGrid(snapshot: snapshot) { selectedMetric = $0 }
                     .padding(.horizontal, 20)
                 TodayWeekBars(snapshot: snapshot, activeDays: preferences.activeDays)
