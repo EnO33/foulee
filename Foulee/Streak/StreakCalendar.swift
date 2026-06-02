@@ -12,6 +12,8 @@ enum DayStatus: Equatable, Sendable {
 struct CalendarDay: Identifiable, Equatable, Sendable {
     let date: Date
     let status: DayStatus
+    /// Minutes / goal, clamped to `0...1` — drives how full the day's ring is.
+    let progress: Double
     var id: Date { date }
 }
 
@@ -43,9 +45,14 @@ enum StreakCalendar {
             return (byDay[date] ?? 0) >= goalMinutes ? .done : .missed
         }
 
+        func progress(of date: Date) -> Double {
+            guard goalMinutes > 0 else { return 0 }
+            return min(Double(byDay[date] ?? 0) / Double(goalMinutes), 1)
+        }
+
         return (0..<(weeks * 7)).compactMap { offset in
             guard let date = calendar.date(byAdding: .day, value: offset, to: start) else { return nil }
-            return CalendarDay(date: date, status: status(of: date))
+            return CalendarDay(date: date, status: status(of: date), progress: progress(of: date))
         }
     }
 }
