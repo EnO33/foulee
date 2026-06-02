@@ -144,8 +144,12 @@ struct TodayScreen: View {
                 .padding(.horizontal, 20)
                 TodayStatsGrid(snapshot: snapshot) { selectedMetric = $0 }
                     .padding(.horizontal, 20)
-                TodayWeekBars(snapshot: snapshot, activeDays: preferences.activeDays)
-                    .padding(.horizontal, 20)
+                Button { isShowingSummary = true } label: {
+                    TodayWeekBars(snapshot: snapshot, activeDays: preferences.activeDays)
+                }
+                .buttonStyle(.pressable)
+                .padding(.horizontal, 20)
+                .accessibilityHint("Voir l'historique des marches")
             }
             .padding(.bottom, 40)
         }

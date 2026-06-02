@@ -89,6 +89,7 @@ struct SettingsScreen: View {
                     .clipShape(Capsule())
                 timePicker(
                     label: "Fin",
+                    alignment: .trailing,
                     selection: Binding(
                         get: { preferences.walkWindowEnd.dateToday() },
                         set: { preferences.walkWindowEnd = TimeOfDay(date: $0) }
@@ -174,8 +175,12 @@ struct SettingsScreen: View {
             .font(FouleeFont.headline)
     }
 
-    private func timePicker(label: String, selection: Binding<Date>) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+    private func timePicker(
+        label: String,
+        alignment: HorizontalAlignment = .leading,
+        selection: Binding<Date>
+    ) -> some View {
+        VStack(alignment: alignment, spacing: 4) {
             Text(label)
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
@@ -183,7 +188,7 @@ struct SettingsScreen: View {
                 .labelsHidden()
                 .datePickerStyle(.compact)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
     }
 
     private func toggle(day: Weekday) {
