@@ -11,6 +11,7 @@ struct TodayScreen: View {
     @State private var isShowingSettings = false
     @State private var selectedMetric: WalkMetric?
     @State private var isShowingWeather = false
+    @State private var isShowingStreak = false
 
     @Environment(UserPreferences.self) private var preferences
     @Environment(\.scenePhase) private var scenePhase
@@ -72,6 +73,13 @@ struct TodayScreen: View {
                     WeatherDetailSheet(weather: weather) { isShowingWeather = false }
                         .preferredColorScheme(preferredScheme)
                 }
+            }
+            .sheet(isPresented: $isShowingStreak) {
+                StreakCalendarSheet(
+                    goalMinutes: store.minutesGoal,
+                    activeDays: preferences.activeDays
+                ) { isShowingStreak = false }
+                .preferredColorScheme(preferredScheme)
             }
             .sheet(isPresented: $isShowingSettings) {
                 SettingsScreen(preferences: preferences)
@@ -138,7 +146,7 @@ struct TodayScreen: View {
                 .padding(.top, 4)
                 TodayStreakWeatherRow(
                     snapshot: snapshot,
-                    onStreakTap: { selectedMetric = .minutes },
+                    onStreakTap: { isShowingStreak = true },
                     onWeatherTap: { isShowingWeather = true }
                 )
                 .padding(.horizontal, 20)
