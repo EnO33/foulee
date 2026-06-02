@@ -1,13 +1,21 @@
 import SwiftUI
 
-/// Two side-by-side glass cards: current streak + midday weather.
+/// Two side-by-side glass cards: current streak + midday weather. Both are
+/// buttons — streak opens the Minutes stats (the metric that drives it),
+/// weather opens a quick detail.
 struct TodayStreakWeatherRow: View {
     var snapshot: TodaySnapshot
+    var onStreakTap: () -> Void
+    var onWeatherTap: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
-            streakCard
-            weatherCard
+            Button(action: onStreakTap) { streakCard }
+                .buttonStyle(.pressable)
+                .accessibilityHint("Voir les statistiques de minutes")
+            Button(action: onWeatherTap) { weatherCard }
+                .buttonStyle(.pressable)
+                .accessibilityHint("Voir le détail météo")
         }
     }
 
