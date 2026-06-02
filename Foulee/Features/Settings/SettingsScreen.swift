@@ -2,7 +2,7 @@ import Dependencies
 import SwiftUI
 
 /// Settings — édite les mêmes prefs qu'onboarding + thème + notifs.
-/// Content-only: wallpaper + nav viennent de `RootTabView`.
+/// Présenté en sheet depuis le bouton profil de l'écran Aujourd'hui.
 struct SettingsScreen: View {
     @Bindable var preferences: UserPreferences
 
@@ -19,8 +19,8 @@ struct SettingsScreen: View {
                 aboutSection
             }
             .padding(.horizontal, 20)
-            .padding(.top, 60)
-            .padding(.bottom, 120)
+            .padding(.top, 28)
+            .padding(.bottom, 40)
         }
     }
 

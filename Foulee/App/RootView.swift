@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Top-level container. Gates onboarding, hosts the tab nav once the user
+/// Top-level container. Gates onboarding, shows the home screen once the user
 /// has set their goals, and applies the chosen theme to the whole app.
 /// Also keeps the walk-reminder schedule in sync with the prefs that
 /// drive it (active days + window start + notifications toggle).
@@ -11,7 +11,7 @@ struct RootView: View {
     var body: some View {
         Group {
             if preferences.hasCompletedOnboarding {
-                RootTabView(preferences: preferences)
+                HomeView()
             } else {
                 OnboardingFlow(preferences: preferences) {
                     preferences.hasCompletedOnboarding = true

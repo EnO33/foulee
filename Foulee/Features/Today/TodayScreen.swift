@@ -1,13 +1,14 @@
 import Dependencies
 import SwiftUI
 
-/// Pre/post-walk dashboard. Content-only: the wallpaper + bottom nav are
-/// provided by `RootTabView`. Data comes from `TodayStore`, which reads
-/// HealthKit through the `healthKit` dependency.
+/// Pre/post-walk dashboard and the app's home. Content-only: the wallpaper is
+/// provided by `HomeView`. Data comes from `TodayStore`, which reads HealthKit
+/// through the `healthKit` dependency. Settings open from the profile button.
 struct TodayScreen: View {
     @State private var store = TodayStore()
     @State private var isWalking = false
     @State private var isShowingSummary = false
+    @State private var isShowingSettings = false
 
     @Environment(UserPreferences.self) private var preferences
     private let scheduler = WalkReminderScheduler()
@@ -30,6 +31,22 @@ struct TodayScreen: View {
             }
             .sheet(isPresented: $isShowingSummary) {
                 TodayWorkoutsSheet()
+            }
+            .sheet(isPresented: $isShowingSettings) {
+                SettingsScreen(preferences: preferences)
+                    .overlay(alignment: .topTrailing) {
+                        Button { isShowingSettings = false } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(.primary)
+                                .frame(width: 40, height: 40)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                        .buttonStyle(.pressable)
+                        .padding(20)
+                        .accessibilityLabel("Fermer")
+                    }
+                    .presentationBackground { SheetBackground() }
             }
     }
 
@@ -84,7 +101,7 @@ struct TodayScreen: View {
                 TodayWeekBars(snapshot: snapshot, activeDays: preferences.activeDays)
                     .padding(.horizontal, 20)
             }
-            .padding(.bottom, 120)
+            .padding(.bottom, 40)
         }
         .refreshable { await store.refresh() }
     }
@@ -148,13 +165,24 @@ struct TodayScreen: View {
     }
 
     private func header(date: Date) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(formatted(date: date))
-                .font(FouleeFont.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .tracking(1.2)
-            Text("Aujourd'hui")
-                .font(FouleeFont.largeTitle)
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(formatted(date: date))
+                    .font(FouleeFont.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .tracking(1.2)
+                Text("Aujourd'hui")
+                    .font(FouleeFont.largeTitle)
+            }
+            Spacer()
+            Button { isShowingSettings = true } label: {
+                Image(systemName: "person.crop.circle")
+                    .font(.system(size: 32))
+                    .foregroundStyle(FouleeColor.accentMid)
+                    .symbolRenderingMode(.hierarchical)
+            }
+            .buttonStyle(.pressable)
+            .accessibilityLabel("Profil et réglages")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
