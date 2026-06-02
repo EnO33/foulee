@@ -20,10 +20,11 @@ struct Wallpaper: View {
             }
         }
         .ignoresSafeArea()
-        // Flatten the four 70pt-blurred circles into one cached Metal texture
-        // so the glass materials on top sample a flat layer instead of forcing
-        // a live blur composite on every scroll frame.
-        .drawingGroup()
+        // No `.drawingGroup()` here: rasterising the blur into a Metal texture
+        // visibly hardened the soft gradient (and didn't help in practice).
+        // The four blurred circles are static, so SwiftUI/Core Animation
+        // caches them as a layer anyway — the scroll cost was the glass-card
+        // shadows, which are already fixed in `GlassCard`.
         .accessibilityHidden(true)
     }
 

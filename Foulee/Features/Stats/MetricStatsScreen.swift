@@ -111,7 +111,7 @@ struct MetricStatsScreen: View {
             }
         }
         .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: store.range == .month ? 5 : 6)) { _ in
+            AxisMarks(values: .automatic(desiredCount: 6)) { _ in
                 AxisGridLine()
                 AxisValueLabel(format: xAxisFormat)
             }
@@ -133,13 +133,14 @@ struct MetricStatsScreen: View {
         case .today: .dateTime.hour()
         case .week: .dateTime.weekday(.narrow)
         case .month: .dateTime.day().month(.narrow)
+        case .year: .dateTime.month(.narrow)
         }
     }
 
     private var chartTitle: String {
         switch store.range {
         case .today: "\(metric.title) par heure"
-        case .week, .month: "\(metric.title) par jour"
+        case .week, .month, .year: "\(metric.title) par jour"
         }
     }
 
@@ -159,7 +160,7 @@ struct MetricStatsScreen: View {
         case .today:
             [("Total", metric.formattedWithUnit(store.total)),
              ("Meilleure heure", metric.formattedWithUnit(store.best))]
-        case .week, .month:
+        case .week, .month, .year:
             [("Total", metric.formattedWithUnit(store.total)),
              ("Moyenne / jour", metric.formattedWithUnit(store.average)),
              ("Meilleur jour", metric.formattedWithUnit(store.best))]
