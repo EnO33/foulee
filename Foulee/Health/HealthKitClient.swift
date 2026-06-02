@@ -43,6 +43,19 @@ struct HealthKitClient: Sendable {
     /// `predicateForObjects(from: workout)` and avoid catching samples
     /// from before or after the session.
     var workoutDetail: @Sendable (_ summary: WorkoutSummary) async throws -> WorkoutDetail
+
+    /// Daily totals of `metric` for the last `daysBack` days (today
+    /// included), oldest → newest and zero-filled. Values are already in the
+    /// metric's display unit (steps, minutes, km, kcal). Drives the per-metric
+    /// stats charts for the Week/Month ranges. Defaults to empty so existing
+    /// test stubs that don't care about it compile unchanged.
+    var metricSeries: @Sendable (_ metric: WalkMetric, _ daysBack: Int) async throws -> [MetricPoint]
+        = { _, _ in [] }
+
+    /// Hourly totals of `metric` for today (00:00 → now), one point per hour.
+    /// Drives the "Aujourd'hui" curve.
+    var hourlyToday: @Sendable (_ metric: WalkMetric) async throws -> [MetricPoint]
+        = { _ in [] }
 }
 
 extension HealthKitClient: DependencyKey {
@@ -58,7 +71,9 @@ extension HealthKitClient: DependencyKey {
         saveWalkingWorkout: { _ in },
         dailyMinutes: { daysBack in previewDailyMinutes(daysBack: daysBack) },
         recentWorkouts: { daysBack in previewRecentWorkouts(daysBack: daysBack) },
-        workoutDetail: { summary in previewWorkoutDetail(summary: summary) }
+        workoutDetail: { summary in previewWorkoutDetail(summary: summary) },
+        metricSeries: { metric, daysBack in previewMetricSeries(metric: metric, daysBack: daysBack) },
+        hourlyToday: { metric in previewHourlyToday(metric: metric) }
     )
 
     static let testValue = HealthKitClient(
@@ -70,7 +85,9 @@ extension HealthKitClient: DependencyKey {
         recentWorkouts: { _ in [] },
         workoutDetail: { summary in
             WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
-        }
+        },
+        metricSeries: { _, _ in [] },
+        hourlyToday: { _ in [] }
     )
 
     /// Mock detail used in `#Preview`: linear HR ramp from ~95 bpm to
@@ -117,6 +134,43 @@ extension HealthKitClient: DependencyKey {
                     sourceName: offset == 0 ? "Foulée" : "Apple Watch de Matthieu"
                 )
             ]
+        }
+    }
+
+    /// Deterministic per-metric daily history for `#Preview`s — mild variation
+    /// per day, no randomness.
+    private static func previewMetricSeries(metric: WalkMetric, daysBack: Int) -> [MetricPoint] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        return (0..<daysBack).reversed().map { offset in
+            let date = calendar.date(byAdding: .day, value: -offset, to: today) ?? today
+            let wave = Double((offset * 7) % 5) // 0…4
+            let value: Double = switch metric {
+            case .steps: 4_500 + wave * 380
+            case .minutes: 20 + wave * 2
+            case .distance: 3.2 + wave * 0.3
+            case .calories: 120 + wave * 18
+            }
+            return MetricPoint(date: date, value: value)
+        }
+    }
+
+    /// Deterministic hourly curve for `#Preview`s — activity concentrated
+    /// around the midday walk, from 00:00 up to the current hour.
+    private static func previewHourlyToday(metric: WalkMetric) -> [MetricPoint] {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: .now)
+        let currentHour = calendar.component(.hour, from: .now)
+        let peak: Double = switch metric {
+        case .steps: 1_800
+        case .minutes: 8
+        case .distance: 1.4
+        case .calories: 55
+        }
+        return (0...max(currentHour, 0)).map { hour in
+            let date = calendar.date(byAdding: .hour, value: hour, to: start) ?? start
+            let closeness = max(0, 1 - abs(Double(hour) - 12) / 6) // triangular peak at noon
+            return MetricPoint(date: date, value: (peak * closeness).rounded())
         }
     }
 

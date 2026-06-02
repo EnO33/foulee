@@ -9,6 +9,7 @@ struct TodayScreen: View {
     @State private var isWalking = false
     @State private var isShowingSummary = false
     @State private var isShowingSettings = false
+    @State private var selectedMetric: WalkMetric?
 
     @Environment(UserPreferences.self) private var preferences
     private let scheduler = WalkReminderScheduler()
@@ -31,6 +32,11 @@ struct TodayScreen: View {
             }
             .sheet(isPresented: $isShowingSummary) {
                 TodayWorkoutsSheet()
+            }
+            .sheet(item: $selectedMetric) { metric in
+                MetricStatsScreen(metric: metric, dailyGoal: dailyGoal(for: metric)) {
+                    selectedMetric = nil
+                }
             }
             .sheet(isPresented: $isShowingSettings) {
                 SettingsScreen(preferences: preferences)
@@ -96,7 +102,7 @@ struct TodayScreen: View {
                 .padding(.top, 4)
                 TodayStreakWeatherRow(snapshot: snapshot)
                     .padding(.horizontal, 20)
-                TodayStatsGrid(snapshot: snapshot)
+                TodayStatsGrid(snapshot: snapshot) { selectedMetric = $0 }
                     .padding(.horizontal, 20)
                 TodayWeekBars(snapshot: snapshot, activeDays: preferences.activeDays)
                     .padding(.horizontal, 20)
@@ -207,6 +213,15 @@ struct TodayScreen: View {
             isShowingSummary = true
         } else {
             isWalking = true
+        }
+    }
+
+    /// Only steps + minutes have a daily goal to draw on the stats chart.
+    private func dailyGoal(for metric: WalkMetric) -> Double? {
+        switch metric {
+        case .steps: Double(store.stepsGoal)
+        case .minutes: Double(store.minutesGoal)
+        case .distance, .calories: nil
         }
     }
 }
