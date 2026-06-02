@@ -7,7 +7,7 @@ import Observation
 @MainActor
 @Observable
 final class StreakCalendarStore {
-    static let weeks = 13
+    static let weeks = 5
 
     let goalMinutes: Int
     let activeDays: Set<Weekday>
