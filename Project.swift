@@ -56,7 +56,7 @@ let project = Project(
     targets: [
         .target(
             name: "Foulee",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .app,
             bundleId: bundleIdBase,
             deploymentTargets: deploymentTargets,
@@ -96,7 +96,7 @@ let project = Project(
         ),
         .target(
             name: "FouleeWidget",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .appExtension,
             bundleId: "\(bundleIdBase).widget",
             deploymentTargets: deploymentTargets,
@@ -127,7 +127,7 @@ let project = Project(
         ),
         .target(
             name: "FouleeLiveActivity",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .appExtension,
             bundleId: "\(bundleIdBase).liveactivity",
             deploymentTargets: deploymentTargets,
@@ -216,7 +216,7 @@ let project = Project(
         ),
         .target(
             name: "FouleeTests",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .unitTests,
             bundleId: "\(bundleIdBase).tests",
             deploymentTargets: deploymentTargets,
