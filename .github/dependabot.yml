@@ -1,0 +1,22 @@
+# Keep dependencies current. Swift packages are resolved by Tuist from
+# Project.swift (there is no root Package.swift for Dependabot to parse), so
+# only the GitHub Actions ecosystem is tracked here. Grouped + auto-merged for
+# patch/minor by .github/workflows/dependabot-auto-merge.yml.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 5
