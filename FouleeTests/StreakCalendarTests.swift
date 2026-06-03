@@ -7,38 +7,61 @@ struct StreakCalendarTests {
     private let calendar = Calendar.iso8601Monday
     private let today = Date(timeIntervalSince1970: 1_716_940_800) // 2024-05-29, Wednesday
 
-    @Test("Grid is weeks×7 days, Monday-aligned, oldest first")
-    func gridShape() {
-        let days = StreakCalendar.build(
+    @Test("Returns `count` months, oldest first, current month last")
+    func monthCountAndOrder() {
+        let months = StreakCalendar.months(
             history: [], goalMinutes: 20, activeDays: Weekday.workWeek,
-            today: today, weeks: 4, calendar: calendar
+            today: today, count: 3, calendar: calendar
         )
-        #expect(days.count == 28)
-        #expect(calendar.component(.weekday, from: days[0].date) == 2) // Monday
+        #expect(months.count == 3)
+        #expect(months[0].monthStart < months[1].monthStart) // oldest first
+        let last = calendar.dateComponents([.year, .month, .day], from: months[2].monthStart)
+        #expect(last.year == 2024 && last.month == 5 && last.day == 1) // current month last
     }
 
-    @Test("Past active days with no data are missed; tomorrow is future")
-    func missedAndFuture() {
-        let days = StreakCalendar.build(
+    @Test("Cells are weekday-aligned with leading blanks and padded to 6 rows")
+    func gridAlignment() {
+        let may = StreakCalendar.months(
             history: [], goalMinutes: 20, activeDays: Weekday.workWeek,
-            today: today, weeks: 1, calendar: calendar
-        )
-        // Week Mon 27 May → Sun 2 Jun; today is Wed 29.
-        #expect(days[0].status == .missed) // Mon, past active, no data
-        #expect(days[2].status == .missed) // Wed = today, active, no data
-        #expect(days[3].status == .future) // Thu, hasn't happened
+            today: today, count: 1, calendar: calendar
+        )[0]
+        #expect(may.cells.count == 42) // 6 rows × 7, stable height
+        // 1 May 2024 is a Wednesday → two leading blanks (Mon, Tue).
+        #expect(may.cells[0] == nil)
+        #expect(may.cells[1] == nil)
+        #expect(calendar.component(.day, from: may.cells[2]!.date) == 1)
+        #expect(calendar.component(.weekday, from: may.cells[2]!.date) == 4) // Wednesday
+        #expect(may.cells[41] == nil) // trailing padding
     }
 
-    @Test("A met active day is done; a past weekend is rest")
-    func doneAndRest() {
-        let monday = Date(timeIntervalSince1970: 1_716_768_000) // 2024-05-27, Monday
-        let history = [DailyMinutes(date: monday, minutes: 25)]
-        let days = StreakCalendar.build(
+    @Test("Day status: done when met, missed when active+unmet, rest on weekend, future after today")
+    func dayStatus() {
+        let firstMay = calendar.date(from: DateComponents(year: 2024, month: 5, day: 1))!
+        let history = [DailyMinutes(date: firstMay, minutes: 25)]
+        let cells = StreakCalendar.months(
             history: history, goalMinutes: 20, activeDays: Weekday.workWeek,
-            today: today, weeks: 2, calendar: calendar
-        )
-        // days[0…6] = previous week (20–26 May), days[7…13] = this week (27 May–2 Jun)
-        #expect(days[7].status == .done) // Mon 27 May, 25 ≥ 20
-        #expect(days[5].status == .rest) // Sat 25 May, past weekend
+            today: today, count: 1, calendar: calendar
+        )[0].cells.compactMap { $0 }
+        func day(_ dayOfMonth: Int) -> CalendarDay {
+            cells.first { calendar.component(.day, from: $0.date) == dayOfMonth }!
+        }
+        #expect(day(1).status == .done)    // Wed 1 May, 25 ≥ 20
+        #expect(day(2).status == .missed)  // Thu 2 May, active, no data, past
+        #expect(day(4).status == .rest)    // Sat 4 May, weekend
+        #expect(day(30).status == .future) // Thu 30 May, after the 29th
+    }
+
+    @Test("Month stats: rate, walks and minutes over the month")
+    func monthStats() {
+        let firstMay = calendar.date(from: DateComponents(year: 2024, month: 5, day: 1))!  // Wed, met
+        let secondMay = calendar.date(from: DateComponents(year: 2024, month: 5, day: 2))! // Thu, unmet
+        let history = [DailyMinutes(date: firstMay, minutes: 25), DailyMinutes(date: secondMay, minutes: 10)]
+        let month = StreakCalendar.months(
+            history: history, goalMinutes: 20, activeDays: Weekday.workWeek,
+            today: today, count: 1, calendar: calendar
+        )[0]
+        #expect(month.walks == 1)    // only 1 May met the goal
+        #expect(month.minutes == 35) // 25 + 10
+        #expect((0...100).contains(month.rate))
     }
 }

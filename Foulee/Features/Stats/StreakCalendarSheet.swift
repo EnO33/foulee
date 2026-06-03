@@ -2,8 +2,8 @@ import Dependencies
 import SwiftUI
 
 /// Streak view opened from the Série card. Fitness-style: a flame hero, a
-/// progress bar toward the record, this month's stats, and the last month as
-/// daily rings (filled by minutes / goal) you can scrub for per-day detail.
+/// progress bar toward the record, and a swipeable month browser whose stats
+/// and daily rings follow the month on screen (tap a day for its detail).
 struct StreakCalendarSheet: View {
     var onClose: () -> Void
 
@@ -21,8 +21,7 @@ struct StreakCalendarSheet: View {
                 VStack(spacing: 16) {
                     hero
                     recordCard
-                    monthStatsCard
-                    ringsCard
+                    monthCard
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 24)
@@ -99,62 +98,17 @@ struct StreakCalendarSheet: View {
         return current > 0 ? 1 : 0
     }
 
-    private var monthStatsCard: some View {
-        let stats = monthStats
-        return HStack(spacing: 0) {
-            statCell(value: "\(stats.rate) %", label: "Réussite ce mois")
-            divider
-            statCell(value: "\(stats.walks)", label: "Marches")
-            divider
-            statCell(value: "\(store.bestStreak) j", label: "Record")
-        }
-        .padding(18)
-        .fouleeGlass(cornerRadius: 22)
-    }
-
-    private var monthStats: (rate: Int, walks: Int) {
-        let calendar = Calendar.current
-        let now = Date.now
-        let month = calendar.component(.month, from: now)
-        let year = calendar.component(.year, from: now)
-        let inMonth = store.days.filter {
-            calendar.component(.month, from: $0.date) == month
-                && calendar.component(.year, from: $0.date) == year
-        }
-        let active = inMonth.filter { $0.status == .done || $0.status == .missed }
-        let done = inMonth.filter { $0.status == .done }.count
-        let rate = active.isEmpty ? 0 : Int((Double(done) / Double(active.count) * 100).rounded())
-        return (rate, done)
-    }
-
-    private func statCell(value: String, label: String) -> some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(FouleeFont.numeric(size: 20, weight: .semibold))
-            Text(label)
-                .font(FouleeFont.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(label)
-        .accessibilityValue(value)
-    }
-
-    private var divider: some View {
-        Rectangle().fill(Color.gray.opacity(0.25)).frame(width: 1, height: 34)
-    }
-
-    private var ringsCard: some View {
+    private var monthCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Dernier mois")
-                .font(FouleeFont.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
             if store.isLoading {
-                ProgressView().frame(maxWidth: .infinity, minHeight: 120)
+                ProgressView().frame(maxWidth: .infinity, minHeight: 260)
+            } else if store.months.isEmpty {
+                Text("Pas encore de données")
+                    .font(FouleeFont.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 120)
             } else {
-                StreakRingsGrid(days: store.days, goalMinutes: store.goalMinutes)
+                StreakMonthBrowser(months: store.months, goalMinutes: store.goalMinutes)
             }
         }
         .padding(18)

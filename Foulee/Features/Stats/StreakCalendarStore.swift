@@ -2,17 +2,19 @@ import Dependencies
 import Foundation
 import Observation
 
-/// Loads the day history behind the streak calendar and derives the grid +
-/// current/record streaks. Mirrors the other stores' single error boundary.
+/// Loads the day history behind the streak rings and derives the browsable
+/// months + current/record streaks. Mirrors the other stores' single error
+/// boundary.
 @MainActor
 @Observable
 final class StreakCalendarStore {
-    static let weeks = 5
+    /// How many calendar months the rings browser can page back through.
+    static let monthsBack = 12
 
     let goalMinutes: Int
     let activeDays: Set<Weekday>
 
-    private(set) var days: [CalendarDay] = []
+    private(set) var months: [StreakMonth] = []
     private(set) var currentStreak = 0
     private(set) var bestStreak = 0
     private(set) var isLoading = true
@@ -28,14 +30,14 @@ final class StreakCalendarStore {
     func load() async {
         isLoading = true
         defer { isLoading = false }
-        // Pull a little extra so a Monday-aligned grid is fully covered.
-        let history = (try? await healthKit.dailyMinutes(Self.weeks * 7 + 7)) ?? []
-        days = StreakCalendar.build(
+        // Pull enough to cover the 1st of the oldest month, plus a little slack.
+        let history = (try? await healthKit.dailyMinutes(Self.monthsBack * 31 + 7)) ?? []
+        months = StreakCalendar.months(
             history: history,
             goalMinutes: goalMinutes,
             activeDays: activeDays,
             today: .now,
-            weeks: Self.weeks
+            count: Self.monthsBack
         )
         currentStreak = StreakCalculator.current(
             history: history,
