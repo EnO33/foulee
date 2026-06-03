@@ -7,7 +7,7 @@ import Observation
 @MainActor
 @Observable
 final class StreakCalendarStore {
-    static let weeks = 13
+    static let weeks = 5
 
     let goalMinutes: Int
     let activeDays: Set<Weekday>
@@ -25,12 +25,10 @@ final class StreakCalendarStore {
         self.activeDays = activeDays
     }
 
-    var completedCount: Int { days.filter { $0.status == .done }.count }
-
     func load() async {
         isLoading = true
         defer { isLoading = false }
-        // Pull a little extra so a Monday-aligned 13-week grid is fully covered.
+        // Pull a little extra so a Monday-aligned grid is fully covered.
         let history = (try? await healthKit.dailyMinutes(Self.weeks * 7 + 7)) ?? []
         days = StreakCalendar.build(
             history: history,

@@ -2,14 +2,12 @@ import Dependencies
 import SwiftUI
 
 /// Streak view opened from the Série card. Fitness-style: a flame hero, a
-/// progress bar toward the record, the last weeks as daily *rings* (filled by
-/// minutes / goal, so near-misses read at a glance), and this month's stats.
+/// progress bar toward the record, this month's stats, and the last month as
+/// daily rings (filled by minutes / goal) you can scrub for per-day detail.
 struct StreakCalendarSheet: View {
     var onClose: () -> Void
 
     @State private var store: StreakCalendarStore
-    private let weekdayLabels = ["L", "M", "M", "J", "V", "S", "D"]
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
 
     init(goalMinutes: Int, activeDays: Set<Weekday>, onClose: @escaping () -> Void) {
         self.onClose = onClose
@@ -34,8 +32,6 @@ struct StreakCalendarSheet: View {
         }
         .task { await store.load() }
     }
-
-    // MARK: - Hero
 
     private var hero: some View {
         HStack(spacing: 16) {
@@ -67,8 +63,6 @@ struct StreakCalendarSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.trailing, 48)
     }
-
-    // MARK: - Record progress
 
     private var recordCard: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -104,8 +98,6 @@ struct StreakCalendarSheet: View {
         if record > 0 { return min(current / record, 1) }
         return current > 0 ? 1 : 0
     }
-
-    // MARK: - Month stats
 
     private var monthStatsCard: some View {
         let stats = monthStats
@@ -154,56 +146,19 @@ struct StreakCalendarSheet: View {
         Rectangle().fill(Color.gray.opacity(0.25)).frame(width: 1, height: 34)
     }
 
-    // MARK: - Rings
-
     private var ringsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("3 derniers mois")
+            Text("Dernier mois")
                 .font(FouleeFont.headline)
-            LazyVGrid(columns: columns, spacing: 6) {
-                ForEach(Array(weekdayLabels.enumerated()), id: \.offset) { _, label in
-                    Text(label)
-                        .font(FouleeFont.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
+                .frame(maxWidth: .infinity, alignment: .leading)
             if store.isLoading {
-                ProgressView().frame(maxWidth: .infinity, minHeight: 180)
+                ProgressView().frame(maxWidth: .infinity, minHeight: 120)
             } else {
-                LazyVGrid(columns: columns, spacing: 8) {
-                    ForEach(store.days) { day in
-                        ring(day)
-                    }
-                }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Calendrier de série")
-                .accessibilityValue("\(store.completedCount) jours réussis sur les 3 derniers mois")
+                StreakRingsGrid(days: store.days, goalMinutes: store.goalMinutes)
             }
         }
         .padding(18)
         .fouleeGlass(cornerRadius: 24)
-    }
-
-    private func ring(_ day: CalendarDay) -> some View {
-        ZStack {
-            switch day.status {
-            case .rest:
-                Circle().fill(Color.gray.opacity(0.18)).frame(width: 6, height: 6)
-            case .future:
-                Circle().strokeBorder(Color.gray.opacity(0.12), lineWidth: 3)
-            case .done, .missed:
-                Circle().strokeBorder(Color.gray.opacity(0.15), lineWidth: 3)
-                Circle()
-                    .trim(from: 0, to: max(day.progress, 0.02))
-                    .stroke(FouleeColor.accentGradient, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-            }
-            if Calendar.current.isDateInToday(day.date) {
-                Circle().fill(FouleeColor.accentMid).frame(width: 5, height: 5)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .aspectRatio(1, contentMode: .fit)
     }
 
     private var closeButton: some View {
