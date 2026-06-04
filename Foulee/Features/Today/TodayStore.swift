@@ -91,7 +91,25 @@ final class TodayStore {
                 walkWindowStart: walkWindowStart,
                 hasWalkedToday: snapshot.minutes >= minutesGoal
             )
+            publishToWidgets()
         }
+    }
+
+    /// Mirror the current snapshot into the shared app group and refresh the
+    /// widgets. Widgets can't read HealthKit while the phone is locked, so they
+    /// read this snapshot instead — which keeps the Lock Screen from dropping to
+    /// zero. Cheap; safe to call on every refresh / goal change.
+    private func publishToWidgets() {
+        guard let snapshot else { return }
+        SharedStore.write(WidgetSnapshot(
+            date: snapshot.date,
+            steps: snapshot.steps,
+            stepsGoal: snapshot.stepsGoal,
+            minutes: snapshot.minutes,
+            minutesGoal: snapshot.minutesGoal,
+            streak: snapshot.streak
+        ))
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     /// Ask for HealthKit + Location authorization and trigger an initial
@@ -140,12 +158,7 @@ final class TodayStore {
         let history = await historyTask ?? []
         cachedHistory = history
         snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot, history: history)
-
-        // Force the streak widgets (iPhone Lock Screen + Home Screen +
-        // Watch complication) to refresh their timelines now that we
-        // have fresh history — otherwise they sit on the cached 0 for
-        // up to an hour after a walk.
-        WidgetCenter.shared.reloadAllTimelines()
+        publishToWidgets()
     }
 
     private func fetchWeatherIfAuthorized() async -> WeatherSnapshot? {
