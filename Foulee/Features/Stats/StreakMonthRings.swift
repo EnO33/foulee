@@ -24,14 +24,10 @@ struct StreakMonthRings: View {
             }
         }
         .overlay {
-            // One gesture handles both a tap and a finger-scrub across rings.
             GeometryReader { geo in
                 Color.clear
                     .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { select(at: $0.location, in: geo.size) }
-                    )
+                    .gesture(scrubGesture(in: geo.size))
             }
         }
         .accessibilityElement(children: .ignore)
@@ -65,6 +61,22 @@ struct StreakMonthRings: View {
         }
         .frame(maxWidth: .infinity)
         .aspectRatio(1, contentMode: .fit)
+    }
+
+    /// A tap selects a day instantly; a brief press-then-drag scrubs across
+    /// days (with the browser's haptic tick). Plain flicks aren't claimed, so
+    /// the enclosing sheet keeps scrolling vertically over the grid.
+    private func scrubGesture(in size: CGSize) -> some Gesture {
+        let tap = SpatialTapGesture()
+            .onEnded { select(at: $0.location, in: size) }
+        let scrub = LongPressGesture(minimumDuration: 0.12)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .onChanged { value in
+                if case .second(true, let drag?) = value {
+                    select(at: drag.location, in: size)
+                }
+            }
+        return tap.exclusively(before: scrub)
     }
 
     /// Map a touch point to the day under the finger (square 7-column grid).

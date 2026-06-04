@@ -7,9 +7,15 @@ struct StreakMonthBrowser: View {
     let months: [StreakMonth]
     let goalMinutes: Int
 
-    @State private var index = 0
+    @State private var index: Int
     @State private var selectedDay: CalendarDay?
-    @State private var didInit = false
+
+    init(months: [StreakMonth], goalMinutes: Int) {
+        self.months = months
+        self.goalMinutes = goalMinutes
+        // Start on the current month (last) rather than flashing the oldest.
+        _index = State(initialValue: max(months.count - 1, 0))
+    }
 
     private let weekdayLabels = ["L", "M", "M", "J", "V", "S", "D"]
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
@@ -31,7 +37,6 @@ struct StreakMonthBrowser: View {
             rings
             detailLine
         }
-        .onAppear { if !didInit { index = max(months.count - 1, 0); didInit = true } }
         .sensoryFeedback(.selection, trigger: selectedDay?.id)
     }
 
