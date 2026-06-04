@@ -158,6 +158,13 @@ struct TodayScreen: View {
                 .buttonStyle(.pressable)
                 .padding(.horizontal, 20)
                 .accessibilityHint("Voir l'historique des marches")
+                if snapshot.weather.isAvailable {
+                    // Required Apple Weather attribution (Guideline 5.2.5) — the
+                    // home shows WeatherKit data in the midday card above.
+                    WeatherAttributionView()
+                        .padding(.horizontal, 20)
+                        .padding(.top, 4)
+                }
             }
             .padding(.bottom, 40)
         }
