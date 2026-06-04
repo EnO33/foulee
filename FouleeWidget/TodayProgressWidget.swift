@@ -1,4 +1,3 @@
-@preconcurrency import HealthKit
 import SwiftUI
 import WidgetKit
 
@@ -49,57 +48,28 @@ struct TodayEntry: TimelineEntry, Sendable {
     static let placeholder = TodayEntry(date: .now, steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20)
 }
 
+/// Reads today's progress from the snapshot the app writes to the app group
+/// (no HealthKit in the widget, so it still works while the phone is locked).
 struct TodayProvider: TimelineProvider {
-    private static let refreshInterval: TimeInterval = 30 * 60
-
     func placeholder(in context: Context) -> TodayEntry { .placeholder }
 
     func getSnapshot(in context: Context, completion: @escaping (TodayEntry) -> Void) {
-        let box = SendableBox(value: completion)
-        Task { box.value(await Self.entry()) }
+        completion(entry())
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TodayEntry>) -> Void) {
-        let box = SendableBox(value: completion)
-        Task {
-            let entry = await Self.entry()
-            let next = Date(timeIntervalSinceNow: Self.refreshInterval)
-            box.value(Timeline(entries: [entry], policy: .after(next)))
-        }
+        completion(Timeline(entries: [entry()], policy: .after(Date(timeIntervalSinceNow: 30 * 60))))
     }
 
-    private static func entry() async -> TodayEntry {
-        let today = await fetchToday()
+    private func entry() -> TodayEntry {
+        let snapshot = SharedStore.read() ?? .placeholder
         return TodayEntry(
             date: .now,
-            steps: today.steps,
-            stepsGoal: SharedGoals.stepsGoal,
-            minutes: today.minutes,
-            minutesGoal: SharedGoals.minutesGoal
+            steps: snapshot.steps,
+            stepsGoal: snapshot.stepsGoal,
+            minutes: snapshot.minutes,
+            minutesGoal: snapshot.minutesGoal
         )
-    }
-
-    private static func fetchToday() async -> (steps: Int, minutes: Int) {
-        guard HKHealthStore.isHealthDataAvailable() else { return (0, 0) }
-        let store = HKHealthStore()
-        let steps = await sum(HKQuantityType(.stepCount), unit: .count(), store: store)
-        let minutes = await sum(HKQuantityType(.appleExerciseTime), unit: .minute(), store: store)
-        return (Int(steps), Int(minutes))
-    }
-
-    private static func sum(_ type: HKQuantityType, unit: HKUnit, store: HKHealthStore) async -> Double {
-        let start = Calendar.current.startOfDay(for: .now)
-        let predicate = HKQuery.predicateForSamples(withStart: start, end: .now, options: .strictStartDate)
-        return await withCheckedContinuation { continuation in
-            let query = HKStatisticsQuery(
-                quantityType: type,
-                quantitySamplePredicate: predicate,
-                options: .cumulativeSum
-            ) { _, statistics, _ in
-                continuation.resume(returning: statistics?.sumQuantity()?.doubleValue(for: unit) ?? 0)
-            }
-            store.execute(query)
-        }
     }
 }
 

@@ -1,6 +1,5 @@
 import Dependencies
 import SwiftUI
-import WidgetKit
 
 /// Pre/post-walk dashboard and the app's home. Content-only: the wallpaper is
 /// provided by `HomeView`. Data comes from `TodayStore`, which reads HealthKit
@@ -83,28 +82,23 @@ struct TodayScreen: View {
                 ) { isShowingStreak = false }
                 .preferredColorScheme(preferredScheme)
             }
-            .sheet(
-                isPresented: $isShowingSettings,
-                // Goals may have changed — refresh the widgets to match.
-                onDismiss: { WidgetCenter.shared.reloadAllTimelines() },
-                content: {
-                    SettingsScreen(preferences: preferences)
-                        .overlay(alignment: .topTrailing) {
-                            Button { isShowingSettings = false } label: {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundStyle(.primary)
-                                    .frame(width: 40, height: 40)
-                                    .background(.ultraThinMaterial, in: Circle())
-                            }
-                            .buttonStyle(.pressable)
-                            .padding(20)
-                            .accessibilityLabel("Fermer")
+            .sheet(isPresented: $isShowingSettings) {
+                SettingsScreen(preferences: preferences)
+                    .overlay(alignment: .topTrailing) {
+                        Button { isShowingSettings = false } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(.primary)
+                                .frame(width: 40, height: 40)
+                                .background(.ultraThinMaterial, in: Circle())
                         }
-                        .presentationBackground { SheetBackground() }
-                        .preferredColorScheme(preferredScheme)
-                }
-            )
+                        .buttonStyle(.pressable)
+                        .padding(20)
+                        .accessibilityLabel("Fermer")
+                    }
+                    .presentationBackground { SheetBackground() }
+                    .preferredColorScheme(preferredScheme)
+            }
     }
 
     /// Single value that flips whenever any preference the store reads

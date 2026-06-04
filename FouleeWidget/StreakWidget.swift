@@ -8,11 +8,29 @@ import WidgetKit
 ///
 /// Reuses `StreakProvider` shared with `FouleeWatchWidget` via the Tuist
 /// sources glob — no logic duplication, just iOS-specific views below.
+/// Reads the current streak from the snapshot the app writes to the app group
+/// (no HealthKit in the widget, so it still works while the phone is locked).
+struct StreakSnapshotProvider: TimelineProvider {
+    func placeholder(in context: Context) -> StreakEntry { .placeholder }
+
+    func getSnapshot(in context: Context, completion: @escaping (StreakEntry) -> Void) {
+        completion(entry())
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<StreakEntry>) -> Void) {
+        completion(Timeline(entries: [entry()], policy: .after(Date(timeIntervalSinceNow: 60 * 60))))
+    }
+
+    private func entry() -> StreakEntry {
+        StreakEntry(date: .now, streak: SharedStore.read()?.streak ?? 0)
+    }
+}
+
 struct StreakWidget: Widget {
     static let kind = "com.eno33.foulee.streakWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: Self.kind, provider: StreakProvider()) { entry in
+        StaticConfiguration(kind: Self.kind, provider: StreakSnapshotProvider()) { entry in
             StreakWidgetView(entry: entry)
                 .containerBackground(StreakWidget.containerBackground, for: .widget)
         }
