@@ -12,8 +12,10 @@ enum DayStatus: Equatable, Sendable {
 struct CalendarDay: Identifiable, Equatable, Sendable {
     let date: Date
     let status: DayStatus
-    /// Exercise minutes that day (drives the ring fill + the day detail).
+    /// Exercise minutes that day (drives the inner activity ring + day detail).
     let minutes: Int
+    /// Steps that day (drives the outer step ring + day detail).
+    let steps: Int
     var id: Date { date }
 }
 
@@ -63,6 +65,7 @@ enum StreakCalendar {
     /// (42 cells) so swiping between months keeps a stable height.
     static func months(
         history: [DailyMinutes],
+        steps: [MetricPoint] = [],
         goalMinutes: Int,
         activeDays: Set<Weekday>,
         today: Date,
@@ -77,6 +80,10 @@ enum StreakCalendar {
 
         let byDay = Dictionary(
             uniqueKeysWithValues: history.map { (calendar.startOfDay(for: $0.date), $0.minutes) }
+        )
+        let stepsByDay = Dictionary(
+            steps.map { (calendar.startOfDay(for: $0.date), Int($0.value)) },
+            uniquingKeysWith: { first, _ in first }
         )
         let activeWeekdays = Set(activeDays.map(\.calendarWeekday))
 
@@ -95,7 +102,12 @@ enum StreakCalendar {
             var cells: [CalendarDay?] = Array(repeating: nil, count: leading)
             for day in dayRange {
                 guard let date = calendar.date(byAdding: .day, value: day - 1, to: monthStart) else { continue }
-                cells.append(CalendarDay(date: date, status: status(of: date), minutes: byDay[date] ?? 0))
+                cells.append(CalendarDay(
+                    date: date,
+                    status: status(of: date),
+                    minutes: byDay[date] ?? 0,
+                    steps: stepsByDay[date] ?? 0
+                ))
             }
             while cells.count < 42 { cells.append(nil) } // pad to 6 rows
             return StreakMonth(monthStart: monthStart, title: monthTitle(monthStart), cells: cells)

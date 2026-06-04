@@ -6,13 +6,15 @@ import SwiftUI
 struct StreakMonthBrowser: View {
     let months: [StreakMonth]
     let goalMinutes: Int
+    let goalSteps: Int
 
     @State private var index: Int
     @State private var selectedDay: CalendarDay?
 
-    init(months: [StreakMonth], goalMinutes: Int) {
+    init(months: [StreakMonth], goalMinutes: Int, goalSteps: Int) {
         self.months = months
         self.goalMinutes = goalMinutes
+        self.goalSteps = goalSteps
         // Start on the current month (last) rather than flashing the oldest.
         _index = State(initialValue: max(months.count - 1, 0))
     }
@@ -101,9 +103,14 @@ struct StreakMonthBrowser: View {
     private var rings: some View {
         Group {
             if let month {
-                StreakMonthRings(month: month, goalMinutes: goalMinutes, selectedDay: $selectedDay)
-                    .id(month.id)
-                    .transition(.opacity)
+                StreakMonthRings(
+                    month: month,
+                    goalMinutes: goalMinutes,
+                    goalSteps: goalSteps,
+                    selectedDay: $selectedDay
+                )
+                .id(month.id)
+                .transition(.opacity)
             }
         }
     }
@@ -137,11 +144,12 @@ struct StreakMonthBrowser: View {
     }
 
     private func detailText(_ day: CalendarDay) -> String {
+        let steps = "\(day.steps.formattedFR) pas"
         switch day.status {
-        case .done: "\(day.minutes) min · objectif atteint"
-        case .missed: "\(day.minutes) / \(goalMinutes) min"
-        case .rest: "jour de repos"
-        case .future: "à venir"
+        case .done: return "\(day.minutes) min · \(steps)"
+        case .missed: return "\(day.minutes) / \(goalMinutes) min · \(steps)"
+        case .rest: return day.steps > 0 ? "Repos · \(steps)" : "Jour de repos"
+        case .future: return "À venir"
         }
     }
 

@@ -27,6 +27,14 @@ enum FouleeColor {
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
+
+    /// Activity (midday-walk minutes) ring — green, distinct from the purple
+    /// step ring, echoing the "exercise" colour language.
+    static let activityGradient = LinearGradient(
+        colors: [Color(hex: 0x5BE36B), success, Color(hex: 0x1FA845)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
 }
 
 extension Color {

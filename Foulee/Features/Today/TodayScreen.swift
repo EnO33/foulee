@@ -77,6 +77,7 @@ struct TodayScreen: View {
             .sheet(isPresented: $isShowingStreak) {
                 StreakCalendarSheet(
                     goalMinutes: store.minutesGoal,
+                    goalSteps: preferences.stepsGoal,
                     activeDays: preferences.activeDays
                 ) { isShowingStreak = false }
                 .preferredColorScheme(preferredScheme)

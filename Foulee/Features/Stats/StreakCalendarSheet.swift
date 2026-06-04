@@ -9,9 +9,13 @@ struct StreakCalendarSheet: View {
 
     @State private var store: StreakCalendarStore
 
-    init(goalMinutes: Int, activeDays: Set<Weekday>, onClose: @escaping () -> Void) {
+    init(goalMinutes: Int, goalSteps: Int, activeDays: Set<Weekday>, onClose: @escaping () -> Void) {
         self.onClose = onClose
-        _store = State(initialValue: StreakCalendarStore(goalMinutes: goalMinutes, activeDays: activeDays))
+        _store = State(initialValue: StreakCalendarStore(
+            goalMinutes: goalMinutes,
+            goalSteps: goalSteps,
+            activeDays: activeDays
+        ))
     }
 
     var body: some View {
@@ -112,7 +116,11 @@ struct StreakCalendarSheet: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 120)
             } else {
-                StreakMonthBrowser(months: store.months, goalMinutes: store.goalMinutes)
+                StreakMonthBrowser(
+                    months: store.months,
+                    goalMinutes: store.goalMinutes,
+                    goalSteps: store.goalSteps
+                )
             }
         }
         .padding(18)
@@ -205,7 +213,7 @@ private struct ProgressBar: View {
 private struct StreakCalendarPreview: View {
     init() { prepareDependencies { $0.healthKit = .previewValue } }
     var body: some View {
-        StreakCalendarSheet(goalMinutes: 20, activeDays: Weekday.workWeek, onClose: {})
+        StreakCalendarSheet(goalMinutes: 20, goalSteps: 6_000, activeDays: Weekday.workWeek, onClose: {})
     }
 }
 

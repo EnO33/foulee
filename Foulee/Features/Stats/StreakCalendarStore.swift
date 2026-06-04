@@ -12,6 +12,7 @@ final class StreakCalendarStore {
     static let monthsBack = 12
 
     let goalMinutes: Int
+    let goalSteps: Int
     let activeDays: Set<Weekday>
 
     private(set) var months: [StreakMonth] = []
@@ -43,8 +44,9 @@ final class StreakCalendarStore {
     @ObservationIgnored
     @Dependency(\.healthKit) private var healthKit
 
-    init(goalMinutes: Int, activeDays: Set<Weekday>) {
+    init(goalMinutes: Int, goalSteps: Int, activeDays: Set<Weekday>) {
         self.goalMinutes = goalMinutes
+        self.goalSteps = goalSteps
         self.activeDays = activeDays
     }
 
@@ -52,9 +54,12 @@ final class StreakCalendarStore {
         isLoading = true
         defer { isLoading = false }
         // Pull enough to cover the 1st of the oldest month, plus a little slack.
-        let history = (try? await healthKit.dailyMinutes(Self.monthsBack * 31 + 7)) ?? []
+        let daysBack = Self.monthsBack * 31 + 7
+        let history = (try? await healthKit.dailyMinutes(daysBack)) ?? []
+        let steps = (try? await healthKit.metricSeries(.steps, daysBack)) ?? []
         months = StreakCalendar.months(
             history: history,
+            steps: steps,
             goalMinutes: goalMinutes,
             activeDays: activeDays,
             today: .now,

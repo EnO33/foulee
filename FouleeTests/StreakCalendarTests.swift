@@ -65,6 +65,18 @@ struct StreakCalendarTests {
         #expect((0...100).contains(month.rate))
     }
 
+    @Test("Daily steps are mapped onto the matching calendar day")
+    func dailySteps() {
+        let firstMay = calendar.date(from: DateComponents(year: 2024, month: 5, day: 1))!
+        let cells = StreakCalendar.months(
+            history: [], steps: [MetricPoint(date: firstMay, value: 8_200)],
+            goalMinutes: 20, activeDays: Weekday.workWeek,
+            today: today, count: 1, calendar: calendar
+        )[0].cells.compactMap { $0 }
+        #expect(cells.first { calendar.component(.day, from: $0.date) == 1 }!.steps == 8_200)
+        #expect(cells.first { calendar.component(.day, from: $0.date) == 2 }!.steps == 0)
+    }
+
     @Test("Weekday stats: per-day rate, Monday-first order, rest flag")
     func weekdayBreakdown() {
         // Every Monday of May 2024 met the goal; nothing else logged.

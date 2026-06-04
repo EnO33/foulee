@@ -1,13 +1,15 @@
 import SwiftUI
 
-/// One calendar month rendered as weekday-aligned daily rings (filled by
-/// minutes / goal). Slide a finger across the grid — or tap — to select a day;
-/// the selected ring gets an accent outline and the browser ticks a haptic on
-/// each change. `nil` cells are the leading/trailing blanks that keep columns
-/// aligned and the grid a stable 6 rows tall.
+/// One calendar month rendered as weekday-aligned daily rings. Each active day
+/// is a Fitness-style double ring: outer = steps / step goal (purple), inner =
+/// activity minutes / goal (green). Slide a finger across the grid — or tap —
+/// to select a day; the selected day gets an accent outline and the browser
+/// ticks a haptic on each change. `nil` cells are the leading/trailing blanks
+/// that keep columns aligned and the grid a stable 6 rows tall.
 struct StreakMonthRings: View {
     let month: StreakMonth
     let goalMinutes: Int
+    let goalSteps: Int
     @Binding var selectedDay: CalendarDay?
 
     private let spacing: CGFloat = 8
@@ -36,23 +38,20 @@ struct StreakMonthRings: View {
     }
 
     private func ring(_ day: CalendarDay) -> some View {
-        let progress = goalMinutes > 0 ? min(Double(day.minutes) / Double(goalMinutes), 1) : 0
         let isSelected = selectedDay?.id == day.id
         return ZStack {
             switch day.status {
             case .rest:
                 Circle().fill(Color.gray.opacity(0.18)).frame(width: 6, height: 6)
             case .future:
-                Circle().strokeBorder(Color.gray.opacity(0.12), lineWidth: 3)
+                Circle().strokeBorder(Color.gray.opacity(0.12), lineWidth: 2.5)
             case .done, .missed:
-                Circle().strokeBorder(Color.gray.opacity(0.15), lineWidth: 3)
-                Circle()
-                    .trim(from: 0, to: max(progress, 0.02))
-                    .stroke(FouleeColor.accentGradient, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
+                arc(progress: fraction(day.steps, goalSteps), gradient: FouleeColor.accentGradient)
+                arc(progress: fraction(day.minutes, goalMinutes), gradient: FouleeColor.activityGradient)
+                    .padding(5.5)
             }
             if Calendar.current.isDateInToday(day.date) {
-                Circle().fill(FouleeColor.accentMid).frame(width: 5, height: 5)
+                Circle().fill(FouleeColor.accentMid).frame(width: 4, height: 4)
             }
         }
         .padding(2)
@@ -61,6 +60,23 @@ struct StreakMonthRings: View {
         }
         .frame(maxWidth: .infinity)
         .aspectRatio(1, contentMode: .fit)
+    }
+
+    /// One ring of the double ring: a faint track plus the filled arc. An empty
+    /// goal shows just the track; a non-zero fill keeps a small minimum sweep so
+    /// it reads as "started".
+    private func arc(progress: Double, gradient: LinearGradient) -> some View {
+        ZStack {
+            Circle().strokeBorder(Color.gray.opacity(0.15), lineWidth: 2.5)
+            Circle()
+                .trim(from: 0, to: progress > 0 ? max(progress, 0.04) : 0)
+                .stroke(gradient, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+        }
+    }
+
+    private func fraction(_ value: Int, _ goal: Int) -> Double {
+        goal > 0 ? min(max(Double(value) / Double(goal), 0), 1) : 0
     }
 
     /// A tap selects a day instantly; a brief press-then-drag scrubs across
