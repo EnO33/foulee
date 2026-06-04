@@ -53,6 +53,11 @@ secrets/
 fastlane/asc_key.p8
 fastlane/dist_cert.p12
 
+# Local screenshots / captures (App Store assets, device + simulator grabs)
+IMG_*.PNG
+Simulator Screenshot*.png
+/appstore-screenshots/
+
 # Local tooling state
 .claude/
 .cursor/
