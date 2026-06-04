@@ -14,10 +14,13 @@ struct WidgetSnapshot: Codable, Sendable {
     var stepsGoal: Int
     var minutes: Int
     var minutesGoal: Int
+    var distanceKm: Double
+    var calories: Int
     var streak: Int
 
     static let placeholder = WidgetSnapshot(
-        date: .now, steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20, streak: 0
+        date: .now, steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20,
+        distanceKm: 0, calories: 0, streak: 0
     )
 }
 
