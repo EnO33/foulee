@@ -12,24 +12,32 @@ struct TodayHeroCard: View {
     var onSnooze: (TimeInterval) -> Void
     var onToggleNotifications: () -> Void
 
-    /// 0 → 1 fill of the ring. Once the walk goal is hit for the day,
-    /// the ring is full regardless of step count (the `hasWalkedToday`
-    /// criterion is minute-based, but visually the user expects the
-    /// circle closed once they're done). Pending state is clamped so a
-    /// step count past the daily goal doesn't overshoot.
-    private var progress: Double {
-        if snapshot.hasWalkedToday { return 1 }
+    /// Step-goal fill (outer ring), clamped so overshoot doesn't wrap.
+    private var stepsProgress: Double {
         guard snapshot.stepsGoal > 0 else { return 0 }
-        let ratio = Double(snapshot.steps) / Double(snapshot.stepsGoal)
-        return min(max(ratio, 0), 1)
+        return min(max(Double(snapshot.steps) / Double(snapshot.stepsGoal), 0), 1)
+    }
+
+    /// Activity-goal fill (inner ring). Full once the walk is marked done so
+    /// the ring closes even if the logged minutes round just under the goal.
+    private var minutesProgress: Double {
+        if snapshot.hasWalkedToday { return 1 }
+        guard snapshot.minutesGoal > 0 else { return 0 }
+        return min(max(Double(snapshot.minutes) / Double(snapshot.minutesGoal), 0), 1)
     }
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 16) {
             HStack(spacing: 18) {
                 ring
                 content
             }
+            TodayGoalLegend(
+                steps: snapshot.steps,
+                stepsGoal: snapshot.stepsGoal,
+                minutes: snapshot.minutes,
+                minutesGoal: snapshot.minutesGoal
+            )
             actionRow
         }
         .padding(22)
@@ -37,34 +45,33 @@ struct TodayHeroCard: View {
     }
 
     private var ring: some View {
-        ProgressRing(progress: progress, lineWidth: 11) {
-            if snapshot.hasWalkedToday {
-                VStack(spacing: 2) {
-                    Image(systemName: FouleeIcon.check)
-                        .font(.system(size: 36, weight: .bold))
-                        .foregroundStyle(FouleeColor.accentMid)
-                    Text("Fait")
-                        .font(FouleeFont.headline)
-                }
-            } else {
-                VStack(spacing: 4) {
-                    Image(systemName: FouleeIcon.walk)
-                        .font(.system(size: 28, weight: .semibold))
-                        .foregroundStyle(FouleeColor.accentMid)
-                    Text(snapshot.steps.formattedFR)
-                        .font(FouleeFont.numeric(size: 22))
-                    Text("pas")
-                        .font(FouleeFont.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-            }
+        DualProgressRing(outerProgress: stepsProgress, innerProgress: minutesProgress) {
+            ringCenter
         }
-        .frame(width: 132, height: 132)
+        .frame(width: 128, height: 128)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(snapshot.hasWalkedToday ? "Objectif du jour atteint" : "Progression du jour")
-        .accessibilityValue(snapshot.hasWalkedToday
-            ? "Marche faite"
-            : "\(snapshot.steps.formattedFR) pas sur \(snapshot.stepsGoal.formattedFR)")
+        .accessibilityLabel("Progression du jour")
+        .accessibilityValue(
+            "Pas \(snapshot.steps.formattedFR) sur \(snapshot.stepsGoal.formattedFR), "
+                + "activité \(snapshot.minutes) sur \(snapshot.minutesGoal) minutes"
+        )
+    }
+
+    @ViewBuilder
+    private var ringCenter: some View {
+        if snapshot.hasWalkedToday {
+            VStack(spacing: 2) {
+                Image(systemName: FouleeIcon.check)
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundStyle(FouleeColor.accentMid)
+                Text("Fait")
+                    .font(FouleeFont.footnote.weight(.semibold))
+            }
+        } else {
+            Image(systemName: FouleeIcon.walk)
+                .font(.system(size: 30, weight: .semibold))
+                .foregroundStyle(FouleeColor.accentMid)
+        }
     }
 
     @ViewBuilder
@@ -93,9 +100,6 @@ struct TodayHeroCard: View {
                 )
                 windowSentence
                     .font(FouleeFont.title3)
-                Text("Objectif : \(snapshot.minutesGoal) min · \(snapshot.stepsGoal.formattedFR) pas")
-                    .font(FouleeFont.footnote)
-                    .foregroundStyle(.secondary)
             }
         }
     }
