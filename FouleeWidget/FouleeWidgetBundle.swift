@@ -6,5 +6,6 @@ struct FouleeWidgetBundle: WidgetBundle {
     var body: some Widget {
         StreakWidget()
         TodayProgressWidget()
+        StatWidget()
     }
 }

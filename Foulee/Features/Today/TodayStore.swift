@@ -107,6 +107,8 @@ final class TodayStore {
             stepsGoal: snapshot.stepsGoal,
             minutes: snapshot.minutes,
             minutesGoal: snapshot.minutesGoal,
+            distanceKm: snapshot.distanceKm,
+            calories: snapshot.calories,
             streak: snapshot.streak
         ))
         WidgetCenter.shared.reloadAllTimelines()
