@@ -25,6 +25,19 @@ enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
         }
     }
 
+    /// Full French day name, lowercased for use mid-sentence ("le mardi").
+    var fullName: String {
+        switch self {
+        case .monday: "lundi"
+        case .tuesday: "mardi"
+        case .wednesday: "mercredi"
+        case .thursday: "jeudi"
+        case .friday: "vendredi"
+        case .saturday: "samedi"
+        case .sunday: "dimanche"
+        }
+    }
+
     /// Default "weekday" set used at onboarding (Mon → Fri).
     static let workWeek: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
 
