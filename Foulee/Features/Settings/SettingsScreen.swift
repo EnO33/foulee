@@ -15,6 +15,7 @@ struct SettingsScreen: View {
                 header
                 appearanceSection
                 walkSection
+                stepsSection
                 notificationsSection
                 aboutSection
             }
@@ -52,7 +53,35 @@ struct SettingsScreen: View {
             VStack(alignment: .leading, spacing: 20) {
                 daysRow
                 windowRow
-                goalRow
+                minutesGoalRow
+            }
+        }
+    }
+
+    /// Daily step goal — independent from the activity goal: it's tracked all
+    /// day (the midday walk just contributes to it), so it stands on its own.
+    private var stepsSection: some View {
+        section(title: "Objectif de pas") {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .firstTextBaseline) {
+                    rowLabel("Objectif quotidien")
+                    Spacer()
+                    Text("\(preferences.stepsGoal.formattedFR) pas")
+                        .font(FouleeFont.numeric(size: 20, weight: .semibold))
+                        .foregroundStyle(FouleeColor.accentMid)
+                }
+                Slider(
+                    value: Binding(
+                        get: { Double(preferences.stepsGoal) },
+                        set: { preferences.stepsGoal = Int($0) }
+                    ),
+                    in: 2_000...15_000,
+                    step: 500
+                )
+                .tint(FouleeColor.accentMid)
+                Text("Compté toute la journée, ta marche du midi incluse.")
+                    .font(FouleeFont.footnote)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -99,10 +128,12 @@ struct SettingsScreen: View {
         }
     }
 
-    private var goalRow: some View {
+    /// Activity goal — the midday-walk duration that drives the ring + the
+    /// "start walk" flow. Distinct from the all-day step goal below.
+    private var minutesGoalRow: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                rowLabel("Objectif")
+                rowLabel("Objectif d'activité")
                 Spacer()
                 Text("\(preferences.minutesGoal) min")
                     .font(FouleeFont.numeric(size: 20, weight: .semibold))
