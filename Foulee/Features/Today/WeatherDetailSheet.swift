@@ -6,7 +6,7 @@ struct WeatherDetailSheet: View {
     let weather: WeatherSnapshot
     var onClose: () -> Void
 
-    private var isAvailable: Bool { weather.condition != "—" }
+    private var isAvailable: Bool { weather.isAvailable }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -34,6 +34,7 @@ struct WeatherDetailSheet: View {
                 Text("Météo du midi à ton emplacement")
                     .font(FouleeFont.footnote)
                     .foregroundStyle(.secondary)
+                WeatherAttributionView()
                     .padding(.bottom, 8)
             }
             .frame(maxWidth: .infinity)

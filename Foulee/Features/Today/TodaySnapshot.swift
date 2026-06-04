@@ -36,4 +36,8 @@ struct WeatherSnapshot: Equatable {
     var temperatureCelsius: Int
     var condition: String
     var advice: String
+
+    /// Whether real WeatherKit data is present (vs the "—" placeholder used
+    /// when location isn't authorised). Drives the Apple Weather attribution.
+    var isAvailable: Bool { condition != "—" }
 }
