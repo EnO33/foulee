@@ -20,10 +20,16 @@ final class UserPreferences {
         didSet { defaults.set(walkWindowEnd.rawMinutes, forKey: Keys.walkWindowEnd) }
     }
     var minutesGoal: Int {
-        didSet { defaults.set(minutesGoal, forKey: Keys.minutesGoal) }
+        didSet {
+            defaults.set(minutesGoal, forKey: Keys.minutesGoal)
+            SharedGoals.write(stepsGoal: stepsGoal, minutesGoal: minutesGoal)
+        }
     }
     var stepsGoal: Int {
-        didSet { defaults.set(stepsGoal, forKey: Keys.stepsGoal) }
+        didSet {
+            defaults.set(stepsGoal, forKey: Keys.stepsGoal)
+            SharedGoals.write(stepsGoal: stepsGoal, minutesGoal: minutesGoal)
+        }
     }
     var hasCompletedOnboarding: Bool {
         didSet { defaults.set(hasCompletedOnboarding, forKey: Keys.hasCompletedOnboarding) }
@@ -52,6 +58,8 @@ final class UserPreferences {
         self.notificationsEnabled = (defaults.object(forKey: Keys.notificationsEnabled) as? Bool) ?? true
         let rawTheme = defaults.string(forKey: Keys.themeMode)
         self.themeMode = rawTheme.flatMap(ThemeMode.init(rawValue:)) ?? .system
+        // Seed the shared container so widgets have the real goals on first run.
+        SharedGoals.write(stepsGoal: stepsGoal, minutesGoal: minutesGoal)
     }
 }
 
