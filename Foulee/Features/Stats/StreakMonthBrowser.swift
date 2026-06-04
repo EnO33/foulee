@@ -1,15 +1,15 @@
 import SwiftUI
 
-/// Month-by-month view of the streak rings. Swipe horizontally — or tap the
-/// chevrons — to move between months; tap a day for its detail. The title,
-/// stats and rings all reflect the month currently on screen. Self-sizing: a
-/// horizontal paging scroll view, so no fixed height is needed.
+/// Month-by-month view of the streak rings. The chevrons move between months
+/// (the title, stats and rings all follow); slide a finger across the rings —
+/// or tap — to inspect a single day, with a light haptic tick on each change.
 struct StreakMonthBrowser: View {
     let months: [StreakMonth]
     let goalMinutes: Int
 
-    @State private var scrolledID: Date?
+    @State private var index = 0
     @State private var selectedDay: CalendarDay?
+    @State private var didInit = false
 
     private let weekdayLabels = ["L", "M", "M", "J", "V", "S", "D"]
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
@@ -21,19 +21,18 @@ struct StreakMonthBrowser: View {
         return formatter
     }()
 
-    private var month: StreakMonth? { months.first { $0.id == scrolledID } ?? months.last }
-    private var index: Int { months.firstIndex { $0.id == scrolledID } ?? months.count - 1 }
+    private var month: StreakMonth? { months.indices.contains(index) ? months[index] : months.last }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
             statsRow
             weekdayHeader
-            pager
+            rings
             detailLine
         }
-        .onAppear { if scrolledID == nil { scrolledID = months.last?.id } }
-        .onChange(of: scrolledID) { selectedDay = nil }
+        .onAppear { if !didInit { index = max(months.count - 1, 0); didInit = true } }
+        .sensoryFeedback(.selection, trigger: selectedDay?.id)
     }
 
     private var header: some View {
@@ -42,7 +41,6 @@ struct StreakMonthBrowser: View {
             Spacer(minLength: 0)
             Text(month?.title ?? "")
                 .font(FouleeFont.headline)
-                .animation(.none, value: scrolledID)
             Spacer(minLength: 0)
             chevron("chevron.right", label: "Mois suivant", enabled: index < months.count - 1) { step(1) }
         }
@@ -95,20 +93,14 @@ struct StreakMonthBrowser: View {
         }
     }
 
-    private var pager: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack(spacing: 0) {
-                ForEach(months) { item in
-                    StreakMonthRings(month: item, goalMinutes: goalMinutes, selectedDay: $selectedDay)
-                        .containerRelativeFrame(.horizontal)
-                        .id(item.id)
-                }
+    private var rings: some View {
+        Group {
+            if let month {
+                StreakMonthRings(month: month, goalMinutes: goalMinutes, selectedDay: $selectedDay)
+                    .id(month.id)
+                    .transition(.opacity)
             }
-            .scrollTargetLayout()
         }
-        .scrollTargetBehavior(.paging)
-        .scrollPosition(id: $scrolledID)
-        .scrollIndicators(.hidden)
     }
 
     private var detailLine: some View {
@@ -123,7 +115,7 @@ struct StreakMonthBrowser: View {
                     Spacer(minLength: 0)
                 }
             } else {
-                Text("Touche un jour pour son détail · glisse pour changer de mois")
+                Text("Glisse ton doigt sur les jours pour le détail")
                     .font(FouleeFont.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -135,7 +127,8 @@ struct StreakMonthBrowser: View {
     private func step(_ delta: Int) {
         let next = index + delta
         guard months.indices.contains(next) else { return }
-        withAnimation(.easeInOut(duration: 0.25)) { scrolledID = months[next].id }
+        selectedDay = nil
+        withAnimation(.easeInOut(duration: 0.2)) { index = next }
     }
 
     private func detailText(_ day: CalendarDay) -> String {

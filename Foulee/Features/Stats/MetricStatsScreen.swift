@@ -153,6 +153,8 @@ struct MetricStatsScreen: View {
                 }
             }
         }
+        // Light tick each time the scrub lands on a different bar.
+        .sensoryFeedback(.selection, trigger: selectedPoint?.id)
     }
 
     /// The daily goal to mark on the Y axis (steps/minutes, daily ranges only).
