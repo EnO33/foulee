@@ -64,4 +64,24 @@ struct StreakCalendarTests {
         #expect(month.minutes == 35) // 25 + 10
         #expect((0...100).contains(month.rate))
     }
+
+    @Test("Weekday stats: per-day rate, Monday-first order, rest flag")
+    func weekdayBreakdown() {
+        // Every Monday of May 2024 met the goal; nothing else logged.
+        let mondays = [6, 13, 20, 27].map { calendar.date(from: DateComponents(year: 2024, month: 5, day: $0))! }
+        let history = mondays.map { DailyMinutes(date: $0, minutes: 25) }
+        let months = StreakCalendar.months(
+            history: history, goalMinutes: 20, activeDays: Weekday.workWeek,
+            today: today, count: 1, calendar: calendar
+        )
+        let stats = StreakCalendar.weekdayStats(months: months, activeDays: Weekday.workWeek, calendar: calendar)
+        func stat(_ day: Weekday) -> WeekdayStat { stats.first { $0.weekday == day }! }
+        #expect(stats.count == 7)
+        #expect(stats[0].weekday == .monday)       // Monday-first
+        #expect(stat(.monday).rate == 100)         // 4 met, 0 missed
+        #expect(stat(.monday).isActive)
+        #expect(stat(.tuesday).rate == 0)          // active, none met
+        #expect(stat(.tuesday).isActive)
+        #expect(stat(.saturday).isActive == false) // rest day
+    }
 }

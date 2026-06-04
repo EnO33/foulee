@@ -22,6 +22,10 @@ struct StreakCalendarSheet: View {
                     hero
                     recordCard
                     monthCard
+                    if !store.isLoading && !store.months.isEmpty {
+                        totalsCard
+                        weekdayCard
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 24)
@@ -113,6 +117,59 @@ struct StreakCalendarSheet: View {
         }
         .padding(18)
         .fouleeGlass(cornerRadius: 24)
+    }
+
+    private var totalsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("12 derniers mois")
+                .font(FouleeFont.headline)
+            HStack(spacing: 0) {
+                totalCell(value: "\(store.totalWalks)", label: store.totalWalks == 1 ? "marche" : "marches")
+                divider
+                totalCell(value: formattedDuration(store.totalMinutes), label: "d'activité")
+                divider
+                totalCell(value: "\(store.overallRate) %", label: "réussite")
+            }
+        }
+        .padding(18)
+        .fouleeGlass(cornerRadius: 22)
+    }
+
+    private func totalCell(value: String, label: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(FouleeFont.numeric(size: 20, weight: .semibold))
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+            Text(label)
+                .font(FouleeFont.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityValue(value)
+    }
+
+    private var divider: some View {
+        Rectangle().fill(Color.gray.opacity(0.25)).frame(width: 1, height: 34)
+    }
+
+    private func formattedDuration(_ minutes: Int) -> String {
+        if minutes < 60 { return "\(minutes) min" }
+        let hours = minutes / 60
+        let mins = minutes % 60
+        return mins == 0 ? "\(hours) h" : "\(hours) h \(mins)"
+    }
+
+    private var weekdayCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Tes jours les plus réguliers")
+                .font(FouleeFont.headline)
+            StreakWeekdayBreakdown(stats: store.weekdayStats)
+        }
+        .padding(18)
+        .fouleeGlass(cornerRadius: 22)
     }
 
     private var closeButton: some View {

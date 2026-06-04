@@ -43,6 +43,17 @@ struct StreakMonth: Identifiable, Equatable, Sendable {
     }
 }
 
+/// Success rate for one weekday across the loaded history (Fitness-style
+/// "which days are you most regular" breakdown).
+struct WeekdayStat: Identifiable, Equatable, Sendable {
+    let weekday: Weekday
+    /// 0…100 — share of that weekday's active days whose goal was met.
+    let rate: Int
+    /// One of the user's active weekdays (false ones are muted in the UI).
+    let isActive: Bool
+    var id: Int { weekday.rawValue }
+}
+
 /// Pure builder for the streak rings — the last `count` calendar months, each
 /// weekday-aligned (Monday first) for a 7-column grid.
 enum StreakCalendar {
@@ -88,6 +99,26 @@ enum StreakCalendar {
             }
             while cells.count < 42 { cells.append(nil) } // pad to 6 rows
             return StreakMonth(monthStart: monthStart, title: monthTitle(monthStart), cells: cells)
+        }
+    }
+
+    /// Per-weekday success rate over the given months (Monday → Sunday). Only
+    /// active (done/missed) days count toward each weekday's rate; rest days
+    /// are flagged so the UI can mute them.
+    static func weekdayStats(
+        months: [StreakMonth],
+        activeDays: Set<Weekday>,
+        calendar: Calendar = .iso8601Monday
+    ) -> [WeekdayStat] {
+        let days = months.flatMap { $0.cells.compactMap { $0 } }
+        return Weekday.allCases.map { weekday in
+            let active = days.filter {
+                calendar.component(.weekday, from: $0.date) == weekday.calendarWeekday
+                    && ($0.status == .done || $0.status == .missed)
+            }
+            let done = active.filter { $0.status == .done }.count
+            let rate = active.isEmpty ? 0 : Int((Double(done) / Double(active.count) * 100).rounded())
+            return WeekdayStat(weekday: weekday, rate: rate, isActive: activeDays.contains(weekday))
         }
     }
 
