@@ -112,6 +112,7 @@ let project = Project(
                 "FouleeWidget/**",
                 "Foulee/Streak/StreakCalculator.swift",
                 "Foulee/Health/DailyMinutes.swift",
+                "Foulee/Shared/SharedGoals.swift",
                 "FouleeWatchWidget/StreakProvider.swift",
                 "FouleeWatchWidget/StreakEntry.swift",
                 "FouleeWatchWidget/SendableBox.swift"
@@ -203,7 +204,8 @@ let project = Project(
             sources: [
                 "FouleeWatchWidget/**",
                 "Foulee/Streak/StreakCalculator.swift",
-                "Foulee/Health/DailyMinutes.swift"
+                "Foulee/Health/DailyMinutes.swift",
+                "Foulee/Shared/SharedGoals.swift"
             ],
             resources: [
                 .glob(

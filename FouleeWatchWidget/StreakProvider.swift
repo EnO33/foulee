@@ -8,7 +8,6 @@ import WidgetKit
 /// HealthKit authorization is granted on first launch of the Watch app —
 /// the widget process inherits that grant via the bundle ID prefix.
 struct StreakProvider: TimelineProvider {
-    private static let goalMinutes = 20
     private static let historyDays = 30
     /// Background refresh cadence. Widgets prefer apps to call
     /// `WidgetCenter.shared.reloadAllTimelines()` from inside the app
@@ -45,7 +44,7 @@ struct StreakProvider: TimelineProvider {
         let history = await loadHistory()
         return StreakCalculator.current(
             history: history,
-            goalMinutes: goalMinutes,
+            goalMinutes: SharedGoals.minutesGoal,
             today: .now
         )
     }
