@@ -113,16 +113,6 @@ struct MetricStatsScreen: View {
                 .opacity(selectedPoint == nil || selectedPoint?.id == point.id ? 1 : 0.4)
                 .cornerRadius(3)
             }
-            if let dailyGoal, store.range != .today {
-                RuleMark(y: .value("Objectif", dailyGoal))
-                    .foregroundStyle(FouleeColor.success.opacity(0.6))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
-                    .annotation(position: .top, alignment: .leading) {
-                        Text("Objectif \(metric.formattedWithUnit(dailyGoal))")
-                            .font(FouleeFont.caption.weight(.semibold))
-                            .foregroundStyle(FouleeColor.success)
-                    }
-            }
             if let selectedPoint {
                 RuleMark(x: .value("Temps", selectedPoint.date, unit: chartUnit))
                     .foregroundStyle(metric.tint.opacity(0.55))
@@ -146,7 +136,29 @@ struct MetricStatsScreen: View {
                 AxisValueLabel(format: xAxisFormat)
             }
         }
-        .chartYAxis { AxisMarks(position: .leading) }
+        .chartYAxis {
+            AxisMarks(position: .leading)
+            // The daily goal as a tinted reference line on the Y axis: it sits
+            // behind the bars (like the chart's own grid lines) with an
+            // "Objectif" label on the trailing edge — no line slashing over
+            // the bars, no floating callout.
+            if let goalLine {
+                AxisMarks(position: .trailing, values: [goalLine]) {
+                    AxisGridLine().foregroundStyle(metric.tint.opacity(0.45))
+                    AxisValueLabel {
+                        Text("Objectif")
+                            .font(FouleeFont.caption)
+                            .foregroundStyle(metric.tint)
+                    }
+                }
+            }
+        }
+    }
+
+    /// The daily goal to mark on the Y axis (steps/minutes, daily ranges only).
+    private var goalLine: Double? {
+        guard let dailyGoal, store.range != .today else { return nil }
+        return dailyGoal
     }
 
     private var yMax: Double {
