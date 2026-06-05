@@ -98,7 +98,11 @@ struct ActiveWalkScreen: View {
     }
 
     private func finishedSummary(session: WalkSession) -> String {
-        "\(session.steps.formattedFR) pas · \(session.distanceKm.kmText())"
+        var parts = ["\(session.steps.formattedFR) pas", session.distanceKm.kmText()]
+        if session.elevationGainMeters >= 1 {
+            parts.append("↑ \(Int(session.elevationGainMeters)) m")
+        }
+        return parts.joined(separator: " · ")
     }
 
     private func header(paused: Bool) -> some View {
@@ -140,12 +144,12 @@ struct ActiveWalkScreen: View {
                 Text("PAS")
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
-                HStack(spacing: 16) {
+                HStack(spacing: 12) {
                     metric(value: session.distanceKm.kmText(fractionDigits: 1), label: "Distance")
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 1, height: 28)
+                    ringDivider
                     metric(value: "\(session.estimatedCalories) kcal", label: "Énergie")
+                    ringDivider
+                    metric(value: "\(Int(session.elevationGainMeters)) m", label: "Dénivelé")
                 }
                 .padding(.top, 8)
             }
@@ -157,14 +161,23 @@ struct ActiveWalkScreen: View {
         .accessibilityValue(
             "\(session.steps.formattedFR) pas, "
             + "\(session.distanceKm.kmText(fractionDigits: 1)), "
-            + "\(session.estimatedCalories) kilocalories"
+            + "\(session.estimatedCalories) kilocalories, "
+            + "\(Int(session.elevationGainMeters)) mètres de dénivelé"
         )
+    }
+
+    private var ringDivider: some View {
+        Rectangle()
+            .fill(Color.gray.opacity(0.3))
+            .frame(width: 1, height: 28)
     }
 
     private func metric(value: String, label: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
                 .font(FouleeFont.numeric(size: 17, weight: .semibold))
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
             Text(label)
                 .font(FouleeFont.caption)
                 .foregroundStyle(.secondary)

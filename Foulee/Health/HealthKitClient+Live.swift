@@ -93,6 +93,15 @@ extension HealthKitClient {
                     distanceSample, stepsSample, caloriesSample, minutesSample
                 ])
 
+                // Record elevation gain as standard workout metadata so Santé
+                // (and our own detail view) can surface the dénivelé.
+                if session.elevationGainMeters > 0 {
+                    try await builder.addMetadata([
+                        HKMetadataKeyElevationAscended:
+                            HKQuantity(unit: .meter(), doubleValue: session.elevationGainMeters)
+                    ])
+                }
+
                 try await builder.endCollection(at: endedAt)
                 _ = try await builder.finishWorkout()
             },
@@ -385,28 +394,6 @@ private func recentWalkingWorkouts(
             continuation.resume(returning: summaries)
         }
         store.execute(query)
-    }
-}
-
-extension WorkoutSummary {
-    fileprivate init(workout: HKWorkout) {
-        let distanceMeters = workout
-            .statistics(for: HKQuantityType(.distanceWalkingRunning))?
-            .sumQuantity()?
-            .doubleValue(for: .meter()) ?? 0
-        let kcal = workout
-            .statistics(for: HKQuantityType(.activeEnergyBurned))?
-            .sumQuantity()?
-            .doubleValue(for: .kilocalorie()) ?? 0
-        self.init(
-            id: workout.uuid,
-            startedAt: workout.startDate,
-            endedAt: workout.endDate,
-            durationSeconds: workout.duration,
-            distanceKm: distanceMeters / 1_000,
-            activeCalories: Int(kcal),
-            sourceName: workout.sourceRevision.source.name
-        )
     }
 }
 
