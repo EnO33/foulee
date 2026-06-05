@@ -9,6 +9,9 @@ struct WorkoutSummary: Equatable, Hashable, Sendable, Identifiable {
     var durationSeconds: TimeInterval
     var distanceKm: Double
     var activeCalories: Int
+    /// Elevation gain (metres) from `HKMetadataKeyElevationAscended` — 0 when
+    /// the source didn't record it. Defaulted so existing initialisers compile.
+    var elevationMeters: Double = 0
     /// "Foulée", "Forme", "Apple Watch", etc. — read from
     /// `HKWorkout.sourceRevision.source.name`.
     var sourceName: String

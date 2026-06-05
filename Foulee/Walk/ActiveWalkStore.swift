@@ -32,6 +32,9 @@ final class ActiveWalkStore {
     @Dependency(\.pedometer) private var pedometer
 
     @ObservationIgnored
+    @Dependency(\.altimeter) private var altimeter
+
+    @ObservationIgnored
     @Dependency(\.location) private var location
 
     @ObservationIgnored
@@ -45,6 +48,9 @@ final class ActiveWalkStore {
 
     @ObservationIgnored
     private var pedometerTask: Task<Void, Never>?
+
+    @ObservationIgnored
+    private var altimeterTask: Task<Void, Never>?
 
     @ObservationIgnored
     private var tickerTask: Task<Void, Never>?
@@ -62,9 +68,11 @@ final class ActiveWalkStore {
     @ObservationIgnored private var bankedElapsed: TimeInterval = 0
     @ObservationIgnored private var bankedSteps = 0
     @ObservationIgnored private var bankedDistance: Double = 0
+    @ObservationIgnored private var bankedElevation: Double = 0
     @ObservationIgnored private var segmentStart = Date.distantPast
     @ObservationIgnored private var segmentSteps = 0
     @ObservationIgnored private var segmentDistance: Double = 0
+    @ObservationIgnored private var segmentElevation: Double = 0
 
     /// Begin a fresh session. No-op when already active or finished — call
     /// `reset()` first to start a second walk in the same screen lifetime.
@@ -74,6 +82,7 @@ final class ActiveWalkStore {
         bankedElapsed = 0
         bankedSteps = 0
         bankedDistance = 0
+        bankedElevation = 0
         route = []
         beginSegment()
         routeTask = makeRouteTask()
@@ -90,6 +99,7 @@ final class ActiveWalkStore {
         session.elapsed = bankedElapsed
         session.steps = bankedSteps
         session.distanceMeters = bankedDistance
+        session.elevationGainMeters = bankedElevation
         state = .paused(session)
         await pushLiveActivity(session: session, isPaused: true)
     }
@@ -113,6 +123,7 @@ final class ActiveWalkStore {
             live.elapsed = bankedElapsed
             live.steps = bankedSteps
             live.distanceMeters = bankedDistance
+            live.elevationGainMeters = bankedElevation
             live.endedAt = date.now
             session = live
         case .paused(var held):
@@ -140,8 +151,10 @@ final class ActiveWalkStore {
         bankedElapsed = 0
         bankedSteps = 0
         bankedDistance = 0
+        bankedElevation = 0
         segmentSteps = 0
         segmentDistance = 0
+        segmentElevation = 0
         route = []
         state = .idle
         lastError = nil
@@ -155,7 +168,9 @@ final class ActiveWalkStore {
         segmentStart = date.now
         segmentSteps = 0
         segmentDistance = 0
+        segmentElevation = 0
         pedometerTask = makePedometerTask(from: segmentStart)
+        altimeterTask = makeAltimeterTask()
     }
 
     /// Fold the live segment's totals into the running tally.
@@ -163,14 +178,18 @@ final class ActiveWalkStore {
         bankedElapsed += date.now.timeIntervalSince(segmentStart)
         bankedSteps += segmentSteps
         bankedDistance += segmentDistance
+        bankedElevation += segmentElevation
         segmentSteps = 0
         segmentDistance = 0
+        segmentElevation = 0
     }
 
     private func cancelObservers() {
         pedometerTask?.cancel()
+        altimeterTask?.cancel()
         tickerTask?.cancel()
         pedometer.stop()
+        altimeter.stop()
     }
 
     private func makePedometerTask(from start: Date) -> Task<Void, Never> {
@@ -184,6 +203,19 @@ final class ActiveWalkStore {
                     session.distanceMeters = self.bankedDistance + sample.distanceMeters
                     self.state = .active(session)
                     Task { await self.pushLiveActivity(session: session, isPaused: false) }
+                }
+            }
+        }
+    }
+
+    private func makeAltimeterTask() -> Task<Void, Never> {
+        Task { [altimeter] in
+            for await gain in altimeter.startUpdates() {
+                await MainActor.run {
+                    guard case .active(var session) = self.state else { return }
+                    self.segmentElevation = gain
+                    session.elevationGainMeters = self.bankedElevation + gain
+                    self.state = .active(session)
                 }
             }
         }

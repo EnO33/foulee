@@ -8,6 +8,8 @@ struct WalkSession: Equatable, Sendable {
     var elapsed: TimeInterval = 0
     var steps: Int = 0
     var distanceMeters: Double = 0
+    /// Cumulative elevation gain (metres) measured by the barometer.
+    var elevationGainMeters: Double = 0
 
     /// Quick estimate while a Watch HR feed isn't connected: ~0.04 kcal/step
     /// for moderate walking. Replaced by HKWorkout's own computation once the
