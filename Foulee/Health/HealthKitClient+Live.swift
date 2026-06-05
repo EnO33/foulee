@@ -474,6 +474,13 @@ private func sumToday(
             quantitySamplePredicate: predicate,
             options: .cumulativeSum
         ) { _, statistics, error in
+            // "No samples yet today" (e.g. zero exercise minutes before the
+            // first walk) is reported as `errorNoData` — that's 0, not a
+            // failure, so don't let it set the Today error banner.
+            if isNoDataAvailable(error) {
+                continuation.resume(returning: 0)
+                return
+            }
             if let error {
                 continuation.resume(throwing: error)
                 return
