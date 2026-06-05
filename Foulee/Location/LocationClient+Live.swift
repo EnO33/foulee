@@ -22,6 +22,8 @@ private final class LocationBridge: NSObject, CLLocationManagerDelegate {
             return status == .authorizedWhenInUse || status == .authorizedAlways
         }
         return await withCheckedContinuation { continuation in
+            // Supersede any in-flight auth request so its continuation can't leak.
+            authContinuation?.resume(returning: false)
             authContinuation = continuation
             manager.requestWhenInUseAuthorization()
         }
@@ -33,6 +35,10 @@ private final class LocationBridge: NSObject, CLLocationManagerDelegate {
             return nil
         }
         return await withCheckedContinuation { continuation in
+            // A second request can arrive before CoreLocation answers the first
+            // (e.g. a HealthKit observer triggers a refresh mid-fetch). Resume
+            // the previous continuation instead of overwriting (and leaking) it.
+            locationContinuation?.resume(returning: nil)
             locationContinuation = continuation
             manager.requestLocation()
         }
