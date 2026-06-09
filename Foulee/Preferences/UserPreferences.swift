@@ -34,6 +34,17 @@ final class UserPreferences {
     var themeMode: ThemeMode {
         didSet { defaults.set(themeMode.rawValue, forKey: Keys.themeMode) }
     }
+    /// Hydration tracking + reminders (opt-in). Intake is stored in Apple
+    /// Health (`dietaryWater`); these only hold the goal and glass size.
+    var hydrationEnabled: Bool {
+        didSet { defaults.set(hydrationEnabled, forKey: Keys.hydrationEnabled) }
+    }
+    var hydrationGoalML: Int {
+        didSet { defaults.set(hydrationGoalML, forKey: Keys.hydrationGoalML) }
+    }
+    var hydrationGlassML: Int {
+        didSet { defaults.set(hydrationGlassML, forKey: Keys.hydrationGlassML) }
+    }
 
     @ObservationIgnored
     private let defaults: UserDefaults
@@ -52,6 +63,9 @@ final class UserPreferences {
         self.notificationsEnabled = (defaults.object(forKey: Keys.notificationsEnabled) as? Bool) ?? true
         let rawTheme = defaults.string(forKey: Keys.themeMode)
         self.themeMode = rawTheme.flatMap(ThemeMode.init(rawValue:)) ?? .system
+        self.hydrationEnabled = defaults.bool(forKey: Keys.hydrationEnabled)
+        self.hydrationGoalML = (defaults.object(forKey: Keys.hydrationGoalML) as? Int) ?? 2_000
+        self.hydrationGlassML = (defaults.object(forKey: Keys.hydrationGlassML) as? Int) ?? 250
     }
 }
 
@@ -64,4 +78,7 @@ private enum Keys {
     static let hasCompletedOnboarding = "preferences.hasCompletedOnboarding"
     static let notificationsEnabled = "preferences.notificationsEnabled"
     static let themeMode = "preferences.themeMode"
+    static let hydrationEnabled = "preferences.hydrationEnabled"
+    static let hydrationGoalML = "preferences.hydrationGoalML"
+    static let hydrationGlassML = "preferences.hydrationGlassML"
 }

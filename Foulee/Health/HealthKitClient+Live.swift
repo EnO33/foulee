@@ -16,15 +16,17 @@ extension HealthKitClient {
         let caloriesType = HKQuantityType(.activeEnergyBurned)
         let heartRateType = HKQuantityType(.heartRate)
         let walkingWorkoutType = HKWorkoutType.workoutType()
+        let waterType = HKQuantityType(.dietaryWater)
 
         // Heart rate is read-only and only surfaces in WorkoutDetailSheet
         // (HR samples scoped to a single HKWorkout) — without it the
         // workoutDetail query fails with "Authorization not determined".
+        // Water is read+write for the hydration tracker.
         let readTypes: Set<HKObjectType> = [
             stepsType, distanceType, minutesType, caloriesType,
-            heartRateType, walkingWorkoutType
+            heartRateType, walkingWorkoutType, waterType
         ]
-        let writeTypes: Set<HKSampleType> = [walkingWorkoutType]
+        let writeTypes: Set<HKSampleType> = [walkingWorkoutType, waterType]
 
         return HealthKitClient(
             isAvailable: {
@@ -126,6 +128,19 @@ extension HealthKitClient {
             },
             observeChanges: {
                 healthChangeStream(store: store, types: [stepsType, distanceType, minutesType, caloriesType])
+            },
+            logWater: { milliliters in
+                let sample = HKQuantitySample(
+                    type: waterType,
+                    quantity: HKQuantity(unit: .literUnit(with: .milli), doubleValue: Double(milliliters)),
+                    start: .now,
+                    end: .now
+                )
+                try await store.save(sample)
+            },
+            todayWaterML: {
+                let milliliters = try await sumToday(store: store, type: waterType, unit: .literUnit(with: .milli))
+                return Int(milliliters)
             }
         )
     }()
