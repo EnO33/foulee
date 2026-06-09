@@ -31,6 +31,11 @@ final class TodayStore {
     private(set) var minutesGoal = 20
     private(set) var walkWindowStart = DateComponents(hour: 12, minute: 0)
     private(set) var activeDays: Set<Weekday> = Weekday.workWeek
+    /// Mirrored hydration prefs — only used to keep the Watch in sync (the
+    /// home hydration card reads `UserPreferences` directly).
+    private(set) var hydrationEnabled = false
+    private(set) var hydrationGoalML = 2_000
+    private(set) var hydrationGlassML = 250
 
     /// Last fetched history, kept so `apply(preferences:)` can re-derive the
     /// streaks immediately when the goal or active days change.
@@ -58,10 +63,16 @@ final class TodayStore {
             || newMinutesGoal != minutesGoal
             || newWindow != walkWindowStart
             || preferences.activeDays != activeDays
+            || preferences.hydrationEnabled != hydrationEnabled
+            || preferences.hydrationGoalML != hydrationGoalML
+            || preferences.hydrationGlassML != hydrationGlassML
         stepsGoal = newStepsGoal
         minutesGoal = newMinutesGoal
         walkWindowStart = newWindow
         activeDays = preferences.activeDays
+        hydrationEnabled = preferences.hydrationEnabled
+        hydrationGoalML = preferences.hydrationGoalML
+        hydrationGlassML = preferences.hydrationGlassML
         // Re-derive from the cached history: changing the goal or the active
         // days changes both the ring threshold and which missed days break the
         // streak, so recompute the streaks rather than copying the old ones.
@@ -120,7 +131,10 @@ final class TodayStore {
         PhoneWatchSync.shared.send(WatchSyncPayload(
             streak: snapshot.streak,
             minutesGoal: minutesGoal,
-            stepsGoal: stepsGoal
+            stepsGoal: stepsGoal,
+            hydrationEnabled: hydrationEnabled,
+            hydrationGoalML: hydrationGoalML,
+            hydrationGlassML: hydrationGlassML
         ))
     }
 

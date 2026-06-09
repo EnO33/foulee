@@ -32,7 +32,7 @@ struct TodayScreen: View {
         content
             .task { await store.bootstrap() }
             .task { await hydration.refresh() }
-            .task(id: preferencesKey) {
+            .task(id: todayPreferencesKey(preferences)) {
                 // Push the user's current goals + walk-window into the
                 // store on first appear and whenever they change.
                 // `apply` re-derives the snapshot from cached history
@@ -108,12 +108,6 @@ struct TodayScreen: View {
                     .presentationBackground { SheetBackground() }
                     .preferredColorScheme(preferredScheme)
             }
-    }
-
-    /// Single value that flips whenever any preference the store reads
-    /// changes — drives the `.task(id:)` re-sync.
-    private var preferencesKey: String {
-        "\(preferences.stepsGoal)-\(preferences.minutesGoal)-\(preferences.walkWindowStart.rawMinutes)-\(preferences.activeDays.bitmask)"
     }
 
     @ViewBuilder
@@ -294,6 +288,17 @@ struct TodayScreen: View {
         case .distance, .calories: nil
         }
     }
+}
+
+/// Single value that flips whenever any preference the Today store reads
+/// changes — drives the `.task(id:)` re-sync. File-scope so it stays out of
+/// the view's body-length budget.
+@MainActor
+private func todayPreferencesKey(_ preferences: UserPreferences) -> String {
+    let goals = "\(preferences.stepsGoal)-\(preferences.minutesGoal)"
+    let window = "\(preferences.walkWindowStart.rawMinutes)-\(preferences.activeDays.bitmask)"
+    let hydration = "\(preferences.hydrationEnabled)-\(preferences.hydrationGoalML)-\(preferences.hydrationGlassML)"
+    return "\(goals)-\(window)-\(hydration)"
 }
 
 private struct TodayPreviewWithData: View {
