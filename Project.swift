@@ -171,9 +171,7 @@ let project = Project(
             sources: [
                 "FouleeWatch/**",
                 "Foulee/Shared/WalkFormatting.swift",
-                "Foulee/Shared/WatchSyncPayload.swift",
-                "Foulee/Streak/StreakCalculator.swift",
-                "Foulee/Health/DailyMinutes.swift"
+                "Foulee/Shared/WatchSyncPayload.swift"
             ],
             resources: [
                 .glob(
@@ -202,9 +200,7 @@ let project = Project(
             ]),
             sources: [
                 "FouleeWatchWidget/**",
-                "Foulee/Shared/WatchSyncPayload.swift",
-                "Foulee/Streak/StreakCalculator.swift",
-                "Foulee/Health/DailyMinutes.swift"
+                "Foulee/Shared/WatchSyncPayload.swift"
             ],
             resources: [
                 .glob(
