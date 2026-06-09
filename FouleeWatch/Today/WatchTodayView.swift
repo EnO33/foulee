@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 /// Watch home: today's streak + key numbers, and the "Démarrer" CTA. Replaces
@@ -23,6 +24,9 @@ struct WatchTodayView: View {
             .padding(.horizontal, 2)
         }
         .task { await store.load() }
+        .onReceive(NotificationCenter.default.publisher(for: .watchSyncReceived)) { _ in
+            Task { await store.load() }
+        }
     }
 
     private var streakHero: some View {
