@@ -1,14 +1,17 @@
 import SwiftUI
 
-/// Owns the workout store and routes to idle / active / ended screens.
+/// Owns the workout store and routes to home / active / ended screens.
 struct WatchRootView: View {
     @State private var store = WatchWorkoutStore()
+    @State private var todayStore = WatchTodayStore()
 
     var body: some View {
         Group {
             switch store.state {
             case .idle:
-                WatchIdleView(store: store)
+                WatchTodayView(store: todayStore, errorMessage: store.lastError) {
+                    Task { await store.start() }
+                }
             case .active(let metrics):
                 WatchActiveWalkView(metrics: metrics) {
                     Task { await store.stop() }
