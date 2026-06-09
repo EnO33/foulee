@@ -45,6 +45,21 @@ final class UserPreferences {
     var hydrationGlassML: Int {
         didSet { defaults.set(hydrationGlassML, forKey: Keys.hydrationGlassML) }
     }
+    var hydrationRemindersEnabled: Bool {
+        didSet { defaults.set(hydrationRemindersEnabled, forKey: Keys.hydrationRemindersEnabled) }
+    }
+    var hydrationWindowStart: TimeOfDay {
+        didSet { defaults.set(hydrationWindowStart.rawMinutes, forKey: Keys.hydrationWindowStart) }
+    }
+    var hydrationWindowEnd: TimeOfDay {
+        didSet { defaults.set(hydrationWindowEnd.rawMinutes, forKey: Keys.hydrationWindowEnd) }
+    }
+    var hydrationIntervalMinutes: Int {
+        didSet { defaults.set(hydrationIntervalMinutes, forKey: Keys.hydrationIntervalMinutes) }
+    }
+    var hydrationSnoozeMinutes: Int {
+        didSet { defaults.set(hydrationSnoozeMinutes, forKey: Keys.hydrationSnoozeMinutes) }
+    }
 
     @ObservationIgnored
     private let defaults: UserDefaults
@@ -66,6 +81,13 @@ final class UserPreferences {
         self.hydrationEnabled = defaults.bool(forKey: Keys.hydrationEnabled)
         self.hydrationGoalML = (defaults.object(forKey: Keys.hydrationGoalML) as? Int) ?? 2_000
         self.hydrationGlassML = (defaults.object(forKey: Keys.hydrationGlassML) as? Int) ?? 250
+        self.hydrationRemindersEnabled = defaults.bool(forKey: Keys.hydrationRemindersEnabled)
+        let rawHydrationStart = defaults.object(forKey: Keys.hydrationWindowStart) as? Int
+        self.hydrationWindowStart = rawHydrationStart.map(TimeOfDay.init(rawMinutes:)) ?? TimeOfDay(rawMinutes: 9 * 60)
+        let rawHydrationEnd = defaults.object(forKey: Keys.hydrationWindowEnd) as? Int
+        self.hydrationWindowEnd = rawHydrationEnd.map(TimeOfDay.init(rawMinutes:)) ?? TimeOfDay(rawMinutes: 21 * 60)
+        self.hydrationIntervalMinutes = (defaults.object(forKey: Keys.hydrationIntervalMinutes) as? Int) ?? 120
+        self.hydrationSnoozeMinutes = (defaults.object(forKey: Keys.hydrationSnoozeMinutes) as? Int) ?? 15
     }
 }
 
@@ -81,4 +103,9 @@ private enum Keys {
     static let hydrationEnabled = "preferences.hydrationEnabled"
     static let hydrationGoalML = "preferences.hydrationGoalML"
     static let hydrationGlassML = "preferences.hydrationGlassML"
+    static let hydrationRemindersEnabled = "preferences.hydrationRemindersEnabled"
+    static let hydrationWindowStart = "preferences.hydrationWindowStart"
+    static let hydrationWindowEnd = "preferences.hydrationWindowEnd"
+    static let hydrationIntervalMinutes = "preferences.hydrationIntervalMinutes"
+    static let hydrationSnoozeMinutes = "preferences.hydrationSnoozeMinutes"
 }

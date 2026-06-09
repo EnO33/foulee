@@ -21,6 +21,8 @@ struct HydrationSettingsContent: View {
             if preferences.hydrationEnabled {
                 goalRow
                 glassRow
+                Divider().overlay(Color.white.opacity(0.08))
+                HydrationReminderSettings(preferences: preferences)
             }
         }
     }
