@@ -64,6 +64,66 @@ extension NotificationsClient {
                     trigger: trigger
                 )
                 try await center.add(request)
+            },
+            configureHydrationCategory: { snoozeMinutes in
+                let drank = UNNotificationAction(
+                    identifier: HydrationNotification.drankAction,
+                    title: "J'ai bu",
+                    options: []
+                )
+                let snooze = UNNotificationAction(
+                    identifier: HydrationNotification.snoozeAction,
+                    title: "Rappelle-moi dans \(snoozeMinutes) min",
+                    options: []
+                )
+                let category = UNNotificationCategory(
+                    identifier: HydrationNotification.category,
+                    actions: [drank, snooze],
+                    intentIdentifiers: [],
+                    options: []
+                )
+                center.setNotificationCategories([category])
+            },
+            replaceHydrationReminders: { times in
+                let existing = await center.pendingNotificationRequests()
+                let toRemove = existing
+                    .map(\.identifier)
+                    .filter { $0.hasPrefix(HydrationNotification.reminderPrefix) }
+                center.removePendingNotificationRequests(withIdentifiers: toRemove)
+
+                for time in times {
+                    let content = UNMutableNotificationContent()
+                    content.title = HydrationNotification.title
+                    content.body = HydrationNotification.body
+                    content.sound = .default
+                    content.categoryIdentifier = HydrationNotification.category
+
+                    var components = DateComponents()
+                    components.hour = time.hour
+                    components.minute = time.minute
+                    let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+                    let request = UNNotificationRequest(
+                        identifier: "\(HydrationNotification.reminderPrefix)\(time.rawMinutes)",
+                        content: content,
+                        trigger: trigger
+                    )
+                    try await center.add(request)
+                }
+            },
+            scheduleHydrationSnooze: { interval in
+                let content = UNMutableNotificationContent()
+                content.title = HydrationNotification.title
+                content.body = HydrationNotification.snoozeBody
+                content.sound = .default
+                content.categoryIdentifier = HydrationNotification.category
+
+                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
+                let request = UNNotificationRequest(
+                    identifier: "\(HydrationNotification.snoozePrefix)\(Date().timeIntervalSince1970)",
+                    content: content,
+                    trigger: trigger
+                )
+                try await center.add(request)
             }
         )
     }()

@@ -7,6 +7,7 @@ import SwiftUI
 struct RootView: View {
     @State private var preferences = UserPreferences()
     private let scheduler = WalkReminderScheduler()
+    private let hydrationScheduler = HydrationReminderScheduler()
 
     var body: some View {
         Group {
@@ -29,12 +30,23 @@ struct RootView: View {
         let days = preferences.activeDays.bitmask
         let start = preferences.walkWindowStart.rawMinutes
         let on = preferences.notificationsEnabled ? 1 : 0
-        return "\(preferences.hasCompletedOnboarding):\(days):\(start):\(on)"
+        return "\(preferences.hasCompletedOnboarding):\(days):\(start):\(on):\(hydrationKey)"
+    }
+
+    /// Hydration inputs that change the reminder schedule.
+    private var hydrationKey: String {
+        let on = (preferences.hydrationEnabled && preferences.hydrationRemindersEnabled) ? 1 : 0
+        let start = preferences.hydrationWindowStart.rawMinutes
+        let end = preferences.hydrationWindowEnd.rawMinutes
+        let interval = preferences.hydrationIntervalMinutes
+        let snooze = preferences.hydrationSnoozeMinutes
+        return "\(on):\(start):\(end):\(interval):\(snooze)"
     }
 
     private func syncReminders() async {
         guard preferences.hasCompletedOnboarding else { return }
         await scheduler.sync(with: preferences)
+        await hydrationScheduler.sync(with: preferences)
     }
 }
 

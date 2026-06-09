@@ -28,6 +28,22 @@ struct NotificationsClient: Sendable {
     /// the user can postpone today's walk without touching the rest of
     /// their schedule.
     var scheduleSnooze: @Sendable (_ after: TimeInterval) async throws -> Void
+
+    /// Register the hydration notification category + its two actions
+    /// ("J'ai bu" / "Rappelle-moi dans `snoozeMinutes` min"). Re-called when
+    /// the snooze duration changes so the button label stays accurate.
+    var configureHydrationCategory: @Sendable (_ snoozeMinutes: Int) async -> Void
+        = { _ in }
+
+    /// Replace the recurring hydration reminders with one daily-repeating
+    /// notification per time slot. An empty array wipes them.
+    var replaceHydrationReminders: @Sendable (_ times: [TimeOfDay]) async throws -> Void
+        = { _ in }
+
+    /// One-shot hydration reminder fired after `interval` seconds — the
+    /// "Rappelle-moi" notification action.
+    var scheduleHydrationSnooze: @Sendable (_ after: TimeInterval) async throws -> Void
+        = { _ in }
 }
 
 extension NotificationsClient: DependencyKey {
