@@ -9,6 +9,40 @@ struct WatchSyncPayload: Codable, Sendable {
     var streak: Int
     var minutesGoal: Int
     var stepsGoal: Int
+    // Hydration: whether the feature is on, and the goal / glass size so the
+    // watch can show the same card.
+    var hydrationEnabled: Bool
+    var hydrationGoalML: Int
+    var hydrationGlassML: Int
+
+    init(
+        streak: Int,
+        minutesGoal: Int,
+        stepsGoal: Int,
+        hydrationEnabled: Bool = false,
+        hydrationGoalML: Int = 2_000,
+        hydrationGlassML: Int = 250
+    ) {
+        self.streak = streak
+        self.minutesGoal = minutesGoal
+        self.stepsGoal = stepsGoal
+        self.hydrationEnabled = hydrationEnabled
+        self.hydrationGoalML = hydrationGoalML
+        self.hydrationGlassML = hydrationGlassML
+    }
+
+    // Tolerant decoding: payloads written before hydration shipped lack the
+    // hydration keys — fall back to defaults instead of failing the whole
+    // decode (which would briefly blank the streak after an update).
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        streak = try container.decode(Int.self, forKey: .streak)
+        minutesGoal = try container.decode(Int.self, forKey: .minutesGoal)
+        stepsGoal = try container.decode(Int.self, forKey: .stepsGoal)
+        hydrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .hydrationEnabled) ?? false
+        hydrationGoalML = try container.decodeIfPresent(Int.self, forKey: .hydrationGoalML) ?? 2_000
+        hydrationGlassML = try container.decodeIfPresent(Int.self, forKey: .hydrationGlassML) ?? 250
+    }
 }
 
 /// Watch-side persistence of the last payload received from the phone. Stored

@@ -14,36 +14,60 @@ final class WatchTodayStore {
     private(set) var distanceKm = 0.0
     private(set) var calories = 0
     private(set) var streak = 0
+    private(set) var waterML = 0
+    private(set) var hydrationEnabled = false
+    private(set) var hydrationGoalML = 2_000
+    private(set) var hydrationGlassML = 250
     private(set) var isLoading = true
 
     @ObservationIgnored private let store = HKHealthStore()
+    private static let waterType = HKQuantityType(.dietaryWater)
 
     private static let readTypes: Set<HKObjectType> = [
         HKQuantityType(.stepCount),
         HKQuantityType(.appleExerciseTime),
         HKQuantityType(.distanceWalkingRunning),
-        HKQuantityType(.activeEnergyBurned)
+        HKQuantityType(.activeEnergyBurned),
+        waterType
     ]
 
     func load() async {
         isLoading = true
         defer { isLoading = false }
 
-        // Streak comes from the phone (source of truth), not local HealthKit.
-        streak = WatchSyncStore.read()?.streak ?? 0
+        // Streak + hydration goal come from the phone (source of truth).
+        let sync = WatchSyncStore.read()
+        streak = sync?.streak ?? 0
+        hydrationEnabled = sync?.hydrationEnabled ?? false
+        hydrationGoalML = sync?.hydrationGoalML ?? 2_000
+        hydrationGlassML = sync?.hydrationGlassML ?? 250
 
         guard HKHealthStore.isHealthDataAvailable() else { return }
-        _ = try? await store.requestAuthorization(toShare: [], read: Self.readTypes)
+        _ = try? await store.requestAuthorization(toShare: [Self.waterType], read: Self.readTypes)
 
         async let stepsValue = sumToday(.stepCount, unit: .count())
         async let minutesValue = sumToday(.appleExerciseTime, unit: .minute())
         async let distanceValue = sumToday(.distanceWalkingRunning, unit: .meter())
         async let caloriesValue = sumToday(.activeEnergyBurned, unit: .kilocalorie())
+        async let waterValue = sumToday(.dietaryWater, unit: .literUnit(with: .milli))
 
         steps = Int(await stepsValue)
         minutes = Int(await minutesValue)
         distanceKm = await distanceValue / 1_000
         calories = Int(await caloriesValue)
+        waterML = Int(await waterValue)
+    }
+
+    /// Log one glass (the phone-synced glass size) to Health, then re-read.
+    func logGlass() async {
+        let sample = HKQuantitySample(
+            type: Self.waterType,
+            quantity: HKQuantity(unit: .literUnit(with: .milli), doubleValue: Double(hydrationGlassML)),
+            start: .now,
+            end: .now
+        )
+        try? await store.save(sample)
+        await load()
     }
 
     /// Today's cumulative sum for a quantity. Missing data resolves to 0 (no
