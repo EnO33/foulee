@@ -62,6 +62,15 @@ struct HealthKitClient: Sendable {
     /// reopen the app or start a walk. Defaults to a stream that never fires.
     var observeChanges: @Sendable () -> AsyncStream<Void>
         = { AsyncStream { $0.finish() } }
+
+    /// Log one drink to Apple Health as a `dietaryWater` sample of
+    /// `milliliters`. Defaulted to a no-op so existing test stubs compile.
+    var logWater: @Sendable (_ milliliters: Int) async throws -> Void
+        = { _ in }
+
+    /// Total `dietaryWater` logged today, in millilitres. Defaulted to 0.
+    var todayWaterML: @Sendable () async throws -> Int
+        = { 0 }
 }
 
 extension HealthKitClient: DependencyKey {
@@ -79,7 +88,8 @@ extension HealthKitClient: DependencyKey {
         recentWorkouts: { daysBack in previewRecentWorkouts(daysBack: daysBack) },
         workoutDetail: { summary in previewWorkoutDetail(summary: summary) },
         metricSeries: { metric, daysBack in previewMetricSeries(metric: metric, daysBack: daysBack) },
-        hourlyToday: { metric in previewHourlyToday(metric: metric) }
+        hourlyToday: { metric in previewHourlyToday(metric: metric) },
+        todayWaterML: { 1_000 }
     )
 
     static let testValue = HealthKitClient(

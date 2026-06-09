@@ -16,6 +16,7 @@ struct SettingsScreen: View {
                 appearanceSection
                 walkSection
                 stepsSection
+                hydrationSection
                 notificationsSection
                 aboutSection
             }
@@ -148,6 +149,12 @@ struct SettingsScreen: View {
                 step: 5
             )
             .tint(FouleeColor.accentMid)
+        }
+    }
+
+    private var hydrationSection: some View {
+        section(title: "Hydratation") {
+            HydrationSettingsContent(preferences: preferences)
         }
     }
 

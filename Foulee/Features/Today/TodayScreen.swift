@@ -6,6 +6,7 @@ import SwiftUI
 /// through the `healthKit` dependency. Settings open from the profile button.
 struct TodayScreen: View {
     @State private var store = TodayStore()
+    @State private var hydration = HydrationStore()
     @State private var isWalking = false
     @State private var isShowingSummary = false
     @State private var isShowingSettings = false
@@ -30,6 +31,7 @@ struct TodayScreen: View {
     var body: some View {
         content
             .task { await store.bootstrap() }
+            .task { await hydration.refresh() }
             .task(id: preferencesKey) {
                 // Push the user's current goals + walk-window into the
                 // store on first appear and whenever they change.
@@ -41,7 +43,14 @@ struct TodayScreen: View {
             // foreground so the dashboard isn't stuck on stale (or zero)
             // values after the user walked and came back.
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active { Task { await store.refresh() } }
+                if phase == .active {
+                    Task { await store.refresh() }
+                    Task { await hydration.refresh() }
+                }
+            }
+            .onChange(of: preferences.hydrationEnabled) { _, enabled in
+                // Turning hydration on prompts for Health (water) access.
+                if enabled { Task { await hydration.enable() } }
             }
             .fullScreenCover(isPresented: $isWalking) {
                 ActiveWalkScreen(minutesGoal: store.minutesGoal) {
@@ -153,6 +162,7 @@ struct TodayScreen: View {
                 .padding(.horizontal, 20)
                 TodayStatsGrid(snapshot: snapshot) { selectedMetric = $0 }
                     .padding(.horizontal, 20)
+                HydrationHomeCard(preferences: preferences, store: hydration)
                 Button { isShowingSummary = true } label: {
                     TodayWeekBars(snapshot: snapshot, activeDays: preferences.activeDays)
                 }
