@@ -18,6 +18,9 @@ struct TodaySnapshot: Equatable {
     var weekGoal: Int
     var walkWindowStart: DateComponents
     var hasWalkedToday: Bool
+    /// True when today isn't one of the user's active days — no walk planned,
+    /// so the hero shows a rest state instead of the window countdown.
+    var isRestDay: Bool = false
 
     /// True when HealthKit returned nothing to show — fresh install, denied
     /// access, or simply no activity yet. Drives the empty-state card so the
