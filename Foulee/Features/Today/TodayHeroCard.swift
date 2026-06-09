@@ -90,6 +90,17 @@ struct TodayHeroCard: View {
                     .font(FouleeFont.footnote)
                     .foregroundStyle(.secondary)
             }
+        } else if snapshot.isRestDay {
+            VStack(alignment: .leading, spacing: 10) {
+                Chip(
+                    label: "Jour de repos",
+                    systemIcon: "moon.stars.fill",
+                    tint: FouleeColor.accentSecondary,
+                    fill: FouleeColor.accentSecondary.opacity(0.16)
+                )
+                Text("Pas de marche prévue aujourd'hui — profite de ta pause.")
+                    .font(FouleeFont.title3)
+            }
         } else {
             VStack(alignment: .leading, spacing: 10) {
                 Chip(

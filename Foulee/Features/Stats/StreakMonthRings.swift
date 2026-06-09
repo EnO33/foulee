@@ -42,7 +42,11 @@ struct StreakMonthRings: View {
         return ZStack {
             switch day.status {
             case .rest:
-                Circle().fill(Color.gray.opacity(0.18)).frame(width: 6, height: 6)
+                // A visible neutral ring (not a tiny dot) so rest days read as
+                // days — clearly lighter than active rings, darker than future.
+                // The day detail labels them "jour de repos".
+                Circle().strokeBorder(Color.gray.opacity(0.3), lineWidth: 2.5)
+                Circle().fill(Color.gray.opacity(0.12)).padding(7)
             case .future:
                 Circle().strokeBorder(Color.gray.opacity(0.12), lineWidth: 2.5)
             case .done, .missed:

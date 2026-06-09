@@ -73,6 +73,7 @@ struct OnboardingGoalView: View {
                     .clipShape(Capsule())
                 timePicker(
                     label: "Fin",
+                    alignment: .trailing,
                     selection: Binding(
                         get: { preferences.walkWindowEnd.dateToday() },
                         set: { preferences.walkWindowEnd = TimeOfDay(date: $0) }
@@ -85,8 +86,12 @@ struct OnboardingGoalView: View {
         }
     }
 
-    private func timePicker(label: String, selection: Binding<Date>) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+    private func timePicker(
+        label: String,
+        alignment: HorizontalAlignment = .leading,
+        selection: Binding<Date>
+    ) -> some View {
+        VStack(alignment: alignment, spacing: 4) {
             Text(label)
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
@@ -95,7 +100,7 @@ struct OnboardingGoalView: View {
                 .datePickerStyle(.compact)
                 .font(FouleeFont.numeric(size: 22, weight: .semibold))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
     }
 
     private var goalSection: some View {

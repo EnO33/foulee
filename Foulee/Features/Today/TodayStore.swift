@@ -89,7 +89,8 @@ final class TodayStore {
                 weekMinutes: snapshot.weekMinutes,
                 weekGoal: minutesGoal,
                 walkWindowStart: walkWindowStart,
-                hasWalkedToday: snapshot.minutes >= minutesGoal
+                hasWalkedToday: snapshot.minutes >= minutesGoal,
+                isRestDay: isTodayRestDay
             )
             publishToWidgets()
         }
@@ -198,8 +199,15 @@ final class TodayStore {
             weekMinutes: currentWeekMinutes(history: history),
             weekGoal: minutesGoal,
             walkWindowStart: walkWindowStart,
-            hasWalkedToday: metrics.activeMinutes >= minutesGoal
+            hasWalkedToday: metrics.activeMinutes >= minutesGoal,
+            isRestDay: isTodayRestDay
         )
+    }
+
+    /// Today isn't one of the user's active weekdays — no walk is planned.
+    private var isTodayRestDay: Bool {
+        let weekday = Calendar.current.component(.weekday, from: .now)
+        return !activeDays.calendarWeekdays.contains(weekday)
     }
 
     /// Minutes for Monday → Sunday of the **current** ISO week, aligned with
