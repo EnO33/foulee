@@ -108,10 +108,23 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 | `ASC_KEY_ID` | Key ID from step 6 |
 | `ASC_ISSUER_ID` | Issuer ID from step 6 |
 | `ASC_KEY_P8_BASE64` | base64 of the `.p8` (step 6) |
+| `DEV_CERT_P12_BASE64` | *(optional)* base64 of an **Apple Development** `.p12` — see note |
+| `DEV_CERT_PASSWORD` | *(optional)* password for that dev `.p12` |
 
 The workflow decodes the `.p8`/`.p12` to disk at runtime, writes a
 `Local.xcconfig` with your team, and deletes them again at the end. None of
 this material is ever committed (see `.gitignore`).
+
+> **Why the optional dev cert?** Cloud signing (`-allowProvisioningUpdates`)
+> runs in a throwaway keychain, so with no development identity present it
+> mints a fresh "Apple Development" certificate on *every* release — they
+> accumulate until the account hits its certificate limit and archives start
+> failing with *"Your account has reached the maximum number of certificates."*
+> Providing a persistent dev cert lets signing reuse it. To set it up: in
+> **Keychain Access** export your *Apple Development* certificate (with its
+> private key) as a `.p12`, then `base64 -i Development.p12 | pbcopy` and paste
+> into `DEV_CERT_P12_BASE64`. If the account ever fills up again, revoke the
+> old `Created via API` development certs in the Developer portal.
 
 ---
 

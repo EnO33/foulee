@@ -52,12 +52,18 @@ jobs:
         env:
           ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
           DIST_CERT_P12_BASE64: ${{ secrets.DIST_CERT_P12_BASE64 }}
+          DEV_CERT_P12_BASE64: ${{ secrets.DEV_CERT_P12_BASE64 }}
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
           set -euo pipefail
           mkdir -p fastlane
           echo "$ASC_KEY_P8_BASE64" | base64 --decode > fastlane/asc_key.p8
           echo "$DIST_CERT_P12_BASE64" | base64 --decode > fastlane/dist_cert.p12
+          # Optional dev cert: lets cloud signing reuse a persistent identity
+          # instead of minting a throwaway one every run (cert-limit leak).
+          if [ -n "${DEV_CERT_P12_BASE64:-}" ]; then
+            echo "$DEV_CERT_P12_BASE64" | base64 --decode > fastlane/dev_cert.p12
+          fi
           printf 'DEVELOPMENT_TEAM = %s\n' "$DEVELOPMENT_TEAM" > Local.xcconfig
 
       - name: Tuist install + generate
@@ -72,6 +78,8 @@ jobs:
           ASC_KEY_PATH: ${{ github.workspace }}/fastlane/asc_key.p8
           DIST_CERT_PATH: ${{ github.workspace }}/fastlane/dist_cert.p12
           DIST_CERT_PASSWORD: ${{ secrets.DIST_CERT_PASSWORD }}
+          DEV_CERT_PATH: ${{ github.workspace }}/fastlane/dev_cert.p12
+          DEV_CERT_PASSWORD: ${{ secrets.DEV_CERT_PASSWORD }}
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
           FOULEE_MARKETING_VERSION: ${{ steps.ver.outputs.marketing }}
           FOULEE_BUILD_NUMBER: ${{ steps.ver.outputs.build }}
@@ -79,4 +87,4 @@ jobs:
 
       - name: Tidy signing assets
         if: always()
-        run: rm -f fastlane/asc_key.p8 fastlane/dist_cert.p12 Local.xcconfig
+        run: rm -f fastlane/asc_key.p8 fastlane/dist_cert.p12 fastlane/dev_cert.p12 Local.xcconfig

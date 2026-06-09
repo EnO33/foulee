@@ -28,6 +28,22 @@ platform :ios do
       keychain_password: ENV.fetch("MATCH_KEYCHAIN_PASSWORD", "")
     )
 
+    # Also import a development certificate when one is provided. The CI
+    # keychain is thrown away each run, so without a dev identity present,
+    # `-allowProvisioningUpdates` mints a brand-new "Apple Development"
+    # certificate on every release — they pile up and eventually hit the
+    # account's certificate limit. Importing a persistent one lets cloud
+    # signing reuse it. Optional: skipped until the DEV_CERT_P12 secret is set.
+    dev_cert_path = ENV["DEV_CERT_PATH"]
+    if dev_cert_path && File.exist?(dev_cert_path)
+      import_certificate(
+        certificate_path: dev_cert_path,
+        certificate_password: ENV["DEV_CERT_PASSWORD"] || "",
+        keychain_name: ENV.fetch("MATCH_KEYCHAIN_NAME", "fastlane_tmp_keychain"),
+        keychain_password: ENV.fetch("MATCH_KEYCHAIN_PASSWORD", "")
+      )
+    end
+
     build_app(
       workspace: "Foulee.xcworkspace",
       scheme: "Foulee",
