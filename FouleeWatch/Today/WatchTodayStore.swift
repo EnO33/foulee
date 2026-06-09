@@ -43,7 +43,19 @@ final class WatchTodayStore {
         calories = Int(await caloriesValue)
 
         let history = await dailyExerciseMinutes()
-        streak = StreakCalculator.current(history: history, goalMinutes: Self.goalMinutes, today: .now)
+        // Use the phone-synced goal + active days so the streak matches the
+        // phone (rest days skipped, not counted as missed). Falls back to the
+        // default goal / every-day until the first sync lands.
+        if let sync = WatchSyncStore.read() {
+            streak = StreakCalculator.current(
+                history: history,
+                goalMinutes: sync.minutesGoal,
+                activeWeekdays: Set(sync.activeWeekdays),
+                today: .now
+            )
+        } else {
+            streak = StreakCalculator.current(history: history, goalMinutes: Self.goalMinutes, today: .now)
+        }
     }
 
     /// Today's cumulative sum for a quantity. Missing data resolves to 0 (no

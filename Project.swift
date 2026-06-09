@@ -171,6 +171,7 @@ let project = Project(
             sources: [
                 "FouleeWatch/**",
                 "Foulee/Shared/WalkFormatting.swift",
+                "Foulee/Shared/WatchSyncPayload.swift",
                 "Foulee/Streak/StreakCalculator.swift",
                 "Foulee/Health/DailyMinutes.swift"
             ],
