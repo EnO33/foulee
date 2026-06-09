@@ -1,15 +1,14 @@
 import Foundation
 
-/// The streak-relevant preferences the phone pushes to the Watch so the watch
-/// computes the *same* streak: the activity goal and which weekdays count
-/// (rest days must be skipped, not break the streak). Sent via WatchConnectivity
-/// application context; persisted on the watch so it survives relaunches.
+/// What the phone pushes to the Watch. The streak is computed on the phone —
+/// the single source of truth — because the watch's local HealthKit only keeps
+/// a few days of history, so recomputing there undercounts long streaks. The
+/// goals ride along for the watch UI. Sent via WatchConnectivity application
+/// context; persisted on the watch so it survives relaunches.
 struct WatchSyncPayload: Codable, Sendable {
+    var streak: Int
     var minutesGoal: Int
     var stepsGoal: Int
-    /// Active weekdays as `Calendar` numbers (1 = Sunday … 7 = Saturday) — the
-    /// shape `StreakCalculator` consumes, so the watch needs no `Weekday` type.
-    var activeWeekdays: [Int]
 }
 
 /// Watch-side persistence of the last payload received from the phone. Stored

@@ -114,12 +114,13 @@ final class TodayStore {
         ))
         WidgetCenter.shared.reloadAllTimelines()
 
-        // Push the streak-relevant prefs to the Watch so it computes the same
-        // streak (skipping rest days) instead of treating every day as active.
+        // Push the phone-computed streak (+ goals) to the Watch. The watch's
+        // local HealthKit only keeps a few days of history, so it can't
+        // recompute long streaks correctly — it just displays this value.
         PhoneWatchSync.shared.send(WatchSyncPayload(
+            streak: snapshot.streak,
             minutesGoal: minutesGoal,
-            stepsGoal: stepsGoal,
-            activeWeekdays: Array(activeDays.calendarWeekdays)
+            stepsGoal: stepsGoal
         ))
     }
 
