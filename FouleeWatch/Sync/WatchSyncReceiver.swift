@@ -1,4 +1,5 @@
 @preconcurrency import WatchConnectivity
+import WidgetKit
 
 extension Notification.Name {
     /// Posted (on the main actor) when fresh prefs arrive from the phone.
@@ -35,6 +36,8 @@ final class WatchSyncReceiver: NSObject, WCSessionDelegate, @unchecked Sendable 
         Task { @MainActor in
             WatchSyncStore.write(payload)
             NotificationCenter.default.post(name: .watchSyncReceived, object: nil)
+            // Refresh the Série complication with the new goal / active days.
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
 }
