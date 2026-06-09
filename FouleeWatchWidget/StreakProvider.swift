@@ -43,6 +43,17 @@ struct StreakProvider: TimelineProvider {
     private static func fetchCurrentStreak() async -> Int {
         guard HKHealthStore.isHealthDataAvailable() else { return 0 }
         let history = await loadHistory()
+        // Use the phone-synced goal + active days (shared app group) so the
+        // complication matches the phone — skipping rest days instead of
+        // counting every day as active. Falls back until the first sync lands.
+        if let sync = WatchSyncStore.read() {
+            return StreakCalculator.current(
+                history: history,
+                goalMinutes: sync.minutesGoal,
+                activeWeekdays: Set(sync.activeWeekdays),
+                today: .now
+            )
+        }
         return StreakCalculator.current(
             history: history,
             goalMinutes: goalMinutes,

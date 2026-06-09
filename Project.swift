@@ -202,6 +202,7 @@ let project = Project(
             ]),
             sources: [
                 "FouleeWatchWidget/**",
+                "Foulee/Shared/WatchSyncPayload.swift",
                 "Foulee/Streak/StreakCalculator.swift",
                 "Foulee/Health/DailyMinutes.swift"
             ],

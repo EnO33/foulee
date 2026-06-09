@@ -12,18 +12,24 @@ struct WatchSyncPayload: Codable, Sendable {
     var activeWeekdays: [Int]
 }
 
-/// Watch-side persistence of the last payload received from the phone
-/// (`UserDefaults.standard` — same process as the receiver and the views).
+/// Watch-side persistence of the last payload received from the phone. Stored
+/// in the shared app group so both the watch app (which writes it on receipt)
+/// and the watch widget extension (a separate process) read the same value.
 enum WatchSyncStore {
     private static let key = "watch.sync.payload"
+    private static let suiteName = "group.com.eno33.foulee"
+
+    private static var defaults: UserDefaults {
+        UserDefaults(suiteName: suiteName) ?? .standard
+    }
 
     static func write(_ payload: WatchSyncPayload) {
         guard let data = try? JSONEncoder().encode(payload) else { return }
-        UserDefaults.standard.set(data, forKey: key)
+        defaults.set(data, forKey: key)
     }
 
     static func read() -> WatchSyncPayload? {
-        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
+        guard let data = defaults.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(WatchSyncPayload.self, from: data)
     }
 }
