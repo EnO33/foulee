@@ -22,9 +22,11 @@ final class HydrationStore {
         await refresh()
     }
 
-    /// Log one glass to Health, then re-read so the card reflects it.
+    /// Log one glass to Health, then re-read so the card reflects it. Surfaces
+    /// the same confirmation toast as the notification action.
     func logGlass(ml: Int) async {
         try? await healthKit.logWater(ml)
         await refresh()
+        HydrationNotification.confirm(kind: "drank", amount: ml)
     }
 }
