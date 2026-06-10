@@ -41,16 +41,21 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
     }
 
     private static func handle(action: String) async {
+        // iOS wakes the app in the *background* to run this. Read prefs straight
+        // from UserDefaults — don't spin up a `@MainActor @Observable`
+        // UserPreferences here (heavy + a likely crash source in a background
+        // launch). Keys mirror `UserPreferences.Keys`.
+        let defaults = UserDefaults.standard
         switch action {
         case HydrationNotification.drankAction:
             // "J'ai bu" → log one glass to Health; the reminder is dismissed
             // by the system automatically.
-            let glassML = await MainActor.run { UserPreferences().hydrationGlassML }
+            let glassML = defaults.object(forKey: "preferences.hydrationGlassML") as? Int ?? 250
             try? await HealthKitClient.liveValue.logWater(glassML)
             WidgetCenter.shared.reloadAllTimelines()
         case HydrationNotification.snoozeAction:
             // "Rappelle-moi" → fire a one-off reminder after the snooze delay.
-            let minutes = await MainActor.run { UserPreferences().hydrationSnoozeMinutes }
+            let minutes = defaults.object(forKey: "preferences.hydrationSnoozeMinutes") as? Int ?? 15
             try? await NotificationsClient.liveValue.scheduleHydrationSnooze(TimeInterval(minutes * 60))
         default:
             break
