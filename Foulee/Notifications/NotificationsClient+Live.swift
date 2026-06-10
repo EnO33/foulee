@@ -66,15 +66,19 @@ extension NotificationsClient {
                 try await center.add(request)
             },
             configureHydrationCategory: { snoozeMinutes in
+                // .foreground: the action brings the app up with a valid window
+                // scene. Without it iOS handles the tap in a "Non UI" background
+                // launch, then asserts trying to snapshot the (sceneless) app for
+                // state restoration → SIGABRT. Foreground sidesteps that entirely.
                 let drank = UNNotificationAction(
                     identifier: HydrationNotification.drankAction,
                     title: "J'ai bu",
-                    options: []
+                    options: [.foreground]
                 )
                 let snooze = UNNotificationAction(
                     identifier: HydrationNotification.snoozeAction,
                     title: "Rappelle-moi dans \(snoozeMinutes) min",
-                    options: []
+                    options: [.foreground]
                 )
                 let category = UNNotificationCategory(
                     identifier: HydrationNotification.category,
