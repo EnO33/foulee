@@ -58,8 +58,8 @@ struct HydrationReminderSettings: View {
                     get: { Double(preferences.hydrationIntervalMinutes) },
                     set: { preferences.hydrationIntervalMinutes = Int($0) }
                 ),
-                in: 30...240,
-                step: 30
+                in: 20...240,
+                step: 10
             )
             .tint(.teal)
         }

@@ -62,8 +62,8 @@ struct HydrationSettingsContent: View {
                     get: { Double(preferences.hydrationGlassML) },
                     set: { preferences.hydrationGlassML = Int($0) }
                 ),
-                in: 100...500,
-                step: 25
+                in: 50...500,
+                step: 10
             )
             .tint(.teal)
             Text("Chaque « J'ai bu » ajoute un verre.")
