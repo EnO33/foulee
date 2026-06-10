@@ -5,6 +5,10 @@ import WidgetKit
 /// the background to run these, so we read the live prefs and write straight to
 /// Health / reschedule — no UI needed. Set as the notification-center delegate
 /// once at launch (`FouleeApp.init`).
+///
+/// Uses the completion-handler delegate methods (not the `async` variants):
+/// the async forms proved crash-prone here, and the completion-handler form is
+/// the long-stable contract — we just hop the real work onto a `Task`.
 final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     static let shared = HydrationNotificationCenter()
 
@@ -15,16 +19,29 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
     /// Show hydration banners even when the app is in the foreground.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
-        [.banner, .sound]
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
     }
 
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse
-    ) async {
-        switch response.actionIdentifier {
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let action = response.actionIdentifier
+        // The completion handler isn't Sendable; box it so it can cross into
+        // the Task. Safe — it's invoked exactly once when the work finishes.
+        let completion = UncheckedSendable(completionHandler)
+        Task {
+            await Self.handle(action: action)
+            completion.value()
+        }
+    }
+
+    private static func handle(action: String) async {
+        switch action {
         case HydrationNotification.drankAction:
             // "J'ai bu" → log one glass to Health; the reminder is dismissed
             // by the system automatically.
@@ -39,4 +56,11 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
             break
         }
     }
+}
+
+/// Carries a non-Sendable value into a `Task`. Use only when the value is
+/// genuinely accessed safely (here: a completion handler invoked once).
+private struct UncheckedSendable<Value>: @unchecked Sendable {
+    let value: Value
+    init(_ value: Value) { self.value = value }
 }
