@@ -52,6 +52,10 @@ struct TodayScreen: View {
                 // Turning hydration on prompts for Health (water) access.
                 if enabled { Task { await hydration.enable() } }
             }
+            .overlay(alignment: .top) {
+                // "C'est compté" feedback after a notification action tap.
+                HydrationActionToast { Task { await hydration.refresh() } }
+            }
             .fullScreenCover(isPresented: $isWalking) {
                 ActiveWalkScreen(minutesGoal: store.minutesGoal) {
                     isWalking = false

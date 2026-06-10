@@ -53,10 +53,12 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
             let glassML = defaults.object(forKey: "preferences.hydrationGlassML") as? Int ?? 250
             try? await HealthKitClient.liveValue.logWater(glassML)
             WidgetCenter.shared.reloadAllTimelines()
+            HydrationNotification.confirm(kind: "drank", amount: glassML)
         case HydrationNotification.snoozeAction:
             // "Rappelle-moi" → fire a one-off reminder after the snooze delay.
             let minutes = defaults.object(forKey: "preferences.hydrationSnoozeMinutes") as? Int ?? 15
             try? await NotificationsClient.liveValue.scheduleHydrationSnooze(TimeInterval(minutes * 60))
+            HydrationNotification.confirm(kind: "snooze", amount: minutes)
         default:
             break
         }
