@@ -36,7 +36,11 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
         let completion = UncheckedSendable(completionHandler)
         Task {
             await Self.handle(action: action)
-            completion.value()
+            // The system's completion synchronously runs UIKit snapshot/state-
+            // restoration work on the calling thread, which asserts off-main
+            // (SIGABRT in _performBlockAfterCATransactionCommitSynchronizes —
+            // crash reports builds 93/95). Always deliver it on the main thread.
+            await MainActor.run { completion.value() }
         }
     }
 
