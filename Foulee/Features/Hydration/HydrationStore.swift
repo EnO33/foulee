@@ -26,11 +26,13 @@ final class HydrationStore {
     }
 
     /// Log one glass to Health, then re-read so the card reflects it. Surfaces
-    /// the same confirmation toast as the notification action.
+    /// the same confirmation toast as the notification action, and shifts the
+    /// reminder grid so the next one lands a full interval after this glass.
     func logGlass(ml: Int) async {
         try? await healthKit.logWater(ml)
         await refresh()
         WidgetCenter.shared.reloadAllTimelines()
         HydrationNotification.confirm(kind: "drank", amount: ml)
+        await HydrationReminderScheduler().recordDrinkAndReschedule()
     }
 }
