@@ -64,6 +64,13 @@ let project = Project(
                 "CFBundleDisplayName": "Foulée",
                 "CFBundleShortVersionString": "$(MARKETING_VERSION)",
                 "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+                // foulee://hydration — widget deep link to the hydration card.
+                "CFBundleURLTypes": [
+                    [
+                        "CFBundleURLName": "com.eno33.foulee",
+                        "CFBundleURLSchemes": ["foulee"]
+                    ]
+                ],
                 "UILaunchScreen": [:],
                 "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
                 "NSHealthShareUsageDescription":

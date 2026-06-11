@@ -13,6 +13,7 @@ struct TodayScreen: View {
     @State private var selectedMetric: WalkMetric?
     @State private var isShowingWeather = false
     @State private var isShowingStreak = false
+    @State private var scrollToHydration = false
 
     @Environment(UserPreferences.self) private var preferences
     @Environment(\.scenePhase) private var scenePhase
@@ -55,6 +56,10 @@ struct TodayScreen: View {
             .overlay(alignment: .top) {
                 // "C'est compté" feedback after a notification action tap.
                 HydrationActionToast { Task { await hydration.refresh() } }
+            }
+            .onOpenURL { url in
+                // foulee://hydration — widget tap lands on the hydration card.
+                if url.host() == "hydration" { scrollToHydration = true }
             }
             .fullScreenCover(isPresented: $isWalking) {
                 ActiveWalkScreen(minutesGoal: store.minutesGoal) {
@@ -124,19 +129,20 @@ struct TodayScreen: View {
     }
 
     private func loaded(snapshot: TodaySnapshot) -> some View {
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(spacing: 12) {
                 header(date: snapshot.date)
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
                 if snapshot.hasNoActivity {
-                    emptyStateCard
+                    TodayEmptyStateCard()
                         .padding(.horizontal, 20)
                 } else if store.lastError != nil {
                     // A real fetch failed while we *do* have something to show.
                     // The empty case is handled by the card above, so we never
                     // surface both at once.
-                    errorBanner
+                    TodayErrorBanner()
                         .padding(.horizontal, 20)
                 }
                 TodayHeroCard(
@@ -161,23 +167,16 @@ struct TodayScreen: View {
                 TodayStatsGrid(snapshot: snapshot) { selectedMetric = $0 }
                     .padding(.horizontal, 20)
                 HydrationHomeCard(preferences: preferences, store: hydration)
-                Button { isShowingSummary = true } label: {
-                    TodayWeekBars(snapshot: snapshot, activeDays: preferences.activeDays)
-                }
-                .buttonStyle(.pressable)
-                .padding(.horizontal, 20)
-                .accessibilityHint("Voir l'historique des marches")
-                if snapshot.weather.isAvailable {
-                    // Required Apple Weather attribution (Guideline 5.2.5) — the
-                    // home shows WeatherKit data in the midday card above.
-                    WeatherAttributionView()
-                        .padding(.horizontal, 20)
-                        .padding(.top, 4)
+                    .id("hydrationCard")
+                TodayFooter(snapshot: snapshot, activeDays: preferences.activeDays) {
+                    isShowingSummary = true
                 }
             }
             .padding(.bottom, 40)
         }
         .refreshable { await store.refresh() }
+        .modifier(HydrationDeepLinkScroll(proxy: proxy, pending: $scrollToHydration))
+        }
     }
 
     private var placeholder: some View {
@@ -189,53 +188,6 @@ struct TodayScreen: View {
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
         }
-    }
-
-    private var errorBanner: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 16))
-                .foregroundStyle(FouleeColor.warning)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Données partiellement indisponibles")
-                    .font(FouleeFont.footnote.weight(.semibold))
-                Text("Vérifie l'accès à Santé dans Réglages, puis réessaie.")
-                    .font(FouleeFont.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(12)
-        .fouleeGlass(cornerRadius: 16)
-    }
-
-    /// Shown on a fresh install / denied access / no activity yet, instead of
-    /// a screen full of muted zeros.
-    private var emptyStateCard: some View {
-        VStack(spacing: 12) {
-            Image(systemName: FouleeIcon.walkMotion)
-                .font(.system(size: 40, weight: .semibold))
-                .foregroundStyle(FouleeColor.accentMid)
-            Text("Pas encore de données")
-                .font(FouleeFont.headline)
-            Text("Connecte Santé et fais quelques pas — ta marche du midi s'affichera ici.")
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button {
-                if let url = URL(string: "x-apple-health://") {
-                    UIApplication.shared.open(url)
-                }
-            } label: {
-                Text("Ouvrir Santé")
-                    .font(FouleeFont.footnote.weight(.semibold))
-                    .foregroundStyle(FouleeColor.accentMid)
-            }
-            .buttonStyle(.pressable)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(24)
-        .fouleeGlass(cornerRadius: 24)
     }
 
     private func header(date: Date) -> some View {
@@ -290,6 +242,102 @@ struct TodayScreen: View {
         case .steps: Double(store.stepsGoal)
         case .minutes: Double(store.minutesGoal)
         case .distance, .calories: nil
+        }
+    }
+}
+
+/// Week bars (tap → walk history) + the Apple Weather attribution required by
+/// Guideline 5.2.5. File-scope to keep `TodayScreen` within lint bounds.
+private struct TodayFooter: View {
+    let snapshot: TodaySnapshot
+    let activeDays: Set<Weekday>
+    var onSummary: () -> Void
+
+    var body: some View {
+        Button(action: onSummary) {
+            TodayWeekBars(snapshot: snapshot, activeDays: activeDays)
+        }
+        .buttonStyle(.pressable)
+        .padding(.horizontal, 20)
+        .accessibilityHint("Voir l'historique des marches")
+        if snapshot.weather.isAvailable {
+            WeatherAttributionView()
+                .padding(.horizontal, 20)
+                .padding(.top, 4)
+        }
+    }
+}
+
+private struct TodayErrorBanner: View {
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 16))
+                .foregroundStyle(FouleeColor.warning)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Données partiellement indisponibles")
+                    .font(FouleeFont.footnote.weight(.semibold))
+                Text("Vérifie l'accès à Santé dans Réglages, puis réessaie.")
+                    .font(FouleeFont.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .fouleeGlass(cornerRadius: 16)
+    }
+}
+
+/// Shown on a fresh install / denied access / no activity yet, instead of
+/// a screen full of muted zeros.
+private struct TodayEmptyStateCard: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: FouleeIcon.walkMotion)
+                .font(.system(size: 40, weight: .semibold))
+                .foregroundStyle(FouleeColor.accentMid)
+            Text("Pas encore de données")
+                .font(FouleeFont.headline)
+            Text("Connecte Santé et fais quelques pas — ta marche du midi s'affichera ici.")
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button {
+                if let url = URL(string: "x-apple-health://") {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                Text("Ouvrir Santé")
+                    .font(FouleeFont.footnote.weight(.semibold))
+                    .foregroundStyle(FouleeColor.accentMid)
+            }
+            .buttonStyle(.pressable)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(24)
+        .fouleeGlass(cornerRadius: 24)
+    }
+}
+
+/// Scrolls the home to the hydration card when the `foulee://hydration` deep
+/// link fires (widget tap). Handles both orders: URL before the content is
+/// mounted (cold launch → `onAppear`) and after (warm open → `onChange`).
+private struct HydrationDeepLinkScroll: ViewModifier {
+    let proxy: ScrollViewProxy
+    @Binding var pending: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear(perform: scrollIfPending)
+            .onChange(of: pending) { _, _ in scrollIfPending() }
+    }
+
+    private func scrollIfPending() {
+        guard pending else { return }
+        pending = false
+        // Slight delay so the freshly mounted scroll content has laid out.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation { proxy.scrollTo("hydrationCard", anchor: .center) }
         }
     }
 }

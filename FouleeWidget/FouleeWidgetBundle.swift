@@ -7,5 +7,6 @@ struct FouleeWidgetBundle: WidgetBundle {
         StreakWidget()
         TodayProgressWidget()
         StatWidget()
+        HydrationWidget()
     }
 }
