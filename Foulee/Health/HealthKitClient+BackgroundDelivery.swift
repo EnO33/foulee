@@ -2,28 +2,42 @@ import Foundation
 @preconcurrency import HealthKit
 import WidgetKit
 
-/// Builds the live `enableBackgroundDelivery` closure: register for hourly
-/// step updates (the finest cadence iOS allows for steps) and, on each
-/// background wake, refresh the widget snapshot's metrics + reload the
-/// widgets — so the Lock Screen rings move during the day even if the user
-/// never opens the app. Separate file to keep HealthKitClient+Live.swift
-/// within the file-length limit.
+/// Builds the live `enableBackgroundDelivery` closure: register for Health
+/// background updates and, on each wake, refresh the widget snapshot's
+/// metrics + reload the widgets — so the rings move during the day even if
+/// the user never opens the app. Steps are clamped to hourly by iOS; water
+/// and workouts deliver *immediately*, so drinking (even from the watch) or
+/// finishing a walk updates the iPhone widgets within seconds. Separate file
+/// to keep HealthKitClient+Live.swift within the file-length limit.
 func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async -> Void {
     {
         guard HKHealthStore.isHealthDataAvailable() else { return }
-        let stepsType = HKQuantityType(.stepCount)
-        try? await store.enableBackgroundDelivery(for: stepsType, frequency: .hourly)
-        let query = HKObserverQuery(sampleType: stepsType, predicate: nil) { _, completionHandler, error in
-            let done = ObserverCompletionBox(completionHandler)
-            guard error == nil else { done.value(); return }
-            Task {
-                await refreshSnapshotMetrics(store: store)
-                WidgetCenter.shared.reloadAllTimelines()
-                done.value()
+        let deliveries: [(HKSampleType, HKUpdateFrequency)] = [
+            (HKQuantityType(.stepCount), .hourly),
+            (HKQuantityType(.dietaryWater), .immediate),
+            (HKWorkoutType.workoutType(), .immediate)
+        ]
+        for (type, frequency) in deliveries {
+            try? await store.enableBackgroundDelivery(for: type, frequency: frequency)
+            let query = HKObserverQuery(sampleType: type, predicate: nil) { _, completionHandler, error in
+                let done = ObserverCompletionBox(completionHandler)
+                guard error == nil else { done.value(); return }
+                Task {
+                    await refreshSnapshotMetrics(store: store)
+                    WidgetCenter.shared.reloadAllTimelines()
+                    done.value()
+                }
             }
+            store.execute(query)
         }
-        store.execute(query)
     }
+}
+
+/// Same snapshot refresh, callable with a standalone store — used by the
+/// BGAppRefresh task as an extra wake source between Health deliveries.
+func refreshWidgetSnapshotFromHealth() async {
+    guard HKHealthStore.isHealthDataAvailable() else { return }
+    await refreshSnapshotMetrics(store: HKHealthStore())
 }
 
 /// Overlay today's live sums onto the stored widget snapshot. Skips silently

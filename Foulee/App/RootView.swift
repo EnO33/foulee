@@ -6,6 +6,7 @@ import SwiftUI
 /// drive it (active days + window start + notifications toggle).
 struct RootView: View {
     @State private var preferences = UserPreferences()
+    @Environment(\.scenePhase) private var scenePhase
     private let scheduler = WalkReminderScheduler()
     private let hydrationScheduler = HydrationReminderScheduler()
 
@@ -22,6 +23,11 @@ struct RootView: View {
         .preferredColorScheme(preferences.themeMode.colorScheme)
         .environment(preferences)
         .task(id: scheduleKey) { await syncReminders() }
+        .onChange(of: scenePhase) { _, phase in
+            // Ask for a background refresh so the widgets keep moving while
+            // the app stays closed.
+            if phase == .background { FouleeApp.scheduleAppRefresh() }
+        }
     }
 
     /// Reschedule whenever any input that affects the notification schedule

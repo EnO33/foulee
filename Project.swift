@@ -71,6 +71,10 @@ let project = Project(
                         "CFBundleURLSchemes": ["foulee"]
                     ]
                 ],
+                // Background app refresh keeps the widget snapshot moving
+                // between HealthKit background deliveries.
+                "BGTaskSchedulerPermittedIdentifiers": ["com.eno33.foulee.refresh"],
+                "UIBackgroundModes": ["fetch"],
                 "UILaunchScreen": [:],
                 "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
                 "NSHealthShareUsageDescription":
