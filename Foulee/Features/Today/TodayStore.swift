@@ -121,7 +121,12 @@ final class TodayStore {
             minutesGoal: snapshot.minutesGoal,
             distanceKm: snapshot.distanceKm,
             calories: snapshot.calories,
-            streak: snapshot.streak
+            streak: snapshot.streak,
+            // Water intake is owned by the hydration flow — carry the stored
+            // value forward so this full rewrite doesn't reset the ring.
+            waterML: SharedStore.read()?.waterML ?? 0,
+            waterGoalML: hydrationGoalML,
+            hydrationEnabled: hydrationEnabled
         ))
         WidgetCenter.shared.reloadAllTimelines()
 

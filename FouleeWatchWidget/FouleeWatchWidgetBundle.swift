@@ -6,5 +6,6 @@ struct FouleeWatchWidgetBundle: WidgetBundle {
     var body: some Widget {
         StreakComplication()
         WatchStatComplication()
+        WatchHydrationComplication()
     }
 }

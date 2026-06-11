@@ -1,5 +1,6 @@
 import Dependencies
 import Observation
+import WidgetKit
 
 /// Today's water intake, backed by Apple Health (`dietaryWater`). The app never
 /// asks for a typed amount: each "J'ai bu" logs one glass. Kept separate from
@@ -13,6 +14,8 @@ final class HydrationStore {
 
     func refresh() async {
         intakeML = (try? await healthKit.todayWaterML()) ?? 0
+        // Keep the hydration widget's ring in sync with what the app shows.
+        SharedStore.updateWater(intakeML: intakeML)
     }
 
     /// Called when the user turns hydration on: prompt for Health access (so
@@ -27,6 +30,7 @@ final class HydrationStore {
     func logGlass(ml: Int) async {
         try? await healthKit.logWater(ml)
         await refresh()
+        WidgetCenter.shared.reloadAllTimelines()
         HydrationNotification.confirm(kind: "drank", amount: ml)
     }
 }

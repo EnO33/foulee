@@ -56,6 +56,11 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
             // by the system automatically.
             let glassML = defaults.object(forKey: "preferences.hydrationGlassML") as? Int ?? 250
             try? await HealthKitClient.liveValue.logWater(glassML)
+            // Refresh the widget snapshot's water so the hydration ring is
+            // up to date even though the app UI may never come up.
+            if let total = try? await HealthKitClient.liveValue.todayWaterML() {
+                SharedStore.updateWater(intakeML: total)
+            }
             WidgetCenter.shared.reloadAllTimelines()
             HydrationNotification.confirm(kind: "drank", amount: glassML)
         case HydrationNotification.snoozeAction:

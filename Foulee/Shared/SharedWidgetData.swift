@@ -17,11 +17,57 @@ struct WidgetSnapshot: Codable, Sendable {
     var distanceKm: Double
     var calories: Int
     var streak: Int
+    // Hydration (added after 1.18 — tolerant decoding below keeps snapshots
+    // written by older builds readable, so widgets never blank on update).
+    var waterML: Int
+    var waterGoalML: Int
+    var hydrationEnabled: Bool
 
     static let placeholder = WidgetSnapshot(
         date: .now, steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20,
         distanceKm: 0, calories: 0, streak: 0
     )
+
+    init(
+        date: Date,
+        steps: Int,
+        stepsGoal: Int,
+        minutes: Int,
+        minutesGoal: Int,
+        distanceKm: Double,
+        calories: Int,
+        streak: Int,
+        waterML: Int = 0,
+        waterGoalML: Int = 2_000,
+        hydrationEnabled: Bool = false
+    ) {
+        self.date = date
+        self.steps = steps
+        self.stepsGoal = stepsGoal
+        self.minutes = minutes
+        self.minutesGoal = minutesGoal
+        self.distanceKm = distanceKm
+        self.calories = calories
+        self.streak = streak
+        self.waterML = waterML
+        self.waterGoalML = waterGoalML
+        self.hydrationEnabled = hydrationEnabled
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        date = try container.decode(Date.self, forKey: .date)
+        steps = try container.decode(Int.self, forKey: .steps)
+        stepsGoal = try container.decode(Int.self, forKey: .stepsGoal)
+        minutes = try container.decode(Int.self, forKey: .minutes)
+        minutesGoal = try container.decode(Int.self, forKey: .minutesGoal)
+        distanceKm = try container.decode(Double.self, forKey: .distanceKm)
+        calories = try container.decode(Int.self, forKey: .calories)
+        streak = try container.decode(Int.self, forKey: .streak)
+        waterML = try container.decodeIfPresent(Int.self, forKey: .waterML) ?? 0
+        waterGoalML = try container.decodeIfPresent(Int.self, forKey: .waterGoalML) ?? 2_000
+        hydrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .hydrationEnabled) ?? false
+    }
 }
 
 /// Read/write the widget snapshot in the shared app-group container.
@@ -39,5 +85,14 @@ enum SharedStore {
     static func read() -> WidgetSnapshot? {
         guard let defaults, let data = defaults.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(WidgetSnapshot.self, from: data)
+    }
+
+    /// Update only today's water intake, preserving the rest of the snapshot —
+    /// the hydration flow (app card or notification action) knows the new
+    /// intake but not the walk metrics.
+    static func updateWater(intakeML: Int) {
+        var snapshot = read() ?? .placeholder
+        snapshot.waterML = intakeML
+        write(snapshot)
     }
 }
