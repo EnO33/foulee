@@ -8,32 +8,27 @@ import Foundation
 /// Lock Screen behavior).
 enum WidgetLiveMetrics {
     /// The shared snapshot with every metric HealthKit can currently provide
-    /// refreshed live. Persists the merge so the next locked render shows the
-    /// freshest values we ever saw.
+    /// refreshed live. Read-only: the app (foreground refresh, background
+    /// delivery, BGAppRefresh) owns persistence — having every widget instance
+    /// also write the app-group on each render only amplified writes and raced
+    /// the app's own updates.
     static func freshSnapshot() async -> WidgetSnapshot {
         var snapshot = SharedStore.read() ?? .placeholder
         guard HKHealthStore.isHealthDataAvailable() else { return snapshot }
         let store = HKHealthStore()
-        var changed = false
-        if let steps = await todaySum(store, .stepCount, .count()) {
-            snapshot.steps = Int(steps); changed = true
-        }
-        if let minutes = await todaySum(store, .appleExerciseTime, .minute()) {
-            snapshot.minutes = Int(minutes); changed = true
-        }
-        if let meters = await todaySum(store, .distanceWalkingRunning, .meter()) {
-            snapshot.distanceKm = meters / 1_000; changed = true
-        }
-        if let kcal = await todaySum(store, .activeEnergyBurned, .kilocalorie()) {
-            snapshot.calories = Int(kcal); changed = true
-        }
-        if let water = await todaySum(store, .dietaryWater, .literUnit(with: .milli)) {
-            snapshot.waterML = Int(water); changed = true
-        }
-        if changed {
-            snapshot.date = .now
-            SharedStore.write(snapshot)
-        }
+        // The five sums are independent — run them concurrently so the widget
+        // provider stays well inside its tight time budget (5 serial healthd
+        // round-trips risked the extension being killed mid-getTimeline).
+        async let steps = todaySum(store, .stepCount, .count())
+        async let minutes = todaySum(store, .appleExerciseTime, .minute())
+        async let meters = todaySum(store, .distanceWalkingRunning, .meter())
+        async let kcal = todaySum(store, .activeEnergyBurned, .kilocalorie())
+        async let water = todaySum(store, .dietaryWater, .literUnit(with: .milli))
+        if let steps = await steps { snapshot.steps = Int(steps) }
+        if let minutes = await minutes { snapshot.minutes = Int(minutes) }
+        if let meters = await meters { snapshot.distanceKm = meters / 1_000 }
+        if let kcal = await kcal { snapshot.calories = Int(kcal) }
+        if let water = await water { snapshot.waterML = Int(water) }
         return snapshot
     }
 

@@ -60,10 +60,13 @@ struct TodayProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<TodayEntry>) -> Void) {
         // Refresh from HealthKit when the phone is unlocked so the rings move
         // without opening the app; fall back to the snapshot when locked.
+        // Hourly: water/workouts already push via immediate background
+        // delivery, so a tighter step cadence would only burn the refresh
+        // budget and get throttled.
         let box = WidgetCompletionBox(completion)
         Task {
             let entry = Self.entry(from: await WidgetLiveMetrics.freshSnapshot())
-            box.value(Timeline(entries: [entry], policy: .after(Date(timeIntervalSinceNow: 20 * 60))))
+            box.value(Timeline(entries: [entry], policy: .after(Date(timeIntervalSinceNow: 60 * 60))))
         }
     }
 
