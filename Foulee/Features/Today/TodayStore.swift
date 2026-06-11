@@ -152,6 +152,9 @@ final class TodayStore {
         _ = await location.requestWhenInUse()
         await refresh()
         startObservingHealthChanges()
+        // Hourly background wakes keep the widget snapshot fresh even when
+        // the app stays closed all day.
+        await healthKit.enableBackgroundDelivery()
     }
 
     /// Refresh the dashboard whenever HealthKit reports new data, so passive

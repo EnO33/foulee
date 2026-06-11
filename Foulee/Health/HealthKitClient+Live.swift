@@ -141,7 +141,8 @@ extension HealthKitClient {
             todayWaterML: {
                 let milliliters = try await sumToday(store: store, type: waterType, unit: .literUnit(with: .milli))
                 return Int(milliliters)
-            }
+            },
+            enableBackgroundDelivery: healthBackgroundDeliveryClosure(store: store)
         )
     }()
 }

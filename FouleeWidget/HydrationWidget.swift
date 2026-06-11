@@ -42,7 +42,13 @@ struct HydrationProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<HydrationEntry>) -> Void) {
-        completion(Timeline(entries: [entry()], policy: .after(Date(timeIntervalSinceNow: 30 * 60))))
+        // Live HealthKit when unlocked, snapshot fallback when locked.
+        let box = WidgetCompletionBox(completion)
+        Task {
+            let snapshot = await WidgetLiveMetrics.freshSnapshot()
+            let entry = HydrationEntry(date: .now, waterML: snapshot.waterML, goalML: snapshot.waterGoalML)
+            box.value(Timeline(entries: [entry], policy: .after(Date(timeIntervalSinceNow: 20 * 60))))
+        }
     }
 
     private func entry() -> HydrationEntry {
