@@ -29,8 +29,6 @@ struct WatchHydrationEntry: TimelineEntry, Sendable {
 }
 
 struct WatchHydrationProvider: TimelineProvider {
-    private static let refreshInterval: TimeInterval = 30 * 60
-
     func placeholder(in context: Context) -> WatchHydrationEntry { .placeholder }
 
     func getSnapshot(in context: Context, completion: @escaping (WatchHydrationEntry) -> Void) {
@@ -42,8 +40,7 @@ struct WatchHydrationProvider: TimelineProvider {
         let box = UncheckedSendableBox(completion)
         Task {
             let entry = await Self.entry()
-            let nextRefresh = Date(timeIntervalSinceNow: Self.refreshInterval)
-            box.value(Timeline(entries: [entry], policy: .after(nextRefresh)))
+            box.value(Timeline(entries: [entry], policy: .after(WidgetRefresh.nextRefresh(after: .now))))
         }
     }
 
