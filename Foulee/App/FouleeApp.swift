@@ -30,17 +30,26 @@ struct FouleeApp: App {
             let work = Task {
                 await refreshWidgetSnapshotFromHealth()
                 WidgetCenter.shared.reloadAllTimelines()
-                task.setTaskCompleted(success: true)
             }
+            // Set the handler before awaiting the result, and complete the
+            // task on every path — including expiration — so iOS doesn't
+            // penalise future background grants for an un-completed task.
             task.expirationHandler = { work.cancel() }
+            Task {
+                _ = await work.value
+                task.setTaskCompleted(success: !work.isCancelled)
+            }
         }
     }()
 
-    /// Ask iOS for a background refresh in ~30 min. Called when the app goes
-    /// to the background; iOS decides the actual timing from usage patterns.
+    /// Ask iOS for a background refresh in ~2 h. Called when the app goes to
+    /// the background; iOS decides the actual timing from usage patterns. This
+    /// is only a safety net — HealthKit background delivery (hourly steps,
+    /// immediate water/workouts) is the primary wake source — so a wide
+    /// interval keeps it from competing with the widgets' own refresh budget.
     static func scheduleAppRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: refreshTaskID)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 30 * 60)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 2 * 60 * 60)
         try? BGTaskScheduler.shared.submit(request)
     }
 }

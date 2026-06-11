@@ -1,6 +1,14 @@
 import Foundation
 @preconcurrency import HealthKit
+import os
 import WidgetKit
+
+/// One-shot guard: the observers must be registered exactly once per process.
+/// `bootstrap()` (and thus this closure) runs on every Today-tab appearance,
+/// and each run would otherwise `execute` a fresh set of HKObserverQuery on the
+/// long-lived live store — stacking observers so a single sample fires the
+/// handler N times.
+private let backgroundObserversStarted = OSAllocatedUnfairLock(initialState: false)
 
 /// Builds the live `enableBackgroundDelivery` closure: register for Health
 /// background updates and, on each wake, refresh the widget snapshot's
@@ -12,6 +20,12 @@ import WidgetKit
 func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async -> Void {
     {
         guard HKHealthStore.isHealthDataAvailable() else { return }
+        let shouldStart = backgroundObserversStarted.withLock { started -> Bool in
+            guard !started else { return false }
+            started = true
+            return true
+        }
+        guard shouldStart else { return }
         let deliveries: [(HKSampleType, HKUpdateFrequency)] = [
             (HKQuantityType(.stepCount), .hourly),
             (HKQuantityType(.dietaryWater), .immediate),
@@ -23,9 +37,12 @@ func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async
                 let done = ObserverCompletionBox(completionHandler)
                 guard error == nil else { done.value(); return }
                 Task {
+                    // iOS throttles/stops background delivery if the handler
+                    // isn't called — `defer` guarantees it on every exit,
+                    // including task cancellation when the budget runs out.
+                    defer { done.value() }
                     await refreshSnapshotMetrics(store: store)
                     WidgetCenter.shared.reloadAllTimelines()
-                    done.value()
                 }
             }
             store.execute(query)
@@ -45,11 +62,17 @@ func refreshWidgetSnapshotFromHealth() async {
 /// (locked phone — keep the last known values).
 private func refreshSnapshotMetrics(store: HKHealthStore) async {
     guard var snapshot = SharedStore.read() else { return }
-    if let steps = await backgroundSum(store, .stepCount, .count()) { snapshot.steps = Int(steps) }
-    if let minutes = await backgroundSum(store, .appleExerciseTime, .minute()) { snapshot.minutes = Int(minutes) }
-    if let meters = await backgroundSum(store, .distanceWalkingRunning, .meter()) { snapshot.distanceKm = meters / 1_000 }
-    if let kcal = await backgroundSum(store, .activeEnergyBurned, .kilocalorie()) { snapshot.calories = Int(kcal) }
-    if let water = await backgroundSum(store, .dietaryWater, .literUnit(with: .milli)) { snapshot.waterML = Int(water) }
+    // Independent sums — run concurrently to keep the background wake short.
+    async let steps = backgroundSum(store, .stepCount, .count())
+    async let minutes = backgroundSum(store, .appleExerciseTime, .minute())
+    async let meters = backgroundSum(store, .distanceWalkingRunning, .meter())
+    async let kcal = backgroundSum(store, .activeEnergyBurned, .kilocalorie())
+    async let water = backgroundSum(store, .dietaryWater, .literUnit(with: .milli))
+    if let steps = await steps { snapshot.steps = Int(steps) }
+    if let minutes = await minutes { snapshot.minutes = Int(minutes) }
+    if let meters = await meters { snapshot.distanceKm = meters / 1_000 }
+    if let kcal = await kcal { snapshot.calories = Int(kcal) }
+    if let water = await water { snapshot.waterML = Int(water) }
     snapshot.date = .now
     SharedStore.write(snapshot)
 }
