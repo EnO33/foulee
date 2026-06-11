@@ -71,6 +71,12 @@ struct HealthKitClient: Sendable {
     /// Total `dietaryWater` logged today, in millilitres. Defaulted to 0.
     var todayWaterML: @Sendable () async throws -> Int
         = { 0 }
+
+    /// Ask iOS to wake the app (hourly, the finest steps cadence allowed) when
+    /// new Health samples land, so the widget snapshot stays fresh without the
+    /// app being opened. Defaulted to a no-op.
+    var enableBackgroundDelivery: @Sendable () async -> Void
+        = {}
 }
 
 extension HealthKitClient: DependencyKey {

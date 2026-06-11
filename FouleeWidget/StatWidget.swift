@@ -51,11 +51,16 @@ struct StatProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: StatWidgetIntent, in context: Context) async -> Timeline<StatEntry> {
-        Timeline(entries: [entry(for: configuration.metric)], policy: .after(Date(timeIntervalSinceNow: 30 * 60)))
+        // Live HealthKit when unlocked, snapshot fallback when locked.
+        let entry = Self.entry(for: configuration.metric, from: await WidgetLiveMetrics.freshSnapshot())
+        return Timeline(entries: [entry], policy: .after(Date(timeIntervalSinceNow: 20 * 60)))
     }
 
     private func entry(for metric: StatMetric) -> StatEntry {
-        let snapshot = SharedStore.read() ?? .placeholder
+        Self.entry(for: metric, from: SharedStore.read() ?? .placeholder)
+    }
+
+    private static func entry(for metric: StatMetric, from snapshot: WidgetSnapshot) -> StatEntry {
         switch metric {
         case .steps:
             return StatEntry(date: .now, metric: metric, value: Double(snapshot.steps), goal: Double(snapshot.stepsGoal))

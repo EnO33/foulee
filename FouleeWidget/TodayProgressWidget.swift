@@ -58,12 +58,21 @@ struct TodayProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TodayEntry>) -> Void) {
-        completion(Timeline(entries: [entry()], policy: .after(Date(timeIntervalSinceNow: 30 * 60))))
+        // Refresh from HealthKit when the phone is unlocked so the rings move
+        // without opening the app; fall back to the snapshot when locked.
+        let box = WidgetCompletionBox(completion)
+        Task {
+            let entry = Self.entry(from: await WidgetLiveMetrics.freshSnapshot())
+            box.value(Timeline(entries: [entry], policy: .after(Date(timeIntervalSinceNow: 20 * 60))))
+        }
     }
 
     private func entry() -> TodayEntry {
-        let snapshot = SharedStore.read() ?? .placeholder
-        return TodayEntry(
+        Self.entry(from: SharedStore.read() ?? .placeholder)
+    }
+
+    private static func entry(from snapshot: WidgetSnapshot) -> TodayEntry {
+        TodayEntry(
             date: .now,
             steps: snapshot.steps,
             stepsGoal: snapshot.stepsGoal,
