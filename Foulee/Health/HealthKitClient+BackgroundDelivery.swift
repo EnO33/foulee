@@ -34,7 +34,7 @@ func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async
         for (type, frequency) in deliveries {
             try? await store.enableBackgroundDelivery(for: type, frequency: frequency)
             let query = HKObserverQuery(sampleType: type, predicate: nil) { _, completionHandler, error in
-                let done = ObserverCompletionBox(completionHandler)
+                let done = UncheckedSendableBox(completionHandler)
                 guard error == nil else { done.value(); return }
                 Task {
                     // iOS throttles/stops background delivery if the handler
@@ -102,10 +102,4 @@ private func backgroundSum(
         }
         store.execute(query)
     }
-}
-
-/// Carries the observer's non-Sendable completion into a `Task` (invoked once).
-private struct ObserverCompletionBox: @unchecked Sendable {
-    let value: () -> Void
-    init(_ value: @escaping () -> Void) { self.value = value }
 }

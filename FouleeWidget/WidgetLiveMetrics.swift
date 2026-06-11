@@ -59,9 +59,3 @@ enum WidgetLiveMetrics {
         }
     }
 }
-
-/// Carries a non-Sendable WidgetKit completion into a `Task` (invoked once).
-struct WidgetCompletionBox<Value>: @unchecked Sendable {
-    let value: (Value) -> Void
-    init(_ value: @escaping (Value) -> Void) { self.value = value }
-}

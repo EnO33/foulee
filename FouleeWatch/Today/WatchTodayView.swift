@@ -107,10 +107,6 @@ struct WatchTodayView: View {
         .sensoryFeedback(.increase, trigger: store.waterML)
     }
 
-    private func litres(_ millilitres: Int) -> String {
-        String(format: "%.1f", Double(millilitres) / 1_000).replacingOccurrences(of: ".", with: ",")
-    }
-
     private var startButton: some View {
         Button(action: onStart) {
             Label("Démarrer", systemImage: "play.fill")
@@ -123,6 +119,6 @@ struct WatchTodayView: View {
     }
 
     private var kmText: String {
-        String(format: "%.1f", store.distanceKm).replacingOccurrences(of: ".", with: ",")
+        store.distanceKm.decimalComma()
     }
 }

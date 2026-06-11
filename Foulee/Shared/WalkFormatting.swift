@@ -18,8 +18,7 @@ extension TimeInterval {
 extension Double {
     /// A km distance with a French decimal comma and no unit, e.g. `1,23`.
     func kmValue(fractionDigits: Int = 2) -> String {
-        String(format: "%.\(fractionDigits)f", self)
-            .replacingOccurrences(of: ".", with: ",")
+        decimalComma(fractionDigits: fractionDigits)
     }
 
     /// A km distance with a French decimal comma and the `km` unit, e.g.

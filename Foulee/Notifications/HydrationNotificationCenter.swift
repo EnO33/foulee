@@ -33,7 +33,7 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
         let action = response.actionIdentifier
         // The completion handler isn't Sendable; box it so it can cross into
         // the Task. Safe — it's invoked exactly once when the work finishes.
-        let completion = UncheckedSendable(completionHandler)
+        let completion = UncheckedSendableBox(completionHandler)
         Task {
             await Self.handle(action: action)
             // The system's completion synchronously runs UIKit snapshot/state-
@@ -75,11 +75,4 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
             break
         }
     }
-}
-
-/// Carries a non-Sendable value into a `Task`. Use only when the value is
-/// genuinely accessed safely (here: a completion handler invoked once).
-private struct UncheckedSendable<Value>: @unchecked Sendable {
-    let value: Value
-    init(_ value: Value) { self.value = value }
 }

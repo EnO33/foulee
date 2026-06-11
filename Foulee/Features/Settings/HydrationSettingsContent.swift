@@ -32,7 +32,7 @@ struct HydrationSettingsContent: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Objectif quotidien").font(FouleeFont.headline)
                 Spacer()
-                Text(litres(preferences.hydrationGoalML))
+                Text("\(litres(preferences.hydrationGoalML)) L")
                     .font(FouleeFont.numeric(size: 20, weight: .semibold))
                     .foregroundStyle(.teal)
             }
@@ -70,11 +70,5 @@ struct HydrationSettingsContent: View {
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
         }
-    }
-
-    /// Millilitres → "2,0 L" (one decimal, comma separator).
-    private func litres(_ millilitres: Int) -> String {
-        String(format: "%.1f L", Double(millilitres) / 1_000)
-            .replacingOccurrences(of: ".", with: ",")
     }
 }
