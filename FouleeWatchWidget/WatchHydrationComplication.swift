@@ -34,12 +34,12 @@ struct WatchHydrationProvider: TimelineProvider {
     func placeholder(in context: Context) -> WatchHydrationEntry { .placeholder }
 
     func getSnapshot(in context: Context, completion: @escaping (WatchHydrationEntry) -> Void) {
-        let box = SendableCompletion(completion)
+        let box = UncheckedSendableBox(completion)
         Task { box.value(await Self.entry()) }
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<WatchHydrationEntry>) -> Void) {
-        let box = SendableCompletion(completion)
+        let box = UncheckedSendableBox(completion)
         Task {
             let entry = await Self.entry()
             let nextRefresh = Date(timeIntervalSinceNow: Self.refreshInterval)
@@ -72,12 +72,6 @@ struct WatchHydrationProvider: TimelineProvider {
             store.execute(query)
         }
     }
-}
-
-/// Carries a non-Sendable WidgetKit completion into a `Task` (invoked once).
-struct SendableCompletion<Value>: @unchecked Sendable {
-    let value: (Value) -> Void
-    init(_ value: @escaping (Value) -> Void) { self.value = value }
 }
 
 struct WatchHydrationView: View {
@@ -126,11 +120,5 @@ struct WatchHydrationView: View {
 
     private var inline: some View {
         Label("\(litres(entry.waterML)) / \(litres(entry.goalML)) L", systemImage: "drop.fill")
-    }
-
-    /// Millilitres → "1,5" (one decimal, comma separator).
-    private func litres(_ millilitres: Int) -> String {
-        String(format: "%.1f", Double(millilitres) / 1_000)
-            .replacingOccurrences(of: ".", with: ",")
     }
 }

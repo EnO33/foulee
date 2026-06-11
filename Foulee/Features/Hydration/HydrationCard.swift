@@ -55,12 +55,6 @@ struct HydrationCard: View {
         .fouleeGlass(cornerRadius: 24)
         .sensoryFeedback(.increase, trigger: intakeML)
     }
-
-    /// Millilitres → "1,5" (one decimal, comma separator).
-    private func litres(_ millilitres: Int) -> String {
-        String(format: "%.1f", Double(millilitres) / 1_000)
-            .replacingOccurrences(of: ".", with: ",")
-    }
 }
 
 #Preview {

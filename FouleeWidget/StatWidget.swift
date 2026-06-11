@@ -210,24 +210,20 @@ struct StatWidgetView: View {
     }
 
     private var valueText: String {
-        entry.metric == .distance ? distanceString(entry.value) : Int(entry.value).formatted()
+        entry.metric == .distance ? entry.value.decimalComma() : Int(entry.value).formatted()
     }
 
     private var goalText: String {
-        entry.metric == .distance ? distanceString(entry.goal) : Int(entry.goal).formatted()
+        entry.metric == .distance ? entry.goal.decimalComma() : Int(entry.goal).formatted()
     }
 
     /// Shorter form for the tight Lock Screen circle (e.g. `4,2k`).
     private var compactValue: String {
         switch entry.metric {
         case .steps, .calories:
-            entry.value >= 1_000 ? distanceString(entry.value / 1_000) + "k" : "\(Int(entry.value))"
+            entry.value >= 1_000 ? (entry.value / 1_000).decimalComma() + "k" : "\(Int(entry.value))"
         case .minutes: "\(Int(entry.value))"
-        case .distance: distanceString(entry.value)
+        case .distance: entry.value.decimalComma()
         }
-    }
-
-    private func distanceString(_ value: Double) -> String {
-        String(format: "%.1f", value).replacingOccurrences(of: ".", with: ",")
     }
 }

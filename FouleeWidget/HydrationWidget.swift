@@ -44,7 +44,7 @@ struct HydrationProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<HydrationEntry>) -> Void) {
         // Live HealthKit when unlocked, snapshot fallback when locked. Water
         // also pushes via immediate background delivery, so hourly is plenty.
-        let box = WidgetCompletionBox(completion)
+        let box = UncheckedSendableBox(completion)
         Task {
             let snapshot = await WidgetLiveMetrics.freshSnapshot()
             let entry = HydrationEntry(date: .now, waterML: snapshot.waterML, goalML: snapshot.waterGoalML)
@@ -130,11 +130,5 @@ struct HydrationWidgetView: View {
                 .stroke(HydrationWidget.waterGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
         }
-    }
-
-    /// Millilitres → "1,5" (one decimal, comma separator).
-    private func litres(_ millilitres: Int) -> String {
-        String(format: "%.1f", Double(millilitres) / 1_000)
-            .replacingOccurrences(of: ".", with: ",")
     }
 }

@@ -122,6 +122,8 @@ let project = Project(
             sources: [
                 "FouleeWidget/**",
                 "Foulee/Shared/SharedWidgetData.swift",
+                "Foulee/Shared/NumberFormatting.swift",
+                "Foulee/Shared/UncheckedSendableBox.swift",
                 "FouleeWatchWidget/StreakEntry.swift"
             ],
             resources: [
@@ -150,7 +152,8 @@ let project = Project(
             sources: [
                 "FouleeLiveActivity/**",
                 "Foulee/Walk/WalkActivityAttributes.swift",
-                "Foulee/Shared/WalkFormatting.swift"
+                "Foulee/Shared/WalkFormatting.swift",
+                "Foulee/Shared/NumberFormatting.swift"
             ],
             resources: [
                 .glob(
@@ -182,6 +185,7 @@ let project = Project(
             sources: [
                 "FouleeWatch/**",
                 "Foulee/Shared/WalkFormatting.swift",
+                "Foulee/Shared/NumberFormatting.swift",
                 "Foulee/Shared/WatchSyncPayload.swift"
             ],
             resources: [
@@ -211,6 +215,8 @@ let project = Project(
             ]),
             sources: [
                 "FouleeWatchWidget/**",
+                "Foulee/Shared/NumberFormatting.swift",
+                "Foulee/Shared/UncheckedSendableBox.swift",
                 "Foulee/Shared/WatchSyncPayload.swift"
             ],
             resources: [

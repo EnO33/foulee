@@ -204,19 +204,15 @@ struct WatchStatComplicationView: View {
     }
 
     private var valueText: String {
-        entry.metric == .distance ? distance(entry.value) : Int(entry.value).formatted()
+        entry.metric == .distance ? entry.value.decimalComma() : Int(entry.value).formatted()
     }
 
     private var compactValue: String {
         switch entry.metric {
         case .steps, .calories:
-            entry.value >= 1_000 ? distance(entry.value / 1_000) + "k" : "\(Int(entry.value))"
+            entry.value >= 1_000 ? (entry.value / 1_000).decimalComma() + "k" : "\(Int(entry.value))"
         case .minutes: "\(Int(entry.value))"
-        case .distance: distance(entry.value)
+        case .distance: entry.value.decimalComma()
         }
-    }
-
-    private func distance(_ value: Double) -> String {
-        String(format: "%.1f", value).replacingOccurrences(of: ".", with: ",")
     }
 }

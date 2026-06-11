@@ -63,7 +63,7 @@ struct TodayProvider: TimelineProvider {
         // Hourly: water/workouts already push via immediate background
         // delivery, so a tighter step cadence would only burn the refresh
         // budget and get throttled.
-        let box = WidgetCompletionBox(completion)
+        let box = UncheckedSendableBox(completion)
         Task {
             let entry = Self.entry(from: await WidgetLiveMetrics.freshSnapshot())
             box.value(Timeline(entries: [entry], policy: .after(Date(timeIntervalSinceNow: 60 * 60))))
