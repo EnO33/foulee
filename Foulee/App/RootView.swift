@@ -24,9 +24,22 @@ struct RootView: View {
         .environment(preferences)
         .task(id: scheduleKey) { await syncReminders() }
         .onChange(of: scenePhase) { _, phase in
-            // Ask for a background refresh so the widgets keep moving while
-            // the app stays closed.
-            if phase == .background { FouleeApp.scheduleAppRefresh() }
+            switch phase {
+            case .background:
+                // Ask for a background refresh so the widgets keep moving
+                // while the app stays closed.
+                FouleeApp.scheduleAppRefresh()
+            case .active:
+                // Re-sync hydration reminders on every foreground so the
+                // standard daily grid is restored once "today's" drink is
+                // stale — otherwise a glass logged yesterday leaves the
+                // shifted (repeating) grid in place and the morning
+                // reminders never come back. `scheduleKey` alone misses this
+                // because it doesn't change on a day boundary.
+                Task { await syncHydration() }
+            default:
+                break
+            }
         }
     }
 
@@ -52,6 +65,11 @@ struct RootView: View {
     private func syncReminders() async {
         guard preferences.hasCompletedOnboarding else { return }
         await scheduler.sync(with: preferences)
+        await hydrationScheduler.sync(with: preferences)
+    }
+
+    private func syncHydration() async {
+        guard preferences.hasCompletedOnboarding else { return }
         await hydrationScheduler.sync(with: preferences)
     }
 }

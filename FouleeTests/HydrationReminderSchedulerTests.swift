@@ -1,7 +1,41 @@
+import Foundation
 import Testing
 @testable import Foulee
 
 @Suite struct HydrationReminderSchedulerTests {
+    /// A throwaway suite so `lastDrinkToday` tests don't touch real prefs.
+    private func scratchDefaults() -> UserDefaults {
+        UserDefaults(suiteName: "test.hydration.\(UUID().uuidString)")!
+    }
+
+    // MARK: - Daily reset of the shifted grid
+
+    @Test func lastDrinkFromTodayShiftsTheGrid() {
+        let defaults = scratchDefaults()
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        // A glass 40 min before "now".
+        defaults.set(now.addingTimeInterval(-40 * 60).timeIntervalSince1970,
+                     forKey: HydrationReminderScheduler.lastDrinkKey)
+        #expect(HydrationReminderScheduler.lastDrinkToday(defaults: defaults, now: now) != nil)
+    }
+
+    @Test func lastDrinkFromYesterdayIsIgnored() {
+        // The core of the daily-reset fix: a glass logged yesterday must NOT
+        // keep shifting today's grid — lastDrinkToday returns nil, so
+        // times(for:) falls back to the standard grid.
+        let defaults = scratchDefaults()
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        defaults.set(now.addingTimeInterval(-26 * 3_600).timeIntervalSince1970,
+                     forKey: HydrationReminderScheduler.lastDrinkKey)
+        #expect(HydrationReminderScheduler.lastDrinkToday(defaults: defaults, now: now) == nil)
+    }
+
+    @Test func noDrinkStampIsIgnored() {
+        let defaults = scratchDefaults()
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        #expect(HydrationReminderScheduler.lastDrinkToday(defaults: defaults, now: now) == nil)
+    }
+
     @Test func everyTwoHoursFromNineToNine() {
         let times = HydrationReminderScheduler.reminderTimes(
             start: TimeOfDay(rawMinutes: 9 * 60),
