@@ -124,6 +124,7 @@ let project = Project(
                 "Foulee/Shared/SharedWidgetData.swift",
                 "Foulee/Shared/NumberFormatting.swift",
                 "Foulee/Shared/UncheckedSendableBox.swift",
+                "Foulee/Shared/WidgetRefresh.swift",
                 "FouleeWatchWidget/StreakEntry.swift"
             ],
             resources: [
@@ -217,6 +218,7 @@ let project = Project(
                 "FouleeWatchWidget/**",
                 "Foulee/Shared/NumberFormatting.swift",
                 "Foulee/Shared/UncheckedSendableBox.swift",
+                "Foulee/Shared/WidgetRefresh.swift",
                 "Foulee/Shared/WatchSyncPayload.swift"
             ],
             resources: [

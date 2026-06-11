@@ -51,10 +51,10 @@ struct StatProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: StatWidgetIntent, in context: Context) async -> Timeline<StatEntry> {
-        // Live HealthKit when unlocked, snapshot fallback when locked. Hourly
-        // cadence — see TodayProgressWidget for why a tighter one is wasteful.
+        // Live HealthKit when unlocked, snapshot fallback when locked.
+        // Daytime cadence — see WidgetRefresh.
         let entry = Self.entry(for: configuration.metric, from: await WidgetLiveMetrics.freshSnapshot())
-        return Timeline(entries: [entry], policy: .after(Date(timeIntervalSinceNow: 60 * 60)))
+        return Timeline(entries: [entry], policy: .after(WidgetRefresh.nextRefresh(after: .now)))
     }
 
     private func entry(for metric: StatMetric) -> StatEntry {

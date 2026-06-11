@@ -97,8 +97,6 @@ struct WatchStatEntry: TimelineEntry {
 }
 
 struct WatchStatProvider: AppIntentTimelineProvider {
-    private static let refreshInterval: TimeInterval = 30 * 60
-
     func placeholder(in context: Context) -> WatchStatEntry { .placeholder }
 
     func snapshot(for configuration: WatchStatIntent, in context: Context) async -> WatchStatEntry {
@@ -107,7 +105,7 @@ struct WatchStatProvider: AppIntentTimelineProvider {
 
     func timeline(for configuration: WatchStatIntent, in context: Context) async -> Timeline<WatchStatEntry> {
         let entry = await entry(for: configuration.metric)
-        return Timeline(entries: [entry], policy: .after(Date(timeIntervalSinceNow: Self.refreshInterval)))
+        return Timeline(entries: [entry], policy: .after(WidgetRefresh.nextRefresh(after: .now)))
     }
 
     /// watchOS requires recommendations so the metric variants appear in the
