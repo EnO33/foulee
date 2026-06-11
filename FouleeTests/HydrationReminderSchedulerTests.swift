@@ -55,4 +55,62 @@ import Testing
         )
         #expect(times.map(\.rawMinutes) == [540])
     }
+
+    // MARK: - Grid shifted by the last glass
+
+    @Test func drinkShiftsNextReminderAFullIntervalLater() {
+        // Drink at 10:57, every 2 h between 9:00 and 21:00 →
+        // 12:57, 14:57, 16:57, 18:57, 20:57 (not 11:00).
+        let times = HydrationReminderScheduler.reminderTimes(
+            start: TimeOfDay(rawMinutes: 9 * 60),
+            end: TimeOfDay(rawMinutes: 21 * 60),
+            intervalMinutes: 120,
+            lastDrink: TimeOfDay(rawMinutes: 10 * 60 + 57)
+        )
+        #expect(times.map(\.rawMinutes) == [777, 897, 1_017, 1_137, 1_257])
+    }
+
+    @Test func noDrinkKeepsStandardGrid() {
+        let times = HydrationReminderScheduler.reminderTimes(
+            start: TimeOfDay(rawMinutes: 540),
+            end: TimeOfDay(rawMinutes: 1_260),
+            intervalMinutes: 120,
+            lastDrink: nil
+        )
+        #expect(times.map(\.rawMinutes) == [540, 660, 780, 900, 1_020, 1_140, 1_260])
+    }
+
+    @Test func earlyDrinkBeforeWindowKeepsStandardGrid() {
+        // Drink at 6:00 (+2 h = 8:00, before the 9:00 window start).
+        let times = HydrationReminderScheduler.reminderTimes(
+            start: TimeOfDay(rawMinutes: 540),
+            end: TimeOfDay(rawMinutes: 1_260),
+            intervalMinutes: 120,
+            lastDrink: TimeOfDay(rawMinutes: 360)
+        )
+        #expect(times.map(\.rawMinutes) == [540, 660, 780, 900, 1_020, 1_140, 1_260])
+    }
+
+    @Test func lateDrinkFallsBackToStandardGridForTomorrow() {
+        // Drink at 20:30 (+2 h = 22:30, past the 21:00 end) — keep the daily
+        // repeating grid so tomorrow still has reminders.
+        let times = HydrationReminderScheduler.reminderTimes(
+            start: TimeOfDay(rawMinutes: 540),
+            end: TimeOfDay(rawMinutes: 1_260),
+            intervalMinutes: 120,
+            lastDrink: TimeOfDay(rawMinutes: 20 * 60 + 30)
+        )
+        #expect(times.map(\.rawMinutes) == [540, 660, 780, 900, 1_020, 1_140, 1_260])
+    }
+
+    @Test func anchorLandingExactlyOnEndKeepsThatSlot() {
+        // Drink at 19:00 (+2 h = 21:00 = end) → single shifted slot at 21:00.
+        let times = HydrationReminderScheduler.reminderTimes(
+            start: TimeOfDay(rawMinutes: 540),
+            end: TimeOfDay(rawMinutes: 1_260),
+            intervalMinutes: 120,
+            lastDrink: TimeOfDay(rawMinutes: 19 * 60)
+        )
+        #expect(times.map(\.rawMinutes) == [1_260])
+    }
 }

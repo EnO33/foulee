@@ -63,6 +63,9 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
             }
             WidgetCenter.shared.reloadAllTimelines()
             HydrationNotification.confirm(kind: "drank", amount: glassML)
+            // Shift today's reminder grid: next one a full interval from now,
+            // not 3 minutes later because a fixed slot was coming up.
+            await HydrationReminderScheduler().recordDrinkAndReschedule()
         case HydrationNotification.snoozeAction:
             // "Rappelle-moi" → fire a one-off reminder after the snooze delay.
             let minutes = defaults.object(forKey: "preferences.hydrationSnoozeMinutes") as? Int ?? 15
