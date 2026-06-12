@@ -3,6 +3,10 @@ import SwiftUI
 /// One-stop visual gallery of the design system — pure SwiftUI previews,
 /// not wired into the running app. Open this file in Xcode and tab through
 /// `Light` / `Dark` previews to review any styling change.
+///
+/// Only referenced from `#Preview` (which Periphery can't see into), so the
+/// whole file is retained via `retain_files` in `.periphery.yml` — that also
+/// keeps the design-system pieces it showcases, like `SecondaryButton`.
 struct DesignSystemGallery: View {
     var body: some View {
         ScrollView {

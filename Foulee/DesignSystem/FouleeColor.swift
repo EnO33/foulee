@@ -6,7 +6,6 @@ import SwiftUI
 /// Theme-aware text/background uses SwiftUI's semantic colors directly
 /// (`.primary`, `.secondary`, `Color(.systemBackground)`).
 enum FouleeColor {
-    static let accent = Color("AccentColor")
     static let accentStart = Color(hex: 0xD97AFF)
     static let accentMid = Color(hex: 0xBF5AF2)
     static let accentEnd = Color(hex: 0x7C3AED)

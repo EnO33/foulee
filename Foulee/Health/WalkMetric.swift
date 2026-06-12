@@ -35,11 +35,12 @@ enum WalkMetric: String, CaseIterable, Identifiable, Sendable {
     var fractionDigits: Int { self == .distance ? 1 : 0 }
 
     /// Format a value in this metric's display unit, without the unit suffix
-    /// (`5 391`, `4,2`). Distance uses a French decimal comma; the rest use
-    /// thousands grouping.
+    /// (`5 391`, `4,2`). Fractional metrics use a French decimal comma at their
+    /// own precision; whole-number metrics use thousands grouping. The branch
+    /// follows `fractionDigits`, so a new fractional metric needs no change here.
     func formatted(_ value: Double) -> String {
-        if self == .distance { return value.kmValue(fractionDigits: 1) }
-        return Int(value.rounded()).formattedFR
+        guard fractionDigits > 0 else { return Int(value.rounded()).formattedFR }
+        return value.decimalComma(fractionDigits: fractionDigits)
     }
 
     /// Same, with the unit appended (`5 391 pas`, `4,2 km`).

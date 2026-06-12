@@ -13,7 +13,6 @@ enum FouleeIcon {
     static let bell = "bell.fill"
     static let sun = "sun.max.fill"
     static let heart = "heart.fill"
-    static let heartRate = "waveform.path.ecg"
     static let play = "play.fill"
     static let pause = "pause.fill"
     static let stop = "stop.fill"
@@ -21,8 +20,4 @@ enum FouleeIcon {
     static let sparkle = "sparkles"
     static let target = "target"
     static let watch = "applewatch"
-    static let calendar = "calendar"
-    static let settings = "gearshape.fill"
-    static let arrowUp = "arrow.up"
-    static let arrowDown = "arrow.down"
 }
