@@ -24,7 +24,10 @@ jobs:
         run: swiftlint lint --strict --reporter github-actions-logging
 
   build:
-    name: Build, Test & Dead code
+    # Keep this name "Build & Test": it's a required status check in main's
+    # branch protection. The job also runs the dead-code scan (a final step),
+    # but renaming it would orphan the required check and block every merge.
+    name: Build & Test
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v6
