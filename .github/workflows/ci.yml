@@ -196,4 +196,4 @@ jobs:
           periphery scan \
             --baseline .periphery.baseline.json \
             --strict \
-            --format github-actions-logging
+            --format github-actions
