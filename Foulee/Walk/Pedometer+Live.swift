@@ -8,7 +8,6 @@ extension Pedometer {
     static let liveValue: Pedometer = {
         let pedometer = CMPedometer()
         return Pedometer(
-            isAvailable: { CMPedometer.isStepCountingAvailable() },
             startUpdates: { from in
                 AsyncStream { continuation in
                     pedometer.startUpdates(from: from) { data, _ in

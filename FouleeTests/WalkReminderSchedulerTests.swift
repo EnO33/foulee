@@ -43,7 +43,6 @@ struct WalkReminderSchedulerTests {
             $0.notifications = NotificationsClient(
                 requestAuthorization: { true },
                 replaceWalkReminders: { captured.set($0) },
-                pendingReminderIdentifiers: { [] },
                 scheduleSnooze: { _ in }
             )
         } operation: {
@@ -76,7 +75,6 @@ struct WalkReminderSchedulerTests {
             $0.notifications = NotificationsClient(
                 requestAuthorization: { true },
                 replaceWalkReminders: { _ in throw Boom() },
-                pendingReminderIdentifiers: { [] },
                 scheduleSnooze: { _ in }
             )
         } operation: {
@@ -94,7 +92,6 @@ struct WalkReminderSchedulerTests {
             $0.notifications = NotificationsClient(
                 requestAuthorization: { true },
                 replaceWalkReminders: { _ in },
-                pendingReminderIdentifiers: { [] },
                 scheduleSnooze: { interval in captured.set(interval) }
             )
         } operation: {
@@ -111,7 +108,6 @@ struct WalkReminderSchedulerTests {
             $0.notifications = NotificationsClient(
                 requestAuthorization: { true },
                 replaceWalkReminders: { _ in },
-                pendingReminderIdentifiers: { [] },
                 scheduleSnooze: { _ in throw Boom() }
             )
         } operation: {

@@ -368,7 +368,6 @@ private struct TodayPreviewLoading: View {
     init() {
         prepareDependencies {
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: {
                     try await Task.sleep(for: .seconds(60))
                     return true

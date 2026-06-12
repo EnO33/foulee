@@ -8,8 +8,6 @@ import Foundation
 struct WalkActivityAttributes: ActivityAttributes {
     typealias ContentState = WalkActivityState
 
-    /// Fixed for the whole activity lifetime.
-    var startedAt: Date
     var goalMinutes: Int
 
     /// Updated every tick from the app.

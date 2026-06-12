@@ -29,9 +29,6 @@ extension HealthKitClient {
         let writeTypes: Set<HKSampleType> = [walkingWorkoutType, waterType]
 
         return HealthKitClient(
-            isAvailable: {
-                HKHealthStore.isHealthDataAvailable()
-            },
             requestAuthorization: {
                 guard HKHealthStore.isHealthDataAvailable() else { return false }
                 try await store.requestAuthorization(toShare: writeTypes, read: readTypes)
