@@ -1,0 +1,15 @@
+project: Foulee.xcworkspace
+schemes:
+  - Foulee
+  - FouleeWatch
+index_exclude:
+  # Tuist-generated asset accessors — not hand-written code.
+  - "Derived/**"
+# Both schemes + every target they build are indexed, so shared code
+# (Foulee/Shared/**) isn't flagged just because its consumer lives in another
+# target. Regenerate the project with `tuist generate` before scanning.
+#
+# CI runs `periphery scan --baseline .periphery.baseline.json --strict`: the
+# baseline freezes today's findings so only NEW dead code fails a PR. After
+# clearing a finding, refresh the baseline with:
+#   periphery scan --write-baseline .periphery.baseline.json
