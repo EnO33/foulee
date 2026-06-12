@@ -28,6 +28,11 @@ struct WatchTodayView: View {
         .onReceive(NotificationCenter.default.publisher(for: .watchSyncReceived)) { _ in
             Task { await store.load() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: HydrationNotification.actionHandled)) { _ in
+            // A glass logged from the hydration banner — re-read so the card
+            // and its haptic reflect it.
+            Task { await store.load() }
+        }
     }
 
     private var streakHero: some View {
