@@ -187,7 +187,9 @@ let project = Project(
                 "FouleeWatch/**",
                 "Foulee/Shared/WalkFormatting.swift",
                 "Foulee/Shared/NumberFormatting.swift",
-                "Foulee/Shared/WatchSyncPayload.swift"
+                "Foulee/Shared/UncheckedSendableBox.swift",
+                "Foulee/Shared/WatchSyncPayload.swift",
+                "Foulee/Notifications/HydrationNotification.swift"
             ],
             resources: [
                 .glob(
