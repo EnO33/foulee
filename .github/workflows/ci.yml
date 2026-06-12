@@ -24,6 +24,9 @@ jobs:
         run: swiftlint lint --strict --reporter github-actions-logging
 
   build:
+    # Keep this name "Build & Test": it's a required status check in main's
+    # branch protection. The job also runs the dead-code scan (a final step),
+    # but renaming it would orphan the required check and block every merge.
     name: Build & Test
     runs-on: macos-15
     steps:
@@ -96,6 +99,8 @@ jobs:
       - name: Tuist generate (Foulee.xcworkspace)
         run: tuist generate --no-open
 
+      # A fixed derivedDataPath lets the dead-code step below reuse this
+      # build's index store instead of building the project a second time.
       - name: Build (iOS)
         run: |
           set -o pipefail
@@ -104,6 +109,7 @@ jobs:
             -scheme Foulee \
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -configuration Debug \
+            -derivedDataPath build/dd \
             build | xcbeautify
 
       - name: Build (watchOS)
@@ -114,6 +120,7 @@ jobs:
             -scheme FouleeWatch \
             -destination 'generic/platform=watchOS Simulator' \
             -configuration Debug \
+            -derivedDataPath build/dd \
             build | xcbeautify
 
       - name: Test (iOS)
@@ -124,58 +131,16 @@ jobs:
             -scheme Foulee \
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -configuration Debug \
+            -derivedDataPath build/dd \
             test | xcbeautify
 
-  periphery:
-    name: Dead code (Periphery)
-    # PR-only: blocks new dead code before merge without doubling cost on every
-    # push to main. The baseline (.periphery.baseline.json) freezes today's
-    # findings, so only NEW unused code fails the check. Refresh the baseline
-    # after clearing a finding: `periphery scan --write-baseline .periphery.baseline.json`.
-    if: github.event_name == 'pull_request'
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Select Xcode 26
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '26.0'
-
-      - name: Download watchOS platform (needed to build the watch targets)
-        run: |
-          for attempt in 1 2 3 4; do
-            echo "Attempt $attempt — downloading watchOS platform"
-            if sudo xcodebuild -downloadPlatform watchOS; then
-              exit 0
-            fi
-            echo "Attempt $attempt failed, sleeping 30s before retry"
-            sleep 30
-          done
-          echo "watchOS platform download failed after 4 attempts"
-          exit 1
-
-      - name: Install toolchain (Tuist) from mise.toml
-        uses: jdx/mise-action@v4
-
-      - name: Cache Tuist + SPM artefacts
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/Library/Caches/tuist
-            ~/Library/Caches/org.tuist.Tuist
-            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
-          key: ${{ runner.os }}-tuist-${{ hashFiles('Tuist.swift', 'Project.swift') }}
-          restore-keys: |
-            ${{ runner.os }}-tuist-
-
-      - name: Tuist install (fetch SPM dependencies)
-        run: tuist install
-
-      - name: Tuist generate (Foulee.xcworkspace)
-        run: tuist generate --no-open
-
+      # Dead-code scan reuses the index from the builds above (--skip-build via
+      # --index-store-path), so it costs seconds, not a second build. PR-only:
+      # the baseline (.periphery.baseline.json) freezes today's findings, so
+      # only NEW unused code fails the check. Refresh after clearing a finding:
+      # `periphery scan --write-baseline .periphery.baseline.json`.
       - name: Install Periphery 3.7.4
+        if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -188,12 +153,12 @@ jobs:
           # The binary loads libIndexStore.dylib from alongside itself.
           echo "$HOME/periphery" >> "$GITHUB_PATH"
 
-      - name: Periphery version
-        run: periphery version
-
-      - name: Scan for new dead code (baseline + strict)
+      - name: Dead code (Periphery, reusing the build index)
+        if: github.event_name == 'pull_request'
         run: |
           periphery scan \
+            --skip-build \
+            --index-store-path build/dd/Index.noindex/DataStore \
             --baseline .periphery.baseline.json \
             --strict \
             --format github-actions
