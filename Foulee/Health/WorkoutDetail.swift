@@ -23,13 +23,6 @@ struct WorkoutDetail: Equatable, Sendable {
         heartRateSamples.map(\.bpm).min()
     }
 
-    /// Average pace in km/h. `nil` when distance or duration is zero.
-    var paceKmH: Double? {
-        guard summary.distanceKm > 0, summary.durationSeconds > 0 else { return nil }
-        let hours = summary.durationSeconds / 3_600
-        return summary.distanceKm / hours
-    }
-
     /// Minutes per kilometer. `nil` when distance is zero.
     var paceMinPerKm: Double? {
         guard summary.distanceKm > 0 else { return nil }

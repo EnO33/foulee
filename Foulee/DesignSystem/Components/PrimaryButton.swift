@@ -25,7 +25,9 @@ struct PrimaryButton: View {
     }
 }
 
-/// Subtle gray pill for secondary actions next to the primary CTA.
+/// Subtle gray pill for secondary actions next to the primary CTA. Part of the
+/// button pair shown in `DesignSystemGallery`; kept as the design-system
+/// counterpart to `PrimaryButton`.
 struct SecondaryButton: View {
     var title: String
     var systemIcon: String?

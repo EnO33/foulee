@@ -5,6 +5,11 @@ schemes:
 index_exclude:
   # Tuist-generated asset accessors — not hand-written code.
   - "Derived/**"
+retain_files:
+  # Design-system gallery: a dev tool reached only from `#Preview` (which
+  # Periphery can't see into). Retaining the file keeps it and the components
+  # it showcases (e.g. SecondaryButton) from being reported as unused.
+  - "**/DesignSystemGallery.swift"
 # Both schemes + every target they build are indexed, so shared code
 # (Foulee/Shared/**) isn't flagged just because its consumer lives in another
 # target. Regenerate the project with `tuist generate` before scanning.

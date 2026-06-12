@@ -45,16 +45,6 @@ struct StreakWidget: Widget {
         ])
     }
 
-    fileprivate static let accentGradient = LinearGradient(
-        colors: [
-            Color(red: 0xD9 / 255, green: 0x7A / 255, blue: 0xFF / 255),
-            Color(red: 0xBF / 255, green: 0x5A / 255, blue: 0xF2 / 255),
-            Color(red: 0x7C / 255, green: 0x3A / 255, blue: 0xED / 255)
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
     fileprivate static let containerBackground = LinearGradient(
         colors: [
             Color(red: 0x2A / 255, green: 0x0A / 255, blue: 0x4A / 255),
