@@ -12,14 +12,12 @@ struct PedometerSample: Equatable, Sendable {
 /// with `HealthKitClient`. `startUpdates(from:)` returns an `AsyncStream` so
 /// the store can `for-await` cleanly and cancel on session stop.
 struct Pedometer: Sendable {
-    var isAvailable: @Sendable () -> Bool
     var startUpdates: @Sendable (_ from: Date) -> AsyncStream<PedometerSample>
     var stop: @Sendable () -> Void
 }
 
 extension Pedometer: DependencyKey {
     static let previewValue = Pedometer(
-        isAvailable: { true },
         startUpdates: { _ in
             AsyncStream { continuation in
                 Task {
@@ -40,7 +38,6 @@ extension Pedometer: DependencyKey {
     )
 
     static let testValue = Pedometer(
-        isAvailable: { false },
         startUpdates: { _ in AsyncStream { $0.finish() } },
         stop: {}
     )

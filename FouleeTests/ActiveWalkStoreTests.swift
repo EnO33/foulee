@@ -52,7 +52,6 @@ struct ActiveWalkStoreTests {
             $0.pedometer = .testValue
             $0.continuousClock = TestClock()
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { session in saved.set(session) },
@@ -89,7 +88,6 @@ struct ActiveWalkStoreTests {
             $0.pedometer = .testValue
             $0.continuousClock = TestClock()
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in throw Boom() },
@@ -199,7 +197,6 @@ struct ActiveWalkStoreTests {
             $0.pedometer = .testValue
             $0.continuousClock = TestClock()
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { session in saved.set(session) },

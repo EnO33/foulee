@@ -10,7 +10,6 @@ struct TodayStoreTests {
     func refreshPopulatesSnapshot() async {
         await withDependencies {
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: {
                     HealthMetrics(
@@ -45,7 +44,6 @@ struct TodayStoreTests {
     func hasWalkedTodayFlips() async {
         await withDependencies {
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: {
                     HealthMetrics(
@@ -78,7 +76,6 @@ struct TodayStoreTests {
         }
         await withDependencies {
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: { throw Boom() },
                 saveWalkingWorkout: { _ in },
@@ -105,7 +102,6 @@ struct TodayStoreTests {
     func refreshPopulatesWeather() async {
         await withDependencies {
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: {
                     HealthMetrics(steps: 100, distanceKm: 0.05, activeMinutes: 1, activeCalories: 4)
@@ -142,7 +138,6 @@ struct TodayStoreTests {
     func refreshSkipsWeatherWithoutLocation() async {
         await withDependencies {
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: {
                     HealthMetrics(steps: 100, distanceKm: 0.05, activeMinutes: 1, activeCalories: 4)
@@ -196,7 +191,6 @@ struct TodayStoreTests {
         ]
         await withDependencies {
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in },
@@ -224,7 +218,6 @@ struct TodayStoreTests {
     func bootstrapPopulatesEvenWhenDenied() async {
         await withDependencies {
             $0.healthKit = HealthKitClient(
-                isAvailable: { true },
                 requestAuthorization: { false },
                 todayMetrics: { .zero },
                 saveWalkingWorkout: { _ in },

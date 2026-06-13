@@ -8,10 +8,6 @@ import Foundation
 /// The struct-of-closures shape (Point-Free convention) lets previews and
 /// tests swap in deterministic stubs without subclassing or mocking.
 struct HealthKitClient: Sendable {
-    /// True iff HealthKit is available on this device (false on iPad without
-    /// the framework, on macOS, …). Always check before any other call.
-    var isAvailable: @Sendable () -> Bool
-
     /// Prompts the user with the system HealthKit sheet on first call.
     /// Returns `true` once permissions have been requested (even if denied —
     /// the system never tells us per-type denial, by design).
@@ -84,7 +80,6 @@ extension HealthKitClient: DependencyKey {
     /// `liveValue` is supplied in `HealthKitClient+Live.swift` so this file
     /// stays HealthKit-free and previewable on any platform.
     static let previewValue = HealthKitClient(
-        isAvailable: { true },
         requestAuthorization: { true },
         todayMetrics: {
             HealthMetrics(steps: 4_218, distanceKm: 1.8, activeMinutes: 24, activeCalories: 142)
@@ -99,7 +94,6 @@ extension HealthKitClient: DependencyKey {
     )
 
     static let testValue = HealthKitClient(
-        isAvailable: { false },
         requestAuthorization: { false },
         todayMetrics: { .zero },
         saveWalkingWorkout: { _ in },

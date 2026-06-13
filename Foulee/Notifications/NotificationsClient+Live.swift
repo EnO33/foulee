@@ -41,13 +41,6 @@ extension NotificationsClient {
                     try await center.add(request)
                 }
             },
-            pendingReminderIdentifiers: {
-                let pending = await center.pendingNotificationRequests()
-                return pending
-                    .map(\.identifier)
-                    .filter { $0.hasPrefix("foulee.walk.reminder.") }
-                    .sorted()
-            },
             scheduleSnooze: { interval in
                 let content = UNMutableNotificationContent()
                 content.title = "Foulée"

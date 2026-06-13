@@ -9,7 +9,6 @@ extension Altimeter {
     static let liveValue: Altimeter = {
         let altimeter = CMAltimeter()
         return Altimeter(
-            isAvailable: { CMAltimeter.isRelativeAltitudeAvailable() },
             startUpdates: {
                 AsyncStream { continuation in
                     var accumulator = ElevationAccumulator()

@@ -22,14 +22,12 @@ struct ElevationAccumulator {
 /// `Pedometer`). `startUpdates()` yields the cumulative elevation gain in
 /// metres each time the barometer reports a fresh reading.
 struct Altimeter: Sendable {
-    var isAvailable: @Sendable () -> Bool
     var startUpdates: @Sendable () -> AsyncStream<Double>
     var stop: @Sendable () -> Void
 }
 
 extension Altimeter: DependencyKey {
     static let previewValue = Altimeter(
-        isAvailable: { true },
         startUpdates: {
             AsyncStream { continuation in
                 Task {
@@ -47,7 +45,6 @@ extension Altimeter: DependencyKey {
     )
 
     static let testValue = Altimeter(
-        isAvailable: { false },
         startUpdates: { AsyncStream { $0.finish() } },
         stop: {}
     )

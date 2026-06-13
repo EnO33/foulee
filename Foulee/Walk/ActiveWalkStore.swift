@@ -88,7 +88,7 @@ final class ActiveWalkStore {
         routeTask = makeRouteTask()
         state = .active(session)
         tickerTask = makeTickerTask()
-        startLiveActivity(startedAt: session.startedAt, minutesGoal: minutesGoal)
+        startLiveActivity(minutesGoal: minutesGoal)
     }
 
     /// Freeze the clock + pedometer without ending the walk.
@@ -249,9 +249,9 @@ final class ActiveWalkStore {
 
     // MARK: - Live Activity
 
-    private func startLiveActivity(startedAt: Date, minutesGoal: Int) {
+    private func startLiveActivity(minutesGoal: Int) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
-        let attributes = WalkActivityAttributes(startedAt: startedAt, goalMinutes: minutesGoal)
+        let attributes = WalkActivityAttributes(goalMinutes: minutesGoal)
         let state = WalkActivityAttributes.WalkActivityState.zero
         let content = ActivityContent(state: state, staleDate: nil)
         liveActivity = try? Activity.request(
