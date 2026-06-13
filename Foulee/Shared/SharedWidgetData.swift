@@ -9,7 +9,6 @@ import Foundation
 /// readable from the widget process and stays available after the first unlock,
 /// so the Lock Screen keeps showing the last known values.
 struct WidgetSnapshot: Codable, Sendable {
-    var date: Date
     var steps: Int
     var stepsGoal: Int
     var minutes: Int
@@ -24,12 +23,11 @@ struct WidgetSnapshot: Codable, Sendable {
     var hydrationEnabled: Bool
 
     static let placeholder = WidgetSnapshot(
-        date: .now, steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20,
+        steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20,
         distanceKm: 0, calories: 0, streak: 0
     )
 
     init(
-        date: Date,
         steps: Int,
         stepsGoal: Int,
         minutes: Int,
@@ -41,7 +39,6 @@ struct WidgetSnapshot: Codable, Sendable {
         waterGoalML: Int = 2_000,
         hydrationEnabled: Bool = false
     ) {
-        self.date = date
         self.steps = steps
         self.stepsGoal = stepsGoal
         self.minutes = minutes
@@ -56,7 +53,6 @@ struct WidgetSnapshot: Codable, Sendable {
 
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        date = try container.decode(Date.self, forKey: .date)
         steps = try container.decode(Int.self, forKey: .steps)
         stepsGoal = try container.decode(Int.self, forKey: .stepsGoal)
         minutes = try container.decode(Int.self, forKey: .minutes)

@@ -14,6 +14,8 @@ final class WatchTodayStore {
     private(set) var distanceKm = 0.0
     private(set) var calories = 0
     private(set) var streak = 0
+    private(set) var stepsGoal = 6_000
+    private(set) var minutesGoal = 20
     private(set) var waterML = 0
     private(set) var hydrationEnabled = false
     private(set) var hydrationGoalML = 2_000
@@ -35,9 +37,11 @@ final class WatchTodayStore {
         isLoading = true
         defer { isLoading = false }
 
-        // Streak + hydration goal come from the phone (source of truth).
+        // Streak + goals come from the phone (source of truth).
         let sync = WatchSyncStore.read()
         streak = sync?.streak ?? 0
+        stepsGoal = sync?.stepsGoal ?? 6_000
+        minutesGoal = sync?.minutesGoal ?? 20
         hydrationEnabled = sync?.hydrationEnabled ?? false
         hydrationGoalML = sync?.hydrationGoalML ?? 2_000
         hydrationGlassML = sync?.hydrationGlassML ?? 250

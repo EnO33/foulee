@@ -114,7 +114,6 @@ final class TodayStore {
     private func publishToWidgets() {
         guard let snapshot else { return }
         SharedStore.write(WidgetSnapshot(
-            date: snapshot.date,
             steps: snapshot.steps,
             stepsGoal: snapshot.stepsGoal,
             minutes: snapshot.minutes,
