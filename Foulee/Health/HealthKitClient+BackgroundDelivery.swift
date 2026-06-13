@@ -73,7 +73,6 @@ private func refreshSnapshotMetrics(store: HKHealthStore) async {
     if let meters = await meters { snapshot.distanceKm = meters / 1_000 }
     if let kcal = await kcal { snapshot.calories = Int(kcal) }
     if let water = await water { snapshot.waterML = Int(water) }
-    snapshot.date = .now
     SharedStore.write(snapshot)
 }
 

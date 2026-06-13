@@ -30,8 +30,9 @@ struct HydrationEntry: TimelineEntry, Sendable {
     let date: Date
     let waterML: Int
     let goalML: Int
+    let enabled: Bool
 
-    static let placeholder = HydrationEntry(date: .now, waterML: 0, goalML: 2_000)
+    static let placeholder = HydrationEntry(date: .now, waterML: 0, goalML: 2_000, enabled: true)
 }
 
 struct HydrationProvider: TimelineProvider {
@@ -48,14 +49,20 @@ struct HydrationProvider: TimelineProvider {
         let box = UncheckedSendableBox(completion)
         Task {
             let snapshot = await WidgetLiveMetrics.freshSnapshot()
-            let entry = HydrationEntry(date: .now, waterML: snapshot.waterML, goalML: snapshot.waterGoalML)
+            let entry = HydrationEntry(
+                date: .now, waterML: snapshot.waterML,
+                goalML: snapshot.waterGoalML, enabled: snapshot.hydrationEnabled
+            )
             box.value(Timeline(entries: [entry], policy: .after(WidgetRefresh.nextRefresh(after: .now))))
         }
     }
 
     private func entry() -> HydrationEntry {
         let snapshot = SharedStore.read() ?? .placeholder
-        return HydrationEntry(date: .now, waterML: snapshot.waterML, goalML: snapshot.waterGoalML)
+        return HydrationEntry(
+            date: .now, waterML: snapshot.waterML,
+            goalML: snapshot.waterGoalML, enabled: snapshot.hydrationEnabled
+        )
     }
 }
 
@@ -68,12 +75,48 @@ struct HydrationWidgetView: View {
     }
 
     var body: some View {
+        if entry.enabled {
+            activeView
+        } else {
+            disabledView
+        }
+    }
+
+    @ViewBuilder private var activeView: some View {
         switch family {
         case .accessoryCircular: circularView
         case .accessoryRectangular: rectangularView
         case .accessoryInline: inlineView
         case .systemSmall: smallView
         default: inlineView
+        }
+    }
+
+    /// Shown when the user hasn't turned hydration on: a muted drop inviting
+    /// them to enable it, instead of an empty ring that reads as "0 % done".
+    @ViewBuilder private var disabledView: some View {
+        switch family {
+        case .accessoryCircular:
+            ZStack {
+                AccessoryWidgetBackground()
+                Image(systemName: "drop").font(.system(size: 13, weight: .semibold))
+            }
+        case .accessoryRectangular:
+            Label("Hydratation à activer", systemImage: "drop")
+                .font(.system(size: 13, weight: .semibold))
+        case .systemSmall:
+            VStack(alignment: .leading, spacing: 8) {
+                Image(systemName: "drop")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.6))
+                Text("Hydratation").font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
+                Text("Active-la dans Foulée")
+                    .font(.system(size: 11)).foregroundStyle(.white.opacity(0.7))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(14)
+        default:
+            Label("Hydratation à activer", systemImage: "drop")
         }
     }
 

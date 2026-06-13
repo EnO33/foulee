@@ -60,20 +60,26 @@ struct WatchTodayView: View {
     private var statsGrid: some View {
         let columns = [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)]
         return LazyVGrid(columns: columns, spacing: 8) {
-            stat(icon: "shoeprints.fill", tint: .purple, value: store.steps.formatted(), label: "pas")
-            stat(icon: "timer", tint: .green, value: "\(store.minutes)", label: "min")
+            // Steps + minutes show progress toward the phone-synced goals,
+            // like the hydration card does; distance/calories have no goal.
+            stat(icon: "shoeprints.fill", tint: .purple,
+                 value: store.steps.formatted(), goal: store.stepsGoal.formatted(), label: "pas")
+            stat(icon: "timer", tint: .green,
+                 value: "\(store.minutes)", goal: "\(store.minutesGoal)", label: "min")
             stat(icon: "ruler.fill", tint: .blue, value: kmText, label: "km")
             stat(icon: "flame.fill", tint: .orange, value: "\(store.calories)", label: "kcal")
         }
     }
 
-    private func stat(icon: String, tint: Color, value: String, label: String) -> some View {
+    private func stat(icon: String, tint: Color, value: String, goal: String? = nil, label: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Image(systemName: icon).font(.system(size: 13, weight: .bold)).foregroundStyle(tint)
             Text(value)
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .monospacedDigit().minimumScaleFactor(0.6).lineLimit(1)
-            Text(label).font(.system(size: 11)).foregroundStyle(.secondary)
+            Text(goal.map { "/ \($0) \(label)" } ?? label)
+                .font(.system(size: 11)).foregroundStyle(.secondary)
+                .minimumScaleFactor(0.7).lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(8)
