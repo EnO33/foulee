@@ -12,10 +12,21 @@ final class HydrationStore {
 
     private(set) var intakeML = 0
 
+    /// Bumped on every refresh. A read that started earlier but finishes later
+    /// (a slow HealthKit query) must NOT overwrite a newer value — otherwise a
+    /// glass logged on the watch, or a fresh "J'ai bu" tap, gets clobbered by
+    /// the refresh that fires when the app returns to the foreground. Only the
+    /// most recent refresh is allowed to commit.
+    @ObservationIgnored private var refreshGeneration = 0
+
     func refresh() async {
-        intakeML = (try? await healthKit.todayWaterML()) ?? 0
+        refreshGeneration += 1
+        let generation = refreshGeneration
+        let value = (try? await healthKit.todayWaterML()) ?? 0
+        guard generation == refreshGeneration else { return }
+        intakeML = value
         // Keep the hydration widget's ring in sync with what the app shows.
-        SharedStore.updateWater(intakeML: intakeML)
+        SharedStore.updateWater(intakeML: value)
     }
 
     /// Called when the user turns hydration on: prompt for Health access (so
