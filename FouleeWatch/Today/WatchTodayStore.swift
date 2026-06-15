@@ -23,6 +23,9 @@ final class WatchTodayStore {
     private(set) var isLoading = true
 
     @ObservationIgnored private let store = HKHealthStore()
+    /// Guards against an older in-flight `load()` overwriting a newer one (the
+    /// same race the phone's HydrationStore has — see its `refreshGeneration`).
+    @ObservationIgnored private var loadGeneration = 0
     private static let waterType = HKQuantityType(.dietaryWater)
 
     private static let readTypes: Set<HKObjectType> = [
@@ -34,6 +37,8 @@ final class WatchTodayStore {
     ]
 
     func load() async {
+        loadGeneration += 1
+        let generation = loadGeneration
         isLoading = true
         defer { isLoading = false }
 
@@ -55,11 +60,21 @@ final class WatchTodayStore {
         async let caloriesValue = sumToday(.activeEnergyBurned, unit: .kilocalorie())
         async let waterValue = sumToday(.dietaryWater, unit: .literUnit(with: .milli))
 
-        steps = Int(await stepsValue)
-        minutes = Int(await minutesValue)
-        distanceKm = await distanceValue / 1_000
-        calories = Int(await caloriesValue)
-        waterML = Int(await waterValue)
+        let newSteps = Int(await stepsValue)
+        let newMinutes = Int(await minutesValue)
+        let newDistanceKm = await distanceValue / 1_000
+        let newCalories = Int(await caloriesValue)
+        let newWaterML = Int(await waterValue)
+
+        // A newer load() started while these reads were in flight — don't let
+        // this stale result overwrite it (e.g. logging a glass right after the
+        // watch comes to the wrist, which both kick off a load).
+        guard generation == loadGeneration else { return }
+        steps = newSteps
+        minutes = newMinutes
+        distanceKm = newDistanceKm
+        calories = newCalories
+        waterML = newWaterML
     }
 
     /// Log one glass (the phone-synced glass size) to Health, then re-read.
