@@ -18,6 +18,20 @@ final class HydrationStore {
     /// the refresh that fires when the app returns to the foreground. Only the
     /// most recent refresh is allowed to commit.
     @ObservationIgnored private var refreshGeneration = 0
+    @ObservationIgnored private var observerTask: Task<Void, Never>?
+
+    /// Refresh whenever `dietaryWater` changes in Health — including water that
+    /// synced in from the watch — so the card reflects the other device without
+    /// the user reopening the app. Idempotent; safe to call on appear.
+    func startObserving() {
+        guard observerTask == nil else { return }
+        let changes = healthKit.observeWaterChanges()
+        observerTask = Task { [weak self] in
+            for await _ in changes {
+                await self?.refresh()
+            }
+        }
+    }
 
     func refresh() async {
         refreshGeneration += 1

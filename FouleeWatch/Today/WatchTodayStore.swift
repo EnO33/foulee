@@ -26,6 +26,7 @@ final class WatchTodayStore {
     /// Guards against an older in-flight `load()` overwriting a newer one (the
     /// same race the phone's HydrationStore has — see its `refreshGeneration`).
     @ObservationIgnored private var loadGeneration = 0
+    @ObservationIgnored private var waterObserver: HKObserverQuery?
     private static let waterType = HKQuantityType(.dietaryWater)
 
     private static let readTypes: Set<HKObjectType> = [
@@ -35,6 +36,19 @@ final class WatchTodayStore {
         HKQuantityType(.activeEnergyBurned),
         waterType
     ]
+
+    /// Reload whenever `dietaryWater` changes in Health — including water that
+    /// synced in from the iPhone — so the watch card reflects it without the
+    /// user reopening the app. Idempotent; safe to call on appear.
+    func startObserving() {
+        guard waterObserver == nil, HKHealthStore.isHealthDataAvailable() else { return }
+        let query = HKObserverQuery(sampleType: Self.waterType, predicate: nil) { [weak self] _, completion, _ in
+            Task { @MainActor in await self?.load() }
+            completion()
+        }
+        store.execute(query)
+        waterObserver = query
+    }
 
     func load() async {
         loadGeneration += 1
