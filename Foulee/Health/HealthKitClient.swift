@@ -59,6 +59,12 @@ struct HealthKitClient: Sendable {
     var observeChanges: @Sendable () -> AsyncStream<Void>
         = { AsyncStream { $0.finish() } }
 
+    /// Emits whenever `dietaryWater` changes — including water that synced in
+    /// from the paired watch — so the hydration card can refresh live instead
+    /// of showing a stale total. Defaults to a stream that never fires.
+    var observeWaterChanges: @Sendable () -> AsyncStream<Void>
+        = { AsyncStream { $0.finish() } }
+
     /// Log one drink to Apple Health as a `dietaryWater` sample of
     /// `milliliters`. Defaulted to a no-op so existing test stubs compile.
     var logWater: @Sendable (_ milliliters: Int) async throws -> Void

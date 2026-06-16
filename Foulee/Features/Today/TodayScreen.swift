@@ -32,7 +32,10 @@ struct TodayScreen: View {
     var body: some View {
         content
             .task { await store.bootstrap() }
-            .task { await hydration.refresh() }
+            .task {
+                hydration.startObserving()
+                await hydration.refresh()
+            }
             .task(id: todayPreferencesKey(preferences)) {
                 // Push the user's current goals + walk-window into the
                 // store on first appear and whenever they change.

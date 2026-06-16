@@ -126,6 +126,9 @@ extension HealthKitClient {
             observeChanges: {
                 healthChangeStream(store: store, types: [stepsType, distanceType, minutesType, caloriesType])
             },
+            observeWaterChanges: {
+                healthChangeStream(store: store, types: [waterType])
+            },
             logWater: { milliliters in
                 let sample = HKQuantitySample(
                     type: waterType,

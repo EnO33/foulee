@@ -24,7 +24,10 @@ struct WatchTodayView: View {
             }
             .padding(.horizontal, 2)
         }
-        .task { await store.load() }
+        .task {
+            store.startObserving()
+            await store.load()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .watchSyncReceived)) { _ in
             Task { await store.load() }
         }
