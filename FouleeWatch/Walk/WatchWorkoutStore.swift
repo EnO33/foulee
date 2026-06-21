@@ -26,7 +26,19 @@ final class WatchWorkoutStore: NSObject {
     @ObservationIgnored private var session: HKWorkoutSession?
     @ObservationIgnored private var builder: HKLiveWorkoutBuilder?
 
-    private static let writeTypes: Set<HKSampleType> = [HKWorkoutType.workoutType()]
+    // The live workout builder saves the metrics its data source collects
+    // (heart rate, active energy, distance…) as part of the workout, so we must
+    // be authorized to *share* them — sharing only `workoutType` makes
+    // `finishWorkout()` fail with an authorization error. Unlike the phone, the
+    // watch is the authoritative source during a workout, so these don't
+    // double-count the daily totals.
+    private static let writeTypes: Set<HKSampleType> = [
+        HKWorkoutType.workoutType(),
+        HKQuantityType(.stepCount),
+        HKQuantityType(.distanceWalkingRunning),
+        HKQuantityType(.activeEnergyBurned),
+        HKQuantityType(.heartRate)
+    ]
     private static let readTypes: Set<HKObjectType> = [
         HKQuantityType(.stepCount),
         HKQuantityType(.distanceWalkingRunning),
