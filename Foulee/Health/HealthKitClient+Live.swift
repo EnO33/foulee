@@ -61,39 +61,17 @@ extension HealthKitClient {
 
                 try await builder.beginCollection(at: session.startedAt)
 
-                let elapsedMinutes = max(session.elapsed / 60, 0)
-                let estimatedCalories = Double(session.estimatedCalories)
-
-                let distanceSample = HKQuantitySample(
-                    type: distanceType,
-                    quantity: HKQuantity(unit: .meter(), doubleValue: session.distanceMeters),
-                    start: session.startedAt,
-                    end: endedAt
-                )
-                let stepsSample = HKQuantitySample(
-                    type: stepsType,
-                    quantity: HKQuantity(unit: .count(), doubleValue: Double(session.steps)),
-                    start: session.startedAt,
-                    end: endedAt
-                )
-                let caloriesSample = HKQuantitySample(
-                    type: caloriesType,
-                    quantity: HKQuantity(unit: .kilocalorie(), doubleValue: estimatedCalories),
-                    start: session.startedAt,
-                    end: endedAt
-                )
-                let minutesSample = HKQuantitySample(
-                    type: minutesType,
-                    quantity: HKQuantity(unit: .minute(), doubleValue: elapsedMinutes),
-                    start: session.startedAt,
-                    end: endedAt
-                )
-                try await builder.addSamples([
-                    distanceSample, stepsSample, caloriesSample, minutesSample
-                ])
-
-                // Record elevation gain as standard workout metadata so Santé
-                // (and our own detail view) can surface the dénivelé.
+                // We deliberately don't write step / distance / energy samples
+                // here. iOS already records steps and distance from the phone's
+                // motion chip, so adding our own would *double-count* the daily
+                // totals the Today screen sums back from HealthKit. And Apple
+                // Exercise Time is system-computed — third-party apps can't write
+                // it at all, so the old `appleExerciseTime` sample is exactly what
+                // made `finishWorkout()` fail with an authorization error and drop
+                // the whole walk. The system still credits exercise minutes for a
+                // saved walking workout, so the streak (which reads exercise
+                // minutes) keeps working. Elevation gain isn't recorded
+                // automatically, so we attach it as standard workout metadata.
                 if session.elevationGainMeters > 0 {
                     try await builder.addMetadata([
                         HKMetadataKeyElevationAscended:
