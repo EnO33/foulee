@@ -61,7 +61,7 @@ extension HealthKitClient {
 
                 try await builder.beginCollection(at: session.startedAt)
 
-                // We deliberately don't write step / distance / energy samples
+                // We deliberately don't write step / distance / energy *samples*
                 // here. iOS already records steps and distance from the phone's
                 // motion chip, so adding our own would *double-count* the daily
                 // totals the Today screen sums back from HealthKit. And Apple
@@ -70,14 +70,22 @@ extension HealthKitClient {
                 // made `finishWorkout()` fail with an authorization error and drop
                 // the whole walk. The system still credits exercise minutes for a
                 // saved walking workout, so the streak (which reads exercise
-                // minutes) keeps working. Elevation gain isn't recorded
-                // automatically, so we attach it as standard workout metadata.
+                // minutes) keeps working.
+                //
+                // Instead we record the walk's own measured numbers as workout
+                // *metadata* — metadata isn't summed into any daily total, so it
+                // can't double-count, yet it lets the résumé/detail show real
+                // values (see WorkoutSummary). Elevation uses the standard key.
+                var metadata: [String: Any] = [
+                    FouleeWorkoutMetadata.steps: session.steps,
+                    FouleeWorkoutMetadata.distanceMeters: session.distanceMeters,
+                    FouleeWorkoutMetadata.calories: session.estimatedCalories
+                ]
                 if session.elevationGainMeters > 0 {
-                    try await builder.addMetadata([
-                        HKMetadataKeyElevationAscended:
-                            HKQuantity(unit: .meter(), doubleValue: session.elevationGainMeters)
-                    ])
+                    metadata[HKMetadataKeyElevationAscended] =
+                        HKQuantity(unit: .meter(), doubleValue: session.elevationGainMeters)
                 }
+                try await builder.addMetadata(metadata)
 
                 try await builder.endCollection(at: endedAt)
                 _ = try await builder.finishWorkout()
@@ -226,14 +234,22 @@ private func fetchWorkoutDetail(
     guard let workout = try await fetchWorkout(uuid: summary.id, store: store) else {
         // Workout disappeared between summary and detail fetch — return a
         // detail with the summary alone so the UI can still render.
-        return WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+        return WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: summary.steps)
     }
     async let hrTask = fetchHeartRateSamples(for: workout, store: store)
-    async let stepsTask = fetchStepsCount(for: workout, store: store)
-    return try await WorkoutDetail(
+    // Foulée walks carry their measured step count in metadata (we don't write
+    // step samples); fall back to a window query for walks from other sources
+    // (Watch, Apple Workouts).
+    let steps: Int
+    if summary.steps > 0 {
+        steps = summary.steps
+    } else {
+        steps = try await fetchStepsCount(for: workout, store: store)
+    }
+    return WorkoutDetail(
         summary: summary,
-        heartRateSamples: hrTask,
-        stepsCount: stepsTask
+        heartRateSamples: try await hrTask,
+        stepsCount: steps
     )
 }
 
