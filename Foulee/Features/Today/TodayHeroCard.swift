@@ -8,7 +8,8 @@ import SwiftUI
 struct TodayHeroCard: View {
     var snapshot: TodaySnapshot
     var notificationsEnabled: Bool
-    var onPrimaryTap: () -> Void
+    var onStart: () -> Void
+    var onSummary: () -> Void
     var onSnooze: (TimeInterval) -> Void
     var onToggleNotifications: () -> Void
 
@@ -156,12 +157,15 @@ struct TodayHeroCard: View {
 
     private var actionRow: some View {
         HStack(spacing: 10) {
-            PrimaryButton(
-                title: snapshot.hasWalkedToday ? "Voir le résumé" : "Démarrer la marche",
-                systemIcon: snapshot.hasWalkedToday ? FouleeIcon.sparkle : FouleeIcon.play,
-                action: onPrimaryTap
-            )
-            reminderMenu
+            if snapshot.hasWalkedToday {
+                // Already walked: still let the user start another walk — the
+                // single "Voir le résumé" button used to be the only option.
+                SecondaryButton(title: "Voir le résumé", systemIcon: FouleeIcon.sparkle, action: onSummary)
+                PrimaryButton(title: "Marcher encore", systemIcon: FouleeIcon.play, action: onStart)
+            } else {
+                PrimaryButton(title: "Démarrer la marche", systemIcon: FouleeIcon.play, action: onStart)
+                reminderMenu
+            }
         }
     }
 
