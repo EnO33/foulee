@@ -65,9 +65,9 @@ struct TodayScreen: View {
                 if url.host() == "hydration" { scrollToHydration = true }
             }
             .fullScreenCover(isPresented: $isWalking) {
-                ActiveWalkScreen(minutesGoal: store.minutesGoal) {
+                ActiveWalkScreen(minutesGoal: store.minutesGoal) { session in
                     isWalking = false
-                    Task { await store.refresh() }
+                    Task { await store.registerFinishedWalk(session) }
                 }
                 .preferredColorScheme(preferredScheme)
             }
@@ -235,6 +235,9 @@ struct TodayScreen: View {
         if snapshot.hasWalkedToday {
             isShowingSummary = true
         } else {
+            // Capture today's totals now so the post-walk overlay lands on the
+            // right baseline (see TodayStore.registerFinishedWalk).
+            store.walkWillStart()
             isWalking = true
         }
     }

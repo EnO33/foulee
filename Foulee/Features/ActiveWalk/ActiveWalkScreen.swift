@@ -6,7 +6,7 @@ import SwiftUI
 /// depending on `store.state`.
 struct ActiveWalkScreen: View {
     let minutesGoal: Int
-    var onDismiss: () -> Void
+    var onDismiss: (WalkSession) -> Void
 
     @State private var store = ActiveWalkStore()
     @State private var showRoute = false
@@ -91,7 +91,7 @@ struct ActiveWalkScreen: View {
                     .padding(.horizontal, 32)
             }
             Spacer()
-            PrimaryButton(title: "Terminer", systemIcon: FouleeIcon.check, action: onDismiss)
+            PrimaryButton(title: "Terminer", systemIcon: FouleeIcon.check) { onDismiss(session) }
                 .padding(.horizontal, 24)
         }
         .padding(.bottom, 32)
@@ -264,7 +264,7 @@ private struct ActiveWalkPreview: View {
         }
     }
     var body: some View {
-        ActiveWalkScreen(minutesGoal: 20, onDismiss: {})
+        ActiveWalkScreen(minutesGoal: 20, onDismiss: { _ in })
     }
 }
 
