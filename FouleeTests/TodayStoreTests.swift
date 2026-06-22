@@ -238,3 +238,55 @@ struct TodayStoreTests {
         }
     }
 }
+
+@Suite("TodayStore optimistic walk overlay")
+struct TodayStoreWalkOverlayTests {
+    @Test("A finished walk overlays its steps + distance, then reconciles to HealthKit")
+    @MainActor
+    func optimisticWalkOverlayReconciles() async {
+        // HealthKit lags behind the walk: it keeps reporting the pre-walk totals
+        // until iOS flushes the walk, then jumps past them.
+        let hkSteps = LockedRef(3_000)
+        await withDependencies {
+            $0.healthKit = HealthKitClient(
+                requestAuthorization: { true },
+                todayMetrics: {
+                    HealthMetrics(
+                        steps: hkSteps.value,
+                        distanceKm: 2.0,
+                        activeMinutes: 5,
+                        activeCalories: 30
+                    )
+                },
+                saveWalkingWorkout: { _ in },
+                dailyMinutes: { _ in [] },
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
+            )
+        } operation: {
+            let store = TodayStore()
+            await store.refresh()
+            #expect(store.snapshot?.steps == 3_000)
+
+            // Walk 1 200 steps / 1 km while HealthKit still reports 3 000.
+            store.walkWillStart()
+            var session = WalkSession(startedAt: .now)
+            session.steps = 1_200
+            session.distanceMeters = 1_000
+            await store.registerFinishedWalk(session)
+
+            // Shown immediately, on top of the captured baseline.
+            #expect(store.snapshot?.steps == 4_200)
+            #expect(store.snapshot?.distanceKm == 3.0)
+
+            // iOS flushes the walk (plus a few extra steps): the overlay
+            // dissolves and we show real data — never double-counted.
+            hkSteps.set(4_500)
+            await store.refresh()
+            #expect(store.snapshot?.steps == 4_500)
+            #expect(store.snapshot?.distanceKm == 2.0)
+        }
+    }
+}

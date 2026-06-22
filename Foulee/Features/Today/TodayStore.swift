@@ -44,6 +44,23 @@ final class TodayStore {
     /// Long-lived subscription to HealthKit changes (live step updates).
     @ObservationIgnored private var observerTask: Task<Void, Never>?
 
+    /// Optimistic overlay applied right after a walk so the home + widgets show
+    /// it instantly. The iPhone takes up to a minute to flush a walk's steps and
+    /// distance into HealthKit, and waiting for that is what made the dashboard
+    /// feel stale. `target` is the total we expect once HealthKit catches up
+    /// (pre-walk baseline + the walk's own measurement); we display
+    /// `max(healthKit, target)`, so the overlay dissolves by itself the moment
+    /// HealthKit reaches it — it can never double-count. Only steps + distance,
+    /// which the walk measures directly; minutes/calories stay HealthKit-driven
+    /// (faking exercise minutes could falsely complete a streak).
+    private struct PendingWalk {
+        var targetSteps: Int
+        var targetDistanceKm: Double
+    }
+    @ObservationIgnored private var pendingWalk: PendingWalk?
+    @ObservationIgnored private var walkBaselineSteps = 0
+    @ObservationIgnored private var walkBaselineDistanceKm = 0.0
+
     private var fallbackWeather: WeatherSnapshot {
         WeatherSnapshot(temperatureCelsius: 0, condition: "—", advice: "")
     }
@@ -168,6 +185,24 @@ final class TodayStore {
         }
     }
 
+    /// Snapshot today's totals just before a walk begins, so when it finishes
+    /// we can show the walk's contribution on top of the right baseline.
+    func walkWillStart() {
+        walkBaselineSteps = snapshot?.steps ?? 0
+        walkBaselineDistanceKm = snapshot?.distanceKm ?? 0
+    }
+
+    /// A walk just finished: overlay its steps + distance immediately (see
+    /// `PendingWalk`) and refresh so the home, widgets and Watch reflect it
+    /// without waiting for the iPhone to flush the walk into HealthKit.
+    func registerFinishedWalk(_ session: WalkSession) async {
+        pendingWalk = PendingWalk(
+            targetSteps: walkBaselineSteps + session.steps,
+            targetDistanceKm: walkBaselineDistanceKm + session.distanceKm
+        )
+        await refresh()
+    }
+
     /// Re-fetches today's metrics + midday weather + 30-day history in
     /// parallel. Always sets `snapshot` — falling back to zeros for
     /// metrics and an empty history when a fetch fails — so the UI
@@ -187,6 +222,12 @@ final class TodayStore {
         }
 
         let metrics = await metricsTask ?? .zero
+        // Drop the post-walk overlay once HealthKit's own step count reaches the
+        // expected total — from there real data is complete, and keeping the
+        // overlay could mask a later edit/deletion in the Health app.
+        if let pending = pendingWalk, metrics.steps >= pending.targetSteps {
+            pendingWalk = nil
+        }
         let weatherSnapshot = await weatherTask
         let history = await historyTask ?? []
         cachedHistory = history
@@ -215,13 +256,17 @@ final class TodayStore {
             goalMinutes: minutesGoal,
             activeWeekdays: activeDays.calendarWeekdays
         )
+        // Apply the optimistic post-walk overlay: show the freshly-walked steps
+        // and distance until HealthKit's own totals reach them (see PendingWalk).
+        let displaySteps = max(metrics.steps, pendingWalk?.targetSteps ?? 0)
+        let displayDistanceKm = max(metrics.distanceKm, pendingWalk?.targetDistanceKm ?? 0)
         return TodaySnapshot(
             date: .now,
-            steps: metrics.steps,
+            steps: displaySteps,
             stepsGoal: stepsGoal,
             minutes: metrics.activeMinutes,
             minutesGoal: minutesGoal,
-            distanceKm: metrics.distanceKm,
+            distanceKm: displayDistanceKm,
             calories: metrics.activeCalories,
             streak: currentStreak,
             bestStreak: bestStreak,
