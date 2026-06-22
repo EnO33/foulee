@@ -98,10 +98,16 @@ final class WatchWorkoutStore: NSObject {
                 configuration: configuration
             )
             let builder = session.associatedWorkoutBuilder()
-            builder.dataSource = HKLiveWorkoutDataSource(
+            let dataSource = HKLiveWorkoutDataSource(
                 healthStore: store,
                 workoutConfiguration: configuration
             )
+            // The data source infers the types to collect from the config —
+            // distance, active energy and heart rate for a walk, but NOT step
+            // count. Enable it explicitly, otherwise the live "pas" counter
+            // stays at 0 while distance and heart rate update.
+            dataSource.enableCollection(for: HKQuantityType(.stepCount), predicate: nil)
+            builder.dataSource = dataSource
             session.delegate = self
             builder.delegate = self
 

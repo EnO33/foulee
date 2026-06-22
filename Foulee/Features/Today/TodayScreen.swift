@@ -151,7 +151,8 @@ struct TodayScreen: View {
                 TodayHeroCard(
                     snapshot: snapshot,
                     notificationsEnabled: preferences.notificationsEnabled,
-                    onPrimaryTap: { handlePrimaryTap(snapshot: snapshot) },
+                    onStart: { startWalk() },
+                    onSummary: { isShowingSummary = true },
                     onSnooze: { interval in
                         Task { await scheduler.snooze(after: interval) }
                     },
@@ -227,19 +228,14 @@ struct TodayScreen: View {
         Self.headerDateFormatter.string(from: date).uppercased()
     }
 
-    /// "Démarrer la marche" → push the active walk sheet.
-    /// "Voir le résumé" (already walked today) → present an in-app sheet
-    /// listing all walking workouts HealthKit recorded today, regardless
-    /// of source (Foulée, Forme, the Watch).
-    private func handlePrimaryTap(snapshot: TodaySnapshot) {
-        if snapshot.hasWalkedToday {
-            isShowingSummary = true
-        } else {
-            // Capture today's totals now so the post-walk overlay lands on the
-            // right baseline (see TodayStore.registerFinishedWalk).
-            store.walkWillStart()
-            isWalking = true
-        }
+    /// Push the active walk sheet. Available from the hero even once today's
+    /// goal is met (the card then also offers "Voir le résumé"), so a second
+    /// walk can always be started.
+    private func startWalk() {
+        // Capture today's totals now so the post-walk overlay lands on the
+        // right baseline (see TodayStore.registerFinishedWalk).
+        store.walkWillStart()
+        isWalking = true
     }
 
     /// Only steps + minutes have a daily goal to draw on the stats chart.
