@@ -290,3 +290,36 @@ struct TodayStoreWalkOverlayTests {
         }
     }
 }
+
+@Suite("TodayStore weather isolation")
+struct TodayStoreWeatherTests {
+    @Test("A WeatherKit failure doesn't raise the Health-data error banner")
+    @MainActor
+    func weatherFailureDoesNotSetLastError() async {
+        struct WeatherDown: Error {}
+        await withDependencies {
+            $0.healthKit = HealthKitClient(
+                requestAuthorization: { true },
+                todayMetrics: {
+                    HealthMetrics(steps: 5_000, distanceKm: 3, activeMinutes: 25, activeCalories: 120)
+                },
+                saveWalkingWorkout: { _ in },
+                dailyMinutes: { _ in [] },
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
+            )
+            $0.location = .previewValue
+            $0.weather = WeatherClient(middayForecast: { _ in throw WeatherDown() })
+        } operation: {
+            let store = TodayStore()
+            await store.refresh()
+
+            // Metrics loaded fine and only weather failed — the user must NOT be
+            // told to check their Santé permissions.
+            #expect(store.snapshot != nil)
+            #expect(store.lastError == nil)
+        }
+    }
+}

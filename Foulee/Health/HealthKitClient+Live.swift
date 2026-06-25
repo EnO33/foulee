@@ -436,6 +436,12 @@ private func dailyExerciseMinutes(
             intervalComponents: interval
         )
         query.initialResultsHandler = { _, results, error in
+            // No exercise minutes in the range can surface as errorNoData — an
+            // empty history, not a failure. Treat it like the other queries do.
+            if isNoDataAvailable(error) {
+                continuation.resume(returning: [])
+                return
+            }
             if let error {
                 continuation.resume(throwing: error)
                 return

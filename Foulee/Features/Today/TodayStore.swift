@@ -237,7 +237,11 @@ final class TodayStore {
 
     private func fetchWeatherIfAuthorized() async -> WeatherSnapshot? {
         guard let coordinate = await location.currentLocation() else { return nil }
-        return await runOrTrap { try await weather.middayForecast(coordinate) }
+        // Weather is non-critical and self-evident — its card just hides when
+        // unavailable. Don't route a transient WeatherKit failure (rate limits,
+        // flaky network) through `lastError`: that raises the Health-data banner
+        // which wrongly tells the user to check their Santé permissions.
+        return try? await weather.middayForecast(coordinate)
     }
 
     private func makeSnapshot(
