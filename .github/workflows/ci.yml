@@ -83,7 +83,7 @@ jobs:
           xcrun simctl list devices available | grep -E "Apple Watch"
 
       - name: Cache Tuist + SPM artefacts
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/Library/Caches/tuist
