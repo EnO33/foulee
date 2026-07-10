@@ -1,6 +1,6 @@
 # Politique de confidentialité — Foulée
 
-_Dernière mise à jour : 29 mai 2026_
+_Dernière mise à jour : 10 juillet 2026_
 
 Foulée est une application **locale**. Elle t'aide à entretenir une série de
 marches du midi à partir de tes données d'activité. **Aucune donnée n'est
@@ -50,6 +50,18 @@ pendant la marche. Ces données sont traitées localement, en temps réel.
 
 Tes réglages (objectif, fenêtre de marche, thème, rappels) sont enregistrés
 **localement** sur ton appareil. Désinstaller l'app les supprime.
+
+## Manifeste de confidentialité Apple
+
+L'app et ses extensions (widgets, app Watch) embarquent un **manifeste de
+confidentialité** (`PrivacyInfo.xcprivacy`), le format standard d'Apple pour
+déclarer ce qu'une app fait de tes données. Celui de Foulée déclare :
+
+- **aucun pistage** et aucun domaine de pistage ;
+- **aucune donnée collectée** — rien ne quitte ton appareil ;
+- un seul accès à une API dite « à raison obligatoire » : les **préférences
+  locales** (UserDefaults), utilisées pour tes réglages et partagées entre
+  l'app et ses widgets via un groupe d'apps, toujours sur ton appareil.
 
 ## Tes choix
 
