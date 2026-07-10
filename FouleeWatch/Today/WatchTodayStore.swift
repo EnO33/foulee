@@ -20,6 +20,10 @@ final class WatchTodayStore {
     private(set) var hydrationEnabled = false
     private(set) var hydrationGoalML = 2_000
     private(set) var hydrationGlassML = 250
+    /// Whether the phone ever synced a payload — false means "never paired /
+    /// phone app never opened", which the UI surfaces instead of hiding
+    /// phone-derived content silently.
+    private(set) var hasPhoneSync = false
     private(set) var isLoading = true
 
     @ObservationIgnored private let store = HKHealthStore()
@@ -58,6 +62,7 @@ final class WatchTodayStore {
 
         // Streak + goals come from the phone (source of truth).
         let sync = WatchSyncStore.read()
+        hasPhoneSync = sync != nil
         streak = sync?.streak ?? 0
         stepsGoal = sync?.stepsGoal ?? 6_000
         minutesGoal = sync?.minutesGoal ?? 20
