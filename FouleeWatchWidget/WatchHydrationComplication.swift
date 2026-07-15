@@ -7,10 +7,8 @@ import WidgetKit
 /// button. Water comes from the watch's HealthKit (today's data is local);
 /// the goal comes from the phone-synced payload in the shared app group.
 struct WatchHydrationComplication: Widget {
-    static let kind = "com.eno33.foulee.watchHydrationComplication"
-
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: Self.kind, provider: WatchHydrationProvider()) { entry in
+        StaticConfiguration(kind: WatchComplicationKind.hydration, provider: WatchHydrationProvider()) { entry in
             WatchHydrationView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
