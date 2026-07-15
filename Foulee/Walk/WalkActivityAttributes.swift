@@ -10,19 +10,20 @@ struct WalkActivityAttributes: ActivityAttributes {
 
     var goalMinutes: Int
 
-    /// Updated every tick from the app.
+    /// Pushed on walk events (start, pause, resume, pedometer samples) —
+    /// the clock itself runs system-side off `timerBasis`.
     struct WalkActivityState: Codable, Hashable, Sendable {
+        /// Virtual start of the walk: now minus accumulated elapsed,
+        /// recomputed on every push so `Text(timerInterval:)` keeps the
+        /// clock running while the app is suspended.
+        var timerBasis: Date
+        /// Set while paused; freezes the system timer via `pauseTime`.
+        var pausedAt: Date?
         var elapsed: TimeInterval
         var steps: Int
         var distanceKm: Double
         var activeCalories: Int
-        var isPaused = false
 
-        static let zero = WalkActivityState(
-            elapsed: 0,
-            steps: 0,
-            distanceKm: 0,
-            activeCalories: 0
-        )
+        var isPaused: Bool { pausedAt != nil }
     }
 }
