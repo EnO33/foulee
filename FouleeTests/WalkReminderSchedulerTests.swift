@@ -84,6 +84,42 @@ struct WalkReminderSchedulerTests {
         }
     }
 
+    @Test("Sync requests notification authorization when reminders are enabled")
+    @MainActor
+    func syncRequestsAuthorizationWhenEnabled() async {
+        let requested = LockedRef<Bool>(false)
+        await withDependencies {
+            $0.notifications = NotificationsClient(
+                requestAuthorization: { requested.set(true); return true },
+                replaceWalkReminders: { _ in },
+                scheduleSnooze: { _ in }
+            )
+        } operation: {
+            let prefs = UserPreferences(defaults: cleanDefaults())
+            prefs.notificationsEnabled = true
+            await WalkReminderScheduler().sync(with: prefs)
+            #expect(requested.value)
+        }
+    }
+
+    @Test("Sync does not prompt when reminders are disabled")
+    @MainActor
+    func syncSkipsAuthorizationWhenDisabled() async {
+        let requested = LockedRef<Bool>(false)
+        await withDependencies {
+            $0.notifications = NotificationsClient(
+                requestAuthorization: { requested.set(true); return true },
+                replaceWalkReminders: { _ in },
+                scheduleSnooze: { _ in }
+            )
+        } operation: {
+            let prefs = UserPreferences(defaults: cleanDefaults())
+            prefs.notificationsEnabled = false
+            await WalkReminderScheduler().sync(with: prefs)
+            #expect(!requested.value)
+        }
+    }
+
     @Test("snooze(after:) forwards the interval to the client and absorbs throws")
     @MainActor
     func snoozeForwardsInterval() async {

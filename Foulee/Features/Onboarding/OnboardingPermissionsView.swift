@@ -7,6 +7,7 @@ import UserNotifications
 /// Notifications + Position run real authorization here; HealthKit is
 /// deferred to `TodayStore.bootstrap()` since it requires a HKHealthStore.
 struct OnboardingPermissionsView: View {
+    var preferences: UserPreferences
     var onFinish: () -> Void
 
     @Dependency(\.healthKit) private var healthKit
@@ -102,6 +103,9 @@ struct OnboardingPermissionsView: View {
     private func requestNotifications() async -> Bool {
         let center = UNUserNotificationCenter.current()
         let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+        // Persist the outcome: the toggle used to live only in local @State,
+        // so the choice made here never reached the reminder scheduler.
+        if granted { preferences.notificationsEnabled = true }
         return granted
     }
 }

@@ -45,6 +45,11 @@ struct WalkReminderScheduler {
     /// the user would actually use to recover.
     @MainActor
     func sync(with preferences: UserPreferences) async {
+        // Ensure notification permission when reminders are on (idempotent —
+        // no re-prompt once the user has decided).
+        if preferences.notificationsEnabled {
+            _ = try? await notifications.requestAuthorization()
+        }
         let reminders = Self.reminders(for: preferences)
         do {
             try await notifications.replaceWalkReminders(reminders)

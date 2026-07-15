@@ -1,5 +1,6 @@
 import Dependencies
 import Foundation
+import UserNotifications
 
 /// Recurring weekly reminder description — one notification per `Weekday`
 /// firing at `time` local. Identifier is derived so reschedules are
@@ -20,6 +21,12 @@ struct WalkReminder: Equatable, Sendable {
 /// per-call try/catch sprinkled.
 struct NotificationsClient: Sendable {
     var requestAuthorization: @Sendable () async throws -> Bool
+
+    /// Current system-level authorization, so the UI can tell "enabled in
+    /// prefs" apart from "denied in iOS Settings".
+    var authorizationStatus: @Sendable () async -> UNAuthorizationStatus
+        = { .notDetermined }
+
     var replaceWalkReminders: @Sendable (_ reminders: [WalkReminder]) async throws -> Void
 
     /// One-shot reminder fired after `interval` seconds, independent of
@@ -48,6 +55,7 @@ struct NotificationsClient: Sendable {
 extension NotificationsClient: DependencyKey {
     static let previewValue = NotificationsClient(
         requestAuthorization: { true },
+        authorizationStatus: { .authorized },
         replaceWalkReminders: { _ in },
         scheduleSnooze: { _ in }
     )
