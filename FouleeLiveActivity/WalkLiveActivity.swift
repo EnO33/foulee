@@ -19,9 +19,14 @@ struct WalkLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     Label {
-                        Text(context.state.elapsed.walkClockText)
-                            .font(.system(.title2, design: .rounded, weight: .semibold))
-                            .monospacedDigit()
+                        Text(
+                            timerInterval: context.state.timerBasis...Date(timeIntervalSinceNow: 86_400),
+                            pauseTime: context.state.pausedAt,
+                            countsDown: false,
+                            showsHours: true
+                        )
+                        .font(.system(.title2, design: .rounded, weight: .semibold))
+                        .monospacedDigit()
                     } icon: {
                         Image(systemName: context.state.isPaused ? "pause.fill" : "figure.walk")
                             .foregroundStyle(.tint)
@@ -55,10 +60,16 @@ struct WalkLiveActivity: Widget {
                 Image(systemName: context.state.isPaused ? "pause.fill" : "figure.walk")
                     .foregroundStyle(.tint)
             } compactTrailing: {
-                Text(context.state.elapsed.walkClockText)
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(context.state.isPaused ? .secondary : .primary)
+                Text(
+                    timerInterval: context.state.timerBasis...Date(timeIntervalSinceNow: 86_400),
+                    pauseTime: context.state.pausedAt,
+                    countsDown: false,
+                    showsHours: true
+                )
+                .font(.system(.caption, design: .rounded, weight: .semibold))
+                .monospacedDigit()
+                .foregroundStyle(context.state.isPaused ? .secondary : .primary)
+                .frame(maxWidth: 60)
             } minimal: {
                 Image(systemName: context.state.isPaused ? "pause.fill" : "figure.walk")
                     .foregroundStyle(.tint)
@@ -102,10 +113,15 @@ struct LockScreenView: View {
                 )
                 .font(.system(.callout, weight: .semibold))
                 .foregroundStyle(.primary)
-                Text(state.elapsed.walkClockText)
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(state.isPaused ? .secondary : .primary)
+                Text(
+                    timerInterval: state.timerBasis...Date(timeIntervalSinceNow: 86_400),
+                    pauseTime: state.pausedAt,
+                    countsDown: false,
+                    showsHours: true
+                )
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(state.isPaused ? .secondary : .primary)
                 Text("\(state.steps) pas · \(state.distanceKm.kmText())")
                     .font(.footnote)
                     .foregroundStyle(.secondary)

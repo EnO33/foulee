@@ -201,6 +201,8 @@ final class ActiveWalkStore {
                     self.segmentDistance = sample.distanceMeters
                     session.steps = self.bankedSteps + sample.steps
                     session.distanceMeters = self.bankedDistance + sample.distanceMeters
+                    session.elapsed = self.bankedElapsed
+                        + self.date.now.timeIntervalSince(self.segmentStart)
                     self.state = .active(session)
                     Task { await self.pushLiveActivity(session: session, isPaused: false) }
                 }
@@ -232,6 +234,8 @@ final class ActiveWalkStore {
         }
     }
 
+    // Drives the in-app clock only — the Live Activity runs its own
+    // system timer and is updated on events, not on this tick.
     private func makeTickerTask() -> Task<Void, Never> {
         Task { [clock] in
             while !Task.isCancelled {
@@ -241,7 +245,6 @@ final class ActiveWalkStore {
                     session.elapsed = self.bankedElapsed
                         + self.date.now.timeIntervalSince(self.segmentStart)
                     self.state = .active(session)
-                    Task { await self.pushLiveActivity(session: session, isPaused: false) }
                 }
             }
         }
@@ -252,8 +255,15 @@ final class ActiveWalkStore {
     private func startLiveActivity(minutesGoal: Int) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         let attributes = WalkActivityAttributes(goalMinutes: minutesGoal)
-        let state = WalkActivityAttributes.WalkActivityState.zero
-        let content = ActivityContent(state: state, staleDate: nil)
+        let state = WalkActivityAttributes.WalkActivityState(
+            timerBasis: date.now,
+            pausedAt: nil,
+            elapsed: 0,
+            steps: 0,
+            distanceKm: 0,
+            activeCalories: 0
+        )
+        let content = ActivityContent(state: state, staleDate: nextStaleDate())
         liveActivity = try? Activity.request(
             attributes: attributes,
             content: content,
@@ -263,30 +273,45 @@ final class ActiveWalkStore {
 
     private func pushLiveActivity(session: WalkSession, isPaused: Bool) async {
         guard let liveActivity else { return }
-        let state = WalkActivityAttributes.WalkActivityState(
-            elapsed: session.elapsed,
-            steps: session.steps,
-            distanceKm: session.distanceKm,
-            activeCalories: session.estimatedCalories,
-            isPaused: isPaused
+        await liveActivity.update(
+            ActivityContent(
+                state: activityState(for: session, isPaused: isPaused),
+                staleDate: nextStaleDate()
+            )
         )
-        await liveActivity.update(ActivityContent(state: state, staleDate: nil))
     }
 
     private func endLiveActivity(with session: WalkSession) async {
         guard let liveActivity else { return }
-        let finalState = WalkActivityAttributes.WalkActivityState(
-            elapsed: session.elapsed,
-            steps: session.steps,
-            distanceKm: session.distanceKm,
-            activeCalories: session.estimatedCalories,
-            isPaused: false
-        )
         await liveActivity.end(
-            ActivityContent(state: finalState, staleDate: nil),
+            ActivityContent(
+                state: activityState(for: session, isPaused: true),
+                staleDate: nil
+            ),
             dismissalPolicy: .immediate
         )
         self.liveActivity = nil
+    }
+
+    private func activityState(
+        for session: WalkSession,
+        isPaused: Bool
+    ) -> WalkActivityAttributes.WalkActivityState {
+        let now = date.now
+        return WalkActivityAttributes.WalkActivityState(
+            timerBasis: now.addingTimeInterval(-session.elapsed),
+            pausedAt: isPaused ? now : nil,
+            elapsed: session.elapsed,
+            steps: session.steps,
+            distanceKm: session.distanceKm,
+            activeCalories: session.estimatedCalories
+        )
+    }
+
+    // Counters only move on event pushes; past this the system greys the
+    // content out as stale (the clock keeps ticking regardless).
+    private func nextStaleDate() -> Date {
+        date.now.addingTimeInterval(10 * 60)
     }
 
     private func runOrTrap<T: Sendable>(_ body: () async throws -> T) async -> T? {
