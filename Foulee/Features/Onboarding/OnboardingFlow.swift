@@ -40,7 +40,7 @@ struct OnboardingFlow: View {
 
 private struct OnboardingPreview: View {
     @State private var preferences = UserPreferences(
-        defaults: UserDefaults(suiteName: "preview-onboarding")!
+        defaults: UserDefaults(suiteName: "preview-onboarding") ?? .standard
     )
     var body: some View {
         OnboardingFlow(preferences: preferences, onFinish: {})

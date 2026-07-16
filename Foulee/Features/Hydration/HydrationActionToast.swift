@@ -16,6 +16,7 @@ struct HydrationActionToast: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var message: String?
     @State private var isError = false
+    @State private var hideTask: Task<Void, Never>?
 
     /// Stamps older than this are stale (app reopened long after the tap).
     private static let maxStampAge: TimeInterval = 25
@@ -71,7 +72,11 @@ struct HydrationActionToast: View {
     private func show(_ text: String, asError: Bool = false) {
         isError = asError
         withAnimation(.spring(duration: 0.35)) { message = text }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+        // Cancellable so a rapid second toast isn't hidden by the first's timer.
+        hideTask?.cancel()
+        hideTask = Task {
+            try? await Task.sleep(for: .seconds(2.8))
+            guard !Task.isCancelled else { return }
             withAnimation(.easeOut(duration: 0.3)) { message = nil }
         }
     }

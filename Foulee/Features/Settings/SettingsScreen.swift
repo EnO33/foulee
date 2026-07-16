@@ -272,7 +272,7 @@ struct DayChip: View {
 
 private struct SettingsPreview: View {
     @State private var preferences = UserPreferences(
-        defaults: UserDefaults(suiteName: "preview-settings")!
+        defaults: UserDefaults(suiteName: "preview-settings") ?? .standard
     )
     var body: some View {
         ZStack {
