@@ -77,10 +77,12 @@ let project = Project(
                 "UIBackgroundModes": ["fetch"],
                 "UILaunchScreen": [:],
                 "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
-                "NSHealthShareUsageDescription":
-                    "Foulée lit tes pas, ta distance et tes minutes d'activité pour t'aider à suivre tes marches du midi.",
+                "NSHealthShareUsageDescription": .string(
+                    "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, "
+                        + "ainsi que tes marches et leur fréquence cardiaque, pour afficher ta journée."
+                ),
                 "NSHealthUpdateUsageDescription":
-                    "Foulée enregistre tes marches du midi comme séances dans Santé.",
+                    "Foulée enregistre tes marches comme séances dans Santé, ainsi que l'eau que tu bois.",
                 "NSMotionUsageDescription":
                     "Foulée compte tes pas en direct pendant la marche du midi.",
                 "NSLocationWhenInUseUsageDescription":
@@ -181,10 +183,15 @@ let project = Project(
                 "WKApplication": true,
                 "WKWatchOnly": false,
                 "WKCompanionAppBundleIdentifier": .string(bundleIdBase),
-                "NSHealthShareUsageDescription":
-                    "Foulée lit tes pas, ta distance et tes minutes d'activité pour t'aider à suivre tes marches du midi.",
-                "NSHealthUpdateUsageDescription":
-                    "Foulée enregistre tes marches du midi comme séances dans Santé."
+                "NSHealthShareUsageDescription": .string(
+                    "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, "
+                        + "tes marches enregistrées et ta fréquence cardiaque pendant la marche, "
+                        + "pour afficher ta journée au poignet."
+                ),
+                "NSHealthUpdateUsageDescription": .string(
+                    "Foulée enregistre tes marches dans Santé, avec les pas, la distance, les calories et la fréquence "
+                        + "cardiaque mesurés pendant la séance, ainsi que l'eau que tu bois."
+                )
             ]),
             sources: [
                 "FouleeWatch/**",
