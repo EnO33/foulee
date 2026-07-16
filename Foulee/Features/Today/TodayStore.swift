@@ -148,7 +148,8 @@ final class TodayStore {
             streak: snapshot.streak,
             // Water intake is owned by the hydration flow — carry the stored
             // value forward so this full rewrite doesn't reset the ring.
-            waterML: SharedStore.read()?.waterML ?? 0,
+            // Stale-zeroed so yesterday's water doesn't survive midnight.
+            waterML: SharedStore.read()?.zeroedIfStale().waterML ?? 0,
             waterGoalML: hydrationGoalML,
             hydrationEnabled: hydrationEnabled
         ))

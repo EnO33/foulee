@@ -105,7 +105,15 @@ struct WatchStatProvider: AppIntentTimelineProvider {
 
     func timeline(for configuration: WatchStatIntent, in context: Context) async -> Timeline<WatchStatEntry> {
         let entry = await entry(for: configuration.metric)
-        return Timeline(entries: [entry], policy: .after(WidgetRefresh.nextRefresh(after: .now)))
+        let now = Date.now
+        // Pre-rendered zero entry at local midnight — the system swaps to it
+        // at 00:00 without a reload, so the complication never shows
+        // yesterday's total overnight.
+        let reset = WatchStatEntry(
+            date: WidgetRefresh.nextMidnight(after: now),
+            metric: configuration.metric, value: 0
+        )
+        return Timeline(entries: [entry, reset], policy: .after(WidgetRefresh.nextRefresh(after: now)))
     }
 
     /// watchOS requires recommendations so the metric variants appear in the

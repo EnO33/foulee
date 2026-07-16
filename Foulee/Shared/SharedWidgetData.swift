@@ -21,6 +21,10 @@ struct WidgetSnapshot: Codable, Sendable {
     var waterML: Int
     var waterGoalML: Int
     var hydrationEnabled: Bool
+    /// Local start-of-day when the snapshot was written (stamped by
+    /// `SharedStore.write`). nil on snapshots from older builds — treated as
+    /// stale, so readers zero the counters rather than show old totals.
+    var day: Date?
 
     static let placeholder = WidgetSnapshot(
         steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20,
@@ -37,7 +41,8 @@ struct WidgetSnapshot: Codable, Sendable {
         streak: Int,
         waterML: Int = 0,
         waterGoalML: Int = 2_000,
-        hydrationEnabled: Bool = false
+        hydrationEnabled: Bool = false,
+        day: Date? = nil
     ) {
         self.steps = steps
         self.stepsGoal = stepsGoal
@@ -49,6 +54,21 @@ struct WidgetSnapshot: Codable, Sendable {
         self.waterML = waterML
         self.waterGoalML = waterGoalML
         self.hydrationEnabled = hydrationEnabled
+        self.day = day
+    }
+
+    /// A copy with the daily counters zeroed when the snapshot was written on
+    /// another day (or carries no day stamp). Goals, streak and the hydration
+    /// toggle survive midnight — only the "today" totals go stale.
+    func zeroedIfStale(today: Date = Calendar.current.startOfDay(for: .now)) -> WidgetSnapshot {
+        guard day != today else { return self }
+        var copy = self
+        copy.steps = 0
+        copy.minutes = 0
+        copy.distanceKm = 0
+        copy.calories = 0
+        copy.waterML = 0
+        return copy
     }
 
     init(from decoder: any Decoder) throws {
@@ -63,6 +83,7 @@ struct WidgetSnapshot: Codable, Sendable {
         waterML = try container.decodeIfPresent(Int.self, forKey: .waterML) ?? 0
         waterGoalML = try container.decodeIfPresent(Int.self, forKey: .waterGoalML) ?? 2_000
         hydrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .hydrationEnabled) ?? false
+        day = try container.decodeIfPresent(Date.self, forKey: .day)
     }
 }
 
@@ -74,6 +95,10 @@ enum SharedStore {
     private static var defaults: UserDefaults? { UserDefaults(suiteName: suiteName) }
 
     static func write(_ snapshot: WidgetSnapshot) {
+        // Stamp the write day so readers can tell today's totals from
+        // yesterday's leftovers after midnight.
+        var snapshot = snapshot
+        snapshot.day = Calendar.current.startOfDay(for: .now)
         guard let defaults, let data = try? JSONEncoder().encode(snapshot) else { return }
         defaults.set(data, forKey: key)
     }
@@ -87,7 +112,9 @@ enum SharedStore {
     /// the hydration flow (app card or notification action) knows the new
     /// intake but not the walk metrics.
     static func updateWater(intakeML: Int) {
-        var snapshot = read() ?? .placeholder
+        // Zero stale counters first: the first drink of a new day must not
+        // resurrect yesterday's steps under today's stamp.
+        var snapshot = (read() ?? .placeholder).zeroedIfStale()
         snapshot.waterML = intakeML
         write(snapshot)
     }

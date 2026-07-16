@@ -39,4 +39,19 @@ import Testing
         // 19:52 -> 20:00; the next call (at 20:00) defers to tomorrow 08:00.
         #expect(WidgetRefresh.nextRefresh(after: date(19, 52), calendar: calendar) == date(20, 0))
     }
+
+    @Test func midnightEntryLandsAtNextLocalMidnight() {
+        // A timeline built at 23:50 dates its zeroed reset entry at 00:00.
+        #expect(WidgetRefresh.nextMidnight(after: date(23, 50), calendar: calendar)
+            == date(0, 0).addingTimeInterval(24 * 3_600))
+        #expect(WidgetRefresh.nextMidnight(after: date(0, 5), calendar: calendar)
+            == date(0, 0).addingTimeInterval(24 * 3_600))
+    }
+
+    @Test func midnightEntryIsStrictlyAfterAnExactMidnightBuild() {
+        // Built exactly at 00:00, the reset must target the FOLLOWING
+        // midnight — a same-instant entry would zero the fresh day itself.
+        #expect(WidgetRefresh.nextMidnight(after: date(0, 0), calendar: calendar)
+            == date(0, 0).addingTimeInterval(24 * 3_600))
+    }
 }

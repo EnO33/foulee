@@ -38,7 +38,14 @@ struct WatchHydrationProvider: TimelineProvider {
         let box = UncheckedSendableBox(completion)
         Task {
             let entry = await Self.entry()
-            box.value(Timeline(entries: [entry], policy: .after(WidgetRefresh.nextRefresh(after: .now))))
+            let now = Date.now
+            // Pre-rendered zero entry at local midnight — the system swaps to
+            // it at 00:00 without a reload, so the ring never shows yesterday.
+            let reset = WatchHydrationEntry(
+                date: WidgetRefresh.nextMidnight(after: now),
+                waterML: 0, goalML: entry.goalML
+            )
+            box.value(Timeline(entries: [entry, reset], policy: .after(WidgetRefresh.nextRefresh(after: now))))
         }
     }
 

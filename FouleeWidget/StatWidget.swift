@@ -54,11 +54,18 @@ struct StatProvider: AppIntentTimelineProvider {
         // Live HealthKit when unlocked, snapshot fallback when locked.
         // Daytime cadence — see WidgetRefresh.
         let entry = Self.entry(for: configuration.metric, from: await WidgetLiveMetrics.freshSnapshot())
-        return Timeline(entries: [entry], policy: .after(WidgetRefresh.nextRefresh(after: .now)))
+        let now = Date.now
+        // Pre-rendered zero entry at local midnight — the system swaps to it
+        // at 00:00 without a reload, so the stat never shows yesterday.
+        let reset = StatEntry(
+            date: WidgetRefresh.nextMidnight(after: now),
+            metric: entry.metric, value: 0, goal: entry.goal
+        )
+        return Timeline(entries: [entry, reset], policy: .after(WidgetRefresh.nextRefresh(after: now)))
     }
 
     private func entry(for metric: StatMetric) -> StatEntry {
-        Self.entry(for: metric, from: SharedStore.read() ?? .placeholder)
+        Self.entry(for: metric, from: (SharedStore.read() ?? .placeholder).zeroedIfStale())
     }
 
     private static func entry(for metric: StatMetric, from snapshot: WidgetSnapshot) -> StatEntry {
