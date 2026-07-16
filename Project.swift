@@ -189,6 +189,7 @@ let project = Project(
                 "Foulee/Shared/NumberFormatting.swift",
                 "Foulee/Shared/UncheckedSendableBox.swift",
                 "Foulee/Shared/WatchSyncPayload.swift",
+                "Foulee/Shared/WatchComplicationKind.swift",
                 "Foulee/Notifications/HydrationNotification.swift"
             ],
             resources: [
@@ -221,7 +222,8 @@ let project = Project(
                 "Foulee/Shared/NumberFormatting.swift",
                 "Foulee/Shared/UncheckedSendableBox.swift",
                 "Foulee/Shared/WidgetRefresh.swift",
-                "Foulee/Shared/WatchSyncPayload.swift"
+                "Foulee/Shared/WatchSyncPayload.swift",
+                "Foulee/Shared/WatchComplicationKind.swift"
             ],
             resources: [
                 .glob(

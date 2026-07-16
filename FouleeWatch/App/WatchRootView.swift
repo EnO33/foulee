@@ -23,5 +23,6 @@ struct WatchRootView: View {
             }
         }
         .animation(.easeOut(duration: 0.25), value: store.state)
+        .task { await WatchWaterBackgroundDelivery.start() }
     }
 }

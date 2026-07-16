@@ -1,5 +1,6 @@
 @preconcurrency import HealthKit
 import Observation
+import WidgetKit
 
 /// Today's at-a-glance numbers for the watch home: steps, exercise minutes,
 /// distance and calories come straight from the watch's HealthKit (today's
@@ -96,7 +97,8 @@ final class WatchTodayStore {
         waterML = newWaterML
     }
 
-    /// Log one glass (the phone-synced glass size) to Health, then re-read.
+    /// Log one glass (the phone-synced glass size) to Health, then re-read and
+    /// refresh the complication.
     func logGlass() async {
         let sample = HKQuantitySample(
             type: Self.waterType,
@@ -105,6 +107,7 @@ final class WatchTodayStore {
             end: .now
         )
         try? await store.save(sample)
+        WidgetCenter.shared.reloadTimelines(ofKind: WatchComplicationKind.hydration)
         await load()
     }
 
