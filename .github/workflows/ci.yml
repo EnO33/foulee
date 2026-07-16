@@ -137,6 +137,27 @@ jobs:
             -derivedDataPath build/dd \
             test | xcbeautify
 
+      - name: Test (watchOS)
+        run: |
+          set -o pipefail
+          # The ensure step above guarantees an Apple Watch simulator exists,
+          # but its exact name depends on the runtime's default devices —
+          # resolve it instead of hardcoding one.
+          WATCH_NAME=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("Apple Watch"))][0].name')
+          if [ -z "$WATCH_NAME" ] || [ "$WATCH_NAME" = "null" ]; then
+            echo "No Apple Watch simulator available"
+            xcrun simctl list devices
+            exit 1
+          fi
+          echo "Testing on simulator: $WATCH_NAME"
+          xcodebuild \
+            -workspace Foulee.xcworkspace \
+            -scheme FouleeWatch \
+            -destination "platform=watchOS Simulator,name=$WATCH_NAME" \
+            -configuration Debug \
+            -derivedDataPath build/dd \
+            test | xcbeautify
+
       # Dead-code scan reuses the index from the builds above (--skip-build via
       # --index-store-path), so it costs seconds, not a second build. PR-only:
       # the baseline (.periphery.baseline.json) freezes today's findings, so

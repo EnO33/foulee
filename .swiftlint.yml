@@ -2,6 +2,7 @@ included:
   - Foulee
   - FouleeTests
   - FouleeWatch
+  - FouleeWatchTests
   - FouleeWatchWidget
   - FouleeWidget
   - FouleeLiveActivity
