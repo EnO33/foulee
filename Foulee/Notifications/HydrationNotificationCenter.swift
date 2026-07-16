@@ -12,6 +12,18 @@ import WidgetKit
 final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     static let shared = HydrationNotificationCenter()
 
+    /// Injected so the action path is testable. `@Dependency` is unusable
+    /// here — iOS launches the app in the background straight into this
+    /// delegate, with no dependency context around it.
+    private let healthKit: HealthKitClient
+    private let defaults: UserDefaults
+
+    init(healthKit: HealthKitClient = .liveValue, defaults: UserDefaults = .standard) {
+        self.healthKit = healthKit
+        self.defaults = defaults
+        super.init()
+    }
+
     func configure() {
         UNUserNotificationCenter.current().delegate = self
     }
@@ -35,7 +47,7 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
         // the Task. Safe — it's invoked exactly once when the work finishes.
         let completion = UncheckedSendableBox(completionHandler)
         Task {
-            await Self.handle(action: action)
+            await self.handle(action: action)
             // The system's completion synchronously runs UIKit snapshot/state-
             // restoration work on the calling thread, which asserts off-main
             // (SIGABRT in _performBlockAfterCATransactionCommitSynchronizes —
@@ -44,28 +56,14 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
         }
     }
 
-    private static func handle(action: String) async {
-        // iOS wakes the app in the *background* to run this. Read prefs straight
-        // from UserDefaults — don't spin up a `@MainActor @Observable`
-        // UserPreferences here (heavy + a likely crash source in a background
-        // launch). Keys mirror `UserPreferences.Keys`.
-        let defaults = UserDefaults.standard
+    // iOS wakes the app in the *background* to run this. Read prefs straight
+    // from UserDefaults — don't spin up a `@MainActor @Observable`
+    // UserPreferences here (heavy + a likely crash source in a background
+    // launch). Keys mirror `UserPreferences.Keys`.
+    func handle(action: String) async {
         switch action {
         case HydrationNotification.drankAction:
-            // "J'ai bu" → log one glass to Health; the reminder is dismissed
-            // by the system automatically.
-            let glassML = defaults.object(forKey: "preferences.hydrationGlassML") as? Int ?? 250
-            try? await HealthKitClient.liveValue.logWater(glassML)
-            // Refresh the widget snapshot's water so the hydration ring is
-            // up to date even though the app UI may never come up.
-            if let total = try? await HealthKitClient.liveValue.todayWaterML() {
-                SharedStore.updateWater(intakeML: total)
-            }
-            WidgetCenter.shared.reloadAllTimelines()
-            HydrationNotification.confirm(kind: "drank", amount: glassML)
-            // Shift today's reminder grid: next one a full interval from now,
-            // not 3 minutes later because a fixed slot was coming up.
-            await HydrationReminderScheduler().recordDrinkAndReschedule()
+            await handleDrank()
         case HydrationNotification.snoozeAction:
             // "Rappelle-moi" → fire a one-off reminder after the snooze delay.
             let minutes = defaults.object(forKey: "preferences.hydrationSnoozeMinutes") as? Int ?? 15
@@ -74,5 +72,34 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
         default:
             break
         }
+    }
+
+    /// "J'ai bu" → log one glass to Health; the reminder is dismissed by the
+    /// system automatically. A denied authorization or a failed save stamps a
+    /// "failed" confirmation — shown as an error toast on the next open —
+    /// instead of pretending the glass counted; the reminder grid only shifts
+    /// on success.
+    private func handleDrank() async {
+        let glassML = defaults.object(forKey: "preferences.hydrationGlassML") as? Int ?? 250
+        guard !(await healthKit.waterWriteDenied()) else {
+            HydrationNotification.confirm(kind: "failed", amount: glassML)
+            return
+        }
+        do {
+            try await healthKit.logWater(glassML)
+        } catch {
+            HydrationNotification.confirm(kind: "failed", amount: glassML)
+            return
+        }
+        // Refresh the widget snapshot's water so the hydration ring is
+        // up to date even though the app UI may never come up.
+        if let total = try? await healthKit.todayWaterML() {
+            SharedStore.updateWater(intakeML: total)
+        }
+        WidgetCenter.shared.reloadAllTimelines()
+        HydrationNotification.confirm(kind: "drank", amount: glassML)
+        // Shift today's reminder grid: next one a full interval from now,
+        // not 3 minutes later because a fixed slot was coming up.
+        await HydrationReminderScheduler().recordDrinkAndReschedule(defaults: defaults)
     }
 }
