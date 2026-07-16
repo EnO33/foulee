@@ -20,7 +20,7 @@ struct WorkoutDetailHero: View {
                 .foregroundStyle(.secondary)
                 .tracking(1.1)
             Text(durationText)
-                .font(FouleeFont.numeric(size: 44))
+                .scaledNumericFont(size: 44)
             Text("\(timeRange) · \(detail.summary.sourceName)")
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)

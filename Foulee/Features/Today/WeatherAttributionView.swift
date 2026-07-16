@@ -19,7 +19,7 @@ struct WeatherAttributionView: View {
                 Text("Sources des données")
                     .font(FouleeFont.caption)
                 Image(systemName: "arrow.up.right")
-                    .font(.system(size: 9, weight: .bold))
+                    .scaledSystemFont(size: 9, weight: .bold)
             }
             .foregroundStyle(.secondary)
         }

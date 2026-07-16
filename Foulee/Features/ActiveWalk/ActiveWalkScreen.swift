@@ -78,7 +78,7 @@ struct ActiveWalkScreen: View {
                 .font(FouleeFont.title2)
             VStack(spacing: 4) {
                 Text(session.elapsed.walkClockText)
-                    .font(FouleeFont.numeric(size: 48))
+                    .scaledNumericFont(size: 48)
                 Text(finishedSummary(session: session))
                     .font(FouleeFont.callout)
                     .foregroundStyle(.secondary)
@@ -123,9 +123,10 @@ struct ActiveWalkScreen: View {
     private func timer(session: WalkSession) -> some View {
         VStack(spacing: 6) {
             Text(session.elapsed.walkClockText)
-                .font(.system(size: 86, weight: .ultraLight, design: .rounded))
-                .monospacedDigit()
                 .kerning(-2)
+                .scaledNumericFont(size: 86, weight: .ultraLight)
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
             Text("DURÉE")
                 .font(FouleeFont.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
@@ -140,7 +141,9 @@ struct ActiveWalkScreen: View {
         return ProgressRing(progress: progress, lineWidth: 16) {
             VStack(spacing: 4) {
                 Text(session.steps.formattedFR)
-                    .font(FouleeFont.numeric(size: 56))
+                    .scaledNumericFont(size: 56)
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
                 Text("PAS")
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
@@ -175,7 +178,7 @@ struct ActiveWalkScreen: View {
     private func metric(value: String, label: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(FouleeFont.numeric(size: 17, weight: .semibold))
+                .scaledNumericFont(size: 17, weight: .semibold)
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
             Text(label)
@@ -187,7 +190,7 @@ struct ActiveWalkScreen: View {
     private var heartRatePlaceholder: some View {
         HStack(spacing: 10) {
             Image(systemName: FouleeIcon.heart)
-                .font(.system(size: 20))
+                .scaledSystemFont(size: 20)
                 .foregroundStyle(FouleeColor.danger)
             Text("Connecte ta Watch pour le rythme cardiaque")
                 .font(FouleeFont.footnote)

@@ -33,7 +33,7 @@ struct HydrationSettingsContent: View {
                 Text("Objectif quotidien").font(FouleeFont.headline)
                 Spacer()
                 Text("\(litres(preferences.hydrationGoalML)) L")
-                    .font(FouleeFont.numeric(size: 20, weight: .semibold))
+                    .scaledNumericFont(size: 20, weight: .semibold)
                     .foregroundStyle(.teal)
             }
             Slider(
@@ -54,7 +54,7 @@ struct HydrationSettingsContent: View {
                 Text("Taille d'un verre").font(FouleeFont.headline)
                 Spacer()
                 Text("\(preferences.hydrationGlassML) mL")
-                    .font(FouleeFont.numeric(size: 20, weight: .semibold))
+                    .scaledNumericFont(size: 20, weight: .semibold)
                     .foregroundStyle(.teal)
             }
             Slider(

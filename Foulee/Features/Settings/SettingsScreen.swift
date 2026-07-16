@@ -68,7 +68,7 @@ struct SettingsScreen: View {
                     rowLabel("Objectif quotidien")
                     Spacer()
                     Text("\(preferences.stepsGoal.formattedFR) pas")
-                        .font(FouleeFont.numeric(size: 20, weight: .semibold))
+                        .scaledNumericFont(size: 20, weight: .semibold)
                         .foregroundStyle(FouleeColor.accentMid)
                 }
                 Slider(
@@ -137,7 +137,7 @@ struct SettingsScreen: View {
                 rowLabel("Objectif d'activité")
                 Spacer()
                 Text("\(preferences.minutesGoal) min")
-                    .font(FouleeFont.numeric(size: 20, weight: .semibold))
+                    .scaledNumericFont(size: 20, weight: .semibold)
                     .foregroundStyle(FouleeColor.accentMid)
             }
             Slider(
@@ -248,8 +248,12 @@ struct DayChip: View {
 
     var body: some View {
         Button(action: toggle) {
+            // The circle stays 40 pt (7 chips must fit one row), so the label
+            // scales with Dynamic Type until it hits the circle, then shrinks.
             Text(day.shortLabel)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(.subheadline, weight: .semibold))
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
                 .foregroundStyle(active ? AnyShapeStyle(Color.white) : AnyShapeStyle(Color.primary))
                 .frame(width: 40, height: 40)
                 .background(

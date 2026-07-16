@@ -21,7 +21,9 @@ struct StatBlock: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(value)
-                    .font(FouleeFont.numeric(size: 26))
+                    .scaledNumericFont(size: 26)
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
                 if let sub {
                     Text(sub)
                         .font(FouleeFont.footnote)

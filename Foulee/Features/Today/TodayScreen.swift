@@ -219,7 +219,7 @@ struct TodayScreen: View {
             Spacer()
             Button { isShowingSettings = true } label: {
                 Image(systemName: "person.crop.circle")
-                    .font(.system(size: 32))
+                    .scaledSystemFont(size: 32)
                     .foregroundStyle(FouleeColor.accentMid)
                     .symbolRenderingMode(.hierarchical)
             }
@@ -286,7 +286,7 @@ private struct TodayErrorBanner: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 16))
+                .font(.callout)
                 .foregroundStyle(FouleeColor.warning)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Données partiellement indisponibles")
@@ -308,7 +308,7 @@ private struct TodayEmptyStateCard: View {
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: FouleeIcon.walkMotion)
-                .font(.system(size: 40, weight: .semibold))
+                .scaledSystemFont(size: 40, weight: .semibold)
                 .foregroundStyle(FouleeColor.accentMid)
             Text("Pas encore de données")
                 .font(FouleeFont.headline)

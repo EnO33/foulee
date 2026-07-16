@@ -17,6 +17,8 @@ struct TodayHeroCard: View {
     var onToggleNotifications: () -> Void
     var onOpenNotificationSettings: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     /// Step-goal fill (outer ring), clamped so overshoot doesn't wrap.
     private var stepsProgress: Double {
         guard snapshot.stepsGoal > 0 else { return 0 }
@@ -160,7 +162,12 @@ struct TodayHeroCard: View {
     }
 
     private var actionRow: some View {
-        HStack(spacing: 10) {
+        // Two side-by-side pills can't fit their labels once text reaches
+        // the accessibility sizes — stack them instead.
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 10))
+            : AnyLayout(HStackLayout(spacing: 10))
+        return layout {
             if snapshot.hasWalkedToday {
                 // Already walked: still let the user start another walk — the
                 // single "Voir le résumé" button used to be the only option.

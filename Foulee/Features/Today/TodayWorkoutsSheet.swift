@@ -99,7 +99,7 @@ struct TodayWorkoutsSheet: View {
     private var emptyDayCard: some View {
         HStack(spacing: 12) {
             Image(systemName: "moon.zzz")
-                .font(.system(size: 18))
+                .scaledSystemFont(size: 18)
                 .foregroundStyle(.secondary)
             Text("Aucune marche enregistrée")
                 .font(FouleeFont.footnote)
@@ -130,7 +130,7 @@ struct TodayWorkoutsSheet: View {
                 }
                 Spacer()
                 Text(durationText(workout.durationSeconds))
-                    .font(FouleeFont.numeric(size: 22, weight: .semibold))
+                    .scaledNumericFont(size: 22, weight: .semibold)
             }
             HStack(spacing: 0) {
                 metricCell(
@@ -165,10 +165,12 @@ struct TodayWorkoutsSheet: View {
     private func metricCell(icon: String, value: String, label: String) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
+                .scaledSystemFont(size: 14, weight: .semibold)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(FouleeFont.numeric(size: 18, weight: .semibold))
+                .scaledNumericFont(size: 18, weight: .semibold)
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
             Text(label)
                 .font(FouleeFont.caption)
                 .foregroundStyle(.secondary)

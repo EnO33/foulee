@@ -25,7 +25,7 @@ struct OnboardingGoalView: View {
     private var heading: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Quand veux-tu\nmarcher ?")
-                .font(.system(size: 30, weight: .bold))
+                .scaledSystemFont(size: 30, weight: .bold)
                 .lineSpacing(2)
             Text("On t'enverra un petit rappel juste avant.")
                 .font(FouleeFont.body)
@@ -98,7 +98,7 @@ struct OnboardingGoalView: View {
             DatePicker("", selection: selection, displayedComponents: .hourAndMinute)
                 .labelsHidden()
                 .datePickerStyle(.compact)
-                .font(FouleeFont.numeric(size: 22, weight: .semibold))
+                .scaledNumericFont(size: 22, weight: .semibold)
         }
         .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
     }
@@ -109,7 +109,7 @@ struct OnboardingGoalView: View {
             VStack(spacing: 8) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(preferences.minutesGoal)")
-                        .font(FouleeFont.numeric(size: 44))
+                        .scaledNumericFont(size: 44)
                     Text("minutes")
                         .font(.title3.weight(.medium))
                         .foregroundStyle(.secondary)
