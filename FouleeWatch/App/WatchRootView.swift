@@ -16,10 +16,13 @@ struct WatchRootView: View {
                 WatchActiveWalkView(metrics: metrics) {
                     Task { await store.stop() }
                 }
-            case .ended(let metrics):
-                WatchFinishedView(metrics: metrics) {
-                    store.reset()
-                }
+            case .ended(let metrics, let saveFailed):
+                WatchFinishedView(
+                    metrics: metrics,
+                    saveFailed: saveFailed,
+                    onRetry: { Task { await store.retrySave() } },
+                    onDone: { store.reset() }
+                )
             }
         }
         .animation(.easeOut(duration: 0.25), value: store.state)

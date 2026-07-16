@@ -1,17 +1,22 @@
 import SwiftUI
 
-/// Post-walk summary — quick recap + a button to clear the slate.
+/// Post-walk summary — quick recap + a button to clear the slate. When the
+/// workout could not be saved to Health, says so and offers a retry instead
+/// of celebrating a walk that never landed.
 struct WatchFinishedView: View {
     let metrics: WatchWorkoutMetrics
+    var saveFailed: Bool
+    var onRetry: () -> Void
     var onDone: () -> Void
 
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 40, weight: .bold))
-                .foregroundStyle(Color("AccentColor"))
-            Text("Bravo")
-                .font(.headline)
+            Image(systemName: saveFailed ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                .font(.system(size: saveFailed ? 32 : 40, weight: .bold))
+                .foregroundStyle(saveFailed ? AnyShapeStyle(.orange) : AnyShapeStyle(Color("AccentColor")))
+            Text(saveFailed ? "Marche non enregistrée dans Santé" : "Bravo")
+                .font(saveFailed ? .caption : .headline)
+                .multilineTextAlignment(.center)
             VStack(spacing: 2) {
                 Text(metrics.elapsed.walkClockText)
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
@@ -21,12 +26,25 @@ struct WatchFinishedView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Button(action: onDone) {
-                Text("Terminer")
-                    .frame(maxWidth: .infinity)
+            if saveFailed {
+                Button(action: onRetry) {
+                    Text("Réessayer")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color("AccentColor"))
+                Button(action: onDone) {
+                    Text("Terminer")
+                        .frame(maxWidth: .infinity)
+                }
+            } else {
+                Button(action: onDone) {
+                    Text("Terminer")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color("AccentColor"))
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Color("AccentColor"))
         }
         .padding(.horizontal, 8)
     }

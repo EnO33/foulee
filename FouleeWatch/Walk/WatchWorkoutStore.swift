@@ -16,7 +16,10 @@ final class WatchWorkoutStore: NSObject {
     enum State: Equatable {
         case idle
         case active(WatchWorkoutMetrics)
-        case ended(WatchWorkoutMetrics)
+        /// `saveFailed` travels with the summary: `endCollection`/
+        /// `finishWorkout` can throw after a perfectly good walk, and the
+        /// summary screen is the only place the user can still act on it.
+        case ended(WatchWorkoutMetrics, saveFailed: Bool)
     }
 
     private(set) var state: State = .idle
@@ -65,18 +68,37 @@ final class WatchWorkoutStore: NSObject {
         await beginSession()
     }
 
-    /// End the session, save the workout and surface a summary.
+    /// End the session, save the workout and surface a summary. On a save
+    /// failure the builder is kept alive so "Réessayer" can finish it.
     func stop() async {
         guard case .active(let metrics) = state, let session, let builder else { return }
         session.end()
-        _ = await runOrTrap {
+        let saved = await runOrTrap {
             try await builder.endCollection(at: .now)
             _ = try await builder.finishWorkout()
             return true as Bool
         }
         self.session = nil
+        if saved == true { self.builder = nil }
+        state = .ended(metrics, saveFailed: saved != true)
+    }
+
+    /// Second attempt at persisting the workout after a failed `stop()`.
+    /// Collection may already be over from the first attempt — only finish is
+    /// unconditionally retried.
+    func retrySave() async {
+        guard case .ended(let metrics, saveFailed: true) = state, let builder else { return }
+        let saved = await runOrTrap {
+            if builder.endDate == nil {
+                try await builder.endCollection(at: .now)
+            }
+            _ = try await builder.finishWorkout()
+            return true as Bool
+        }
+        guard saved == true else { return }
         self.builder = nil
-        state = .ended(metrics)
+        lastError = nil
+        state = .ended(metrics, saveFailed: false)
     }
 
     /// Return to idle so a new session can start.
@@ -179,8 +201,19 @@ extension WatchWorkoutStore: HKWorkoutSessionDelegate {
     ) {
         let message = error.localizedDescription
         Task { @MainActor [weak self] in
-            self?.lastError = message
+            self?.handleSessionFailure(message)
         }
+    }
+
+    /// A failed session is dead mid-walk: land on the summary with the save
+    /// banner instead of leaving `.active` frozen (the error used to go to
+    /// `lastError`, rendered only on the idle screen — after `reset()` had
+    /// already cleared it).
+    private func handleSessionFailure(_ message: String) {
+        lastError = message
+        guard case .active(let metrics) = state else { return }
+        session = nil
+        state = .ended(metrics, saveFailed: true)
     }
 }
 
