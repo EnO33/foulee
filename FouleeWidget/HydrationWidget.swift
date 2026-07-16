@@ -1,11 +1,14 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
-/// Today's water intake vs goal as a single teal ring. Tapping the widget deep
-/// links to the home's hydration card (`foulee://hydration`) where "J'ai bu"
-/// lives. Reads the shared snapshot (no HealthKit → works on the Lock Screen).
+/// Today's water intake vs goal as a single teal ring. The small and
+/// rectangular families carry a "+1 verre" button (`LogWaterIntent`) so a
+/// glass can be logged without opening the app; the rest of the surface deep
+/// links to the home's hydration card (`foulee://hydration`). Reads the shared
+/// snapshot (no HealthKit → works on the Lock Screen).
 struct HydrationWidget: Widget {
-    static let kind = "com.eno33.foulee.hydrationWidget"
+    static let kind = WidgetKind.hydration
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: Self.kind, provider: HydrationProvider()) { entry in
@@ -144,7 +147,24 @@ struct HydrationWidgetView: View {
                 Text("\(Int((progress * 100).rounded())) % de l'objectif")
             }
             .font(.system(size: 12, weight: .semibold))
+            Spacer(minLength: 0)
+            rectangularAddButton
         }
+    }
+
+    /// Compact "+1 verre" for the Lock Screen: icon over the glass size, so it
+    /// stays legible in the tight rectangular slot.
+    private var rectangularAddButton: some View {
+        Button(intent: LogWaterIntent()) {
+            VStack(spacing: 0) {
+                Image(systemName: "drop.fill").font(.system(size: 11, weight: .bold))
+                Text("+\(glassML)").font(.system(size: 10, weight: .bold, design: .rounded))
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 4)
+            .background(.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
     }
 
     private var inlineView: some View {
@@ -170,7 +190,26 @@ struct HydrationWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .overlay(alignment: .bottomTrailing) { smallAddButton }
         .padding(14)
+    }
+
+    private var smallAddButton: some View {
+        Button(intent: LogWaterIntent()) {
+            Label("+\(glassML) ml", systemImage: "drop.fill")
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 6)
+                .background(.white.opacity(0.18), in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// User's glass size, mirrored into the shared snapshot by the app — the
+    /// widget process can't read the app's `UserDefaults.standard` preferences.
+    private var glassML: Int {
+        WaterGlass.milliliters(from: SharedStore.read())
     }
 
     private func ring(lineWidth: CGFloat) -> some View {

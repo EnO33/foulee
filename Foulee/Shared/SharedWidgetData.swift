@@ -21,6 +21,9 @@ struct WidgetSnapshot: Codable, Sendable {
     var waterML: Int
     var waterGoalML: Int
     var hydrationEnabled: Bool
+    /// Glass size preference mirrored here because the widget process can't
+    /// read `UserDefaults.standard` — see `WaterGlass`.
+    var hydrationGlassML: Int
     /// Local start-of-day when the snapshot was written (stamped by
     /// `SharedStore.write`). nil on snapshots from older builds — treated as
     /// stale, so readers zero the counters rather than show old totals.
@@ -42,6 +45,7 @@ struct WidgetSnapshot: Codable, Sendable {
         waterML: Int = 0,
         waterGoalML: Int = 2_000,
         hydrationEnabled: Bool = false,
+        hydrationGlassML: Int = 250,
         day: Date? = nil
     ) {
         self.steps = steps
@@ -54,6 +58,7 @@ struct WidgetSnapshot: Codable, Sendable {
         self.waterML = waterML
         self.waterGoalML = waterGoalML
         self.hydrationEnabled = hydrationEnabled
+        self.hydrationGlassML = hydrationGlassML
         self.day = day
     }
 
@@ -83,6 +88,7 @@ struct WidgetSnapshot: Codable, Sendable {
         waterML = try container.decodeIfPresent(Int.self, forKey: .waterML) ?? 0
         waterGoalML = try container.decodeIfPresent(Int.self, forKey: .waterGoalML) ?? 2_000
         hydrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .hydrationEnabled) ?? false
+        hydrationGlassML = try container.decodeIfPresent(Int.self, forKey: .hydrationGlassML) ?? 250
         day = try container.decodeIfPresent(Date.self, forKey: .day)
     }
 }

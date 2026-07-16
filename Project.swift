@@ -125,6 +125,8 @@ let project = Project(
                 "Foulee/Shared/NumberFormatting.swift",
                 "Foulee/Shared/UncheckedSendableBox.swift",
                 "Foulee/Shared/WidgetRefresh.swift",
+                "Foulee/Shared/WidgetKind.swift",
+                "Foulee/Shared/LogWaterIntent.swift",
                 "FouleeWatchWidget/StreakEntry.swift"
             ],
             resources: [

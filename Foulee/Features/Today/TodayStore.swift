@@ -174,7 +174,8 @@ final class TodayStore {
             // Stale-zeroed so yesterday's water doesn't survive midnight.
             waterML: SharedStore.read()?.zeroedIfStale().waterML ?? 0,
             waterGoalML: hydrationGoalML,
-            hydrationEnabled: hydrationEnabled
+            hydrationEnabled: hydrationEnabled,
+            hydrationGlassML: hydrationGlassML
         ))
         WidgetCenter.shared.reloadAllTimelines()
 
