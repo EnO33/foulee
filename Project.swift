@@ -246,6 +246,17 @@ let project = Project(
             dependencies: [
                 .target(name: "Foulee")
             ]
+        ),
+        .target(
+            name: "FouleeWatchTests",
+            destinations: [.appleWatch],
+            product: .unitTests,
+            bundleId: "\(bundleIdBase).watchkitapp.tests",
+            deploymentTargets: .watchOS("26.0"),
+            sources: ["FouleeWatchTests/**"],
+            dependencies: [
+                .target(name: "FouleeWatch")
+            ]
         )
     ],
     schemes: [
@@ -260,6 +271,7 @@ let project = Project(
             name: "FouleeWatch",
             shared: true,
             buildAction: .buildAction(targets: ["FouleeWatch"]),
+            testAction: .targets(["FouleeWatchTests"]),
             runAction: .runAction(executable: "FouleeWatch")
         )
     ]

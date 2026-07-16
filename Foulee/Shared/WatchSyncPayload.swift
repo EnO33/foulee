@@ -52,16 +52,18 @@ enum WatchSyncStore {
     private static let key = "watch.sync.payload"
     private static let suiteName = "group.com.eno33.foulee"
 
-    private static var defaults: UserDefaults {
+    private static var sharedDefaults: UserDefaults {
         UserDefaults(suiteName: suiteName) ?? .standard
     }
 
-    static func write(_ payload: WatchSyncPayload) {
+    // The `defaults` parameter is a test seam: production call sites rely on
+    // the default (the app-group suite); tests inject an isolated suite.
+    static func write(_ payload: WatchSyncPayload, to defaults: UserDefaults = Self.sharedDefaults) {
         guard let data = try? JSONEncoder().encode(payload) else { return }
         defaults.set(data, forKey: key)
     }
 
-    static func read() -> WatchSyncPayload? {
+    static func read(from defaults: UserDefaults = Self.sharedDefaults) -> WatchSyncPayload? {
         guard let data = defaults.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(WatchSyncPayload.self, from: data)
     }
