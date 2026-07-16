@@ -150,7 +150,8 @@ final class TodayStore {
             // value forward so this full rewrite doesn't reset the ring.
             waterML: SharedStore.read()?.waterML ?? 0,
             waterGoalML: hydrationGoalML,
-            hydrationEnabled: hydrationEnabled
+            hydrationEnabled: hydrationEnabled,
+            hydrationGlassML: hydrationGlassML
         ))
         WidgetCenter.shared.reloadAllTimelines()
 

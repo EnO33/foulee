@@ -21,6 +21,9 @@ struct WidgetSnapshot: Codable, Sendable {
     var waterML: Int
     var waterGoalML: Int
     var hydrationEnabled: Bool
+    /// Glass size preference mirrored here because the widget process can't
+    /// read `UserDefaults.standard` — see `WaterGlass`.
+    var hydrationGlassML: Int
 
     static let placeholder = WidgetSnapshot(
         steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20,
@@ -37,7 +40,8 @@ struct WidgetSnapshot: Codable, Sendable {
         streak: Int,
         waterML: Int = 0,
         waterGoalML: Int = 2_000,
-        hydrationEnabled: Bool = false
+        hydrationEnabled: Bool = false,
+        hydrationGlassML: Int = 250
     ) {
         self.steps = steps
         self.stepsGoal = stepsGoal
@@ -49,6 +53,7 @@ struct WidgetSnapshot: Codable, Sendable {
         self.waterML = waterML
         self.waterGoalML = waterGoalML
         self.hydrationEnabled = hydrationEnabled
+        self.hydrationGlassML = hydrationGlassML
     }
 
     init(from decoder: any Decoder) throws {
@@ -63,6 +68,7 @@ struct WidgetSnapshot: Codable, Sendable {
         waterML = try container.decodeIfPresent(Int.self, forKey: .waterML) ?? 0
         waterGoalML = try container.decodeIfPresent(Int.self, forKey: .waterGoalML) ?? 2_000
         hydrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .hydrationEnabled) ?? false
+        hydrationGlassML = try container.decodeIfPresent(Int.self, forKey: .hydrationGlassML) ?? 250
     }
 }
 
