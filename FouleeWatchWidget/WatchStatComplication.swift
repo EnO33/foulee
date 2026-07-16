@@ -104,16 +104,52 @@ struct WatchStatProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: WatchStatIntent, in context: Context) async -> Timeline<WatchStatEntry> {
-        let entry = await entry(for: configuration.metric)
+        let metric = configuration.metric
+        let value = await Self.todaySum(for: metric)
         let now = Date.now
+        let nextRefresh = WidgetRefresh.nextRefresh(after: now)
+        let midnight = WidgetRefresh.nextMidnight(after: now)
+        // Interpolated future entries until the next reload slot — steps
+        // projected (clamped below the gauge's own goal so a crossing is
+        // never fabricated), the other metrics re-dated flat. Still one
+        // timeline call per slot: more entries, not more reloads.
+        var entries = WidgetTimelineBuilder
+            .projectedValues(
+                counters: Self.counters(for: metric, value: value),
+                now: now, nextRefresh: nextRefresh, nextMidnight: midnight
+            )
+            .map { WatchStatEntry(date: $0.date, metric: metric, value: Self.value(for: metric, from: $0)) }
         // Pre-rendered zero entry at local midnight — the system swaps to it
         // at 00:00 without a reload, so the complication never shows
         // yesterday's total overnight.
-        let reset = WatchStatEntry(
-            date: WidgetRefresh.nextMidnight(after: now),
-            metric: configuration.metric, value: 0
-        )
-        return Timeline(entries: [entry, reset], policy: .after(WidgetRefresh.nextRefresh(after: now)))
+        entries.append(WatchStatEntry(date: midnight, metric: metric, value: 0))
+        return Timeline(entries: entries, policy: .after(nextRefresh))
+    }
+
+    /// Routes the single queried value into the projection slot matching the
+    /// metric. Only steps get a moving projection; minutes would need the
+    /// steps pace (a second HealthKit query) to be honest, so they stay flat
+    /// like distance and calories.
+    private static func counters(for metric: WatchStatMetric, value: Double) -> WidgetCounters {
+        switch metric {
+        case .steps:
+            WidgetCounters(steps: Int(value), stepsGoal: Int(metric.goal), minutes: 0, minutesGoal: 0)
+        case .minutes:
+            WidgetCounters(steps: 0, stepsGoal: 0, minutes: Int(value), minutesGoal: Int(metric.goal))
+        case .distance:
+            WidgetCounters(steps: 0, stepsGoal: 0, minutes: 0, minutesGoal: 0, distanceKm: value)
+        case .calories:
+            WidgetCounters(steps: 0, stepsGoal: 0, minutes: 0, minutesGoal: 0, calories: Int(value))
+        }
+    }
+
+    private static func value(for metric: WatchStatMetric, from point: WidgetProjectedValue) -> Double {
+        switch metric {
+        case .steps: Double(point.steps)
+        case .minutes: Double(point.minutes)
+        case .distance: point.distanceKm
+        case .calories: Double(point.calories)
+        }
     }
 
     /// watchOS requires recommendations so the metric variants appear in the

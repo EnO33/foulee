@@ -125,3 +125,15 @@ enum SharedStore {
         write(snapshot)
     }
 }
+
+/// Bridge to the platform-neutral projection input (`WidgetTimelineBuilder`
+/// compiles into the watch widget target, this type does not).
+extension WidgetSnapshot {
+    var counters: WidgetCounters {
+        WidgetCounters(
+            steps: steps, stepsGoal: stepsGoal,
+            minutes: minutes, minutesGoal: minutesGoal,
+            distanceKm: distanceKm, calories: calories
+        )
+    }
+}

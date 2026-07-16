@@ -38,12 +38,19 @@ struct StatEntry: TimelineEntry {
     let metric: StatMetric
     let value: Double
     let goal: Double
+    /// When the value was actually read (HealthKit or snapshot) — shown as a
+    /// live relative stamp so staleness is visible without a reload.
+    let fetchedAt: Date
+
+    var relevance: TimelineEntryRelevance? {
+        TimelineEntryRelevance(score: WidgetTimelineBuilder.relevanceScore(at: date))
+    }
 }
 
 /// Reads the chosen stat from the snapshot the app writes to the app group.
 struct StatProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> StatEntry {
-        StatEntry(date: .now, metric: .steps, value: 0, goal: 6_000)
+        StatEntry(date: .now, metric: .steps, value: 0, goal: 6_000, fetchedAt: .now)
     }
 
     func snapshot(for configuration: StatWidgetIntent, in context: Context) async -> StatEntry {
@@ -53,31 +60,55 @@ struct StatProvider: AppIntentTimelineProvider {
     func timeline(for configuration: StatWidgetIntent, in context: Context) async -> Timeline<StatEntry> {
         // Live HealthKit when unlocked, snapshot fallback when locked.
         // Daytime cadence — see WidgetRefresh.
-        let entry = Self.entry(for: configuration.metric, from: await WidgetLiveMetrics.freshSnapshot())
+        let snapshot = await WidgetLiveMetrics.freshSnapshot()
+        // One clock sample for entries, reset and policy, so a rebuild
+        // straddling midnight cannot pair stale totals with a reset dated
+        // the *following* midnight.
         let now = Date.now
+        let nextRefresh = WidgetRefresh.nextRefresh(after: now)
+        let midnight = WidgetRefresh.nextMidnight(after: now)
+        // Interpolated future entries until the next reload slot — steps and
+        // minutes projected, distance and calories flat. Same single
+        // getTimeline call, so the reload budget is unchanged.
+        var entries = WidgetTimelineBuilder
+            .projectedValues(counters: snapshot.counters, now: now, nextRefresh: nextRefresh, nextMidnight: midnight)
+            .map { Self.entry(for: configuration.metric, projecting: $0, goals: snapshot, fetchedAt: now) }
         // Pre-rendered zero entry at local midnight — the system swaps to it
         // at 00:00 without a reload, so the stat never shows yesterday.
         let reset = StatEntry(
-            date: WidgetRefresh.nextMidnight(after: now),
-            metric: entry.metric, value: 0, goal: entry.goal
+            date: midnight, metric: configuration.metric,
+            value: 0, goal: entries.first?.goal ?? 0, fetchedAt: midnight
         )
-        return Timeline(entries: [entry, reset], policy: .after(WidgetRefresh.nextRefresh(after: now)))
+        entries.append(reset)
+        return Timeline(entries: entries, policy: .after(nextRefresh))
     }
 
     private func entry(for metric: StatMetric) -> StatEntry {
-        Self.entry(for: metric, from: (SharedStore.read() ?? .placeholder).zeroedIfStale())
+        let snapshot = (SharedStore.read() ?? .placeholder).zeroedIfStale()
+        let now = Date.now
+        return Self.entry(
+            for: metric, projecting: WidgetTimelineBuilder.point(counters: snapshot.counters, at: now),
+            goals: snapshot, fetchedAt: now
+        )
     }
 
-    private static func entry(for metric: StatMetric, from snapshot: WidgetSnapshot) -> StatEntry {
+    private static func entry(
+        for metric: StatMetric,
+        projecting value: WidgetProjectedValue,
+        goals snapshot: WidgetSnapshot,
+        fetchedAt: Date
+    ) -> StatEntry {
         switch metric {
         case .steps:
-            return StatEntry(date: .now, metric: metric, value: Double(snapshot.steps), goal: Double(snapshot.stepsGoal))
+            StatEntry(date: value.date, metric: metric, value: Double(value.steps),
+                      goal: Double(snapshot.stepsGoal), fetchedAt: fetchedAt)
         case .minutes:
-            return StatEntry(date: .now, metric: metric, value: Double(snapshot.minutes), goal: Double(snapshot.minutesGoal))
+            StatEntry(date: value.date, metric: metric, value: Double(value.minutes),
+                      goal: Double(snapshot.minutesGoal), fetchedAt: fetchedAt)
         case .distance:
-            return StatEntry(date: .now, metric: metric, value: snapshot.distanceKm, goal: 0)
+            StatEntry(date: value.date, metric: metric, value: value.distanceKm, goal: 0, fetchedAt: fetchedAt)
         case .calories:
-            return StatEntry(date: .now, metric: metric, value: Double(snapshot.calories), goal: 0)
+            StatEntry(date: value.date, metric: metric, value: Double(value.calories), goal: 0, fetchedAt: fetchedAt)
         }
     }
 }
@@ -146,6 +177,7 @@ struct StatWidgetView: View {
                     .font(.system(size: 17, weight: .bold, design: .rounded))
                     .monospacedDigit()
                 Text(label).font(.system(size: 11)).foregroundStyle(.secondary)
+                FreshnessStamp(fetchedAt: entry.fetchedAt).foregroundStyle(.secondary)
             }
         }
     }
@@ -170,6 +202,7 @@ struct StatWidgetView: View {
                 .monospacedDigit().minimumScaleFactor(0.5).lineLimit(1)
                 .foregroundStyle(.white)
             Text(label).font(.system(size: 12, weight: .semibold)).foregroundStyle(.white.opacity(0.7))
+            FreshnessStamp(fetchedAt: entry.fetchedAt).foregroundStyle(.white.opacity(0.5))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(14)

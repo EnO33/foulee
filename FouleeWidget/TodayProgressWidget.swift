@@ -44,8 +44,17 @@ struct TodayEntry: TimelineEntry, Sendable {
     let stepsGoal: Int
     let minutes: Int
     let minutesGoal: Int
+    /// When the values were actually read (HealthKit or snapshot) — shown as
+    /// a live relative stamp so staleness is visible without a reload.
+    let fetchedAt: Date
 
-    static let placeholder = TodayEntry(date: .now, steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20)
+    var relevance: TimelineEntryRelevance? {
+        TimelineEntryRelevance(score: WidgetTimelineBuilder.relevanceScore(at: date))
+    }
+
+    static let placeholder = TodayEntry(
+        date: .now, steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20, fetchedAt: .now
+    )
 }
 
 /// Reads today's progress from the snapshot the app writes to the app group
@@ -65,36 +74,47 @@ struct TodayProvider: TimelineProvider {
         let box = UncheckedSendableBox(completion)
         Task {
             let snapshot = await WidgetLiveMetrics.freshSnapshot()
-            // One clock sample for entry, reset and policy, so a rebuild
+            // One clock sample for entries, reset and policy, so a rebuild
             // straddling midnight cannot pair stale totals with a reset
             // dated the *following* midnight.
             let now = Date.now
-            // Pre-rendered zero entry at local midnight: the system swaps to
-            // it at 00:00 without a reload, so the rings never show
-            // yesterday's totals overnight.
-            let reset = TodayEntry(
-                date: WidgetRefresh.nextMidnight(after: now),
-                steps: 0, stepsGoal: snapshot.stepsGoal,
-                minutes: 0, minutesGoal: snapshot.minutesGoal
-            )
-            box.value(Timeline(
-                entries: [Self.entry(from: snapshot), reset],
-                policy: .after(WidgetRefresh.nextRefresh(after: now))
-            ))
+            box.value(Self.timeline(from: snapshot, now: now))
         }
     }
 
-    private func entry() -> TodayEntry {
-        Self.entry(from: (SharedStore.read() ?? .placeholder).zeroedIfStale())
+    /// The whole batch — now, interpolated future points, midnight reset —
+    /// comes from this one getTimeline call: more entries, not more reloads,
+    /// so the daily budget stays where WidgetRefresh put it.
+    private static func timeline(from snapshot: WidgetSnapshot, now: Date) -> Timeline<TodayEntry> {
+        let nextRefresh = WidgetRefresh.nextRefresh(after: now)
+        let midnight = WidgetRefresh.nextMidnight(after: now)
+        var entries = WidgetTimelineBuilder
+            .projectedValues(counters: snapshot.counters, now: now, nextRefresh: nextRefresh, nextMidnight: midnight)
+            .map { entry(from: $0, goals: snapshot, fetchedAt: now) }
+        // Pre-rendered zero entry at local midnight: the system swaps to it
+        // at 00:00 without a reload, so the rings never show yesterday's
+        // totals overnight.
+        entries.append(TodayEntry(
+            date: midnight, steps: 0, stepsGoal: snapshot.stepsGoal,
+            minutes: 0, minutesGoal: snapshot.minutesGoal, fetchedAt: midnight
+        ))
+        return Timeline(entries: entries, policy: .after(nextRefresh))
     }
 
-    private static func entry(from snapshot: WidgetSnapshot) -> TodayEntry {
+    private func entry() -> TodayEntry {
+        let snapshot = (SharedStore.read() ?? .placeholder).zeroedIfStale()
+        let now = Date.now
+        return Self.entry(from: WidgetTimelineBuilder.point(counters: snapshot.counters, at: now), goals: snapshot, fetchedAt: now)
+    }
+
+    private static func entry(from value: WidgetProjectedValue, goals: WidgetSnapshot, fetchedAt: Date) -> TodayEntry {
         TodayEntry(
-            date: .now,
-            steps: snapshot.steps,
-            stepsGoal: snapshot.stepsGoal,
-            minutes: snapshot.minutes,
-            minutesGoal: snapshot.minutesGoal
+            date: value.date,
+            steps: value.steps,
+            stepsGoal: goals.stepsGoal,
+            minutes: value.minutes,
+            minutesGoal: goals.minutesGoal,
+            fetchedAt: fetchedAt
         )
     }
 }
@@ -134,6 +154,7 @@ struct TodayProgressView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Label("\(entry.steps.formatted()) / \(entry.stepsGoal.formatted())", systemImage: "figure.walk")
                 Label("\(entry.minutes) / \(entry.minutesGoal) min", systemImage: "timer")
+                FreshnessStamp(fetchedAt: entry.fetchedAt).foregroundStyle(.secondary)
             }
             .font(.system(size: 12, weight: .semibold))
         }
@@ -151,6 +172,7 @@ struct TodayProgressView: View {
                           value: "\(entry.steps.formatted())", unit: "pas")
                 legendRow(color: Color(red: 0x30 / 255, green: 0xD1 / 255, blue: 0x58 / 255),
                           value: "\(entry.minutes)", unit: "min")
+                FreshnessStamp(fetchedAt: entry.fetchedAt).foregroundStyle(.white.opacity(0.5))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
