@@ -350,7 +350,10 @@ private struct HydrationDeepLinkScroll: ViewModifier {
         guard pending else { return }
         pending = false
         // Slight delay so the freshly mounted scroll content has laid out.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // No stored handle: a repeat deep link just scrolls to the same card,
+        // so a stale fire is harmless and cancellation would be dead weight.
+        Task {
+            try? await Task.sleep(for: .seconds(0.3))
             withAnimation { proxy.scrollTo("hydrationCard", anchor: .center) }
         }
     }
