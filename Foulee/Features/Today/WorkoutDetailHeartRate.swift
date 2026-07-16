@@ -68,14 +68,14 @@ struct WorkoutDetailHeartRate: View {
     private var header: some View {
         HStack(spacing: 10) {
             Image(systemName: "heart.fill")
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(.callout, weight: .bold))
                 .foregroundStyle(FouleeColor.danger)
             Text("Fréquence cardiaque")
                 .font(FouleeFont.headline)
             Spacer()
             if let avg = detail.averageHeartRate {
                 Text("\(avg) bpm")
-                    .font(FouleeFont.numeric(size: 22, weight: .semibold))
+                    .scaledNumericFont(size: 22, weight: .semibold)
                     .foregroundStyle(FouleeColor.danger)
             }
         }
@@ -84,7 +84,7 @@ struct WorkoutDetailHeartRate: View {
     private func hrCell(label: String, value: Int?) -> some View {
         VStack(spacing: 2) {
             Text(value.map { "\($0)" } ?? "—")
-                .font(FouleeFont.numeric(size: 18, weight: .semibold))
+                .scaledNumericFont(size: 18, weight: .semibold)
             Text(label)
                 .font(FouleeFont.caption)
                 .foregroundStyle(.secondary)

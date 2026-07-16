@@ -35,7 +35,7 @@ struct OnboardingPermissionsView: View {
     private var heading: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Connectons\nSanté & Apple Watch")
-                .font(.system(size: 30, weight: .bold))
+                .scaledSystemFont(size: 30, weight: .bold)
                 .lineSpacing(2)
             Text("Foulée lit uniquement tes pas et marches.\nAucune donnée n'est partagée.")
                 .font(FouleeFont.body)
@@ -83,7 +83,7 @@ struct OnboardingPermissionsView: View {
     private var hint: some View {
         HStack(spacing: 8) {
             Image(systemName: FouleeIcon.sparkle)
-                .font(.system(size: 14))
+                .scaledSystemFont(size: 14)
                 .foregroundStyle(.secondary)
             Text("Tu peux changer ces autorisations dans Réglages à tout moment.")
                 .font(FouleeFont.caption)

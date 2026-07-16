@@ -15,6 +15,12 @@ final class TodayStore {
     private(set) var isLoading = false
     private(set) var lastError: String?
 
+    /// Error captured by `runOrTrap` during the current pass. Published into
+    /// `lastError` only at the end of `refresh()` so a transient failure
+    /// doesn't pin the banner forever, and a pass in progress doesn't make
+    /// it flicker off/on.
+    @ObservationIgnored private var passError: String?
+
     /// System-level notification permission, so the hero bell can surface
     /// "refusées dans Réglages" instead of a lying "activés".
     private(set) var notificationsAuthorizationStatus: UNAuthorizationStatus = .notDetermined
@@ -30,6 +36,9 @@ final class TodayStore {
 
     @ObservationIgnored
     @Dependency(\.weather) private var weather
+
+    @ObservationIgnored
+    @Dependency(\.date) private var date
 
     /// Mirror of the user's preferences. TodayScreen calls
     /// `apply(preferences:)` on mount and on every change so the hero
@@ -64,10 +73,24 @@ final class TodayStore {
     private struct PendingWalk {
         var targetSteps: Int
         var targetDistanceKm: Double
+        /// startOfDay when the walk was registered — the overlay is only
+        /// meaningful for that day's totals.
+        var day: Date
+        var registeredAt: Date
     }
     @ObservationIgnored private var pendingWalk: PendingWalk?
     @ObservationIgnored private var walkBaselineSteps = 0
     @ObservationIgnored private var walkBaselineDistanceKm = 0.0
+
+    /// Last raw HealthKit totals (no overlay applied), so `walkWillStart`
+    /// baselines on real data — a snapshot-based baseline would compound the
+    /// previous walk's overlay into the next walk's target.
+    @ObservationIgnored private var lastRawMetrics: HealthMetrics = .zero
+
+    /// The overlay is a short-lived patch while HealthKit reconciles a walk,
+    /// not a durable state — past this, trust HealthKit even if it never
+    /// reaches the target.
+    private static let pendingWalkLifetime: TimeInterval = 60 * 60
 
     private var fallbackWeather: WeatherSnapshot {
         WeatherSnapshot(temperatureCelsius: 0, condition: "—", advice: "")
@@ -148,7 +171,8 @@ final class TodayStore {
             streak: snapshot.streak,
             // Water intake is owned by the hydration flow — carry the stored
             // value forward so this full rewrite doesn't reset the ring.
-            waterML: SharedStore.read()?.waterML ?? 0,
+            // Stale-zeroed so yesterday's water doesn't survive midnight.
+            waterML: SharedStore.read()?.zeroedIfStale().waterML ?? 0,
             waterGoalML: hydrationGoalML,
             hydrationEnabled: hydrationEnabled,
             hydrationGlassML: hydrationGlassML
@@ -197,17 +221,20 @@ final class TodayStore {
     /// Snapshot today's totals just before a walk begins, so when it finishes
     /// we can show the walk's contribution on top of the right baseline.
     func walkWillStart() {
-        walkBaselineSteps = snapshot?.steps ?? 0
-        walkBaselineDistanceKm = snapshot?.distanceKm ?? 0
+        walkBaselineSteps = lastRawMetrics.steps
+        walkBaselineDistanceKm = lastRawMetrics.distanceKm
     }
 
     /// A walk just finished: overlay its steps + distance immediately (see
     /// `PendingWalk`) and refresh so the home, widgets and Watch reflect it
     /// without waiting for the iPhone to flush the walk into HealthKit.
     func registerFinishedWalk(_ session: WalkSession) async {
+        let now = date.now
         pendingWalk = PendingWalk(
             targetSteps: walkBaselineSteps + session.steps,
-            targetDistanceKm: walkBaselineDistanceKm + session.distanceKm
+            targetDistanceKm: walkBaselineDistanceKm + session.distanceKm,
+            day: Calendar.current.startOfDay(for: now),
+            registeredAt: now
         )
         await refresh()
     }
@@ -235,17 +262,39 @@ final class TodayStore {
         }
 
         let metrics = await metricsTask ?? .zero
-        // Drop the post-walk overlay once HealthKit's own step count reaches the
-        // expected total — from there real data is complete, and keeping the
-        // overlay could mask a later edit/deletion in the Health app.
-        if let pending = pendingWalk, metrics.steps >= pending.targetSteps {
-            pendingWalk = nil
-        }
+        lastRawMetrics = metrics
+        dropPendingWalkIfStale(metrics: metrics)
         let weatherSnapshot = await weatherTask
         let history = await historyTask ?? []
         cachedHistory = history
         snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot, history: history)
         publishToWidgets()
+        // Publish this pass's verdict last: a transient failure must not pin
+        // the banner for the whole process lifetime, and clearing it mid-pass
+        // would make it flicker. Bootstrap's auth errors land here too, since
+        // bootstrap always ends in a refresh.
+        lastError = passError
+        passError = nil
+    }
+
+    /// Drop the post-walk overlay once HealthKit's own step count reaches the
+    /// expected total — from there real data is complete, and keeping the
+    /// overlay could mask a later edit/deletion in the Health app. The target
+    /// gets a small tolerance because CMPedometer (which measured the walk)
+    /// usually counts a bit more than the coprocessor total HealthKit reports —
+    /// and the app deliberately never writes steps itself. Also drop it when
+    /// the day changes or after `pendingWalkLifetime`: a stale overlay would
+    /// show yesterday's post-walk totals as today's, in the app and widgets.
+    private func dropPendingWalkIfStale(metrics: HealthMetrics) {
+        guard let pending = pendingWalk else { return }
+        let now = date.now
+        let tolerance = max(50, pending.targetSteps / 50)
+        let caughtUp = metrics.steps >= pending.targetSteps - tolerance
+        let dayChanged = Calendar.current.startOfDay(for: now) != pending.day
+        let expired = now.timeIntervalSince(pending.registeredAt) >= Self.pendingWalkLifetime
+        if caughtUp || dayChanged || expired {
+            pendingWalk = nil
+        }
     }
 
     private func fetchWeatherIfAuthorized() async -> WeatherSnapshot? {
@@ -319,7 +368,7 @@ final class TodayStore {
         do {
             return try await body()
         } catch {
-            lastError = error.localizedDescription
+            passError = error.localizedDescription
             return nil
         }
     }

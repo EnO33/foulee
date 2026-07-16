@@ -64,7 +64,7 @@ struct WorkoutDetailSheet: View {
         } else {
             VStack(spacing: 12) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 36, weight: .semibold))
+                    .scaledSystemFont(size: 36, weight: .semibold)
                     .foregroundStyle(FouleeColor.warning)
                 Text("Détail indisponible")
                     .font(FouleeFont.headline)
@@ -137,14 +137,16 @@ struct WorkoutDetailSheet: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
+                    .scaledSystemFont(size: 14, weight: .semibold)
                     .foregroundStyle(tint)
                 Text(label)
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
             Text(value)
-                .font(FouleeFont.numeric(size: 22, weight: .semibold))
+                .scaledNumericFont(size: 22, weight: .semibold)
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)

@@ -1,3 +1,4 @@
+@preconcurrency import ActivityKit
 @preconcurrency import BackgroundTasks
 import SwiftUI
 import WidgetKit
@@ -15,6 +16,7 @@ struct FouleeApp: App {
         // BGTaskScheduler throws on double registration, and FouleeApp can be
         // constructed more than once (tests, previews) — register exactly once.
         _ = Self.registerAppRefreshOnce
+        _ = Self.endOrphanedWalkActivitiesOnce
     }
 
     var body: some Scene {
@@ -38,6 +40,19 @@ struct FouleeApp: App {
             Task {
                 _ = await work.value
                 task.setTaskCompleted(success: !work.isCancelled)
+            }
+        }
+    }()
+
+    // Active-walk state lives in memory only, so any walk Live Activity
+    // found at process start is an orphan left by a crash/force-quit —
+    // without this it sits on the Lock Screen as "en cours" for hours.
+    // Once-gated: SwiftUI can re-construct FouleeApp mid-walk, and a second
+    // sweep would kill the legitimate live activity.
+    private static let endOrphanedWalkActivitiesOnce: Void = {
+        Task {
+            for activity in Activity<WalkActivityAttributes>.activities {
+                await activity.end(nil, dismissalPolicy: .immediate)
             }
         }
     }()

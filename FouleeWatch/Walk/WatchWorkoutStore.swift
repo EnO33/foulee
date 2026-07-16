@@ -57,10 +57,20 @@ final class WatchWorkoutStore: NSObject {
             lastError = "HealthKit n'est pas disponible sur ce device."
             return
         }
+        var writeTypes = Self.writeTypes
+        var readTypes = Self.readTypes
+        // Starting a walk is the most visible authorization prompt on the
+        // watch — ride the water type along when hydration is on, so "J'ai bu"
+        // is covered by the same sheet instead of never getting authorized.
+        if WatchSyncStore.read()?.hydrationEnabled == true {
+            let waterType = HKQuantityType(.dietaryWater)
+            writeTypes.insert(waterType)
+            readTypes.insert(waterType)
+        }
         let granted = await runOrTrap {
             try await store.requestAuthorization(
-                toShare: Self.writeTypes,
-                read: Self.readTypes
+                toShare: writeTypes,
+                read: readTypes
             )
             return true
         }

@@ -79,7 +79,10 @@ struct StreakMonthBrowser: View {
 
     private func statCell(value: String, label: String) -> some View {
         VStack(spacing: 3) {
-            Text(value).font(FouleeFont.numeric(size: 19, weight: .semibold))
+            Text(value)
+                .scaledNumericFont(size: 19, weight: .semibold)
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
             Text(label).font(FouleeFont.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)

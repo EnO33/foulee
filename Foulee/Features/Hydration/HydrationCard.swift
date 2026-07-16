@@ -18,12 +18,12 @@ struct HydrationCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: "drop.fill")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(.callout, weight: .semibold))
                     .foregroundStyle(Self.water)
                 Text("Hydratation").font(FouleeFont.headline)
                 Spacer()
                 Text("\(litres(intakeML)) / \(litres(goalML)) L")
-                    .font(FouleeFont.numeric(size: 16, weight: .semibold))
+                    .scaledNumericFont(size: 16, weight: .semibold)
                     .foregroundStyle(reached ? Self.water : .secondary)
             }
 

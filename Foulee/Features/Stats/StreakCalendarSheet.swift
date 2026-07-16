@@ -59,7 +59,7 @@ struct StreakCalendarSheet: View {
                     .tracking(1)
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(store.currentStreak)")
-                        .font(FouleeFont.numeric(size: 44))
+                        .scaledNumericFont(size: 44)
                     Text("jours")
                         .font(FouleeFont.title3)
                         .foregroundStyle(.secondary)
@@ -79,7 +79,7 @@ struct StreakCalendarSheet: View {
                 Spacer()
                 if store.bestStreak > 0 {
                     Text("\(store.currentStreak) / \(store.bestStreak)")
-                        .font(FouleeFont.numeric(size: 16, weight: .semibold))
+                        .scaledNumericFont(size: 16, weight: .semibold)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -146,7 +146,7 @@ struct StreakCalendarSheet: View {
     private func totalCell(value: String, label: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(FouleeFont.numeric(size: 20, weight: .semibold))
+                .scaledNumericFont(size: 20, weight: .semibold)
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
             Text(label)

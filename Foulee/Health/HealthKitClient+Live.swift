@@ -128,6 +128,9 @@ extension HealthKitClient {
                 let milliliters = try await sumToday(store: store, type: waterType, unit: .literUnit(with: .milli))
                 return Int(milliliters)
             },
+            waterWriteDenied: {
+                store.authorizationStatus(for: waterType) == .sharingDenied
+            },
             enableBackgroundDelivery: healthBackgroundDeliveryClosure(store: store)
         )
     }()

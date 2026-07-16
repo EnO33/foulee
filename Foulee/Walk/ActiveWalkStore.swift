@@ -148,6 +148,12 @@ final class ActiveWalkStore {
     func reset() {
         cancelObservers()
         routeTask?.cancel()
+        // Normally already ended by stop(), but no path may leak the handle:
+        // an unended activity outlives the store on the Lock Screen.
+        if let liveActivity {
+            self.liveActivity = nil
+            Task { await liveActivity.end(nil, dismissalPolicy: .immediate) }
+        }
         bankedElapsed = 0
         bankedSteps = 0
         bankedDistance = 0
@@ -250,10 +256,26 @@ final class ActiveWalkStore {
         }
     }
 
-    // MARK: - Live Activity
+    private func runOrTrap<T: Sendable>(_ body: () async throws -> T) async -> T? {
+        do {
+            return try await body()
+        } catch {
+            lastError = error.localizedDescription
+            return nil
+        }
+    }
+}
 
-    private func startLiveActivity(minutesGoal: Int) {
+// MARK: - Live Activity
+
+private extension ActiveWalkStore {
+    func startLiveActivity(minutesGoal: Int) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        // A crash/force-quit mid-walk can leave a stray activity behind; end
+        // it before requesting so the Lock Screen never shows two walks.
+        for stray in Activity<WalkActivityAttributes>.activities {
+            Task { await stray.end(nil, dismissalPolicy: .immediate) }
+        }
         let attributes = WalkActivityAttributes(goalMinutes: minutesGoal)
         let state = WalkActivityAttributes.WalkActivityState(
             timerBasis: date.now,
@@ -271,7 +293,7 @@ final class ActiveWalkStore {
         )
     }
 
-    private func pushLiveActivity(session: WalkSession, isPaused: Bool) async {
+    func pushLiveActivity(session: WalkSession, isPaused: Bool) async {
         guard let liveActivity else { return }
         await liveActivity.update(
             ActivityContent(
@@ -281,7 +303,7 @@ final class ActiveWalkStore {
         )
     }
 
-    private func endLiveActivity(with session: WalkSession) async {
+    func endLiveActivity(with session: WalkSession) async {
         guard let liveActivity else { return }
         await liveActivity.end(
             ActivityContent(
@@ -293,7 +315,7 @@ final class ActiveWalkStore {
         self.liveActivity = nil
     }
 
-    private func activityState(
+    func activityState(
         for session: WalkSession,
         isPaused: Bool
     ) -> WalkActivityAttributes.WalkActivityState {
@@ -310,16 +332,7 @@ final class ActiveWalkStore {
 
     // Counters only move on event pushes; past this the system greys the
     // content out as stale (the clock keeps ticking regardless).
-    private func nextStaleDate() -> Date {
+    func nextStaleDate() -> Date {
         date.now.addingTimeInterval(10 * 60)
-    }
-
-    private func runOrTrap<T: Sendable>(_ body: () async throws -> T) async -> T? {
-        do {
-            return try await body()
-        } catch {
-            lastError = error.localizedDescription
-            return nil
-        }
     }
 }

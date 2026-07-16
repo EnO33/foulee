@@ -13,7 +13,9 @@ enum WidgetLiveMetrics {
     /// also write the app-group on each render only amplified writes and raced
     /// the app's own updates.
     static func freshSnapshot() async -> WidgetSnapshot {
-        var snapshot = SharedStore.read() ?? .placeholder
+        // Zero counters from a previous day up front: when locked-phone reads
+        // fail below, the fallback must not show yesterday's totals.
+        var snapshot = (SharedStore.read() ?? .placeholder).zeroedIfStale()
         guard HKHealthStore.isHealthDataAvailable() else { return snapshot }
         let store = HKHealthStore()
         // The five sums are independent — run them concurrently so the widget

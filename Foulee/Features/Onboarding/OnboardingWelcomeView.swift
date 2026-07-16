@@ -42,8 +42,8 @@ struct OnboardingWelcomeView: View {
     private var heading: some View {
         VStack(spacing: 8) {
             Text("Foulée")
-                .font(.system(size: 40, weight: .heavy))
                 .kerning(-1)
+                .scaledSystemFont(size: 40, weight: .heavy)
             Text("Bouge un peu,\nchaque midi.")
                 .font(.title3.weight(.medium))
                 .foregroundStyle(.secondary)

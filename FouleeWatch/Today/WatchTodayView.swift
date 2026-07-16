@@ -107,15 +107,30 @@ struct WatchTodayView: View {
                 Spacer()
             }
             ProgressView(value: hydrationProgress).tint(.teal)
-            Button {
-                Task { await store.logGlass() }
-            } label: {
-                Label("J'ai bu", systemImage: "drop.fill")
-                    .font(.footnote.weight(.semibold))
-                    .frame(maxWidth: .infinity)
+            if store.waterDenied {
+                // Writing water was denied — a dead "J'ai bu" button would be
+                // indistinguishable from a sync bug.
+                Text("Autorise l'eau dans Santé")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            } else {
+                Button {
+                    Task { await store.logGlass() }
+                } label: {
+                    Label("J'ai bu", systemImage: "drop.fill")
+                        .font(.footnote.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.teal)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.teal)
+            if let hydrationError = store.hydrationError {
+                Text(hydrationError)
+                    .font(.caption2)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+            }
         }
         .padding(8)
         .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))

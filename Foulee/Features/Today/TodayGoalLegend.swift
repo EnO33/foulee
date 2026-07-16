@@ -33,7 +33,7 @@ struct TodayGoalLegend: View {
                     .font(FouleeFont.caption)
                     .foregroundStyle(.secondary)
                 Text(value)
-                    .font(FouleeFont.numeric(size: 14, weight: .semibold))
+                    .scaledNumericFont(size: 14, weight: .semibold)
                     .minimumScaleFactor(0.8)
                     .lineLimit(1)
             }

@@ -12,6 +12,14 @@ final class HydrationStore {
 
     private(set) var intakeML = 0
 
+    /// Set when the last "J'ai bu" write failed — cleared on the next success.
+    /// Drives the card's failure banner so a dropped glass is never silent.
+    private(set) var lastError: String?
+
+    /// The user explicitly denied writing `dietaryWater` in Santé. Refreshed
+    /// alongside the intake; drives the "Autorise l'eau dans Santé" banner.
+    private(set) var writeDenied = false
+
     /// Bumped on every refresh. A read that started earlier but finishes later
     /// (a slow HealthKit query) must NOT overwrite a newer value — otherwise a
     /// glass logged on the watch, or a fresh "J'ai bu" tap, gets clobbered by
@@ -36,9 +44,12 @@ final class HydrationStore {
     func refresh() async {
         refreshGeneration += 1
         let generation = refreshGeneration
+        async let deniedCheck = healthKit.waterWriteDenied()
         let value = (try? await healthKit.todayWaterML()) ?? 0
+        let denied = await deniedCheck
         guard generation == refreshGeneration else { return }
         intakeML = value
+        writeDenied = denied
         // Keep the hydration widget's ring in sync with what the app shows.
         SharedStore.updateWater(intakeML: value)
     }
@@ -53,8 +64,21 @@ final class HydrationStore {
     /// Log one glass to Health, then re-read so the card reflects it. Surfaces
     /// the same confirmation toast as the notification action, and shifts the
     /// reminder grid so the next one lands a full interval after this glass.
+    /// A denied authorization or a failed save raises the card's banner
+    /// instead of silently dropping the glass.
     func logGlass(ml: Int) async {
-        try? await healthKit.logWater(ml)
+        guard !(await healthKit.waterWriteDenied()) else {
+            writeDenied = true
+            return
+        }
+        writeDenied = false
+        do {
+            try await healthKit.logWater(ml)
+            lastError = nil
+        } catch {
+            lastError = error.localizedDescription
+            return
+        }
         await refresh()
         WidgetCenter.shared.reloadAllTimelines()
         HydrationNotification.confirm(kind: "drank", amount: ml)
