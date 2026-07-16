@@ -64,13 +64,28 @@ struct TodayProvider: TimelineProvider {
         // water/workouts already push instantly via background delivery.
         let box = UncheckedSendableBox(completion)
         Task {
-            let entry = Self.entry(from: await WidgetLiveMetrics.freshSnapshot())
-            box.value(Timeline(entries: [entry], policy: .after(WidgetRefresh.nextRefresh(after: .now))))
+            let snapshot = await WidgetLiveMetrics.freshSnapshot()
+            // One clock sample for entry, reset and policy, so a rebuild
+            // straddling midnight cannot pair stale totals with a reset
+            // dated the *following* midnight.
+            let now = Date.now
+            // Pre-rendered zero entry at local midnight: the system swaps to
+            // it at 00:00 without a reload, so the rings never show
+            // yesterday's totals overnight.
+            let reset = TodayEntry(
+                date: WidgetRefresh.nextMidnight(after: now),
+                steps: 0, stepsGoal: snapshot.stepsGoal,
+                minutes: 0, minutesGoal: snapshot.minutesGoal
+            )
+            box.value(Timeline(
+                entries: [Self.entry(from: snapshot), reset],
+                policy: .after(WidgetRefresh.nextRefresh(after: now))
+            ))
         }
     }
 
     private func entry() -> TodayEntry {
-        Self.entry(from: SharedStore.read() ?? .placeholder)
+        Self.entry(from: (SharedStore.read() ?? .placeholder).zeroedIfStale())
     }
 
     private static func entry(from snapshot: WidgetSnapshot) -> TodayEntry {

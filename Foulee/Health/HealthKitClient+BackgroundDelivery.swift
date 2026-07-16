@@ -61,7 +61,10 @@ func refreshWidgetSnapshotFromHealth() async {
 /// when there's no snapshot yet (first launch publishes one) or a read fails
 /// (locked phone — keep the last known values).
 private func refreshSnapshotMetrics(store: HKHealthStore) async {
-    guard var snapshot = SharedStore.read() else { return }
+    guard let stored = SharedStore.read() else { return }
+    // Zero counters from a previous day before overlaying: a failed read
+    // below must not carry yesterday's totals into a freshly-stamped write.
+    var snapshot = stored.zeroedIfStale()
     // Independent sums — run concurrently to keep the background wake short.
     async let steps = backgroundSum(store, .stepCount, .count())
     async let minutes = backgroundSum(store, .appleExerciseTime, .minute())

@@ -18,6 +18,14 @@ enum WidgetRefresh {
     static let windowStartHour = 8
     static let windowEndHour = 20
 
+    /// The next local midnight strictly after `now`. Providers date a second,
+    /// zeroed timeline entry here so daily counters reset at 00:00 via the
+    /// pre-rendered timeline — no reload (and no budget) needed overnight.
+    static func nextMidnight(after now: Date, calendar: Calendar = .current) -> Date {
+        calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))
+            ?? now.addingTimeInterval(24 * 60 * 60)
+    }
+
     static func nextRefresh(after now: Date, calendar: Calendar = .current) -> Date {
         let hour = calendar.component(.hour, from: now)
         if hour >= windowStartHour, hour < windowEndHour {

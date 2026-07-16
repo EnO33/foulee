@@ -49,16 +49,23 @@ struct HydrationProvider: TimelineProvider {
         let box = UncheckedSendableBox(completion)
         Task {
             let snapshot = await WidgetLiveMetrics.freshSnapshot()
+            let now = Date.now
             let entry = HydrationEntry(
                 date: .now, waterML: snapshot.waterML,
                 goalML: snapshot.waterGoalML, enabled: snapshot.hydrationEnabled
             )
-            box.value(Timeline(entries: [entry], policy: .after(WidgetRefresh.nextRefresh(after: .now))))
+            // Pre-rendered zero entry at local midnight — the system swaps to
+            // it at 00:00 without a reload, so the ring never shows yesterday.
+            let reset = HydrationEntry(
+                date: WidgetRefresh.nextMidnight(after: now), waterML: 0,
+                goalML: snapshot.waterGoalML, enabled: snapshot.hydrationEnabled
+            )
+            box.value(Timeline(entries: [entry, reset], policy: .after(WidgetRefresh.nextRefresh(after: now))))
         }
     }
 
     private func entry() -> HydrationEntry {
-        let snapshot = SharedStore.read() ?? .placeholder
+        let snapshot = (SharedStore.read() ?? .placeholder).zeroedIfStale()
         return HydrationEntry(
             date: .now, waterML: snapshot.waterML,
             goalML: snapshot.waterGoalML, enabled: snapshot.hydrationEnabled
