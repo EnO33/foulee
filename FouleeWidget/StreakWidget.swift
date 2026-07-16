@@ -6,8 +6,9 @@ import WidgetKit
 /// plus the two most useful Home Screen sizes (`.systemSmall` and
 /// `.systemMedium`).
 ///
-/// Reuses `StreakProvider` shared with `FouleeWatchWidget` via the Tuist
-/// sources glob — no logic duplication, just iOS-specific views below.
+/// Wires its own `StreakSnapshotProvider` (the Watch target has a separate
+/// `StreakProvider` reading `WatchSyncStore`); both follow the shared
+/// `WidgetRefresh` cadence so the two surfaces move together.
 /// Reads the current streak from the snapshot the app writes to the app group
 /// (no HealthKit in the widget, so it still works while the phone is locked).
 struct StreakSnapshotProvider: TimelineProvider {
@@ -18,7 +19,7 @@ struct StreakSnapshotProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<StreakEntry>) -> Void) {
-        completion(Timeline(entries: [entry()], policy: .after(Date(timeIntervalSinceNow: 60 * 60))))
+        completion(Timeline(entries: [entry()], policy: .after(WidgetRefresh.nextRefresh(after: .now))))
     }
 
     private func entry() -> StreakEntry {
