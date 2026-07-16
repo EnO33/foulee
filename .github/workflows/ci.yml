@@ -10,15 +10,18 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Install toolchain (Tuist, SwiftLint) from mise.toml
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
 
       - name: SwiftLint (strict)
         run: swiftlint lint --strict --reporter github-actions-logging
@@ -30,10 +33,10 @@ jobs:
     name: Build & Test
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Select Xcode 26
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: '26.0'
 
@@ -57,7 +60,7 @@ jobs:
           exit 1
 
       - name: Install toolchain (Tuist) from mise.toml
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
 
       - name: Install xcbeautify
         run: brew install xcbeautify
@@ -83,7 +86,7 @@ jobs:
           xcrun simctl list devices available | grep -E "Apple Watch"
 
       - name: Cache Tuist + SPM artefacts
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/Library/Caches/tuist
@@ -161,4 +164,5 @@ jobs:
             --index-store-path build/dd/Index.noindex/DataStore \
             --baseline .periphery.baseline.json \
             --strict \
+            --relative-results \
             --format github-actions
