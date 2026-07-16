@@ -179,7 +179,7 @@ struct MetricStatsScreen: View {
                 .font(FouleeFont.caption.weight(.semibold))
                 .foregroundStyle(.white.opacity(0.85))
             Text(metric.formattedWithUnit(point.value))
-                .font(FouleeFont.numeric(size: 15, weight: .semibold))
+                .scaledNumericFont(size: 15, weight: .semibold)
                 .foregroundStyle(.white)
         }
         .padding(.horizontal, 12)
@@ -246,7 +246,7 @@ struct MetricStatsScreen: View {
     private func summaryCell(label: String, value: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(FouleeFont.numeric(size: 20, weight: .semibold))
+                .scaledNumericFont(size: 20, weight: .semibold)
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
             Text(label)
@@ -268,7 +268,7 @@ struct MetricStatsScreen: View {
     private var emptyChart: some View {
         VStack(spacing: 8) {
             Image(systemName: metric.icon)
-                .font(.system(size: 32, weight: .semibold))
+                .scaledSystemFont(size: 32, weight: .semibold)
                 .foregroundStyle(.secondary)
             Text("Aucune donnée sur cette période")
                 .font(FouleeFont.footnote)

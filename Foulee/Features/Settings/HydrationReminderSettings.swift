@@ -50,7 +50,7 @@ struct HydrationReminderSettings: View {
                 Text("Fréquence").font(FouleeFont.headline)
                 Spacer()
                 Text("toutes les \(intervalLabel(preferences.hydrationIntervalMinutes))")
-                    .font(FouleeFont.numeric(size: 18, weight: .semibold))
+                    .scaledNumericFont(size: 18, weight: .semibold)
                     .foregroundStyle(.teal)
             }
             Slider(

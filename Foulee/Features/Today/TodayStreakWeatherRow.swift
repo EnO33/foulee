@@ -23,7 +23,7 @@ struct TodayStreakWeatherRow: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Image(systemName: FouleeIcon.flame)
-                    .font(.system(size: 20))
+                    .scaledSystemFont(size: 20)
                     .foregroundStyle(FouleeColor.warning)
                 Text("SÉRIE")
                     .font(FouleeFont.footnote.weight(.semibold))
@@ -32,7 +32,7 @@ struct TodayStreakWeatherRow: View {
             }
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(snapshot.streak)")
-                    .font(FouleeFont.numeric(size: 30))
+                    .scaledNumericFont(size: 30)
                 Text("jours")
                     .font(FouleeFont.callout)
                     .foregroundStyle(.secondary)
@@ -50,7 +50,7 @@ struct TodayStreakWeatherRow: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Image(systemName: FouleeIcon.sun)
-                    .font(.system(size: 20))
+                    .scaledSystemFont(size: 20)
                     .foregroundStyle(FouleeColor.warning)
                 Text("MIDI")
                     .font(FouleeFont.footnote.weight(.semibold))
@@ -59,7 +59,7 @@ struct TodayStreakWeatherRow: View {
             }
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(snapshot.weather.temperatureCelsius)°")
-                    .font(FouleeFont.numeric(size: 30))
+                    .scaledNumericFont(size: 30)
                 Text("C")
                     .font(FouleeFont.callout)
                     .foregroundStyle(.secondary)

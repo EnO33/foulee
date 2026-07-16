@@ -26,7 +26,9 @@ struct WeatherDetailSheet: View {
                     .foregroundStyle(FouleeColor.streakGradient)
                     .symbolRenderingMode(.hierarchical)
                 Text("\(weather.temperatureCelsius)°C")
-                    .font(FouleeFont.numeric(size: 64))
+                    .scaledNumericFont(size: 64)
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
                 Text(weather.condition)
                     .font(FouleeFont.title2)
                 adviceRow
