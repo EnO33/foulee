@@ -15,6 +15,7 @@ struct WatchTodayView: View {
                 statsGrid
                 if store.hydrationEnabled { hydrationCard }
                 startButton
+                if !store.isLoading, !store.hasPhoneSync { syncHint }
                 if let errorMessage {
                     Text(errorMessage)
                         .font(.caption2)
@@ -119,6 +120,15 @@ struct WatchTodayView: View {
         .padding(8)
         .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .sensoryFeedback(.increase, trigger: store.waterML)
+    }
+
+    /// No payload ever received from the phone — explain why the streak and
+    /// hydration card are missing instead of hiding them silently.
+    private var syncHint: some View {
+        Text("Ouvre Foulée sur ton iPhone pour synchroniser")
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
     }
 
     private var startButton: some View {
