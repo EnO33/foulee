@@ -74,10 +74,14 @@ final class WatchHydrationNotificationCenter: NSObject, UNUserNotificationCenter
     }
 
     /// Log one glass (the phone-synced glass size) to the watch's HealthKit,
-    /// then nudge the home to re-read so the card + haptic reflect it.
+    /// then nudge the home to re-read so the card + haptic reflect it. On a
+    /// denied authorization or failed save, nothing is posted — the home's
+    /// card (via `WatchTodayStore.waterDenied`) explains the denial; faking
+    /// the "handled" signal here would just trigger a refresh to a stale 0.
     private func logGlass() async {
         guard HKHealthStore.isHealthDataAvailable() else { return }
         _ = try? await store.requestAuthorization(toShare: [Self.waterType], read: [Self.waterType])
+        guard store.authorizationStatus(for: Self.waterType) != .sharingDenied else { return }
         let glassML = WatchSyncStore.read()?.hydrationGlassML ?? 250
         let sample = HKQuantitySample(
             type: Self.waterType,
@@ -85,7 +89,11 @@ final class WatchHydrationNotificationCenter: NSObject, UNUserNotificationCenter
             start: .now,
             end: .now
         )
-        try? await store.save(sample)
+        do {
+            try await store.save(sample)
+        } catch {
+            return
+        }
         WidgetCenter.shared.reloadAllTimelines()
         await MainActor.run {
             NotificationCenter.default.post(name: HydrationNotification.actionHandled, object: nil)

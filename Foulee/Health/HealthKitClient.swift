@@ -74,6 +74,13 @@ struct HealthKitClient: Sendable {
     var todayWaterML: @Sendable () async throws -> Int
         = { 0 }
 
+    /// Whether the user explicitly denied *writing* `dietaryWater`. Read
+    /// denial is invisible by design (queries just return zeros), but write
+    /// denial is detectable — check it before logging a glass so the failure
+    /// can be explained instead of swallowed. Defaulted to `false`.
+    var waterWriteDenied: @Sendable () async -> Bool
+        = { false }
+
     /// Ask iOS to wake the app (hourly, the finest steps cadence allowed) when
     /// new Health samples land, so the widget snapshot stays fresh without the
     /// app being opened. Defaulted to a no-op.

@@ -26,6 +26,13 @@ final class WatchTodayStore {
     /// phone-derived content silently.
     private(set) var hasPhoneSync = false
     private(set) var isLoading = true
+    /// The user explicitly denied writing `dietaryWater` on the watch — the
+    /// hydration card explains it instead of showing a dead "J'ai bu" button.
+    /// Write denial is detectable via `authorizationStatus`; read denial is
+    /// not (queries just return zeros, by HealthKit design).
+    private(set) var waterDenied = false
+    /// Set when the last glass failed to save — cleared on the next success.
+    private(set) var hydrationError: String?
 
     @ObservationIgnored private let store = HKHealthStore()
     /// Guards against an older in-flight `load()` overwriting a newer one (the
@@ -73,6 +80,7 @@ final class WatchTodayStore {
 
         guard HKHealthStore.isHealthDataAvailable() else { return }
         _ = try? await store.requestAuthorization(toShare: [Self.waterType], read: Self.readTypes)
+        waterDenied = store.authorizationStatus(for: Self.waterType) == .sharingDenied
 
         async let stepsValue = sumToday(.stepCount, unit: .count())
         async let minutesValue = sumToday(.appleExerciseTime, unit: .minute())
@@ -98,15 +106,29 @@ final class WatchTodayStore {
     }
 
     /// Log one glass (the phone-synced glass size) to Health, then re-read and
-    /// refresh the complication.
+    /// refresh the complication. Requests authorization itself so it works
+    /// even when `load()` hasn't run yet, and surfaces denial / a failed save
+    /// instead of silently dropping the glass.
     func logGlass() async {
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        _ = try? await store.requestAuthorization(toShare: [Self.waterType], read: Self.readTypes)
+        waterDenied = store.authorizationStatus(for: Self.waterType) == .sharingDenied
+        guard !waterDenied else { return }
         let sample = HKQuantitySample(
             type: Self.waterType,
             quantity: HKQuantity(unit: .literUnit(with: .milli), doubleValue: Double(hydrationGlassML)),
             start: .now,
             end: .now
         )
-        try? await store.save(sample)
+        do {
+            try await store.save(sample)
+            hydrationError = nil
+        } catch {
+            // Raw HKError descriptions are technical noise on a watch card —
+            // a fixed message tells the user what matters: it didn't count.
+            hydrationError = "Verre non enregistré — réessaie"
+            return
+        }
         WidgetCenter.shared.reloadTimelines(ofKind: WatchComplicationKind.hydration)
         await load()
     }
