@@ -248,6 +248,7 @@ struct TodayStoreWalkOverlayTests {
         // until iOS flushes the walk, then jumps past them.
         let hkSteps = LockedRef(3_000)
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: {
