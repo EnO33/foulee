@@ -8,10 +8,14 @@ import SwiftUI
 struct TodayHeroCard: View {
     var snapshot: TodaySnapshot
     var notificationsEnabled: Bool
+    /// System permission is denied: the pref alone would lie ("activés" while
+    /// iOS delivers nothing), so the bell surfaces the real state instead.
+    var notificationsDenied: Bool
     var onStart: () -> Void
     var onSummary: () -> Void
     var onSnooze: (TimeInterval) -> Void
     var onToggleNotifications: () -> Void
+    var onOpenNotificationSettings: () -> Void
 
     /// Step-goal fill (outer ring), clamped so overshoot doesn't wrap.
     private var stepsProgress: Double {
@@ -169,6 +173,9 @@ struct TodayHeroCard: View {
         }
     }
 
+    /// The pref says on, but iOS won't deliver anything.
+    private var remindersBlocked: Bool { notificationsEnabled && notificationsDenied }
+
     private var reminderMenu: some View {
         Menu {
             Section("Plus tard") {
@@ -183,6 +190,13 @@ struct TodayHeroCard: View {
                     Label("Dans 1 heure", systemImage: "clock")
                 }
             }
+            if remindersBlocked {
+                Button {
+                    onOpenNotificationSettings()
+                } label: {
+                    Label("Autoriser dans Réglages", systemImage: "gear")
+                }
+            }
             Button(role: notificationsEnabled ? .destructive : nil) {
                 onToggleNotifications()
             } label: {
@@ -192,16 +206,26 @@ struct TodayHeroCard: View {
                 )
             }
         } label: {
-            Image(systemName: notificationsEnabled ? "bell.fill" : "bell.slash.fill")
+            Image(systemName: notificationsEnabled && !remindersBlocked ? "bell.fill" : "bell.slash.fill")
                 .font(.system(size: 20))
-                .foregroundStyle(notificationsEnabled ? .primary : .secondary)
+                .foregroundStyle(bellStyle)
                 .frame(width: 50, height: 50)
                 .background(Color.gray.opacity(0.16), in: Circle())
         }
         .menuOrder(.fixed)
         .accessibilityLabel("Rappels de marche")
-        .accessibilityValue(notificationsEnabled ? "activés" : "désactivés")
+        .accessibilityValue(bellAccessibilityValue)
         .accessibilityHint("Reporter le rappel ou activer les rappels")
+    }
+
+    private var bellStyle: some ShapeStyle {
+        if remindersBlocked { return AnyShapeStyle(.orange) }
+        return notificationsEnabled ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary)
+    }
+
+    private var bellAccessibilityValue: String {
+        if remindersBlocked { return "refusées dans Réglages" }
+        return notificationsEnabled ? "activés" : "désactivés"
     }
 }
 

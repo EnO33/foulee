@@ -1,6 +1,7 @@
 import Dependencies
 import Foundation
 import Observation
+import UserNotifications
 import WidgetKit
 
 /// Owns the Today snapshot and refreshes it from HealthKit.
@@ -14,8 +15,15 @@ final class TodayStore {
     private(set) var isLoading = false
     private(set) var lastError: String?
 
+    /// System-level notification permission, so the hero bell can surface
+    /// "refusées dans Réglages" instead of a lying "activés".
+    private(set) var notificationsAuthorizationStatus: UNAuthorizationStatus = .notDetermined
+
     @ObservationIgnored
     @Dependency(\.healthKit) private var healthKit
+
+    @ObservationIgnored
+    @Dependency(\.notifications) private var notifications
 
     @ObservationIgnored
     @Dependency(\.location) private var location
@@ -212,6 +220,10 @@ final class TodayStore {
     func refresh() async {
         isLoading = true
         defer { isLoading = false }
+
+        // Runs on bootstrap and on every return to foreground, so a trip
+        // to iOS Settings is reflected as soon as the user comes back.
+        notificationsAuthorizationStatus = await notifications.authorizationStatus()
 
         async let metricsTask: HealthMetrics? = runOrTrap {
             try await healthKit.todayMetrics()

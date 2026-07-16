@@ -26,7 +26,7 @@ struct OnboardingFlow: View {
         case 1:
             OnboardingGoalView(preferences: preferences) { advance() }
         default:
-            OnboardingPermissionsView {
+            OnboardingPermissionsView(preferences: preferences) {
                 preferences.hasCompletedOnboarding = true
                 onFinish()
             }

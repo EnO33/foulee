@@ -1,5 +1,6 @@
 import Dependencies
 import SwiftUI
+import UIKit
 
 /// Pre/post-walk dashboard and the app's home. Content-only: the wallpaper is
 /// provided by `HomeView`. Data comes from `TodayStore`, which reads HealthKit
@@ -18,6 +19,7 @@ struct TodayScreen: View {
     @Environment(UserPreferences.self) private var preferences
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var systemColorScheme
+    @Environment(\.openURL) private var openURL
     private let scheduler = WalkReminderScheduler()
 
     /// The app theme, applied to every modal — sheets/covers don't inherit the
@@ -131,6 +133,27 @@ struct TodayScreen: View {
         }
     }
 
+    private func heroCard(snapshot: TodaySnapshot) -> some View {
+        TodayHeroCard(
+            snapshot: snapshot,
+            notificationsEnabled: preferences.notificationsEnabled,
+            notificationsDenied: store.notificationsAuthorizationStatus == .denied,
+            onStart: { startWalk() },
+            onSummary: { isShowingSummary = true },
+            onSnooze: { interval in
+                Task { await scheduler.snooze(after: interval) }
+            },
+            onToggleNotifications: {
+                preferences.notificationsEnabled.toggle()
+            },
+            onOpenNotificationSettings: {
+                if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                    openURL(url)
+                }
+            }
+        )
+    }
+
     private func loaded(snapshot: TodaySnapshot) -> some View {
         ScrollViewReader { proxy in
         ScrollView {
@@ -148,20 +171,9 @@ struct TodayScreen: View {
                     TodayErrorBanner()
                         .padding(.horizontal, 20)
                 }
-                TodayHeroCard(
-                    snapshot: snapshot,
-                    notificationsEnabled: preferences.notificationsEnabled,
-                    onStart: { startWalk() },
-                    onSummary: { isShowingSummary = true },
-                    onSnooze: { interval in
-                        Task { await scheduler.snooze(after: interval) }
-                    },
-                    onToggleNotifications: {
-                        preferences.notificationsEnabled.toggle()
-                    }
-                )
-                .padding(.horizontal, 20)
-                .padding(.top, 4)
+                heroCard(snapshot: snapshot)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
                 TodayStreakWeatherRow(
                     snapshot: snapshot,
                     onStreakTap: { isShowingStreak = true },

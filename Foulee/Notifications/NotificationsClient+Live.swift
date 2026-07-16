@@ -11,6 +11,9 @@ extension NotificationsClient {
             requestAuthorization: {
                 try await center.requestAuthorization(options: [.alert, .sound, .badge])
             },
+            authorizationStatus: {
+                await center.notificationSettings().authorizationStatus
+            },
             replaceWalkReminders: { reminders in
                 let existing = await center.pendingNotificationRequests()
                 let toRemove = existing
