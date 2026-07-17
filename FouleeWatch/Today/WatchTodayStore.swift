@@ -40,6 +40,9 @@ final class WatchTodayStore {
     @ObservationIgnored private var loadGeneration = 0
     @ObservationIgnored private var waterObserver: HKObserverQuery?
     private static let waterType = HKQuantityType(.dietaryWater)
+    /// Raw HKError descriptions are technical noise on a watch card — a fixed
+    /// message tells the user what matters: it didn't count.
+    private static let saveFailedMessage = "Verre non enregistré — réessaie"
 
     private static let readTypes: Set<HKObjectType> = [
         HKQuantityType(.stepCount),
@@ -48,6 +51,32 @@ final class WatchTodayStore {
         HKQuantityType(.activeEnergyBurned),
         waterType
     ]
+
+    init() {
+        // The hydration banner's "J'ai bu" action saves from another object
+        // (`WatchHydrationNotificationCenter`) — its denial / failed save
+        // reaches the card only through these signals. The store lives as
+        // long as the app, so the observations are never removed; `weak self`
+        // keeps a stray observer inert.
+        _ = NotificationCenter.default.addObserver(
+            forName: .watchHydrationActionFailed, object: nil, queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor in self?.hydrationError = Self.saveFailedMessage }
+        }
+        _ = NotificationCenter.default.addObserver(
+            forName: .watchHydrationActionDenied, object: nil, queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor in self?.waterDenied = true }
+        }
+        // A confirmed successful save clears the failure — otherwise a
+        // banner retry that works would leave « non enregistré » stuck on
+        // the card until the next in-app log.
+        _ = NotificationCenter.default.addObserver(
+            forName: HydrationNotification.actionHandled, object: nil, queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor in self?.hydrationError = nil }
+        }
+    }
 
     /// Reload whenever `dietaryWater` changes in Health — including water that
     /// synced in from the iPhone — so the watch card reflects it without the
@@ -124,9 +153,7 @@ final class WatchTodayStore {
             try await store.save(sample)
             hydrationError = nil
         } catch {
-            // Raw HKError descriptions are technical noise on a watch card —
-            // a fixed message tells the user what matters: it didn't count.
-            hydrationError = "Verre non enregistré — réessaie"
+            hydrationError = Self.saveFailedMessage
             return
         }
         WidgetCenter.shared.reloadTimelines(ofKind: WatchComplicationKind.hydration)

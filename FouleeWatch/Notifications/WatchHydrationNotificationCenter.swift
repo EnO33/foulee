@@ -2,6 +2,16 @@
 @preconcurrency import UserNotifications
 import WidgetKit
 
+extension Notification.Name {
+    /// Posted (on the main actor) when the "J'ai bu" notification action could
+    /// not save the glass — `WatchTodayStore` owns the card state and would
+    /// otherwise never learn.
+    static let watchHydrationActionFailed = Notification.Name("watchHydrationActionFailed")
+    /// Posted (on the main actor) when the action found water writes denied in
+    /// Health, so the card explains the denial instead of showing a dead button.
+    static let watchHydrationActionDenied = Notification.Name("watchHydrationActionDenied")
+}
+
 /// Handles taps on the hydration reminder's actions when the banner is shown on
 /// the **watch** (the phone forwards it there when the wrist is up). Without a
 /// delegate *and* the matching category registered on the watch, watchOS just
@@ -74,14 +84,17 @@ final class WatchHydrationNotificationCenter: NSObject, UNUserNotificationCenter
     }
 
     /// Log one glass (the phone-synced glass size) to the watch's HealthKit,
-    /// then nudge the home to re-read so the card + haptic reflect it. On a
-    /// denied authorization or failed save, nothing is posted — the home's
-    /// card (via `WatchTodayStore.waterDenied`) explains the denial; faking
-    /// the "handled" signal here would just trigger a refresh to a stale 0.
+    /// then nudge the home to re-read so the card + haptic reflect it. A
+    /// denied authorization or a failed save posts the matching failure
+    /// signal instead — the glass didn't count, and only `WatchTodayStore`
+    /// can say so on the card.
     private func logGlass() async {
         guard HKHealthStore.isHealthDataAvailable() else { return }
         _ = try? await store.requestAuthorization(toShare: [Self.waterType], read: [Self.waterType])
-        guard store.authorizationStatus(for: Self.waterType) != .sharingDenied else { return }
+        guard store.authorizationStatus(for: Self.waterType) != .sharingDenied else {
+            await Self.post(.watchHydrationActionDenied)
+            return
+        }
         let glassML = WatchSyncStore.read()?.hydrationGlassML ?? 250
         let sample = HKQuantitySample(
             type: Self.waterType,
@@ -92,11 +105,17 @@ final class WatchHydrationNotificationCenter: NSObject, UNUserNotificationCenter
         do {
             try await store.save(sample)
         } catch {
+            await Self.post(.watchHydrationActionFailed)
             return
         }
         WidgetCenter.shared.reloadAllTimelines()
+        await Self.post(HydrationNotification.actionHandled)
+    }
+
+    /// Observers rely on these signals arriving on the main actor.
+    private static func post(_ name: Notification.Name) async {
         await MainActor.run {
-            NotificationCenter.default.post(name: HydrationNotification.actionHandled, object: nil)
+            NotificationCenter.default.post(name: name, object: nil)
         }
     }
 
