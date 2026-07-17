@@ -1,5 +1,6 @@
 @preconcurrency import ActivityKit
 @preconcurrency import BackgroundTasks
+import Dependencies
 import SwiftUI
 import WidgetKit
 
@@ -17,6 +18,7 @@ struct FouleeApp: App {
         // constructed more than once (tests, previews) — register exactly once.
         _ = Self.registerAppRefreshOnce
         _ = Self.endOrphanedWalkActivitiesOnce
+        _ = Self.startHealthObserversOnce
     }
 
     var body: some Scene {
@@ -55,6 +57,18 @@ struct FouleeApp: App {
                 await activity.end(nil, dismissalPolicy: .immediate)
             }
         }
+    }()
+
+    // A HealthKit background delivery can relaunch a *terminated* app with no
+    // UI mounted, so TodayStore.bootstrap() (Today-tab .task) never runs on
+    // that path and the wake would do nothing. Register the observers at
+    // process start instead; bootstrap() keeps its own call and the closure's
+    // one-shot lock dedupes — whichever runs first wins. Registering before
+    // requestAuthorization is fine: unauthorized queries just return nothing,
+    // and bootstrap still prompts on the first Today appearance.
+    private static let startHealthObserversOnce: Void = {
+        @Dependency(\.healthKit) var healthKit
+        Task { await healthKit.enableBackgroundDelivery() }
     }()
 
     /// Ask iOS for a background refresh in ~2 h. Called when the app goes to
