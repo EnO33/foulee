@@ -63,4 +63,31 @@ struct MetricStatsStoreTests {
             #expect(store.total == 5)
         }
     }
+
+    @Test("A transient failure clears once the next load succeeds")
+    @MainActor
+    func transientErrorClearsOnNextSuccess() async {
+        struct Boom: Error, LocalizedError {
+            var errorDescription: String? { "Santé indisponible" }
+        }
+        let failing = LockedRef(true)
+        await withDependencies {
+            $0.healthKit.metricSeries = { _, _ in
+                if failing.value { throw Boom() }
+                return self.points([12])
+            }
+        } operation: {
+            let store = MetricStatsStore(metric: .minutes)
+            store.range = .week
+            await store.load()
+            #expect(store.lastError == "Santé indisponible")
+
+            // HealthKit recovers (e.g. pull-to-refresh after an unlock): the
+            // error must reflect the current pass, not the process lifetime.
+            failing.set(false)
+            await store.load()
+            #expect(store.lastError == nil)
+            #expect(store.total == 12)
+        }
+    }
 }

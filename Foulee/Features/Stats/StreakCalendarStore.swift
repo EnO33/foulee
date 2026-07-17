@@ -19,6 +19,12 @@ final class StreakCalendarStore {
     private(set) var currentStreak = 0
     private(set) var bestStreak = 0
     private(set) var isLoading = true
+    private(set) var lastError: String?
+
+    /// Error captured by `runOrTrap` during the current pass. Published into
+    /// `lastError` only at the end of `load()` so a transient failure doesn't
+    /// outlive its pass (same pattern as `TodayStore.passError`).
+    @ObservationIgnored private var passError: String?
 
     /// Goals met across all loaded months.
     var totalWalks: Int { months.reduce(0) { $0 + $1.walks } }
@@ -55,8 +61,8 @@ final class StreakCalendarStore {
         defer { isLoading = false }
         // Pull enough to cover the 1st of the oldest month, plus a little slack.
         let daysBack = Self.monthsBack * 31 + 7
-        let history = (try? await healthKit.dailyMinutes(daysBack)) ?? []
-        let steps = (try? await healthKit.metricSeries(.steps, daysBack)) ?? []
+        let history = await runOrTrap { try await healthKit.dailyMinutes(daysBack) } ?? []
+        let steps = await runOrTrap { try await healthKit.metricSeries(.steps, daysBack) } ?? []
         months = StreakCalendar.months(
             history: history,
             steps: steps,
@@ -76,5 +82,16 @@ final class StreakCalendarStore {
             goalMinutes: goalMinutes,
             activeWeekdays: activeDays.calendarWeekdays
         )
+        lastError = passError
+        passError = nil
+    }
+
+    private func runOrTrap<T: Sendable>(_ body: () async throws -> T) async -> T? {
+        do {
+            return try await body()
+        } catch {
+            passError = error.localizedDescription
+            return nil
+        }
     }
 }

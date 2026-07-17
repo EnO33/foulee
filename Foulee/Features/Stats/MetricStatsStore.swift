@@ -43,6 +43,11 @@ final class MetricStatsStore {
     private(set) var lastError: String?
     var range: MetricRange = .week
 
+    /// Error captured by `runOrTrap` during the current pass. Published into
+    /// `lastError` only at the end of `load()` so a transient failure doesn't
+    /// outlive its pass (same pattern as `TodayStore.passError`).
+    @ObservationIgnored private var passError: String?
+
     @ObservationIgnored
     @Dependency(\.healthKit) private var healthKit
 
@@ -61,6 +66,8 @@ final class MetricStatsStore {
             loaded = await runOrTrap { try await healthKit.metricSeries(metric, range.daysBack) }
         }
         points = loaded ?? []
+        lastError = passError
+        passError = nil
     }
 
     // MARK: - Summary (pure, derived from `points`)
@@ -84,7 +91,7 @@ final class MetricStatsStore {
         do {
             return try await body()
         } catch {
-            lastError = error.localizedDescription
+            passError = error.localizedDescription
             return nil
         }
     }
