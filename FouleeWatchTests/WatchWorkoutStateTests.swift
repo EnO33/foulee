@@ -22,10 +22,10 @@ struct WatchWorkoutMetricsTests {
     }
 }
 
-// The store itself is driven by HKWorkoutSession/HKLiveWorkoutBuilder, which
-// need a paired sensor stack — only the state machine's value semantics are
-// testable off-hardware. The view relies on these to re-render and to pick
-// the right screen, so they are pinned here.
+// Value semantics of the state enum, pinned separately: the view relies on
+// these to re-render and to pick the right screen. The store's transitions
+// themselves are covered in WatchWorkoutStoreTests via the injectable
+// WatchWorkoutHealthKit facade.
 @MainActor
 @Suite("WatchWorkoutStore.State")
 struct WatchWorkoutStateTests {

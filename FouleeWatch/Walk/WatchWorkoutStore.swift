@@ -5,7 +5,8 @@ import SwiftUI
 /// Drives the live walking workout on watchOS via `HKWorkoutSession` +
 /// `HKLiveWorkoutBuilder` — the same APIs the Workouts app uses, which
 /// gives us real heart-rate, distance and calorie samples instead of the
-/// CMPedometer estimates the iPhone target relies on.
+/// CMPedometer estimates the iPhone target relies on. The HealthKit calls
+/// go through the injectable `WatchWorkoutHealthKit` facade.
 ///
 /// State is a tiny three-case enum so the view binds declaratively.
 /// Errors funnel through a single boundary (`runOrTrap`); the rest of the
@@ -25,9 +26,13 @@ final class WatchWorkoutStore: NSObject {
     private(set) var state: State = .idle
     private(set) var lastError: String?
 
-    @ObservationIgnored private let store = HKHealthStore()
-    @ObservationIgnored private var session: HKWorkoutSession?
-    @ObservationIgnored private var builder: HKLiveWorkoutBuilder?
+    @ObservationIgnored private let healthKit: WatchWorkoutHealthKit
+    @ObservationIgnored private var sessionHandle: WatchWorkoutSessionHandle?
+
+    init(healthKit: WatchWorkoutHealthKit = .live) {
+        self.healthKit = healthKit
+        super.init()
+    }
 
     // The live workout builder saves the metrics its data source collects
     // (heart rate, active energy, distance…) as part of the workout, so we must
@@ -53,7 +58,7 @@ final class WatchWorkoutStore: NSObject {
     /// Begin a fresh walking session. Idempotent: no-op when already active.
     func start() async {
         guard case .idle = state else { return }
-        guard HKHealthStore.isHealthDataAvailable() else {
+        guard healthKit.isAvailable() else {
             lastError = "HealthKit n'est pas disponible sur ce device."
             return
         }
@@ -68,10 +73,7 @@ final class WatchWorkoutStore: NSObject {
             readTypes.insert(waterType)
         }
         let granted = await runOrTrap {
-            try await store.requestAuthorization(
-                toShare: writeTypes,
-                read: readTypes
-            )
+            try await healthKit.requestAuthorization(writeTypes, readTypes)
             return true
         }
         guard granted == true else { return }
@@ -81,15 +83,14 @@ final class WatchWorkoutStore: NSObject {
     /// End the session, save the workout and surface a summary. On a save
     /// failure the builder is kept alive so "Réessayer" can finish it.
     func stop() async {
-        guard case .active(let metrics) = state, let session, let builder else { return }
-        session.end()
+        guard case .active(let metrics) = state, let handle = sessionHandle else { return }
+        handle.end()
         let saved = await runOrTrap {
-            try await builder.endCollection(at: .now)
-            _ = try await builder.finishWorkout()
+            try await handle.endCollection(.now)
+            try await handle.finishWorkout()
             return true as Bool
         }
-        self.session = nil
-        if saved == true { self.builder = nil }
+        if saved == true { sessionHandle = nil }
         state = .ended(metrics, saveFailed: saved != true)
     }
 
@@ -97,24 +98,23 @@ final class WatchWorkoutStore: NSObject {
     /// Collection may already be over from the first attempt — only finish is
     /// unconditionally retried.
     func retrySave() async {
-        guard case .ended(let metrics, saveFailed: true) = state, let builder else { return }
+        guard case .ended(let metrics, saveFailed: true) = state, let handle = sessionHandle else { return }
         let saved = await runOrTrap {
-            if builder.endDate == nil {
-                try await builder.endCollection(at: .now)
+            if handle.collectionEndDate() == nil {
+                try await handle.endCollection(.now)
             }
-            _ = try await builder.finishWorkout()
+            try await handle.finishWorkout()
             return true as Bool
         }
         guard saved == true else { return }
-        self.builder = nil
+        sessionHandle = nil
         lastError = nil
         state = .ended(metrics, saveFailed: false)
     }
 
     /// Return to idle so a new session can start.
     func reset() {
-        session = nil
-        builder = nil
+        sessionHandle = nil
         lastError = nil
         state = .idle
     }
@@ -124,34 +124,11 @@ final class WatchWorkoutStore: NSObject {
         configuration.activityType = .walking
         configuration.locationType = .outdoor
 
-        let started = await runOrTrap {
-            let session = try HKWorkoutSession(
-                healthStore: store,
-                configuration: configuration
-            )
-            let builder = session.associatedWorkoutBuilder()
-            let dataSource = HKLiveWorkoutDataSource(
-                healthStore: store,
-                workoutConfiguration: configuration
-            )
-            // The data source infers the types to collect from the config —
-            // distance, active energy and heart rate for a walk, but NOT step
-            // count. Enable it explicitly, otherwise the live "pas" counter
-            // stays at 0 while distance and heart rate update.
-            dataSource.enableCollection(for: HKQuantityType(.stepCount), predicate: nil)
-            builder.dataSource = dataSource
-            session.delegate = self
-            builder.delegate = self
-
-            let startDate = Date()
-            session.startActivity(with: startDate)
-            try await builder.beginCollection(at: startDate)
-
-            self.session = session
-            self.builder = builder
-            return true
+        let handle = await runOrTrap {
+            try await healthKit.startSession(configuration, self)
         }
-        guard started == true else { return }
+        guard let handle else { return }
+        sessionHandle = handle
         state = .active(.zero)
     }
 
@@ -218,11 +195,11 @@ extension WatchWorkoutStore: HKWorkoutSessionDelegate {
     /// A failed session is dead mid-walk: land on the summary with the save
     /// banner instead of leaving `.active` frozen (the error used to go to
     /// `lastError`, rendered only on the idle screen — after `reset()` had
-    /// already cleared it).
-    private func handleSessionFailure(_ message: String) {
+    /// already cleared it). The handle stays alive so "Réessayer" can still
+    /// finish the builder.
+    func handleSessionFailure(_ message: String) {
         lastError = message
         guard case .active(let metrics) = state else { return }
-        session = nil
         state = .ended(metrics, saveFailed: true)
     }
 }
