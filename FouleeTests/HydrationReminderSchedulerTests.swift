@@ -147,4 +147,60 @@ import Testing
         )
         #expect(times.map(\.rawMinutes) == [1_260])
     }
+
+    // MARK: - Background water delivery (widget / Watch / third-party glasses)
+
+    @Test func waterIncreaseTriggersReschedule() {
+        #expect(HydrationReminderScheduler.shouldRescheduleAfterWaterDelivery(
+            previousML: 250, currentML: 500, remindersEnabled: true
+        ))
+    }
+
+    @Test func recentInAppDrinkDebouncesTheObserverEcho() {
+        // The in-app path already rescheduled for its own write seconds ago —
+        // the observer echo must not race a second replace of the same grid.
+        #expect(!HydrationReminderScheduler.shouldRescheduleAfterWaterDelivery(
+            previousML: 250, currentML: 500, remindersEnabled: true, lastDrinkAge: 5
+        ))
+    }
+
+    @Test func anOldDrinkStampDoesNotBlockTheReshift() {
+        #expect(HydrationReminderScheduler.shouldRescheduleAfterWaterDelivery(
+            previousML: 250, currentML: 500, remindersEnabled: true,
+            lastDrinkAge: HydrationReminderScheduler.ownWriteDebounce + 1
+        ))
+    }
+
+    @Test func firstGlassOfTheDayCountsAsIncreaseFromZero() {
+        // previousML nil = nothing recorded today (new day / first launch).
+        #expect(HydrationReminderScheduler.shouldRescheduleAfterWaterDelivery(
+            previousML: nil, currentML: 250, remindersEnabled: true
+        ))
+    }
+
+    @Test func unchangedTotalDoesNotReschedule() {
+        // The observer's initial fire at registration, or the wake for the
+        // app's own write after the tracker already recorded it.
+        #expect(!HydrationReminderScheduler.shouldRescheduleAfterWaterDelivery(
+            previousML: 500, currentML: 500, remindersEnabled: true
+        ))
+    }
+
+    @Test func deletedSampleDoesNotReschedule() {
+        #expect(!HydrationReminderScheduler.shouldRescheduleAfterWaterDelivery(
+            previousML: 500, currentML: 250, remindersEnabled: true
+        ))
+    }
+
+    @Test func failedReadDoesNotReschedule() {
+        #expect(!HydrationReminderScheduler.shouldRescheduleAfterWaterDelivery(
+            previousML: 250, currentML: nil, remindersEnabled: true
+        ))
+    }
+
+    @Test func disabledRemindersNeverReschedule() {
+        #expect(!HydrationReminderScheduler.shouldRescheduleAfterWaterDelivery(
+            previousML: 0, currentML: 250, remindersEnabled: false
+        ))
+    }
 }

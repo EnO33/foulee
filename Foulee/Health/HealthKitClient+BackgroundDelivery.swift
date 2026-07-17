@@ -33,6 +33,7 @@ func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async
         ]
         for (type, frequency) in deliveries {
             try? await store.enableBackgroundDelivery(for: type, frequency: frequency)
+            let isWater = type == HKQuantityType(.dietaryWater)
             let query = HKObserverQuery(sampleType: type, predicate: nil) { _, completionHandler, error in
                 let done = UncheckedSendableBox(completionHandler)
                 guard error == nil else { done.value(); return }
@@ -43,6 +44,9 @@ func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async
                     defer { done.value() }
                     await refreshSnapshotMetrics(store: store)
                     WidgetCenter.shared.reloadAllTimelines()
+                    if isWater {
+                        await reshiftHydrationRemindersIfWaterIncreased(store: store)
+                    }
                 }
             }
             store.execute(query)
@@ -77,6 +81,53 @@ private func refreshSnapshotMetrics(store: HKHealthStore) async {
     if let kcal = await kcal { snapshot.calories = Int(kcal) }
     if let water = await water { snapshot.waterML = Int(water) }
     SharedStore.write(snapshot)
+}
+
+/// Last dietaryWater total this observer saw, kept in the app's own defaults
+/// — day-stamped so yesterday's total is never a baseline for today. The
+/// shared snapshot can't serve as the "before" value: the widget's
+/// `LogWaterIntent` rewrites it from its own process before (or racing) this
+/// observer, which would mask exactly the glasses this path exists to catch.
+private let observedWaterTotalKey = "hydration.observedWaterML"
+private let observedWaterDayKey = "hydration.observedWaterAt"
+
+/// A glass logged outside the app (widget intent, the Watch, another Health
+/// app) never runs the in-app reschedule path, so a reminder could fire
+/// minutes after it. This observer is the one hook that wakes for every water
+/// sample; reshift today's grid when the total increased. It also fires for
+/// the app's own writes, where the reschedule already ran — the second call
+/// is harmless (the drink stamp lands seconds apart and the pending requests
+/// are replaced deterministically). Decreases (sample deletions) and the
+/// initial fire at observer registration must not shift anything.
+private func reshiftHydrationRemindersIfWaterIncreased(store: HKHealthStore) async {
+    guard let total = await backgroundSum(store, .dietaryWater, .literUnit(with: .milli)) else { return }
+    let defaults = UserDefaults.standard
+    let previous = lastObservedWaterToday(defaults: defaults)
+    defaults.set(total, forKey: observedWaterTotalKey)
+    defaults.set(Date.now.timeIntervalSince1970, forKey: observedWaterDayKey)
+    let enabled = defaults.bool(forKey: "preferences.hydrationEnabled")
+        && defaults.bool(forKey: "preferences.hydrationRemindersEnabled")
+    let lastDrinkStamp = defaults.double(forKey: HydrationReminderScheduler.lastDrinkKey)
+    let lastDrinkAge: TimeInterval? = lastDrinkStamp > 0
+        ? Date.now.timeIntervalSince1970 - lastDrinkStamp
+        : nil
+    guard HydrationReminderScheduler.shouldRescheduleAfterWaterDelivery(
+        previousML: previous,
+        currentML: Int(total),
+        remindersEnabled: enabled,
+        lastDrinkAge: lastDrinkAge
+    ) else { return }
+    await HydrationReminderScheduler().recordDrinkAndReschedule()
+}
+
+/// The total recorded by the last observation *today*, or nil when none —
+/// so the day's first out-of-app glass counts as an increase from 0.
+private func lastObservedWaterToday(defaults: UserDefaults) -> Int? {
+    let stamp = defaults.double(forKey: observedWaterDayKey)
+    guard stamp > 0,
+          Calendar.current.isDate(Date(timeIntervalSince1970: stamp), inSameDayAs: .now)
+    else { return nil }
+    return Int(defaults.double(forKey: observedWaterTotalKey))
 }
 
 /// Today's cumulative sum, or nil when HealthKit can't answer. "No samples
