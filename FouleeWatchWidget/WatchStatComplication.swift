@@ -105,7 +105,11 @@ struct WatchStatProvider: AppIntentTimelineProvider {
 
     func timeline(for configuration: WatchStatIntent, in context: Context) async -> Timeline<WatchStatEntry> {
         let metric = configuration.metric
-        let value = await Self.todaySum(for: metric)
+        let live = await Self.queriedTodaySum(for: metric)
+        if let live { WatchComplicationCache.write(live, for: metric.rawValue) }
+        // Query failed (protected data after a reboot, transient error):
+        // today's last known value instead of a fake zero.
+        let value = live ?? WatchComplicationCache.read(for: metric.rawValue) ?? 0
         let now = Date.now
         let nextRefresh = WidgetRefresh.nextRefresh(after: now)
         let midnight = WidgetRefresh.nextMidnight(after: now)
@@ -113,12 +117,23 @@ struct WatchStatProvider: AppIntentTimelineProvider {
         // projected (clamped below the gauge's own goal so a crossing is
         // never fabricated), the other metrics re-dated flat. Still one
         // timeline call per slot: more entries, not more reloads.
+        // A cached fallback is never projected: "last known value" means
+        // exactly that, not a fabricated progression from a count that may
+        // be hours old — the builder then only provides the re-dated grid.
+        let counters = live == nil
+            ? WidgetCounters(steps: 0, stepsGoal: 0, minutes: 0, minutesGoal: 0)
+            : Self.counters(for: metric, value: value)
         var entries = WidgetTimelineBuilder
             .projectedValues(
-                counters: Self.counters(for: metric, value: value),
+                counters: counters,
                 now: now, nextRefresh: nextRefresh, nextMidnight: midnight
             )
-            .map { WatchStatEntry(date: $0.date, metric: metric, value: Self.value(for: metric, from: $0)) }
+            .map { point in
+                WatchStatEntry(
+                    date: point.date, metric: metric,
+                    value: live == nil ? value : Self.value(for: metric, from: point)
+                )
+            }
         // Pre-rendered zero entry at local midnight — the system swaps to it
         // at 00:00 without a reload, so the complication never shows
         // yesterday's total overnight.
@@ -167,7 +182,19 @@ struct WatchStatProvider: AppIntentTimelineProvider {
     }
 
     private static func todaySum(for metric: WatchStatMetric) async -> Double {
-        guard HKHealthStore.isHealthDataAvailable() else { return 0 }
+        guard let live = await queriedTodaySum(for: metric) else {
+            // Query failed (protected data after a reboot, transient error):
+            // show today's last known value instead of a fake zero.
+            return WatchComplicationCache.read(for: metric.rawValue) ?? 0
+        }
+        WatchComplicationCache.write(live, for: metric.rawValue)
+        return live
+    }
+
+    /// nil means the query failed — distinct from a legitimate zero, so the
+    /// caller knows when the cache fallback is allowed.
+    private static func queriedTodaySum(for metric: WatchStatMetric) async -> Double? {
+        guard HKHealthStore.isHealthDataAvailable() else { return nil }
         let store = HKHealthStore()
         let start = Calendar.current.startOfDay(for: .now)
         let predicate = HKQuery.predicateForSamples(withStart: start, end: .now, options: .strictStartDate)
@@ -176,8 +203,15 @@ struct WatchStatProvider: AppIntentTimelineProvider {
                 quantityType: HKQuantityType(metric.identifier),
                 quantitySamplePredicate: predicate,
                 options: .cumulativeSum
-            ) { _, statistics, _ in
-                continuation.resume(returning: statistics?.sumQuantity()?.doubleValue(for: metric.unit) ?? 0)
+            ) { _, statistics, error in
+                if let statistics {
+                    continuation.resume(returning: statistics.sumQuantity()?.doubleValue(for: metric.unit) ?? 0)
+                } else if (error as? HKError)?.code == .errorNoData {
+                    // No samples today is a legitimate zero, not a failure.
+                    continuation.resume(returning: 0)
+                } else {
+                    continuation.resume(returning: nil)
+                }
             }
             store.execute(query)
         }

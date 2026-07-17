@@ -200,6 +200,7 @@ let project = Project(
                 "Foulee/Shared/UncheckedSendableBox.swift",
                 "Foulee/Shared/WatchSyncPayload.swift",
                 "Foulee/Shared/WatchComplicationKind.swift",
+                "Foulee/Shared/WatchComplicationCache.swift",
                 "Foulee/Notifications/HydrationNotification.swift"
             ],
             resources: [
@@ -234,7 +235,8 @@ let project = Project(
                 "Foulee/Shared/WidgetRefresh.swift",
                 "Foulee/Shared/WidgetTimelineBuilder.swift",
                 "Foulee/Shared/WatchSyncPayload.swift",
-                "Foulee/Shared/WatchComplicationKind.swift"
+                "Foulee/Shared/WatchComplicationKind.swift",
+                "Foulee/Shared/WatchComplicationCache.swift"
             ],
             resources: [
                 .glob(
