@@ -46,6 +46,49 @@ struct TodayStoreErrorFreshnessTests {
             #expect(store.snapshot?.steps == 2_000)
         }
     }
+
+    @Test("A stale refresh doesn't clobber a newer pass's outcome")
+    @MainActor
+    func staleRefreshDoesNotClobberNewerPass() async {
+        struct Boom: Error, LocalizedError {
+            var errorDescription: String? { "Santé indisponible" }
+        }
+        // The first todayMetrics call (the stale pass) parks on the gate;
+        // later calls (the newer pass) answer immediately.
+        let (gate, release) = AsyncStream<Void>.makeStream()
+        let parked = LockedRef(false)
+        await withDependencies {
+            $0.healthKit = healthKitStub {
+                if !parked.value {
+                    parked.set(true)
+                    for await _ in gate { break }
+                    throw Boom()
+                }
+                return HealthMetrics(steps: 2_000, distanceKm: 1.2, activeMinutes: 15, activeCalories: 80)
+            }
+        } operation: {
+            let store = TodayStore()
+            let stalePass = Task { await store.refresh() }
+            var spins = 0
+            while !parked.value, spins < 10_000 {
+                await Task.yield()
+                spins += 1
+            }
+            #expect(parked.value)
+
+            // A newer pass starts and finishes while the stale one is parked.
+            await store.refresh()
+            #expect(store.lastError == nil)
+            #expect(store.snapshot?.steps == 2_000)
+
+            // The stale pass now fails: its zeroed metrics and its error must
+            // not overwrite the newer pass's snapshot or verdict.
+            release.finish()
+            await stalePass.value
+            #expect(store.lastError == nil)
+            #expect(store.snapshot?.steps == 2_000)
+        }
+    }
 }
 
 @Suite("TodayStore walk overlay staleness")

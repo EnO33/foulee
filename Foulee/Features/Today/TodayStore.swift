@@ -21,6 +21,11 @@ final class TodayStore {
     /// it flicker off/on.
     @ObservationIgnored private var passError: String?
 
+    /// Guards against an older in-flight `refresh()` overwriting a newer one's
+    /// snapshot or error verdict — overlaps happen (observer-triggered +
+    /// foreground). Same pattern as `WatchTodayStore.loadGeneration`.
+    @ObservationIgnored private var refreshGeneration = 0
+
     /// System-level notification permission, so the hero bell can surface
     /// "refusées dans Réglages" instead of a lying "activés".
     private(set) var notificationsAuthorizationStatus: UNAuthorizationStatus = .notDetermined
@@ -197,9 +202,17 @@ final class TodayStore {
     /// Always refreshes regardless of whether authorization succeeded, so
     /// the UI never gets stuck on the placeholder.
     func bootstrap() async {
-        _ = await runOrTrap { try await healthKit.requestAuthorization() }
+        // Auth errors are seeded into the refresh below rather than written
+        // to the shared slot: refresh() starts each pass from a clean slate,
+        // which would otherwise wipe them before publication.
+        var authError: String?
+        do {
+            _ = try await healthKit.requestAuthorization()
+        } catch {
+            authError = error.localizedDescription
+        }
         _ = await location.requestWhenInUse()
-        await refresh()
+        await refresh(seedError: authError)
         startObservingHealthChanges()
         // Hourly background wakes keep the widget snapshot fresh even when
         // the app stays closed all day.
@@ -245,7 +258,12 @@ final class TodayStore {
     /// renders even when HealthKit/WeatherKit are unavailable (sim, free
     /// dev signing, denied perms). Failures are surfaced via `lastError`
     /// for an in-screen banner.
-    func refresh() async {
+    func refresh(seedError: String? = nil) async {
+        refreshGeneration += 1
+        let generation = refreshGeneration
+        // Clean slate for this pass (a superseded pass may have left its
+        // verdict behind); bootstrap seeds its auth error here.
+        passError = seedError
         isLoading = true
         defer { isLoading = false }
 
@@ -253,19 +271,27 @@ final class TodayStore {
         // to iOS Settings is reflected as soon as the user comes back.
         notificationsAuthorizationStatus = await notifications.authorizationStatus()
 
-        async let metricsTask: HealthMetrics? = runOrTrap {
+        async let metricsTask: HealthMetrics? = runOrTrap(generation: generation) {
             try await healthKit.todayMetrics()
         }
         async let weatherTask: WeatherSnapshot? = fetchWeatherIfAuthorized()
-        async let historyTask: [DailyMinutes]? = runOrTrap {
+        async let historyTask: [DailyMinutes]? = runOrTrap(generation: generation) {
             try await healthKit.dailyMinutes(30)
         }
 
         let metrics = await metricsTask ?? .zero
-        lastRawMetrics = metrics
-        dropPendingWalkIfStale(metrics: metrics)
+        // Metrics return first (local HealthKit); commit the walk baseline
+        // and overlay verdict promptly — weather can take seconds, and
+        // walkWillStart() must not read a stale baseline in the meantime.
+        if generation == refreshGeneration {
+            lastRawMetrics = metrics
+            dropPendingWalkIfStale(metrics: metrics)
+        }
         let weatherSnapshot = await weatherTask
         let history = await historyTask ?? []
+        // A newer refresh() started while these fetches were in flight — let
+        // it publish; this pass's data (and error verdict) is already stale.
+        guard generation == refreshGeneration else { return }
         cachedHistory = history
         snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot, history: history)
         publishToWidgets()
@@ -364,11 +390,23 @@ final class TodayStore {
         return days.map { byDay[$0] ?? 0 }
     }
 
-    private func runOrTrap<T: Sendable>(_ body: () async throws -> T) async -> T? {
+}
+
+// MARK: - Error boundary
+
+private extension TodayStore {
+    func runOrTrap<T: Sendable>(
+        generation: Int? = nil,
+        _ body: () async throws -> T
+    ) async -> T? {
         do {
             return try await body()
         } catch {
-            passError = error.localizedDescription
+            // A superseded pass's failure is as stale as its data — only the
+            // pass that will publish may record its verdict.
+            if generation == nil || generation == refreshGeneration {
+                passError = error.localizedDescription
+            }
             return nil
         }
     }
