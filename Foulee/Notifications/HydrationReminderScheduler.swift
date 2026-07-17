@@ -48,6 +48,28 @@ struct HydrationReminderScheduler {
         return times
     }
 
+    /// Decision for the dietaryWater background observer: reshift only when
+    /// today's total actually increased. `previousML` nil means no total was
+    /// recorded today (new day, first launch) — treated as 0 so the day's
+    /// first out-of-app glass still shifts the grid. `currentML` nil means
+    /// the read failed (locked phone) — never shift on a guess. A decrease is
+    /// a sample deletion, not a drink.
+    /// The in-app and notification paths reschedule for their own write; the
+    /// observer echo arrives seconds later and must not race a second,
+    /// concurrent replace of the same grid.
+    static let ownWriteDebounce: TimeInterval = 90
+
+    static func shouldRescheduleAfterWaterDelivery(
+        previousML: Int?,
+        currentML: Int?,
+        remindersEnabled: Bool,
+        lastDrinkAge: TimeInterval? = nil
+    ) -> Bool {
+        guard remindersEnabled, let currentML else { return false }
+        if let lastDrinkAge, lastDrinkAge < ownWriteDebounce { return false }
+        return currentML > (previousML ?? 0)
+    }
+
     /// The last logged glass as a time-of-day — only if it happened today
     /// (yesterday's drink must not shift today's grid).
     static func lastDrinkToday(defaults: UserDefaults = .standard, now: Date = .now) -> TimeOfDay? {
