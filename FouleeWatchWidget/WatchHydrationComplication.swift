@@ -58,7 +58,19 @@ struct WatchHydrationProvider: TimelineProvider {
     }
 
     private static func todayWaterML() async -> Int {
-        guard HKHealthStore.isHealthDataAvailable() else { return 0 }
+        guard let live = await queriedTodayWaterML() else {
+            // Query failed (protected data after a reboot, transient error):
+            // show today's last known value instead of a fake zero.
+            return Int(WatchComplicationCache.read(for: WatchComplicationCache.waterKey) ?? 0)
+        }
+        WatchComplicationCache.write(live, for: WatchComplicationCache.waterKey)
+        return Int(live)
+    }
+
+    /// nil means the query failed — distinct from a legitimate zero, so the
+    /// caller knows when the cache fallback is allowed.
+    private static func queriedTodayWaterML() async -> Double? {
+        guard HKHealthStore.isHealthDataAvailable() else { return nil }
         let store = HKHealthStore()
         let start = Calendar.current.startOfDay(for: .now)
         let predicate = HKQuery.predicateForSamples(withStart: start, end: .now, options: .strictStartDate)
@@ -67,9 +79,16 @@ struct WatchHydrationProvider: TimelineProvider {
                 quantityType: HKQuantityType(.dietaryWater),
                 quantitySamplePredicate: predicate,
                 options: .cumulativeSum
-            ) { _, statistics, _ in
-                let milliliters = statistics?.sumQuantity()?.doubleValue(for: .literUnit(with: .milli)) ?? 0
-                continuation.resume(returning: Int(milliliters))
+            ) { _, statistics, error in
+                if let statistics {
+                    let milliliters = statistics.sumQuantity()?.doubleValue(for: .literUnit(with: .milli)) ?? 0
+                    continuation.resume(returning: milliliters)
+                } else if (error as? HKError)?.code == .errorNoData {
+                    // No samples today is a legitimate zero, not a failure.
+                    continuation.resume(returning: 0)
+                } else {
+                    continuation.resume(returning: nil)
+                }
             }
             store.execute(query)
         }
