@@ -252,7 +252,9 @@ final class TodayStore {
         await refresh()
     }
 
-    /// Re-fetches today's metrics + midday weather + 30-day history in
+    /// Re-fetches today's metrics + midday weather + the full streak history
+    /// (`StreakCalculator.historyWindowDays` — same window as the calendar
+    /// sheet, so the record here can't diverge from the one shown there) in
     /// parallel. Always sets `snapshot` — falling back to zeros for
     /// metrics and an empty history when a fetch fails — so the UI
     /// renders even when HealthKit/WeatherKit are unavailable (sim, free
@@ -276,7 +278,7 @@ final class TodayStore {
         }
         async let weatherTask: WeatherSnapshot? = fetchWeatherIfAuthorized()
         async let historyTask: [DailyMinutes]? = runOrTrap(generation: generation) {
-            try await healthKit.dailyMinutes(30)
+            try await healthKit.dailyMinutes(StreakCalculator.historyWindowDays)
         }
 
         let metrics = await metricsTask ?? .zero

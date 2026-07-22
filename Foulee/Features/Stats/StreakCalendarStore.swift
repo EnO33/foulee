@@ -9,7 +9,10 @@ import Observation
 @Observable
 final class StreakCalendarStore {
     /// How many calendar months the rings browser can page back through.
-    static let monthsBack = 12
+    /// Sourced from `StreakCalculator` so the home card (which fetches
+    /// `historyWindowDays` too) always computes streaks over the exact
+    /// window this sheet displays.
+    static let monthsBack = StreakCalculator.historyMonths
 
     let goalMinutes: Int
     let goalSteps: Int
@@ -59,8 +62,8 @@ final class StreakCalendarStore {
     func load() async {
         isLoading = true
         defer { isLoading = false }
-        // Pull enough to cover the 1st of the oldest month, plus a little slack.
-        let daysBack = Self.monthsBack * 31 + 7
+        // Covers the 1st of the oldest month, plus a little slack.
+        let daysBack = StreakCalculator.historyWindowDays
         let history = await runOrTrap { try await healthKit.dailyMinutes(daysBack) } ?? []
         let steps = await runOrTrap { try await healthKit.metricSeries(.steps, daysBack) } ?? []
         months = StreakCalendar.months(
