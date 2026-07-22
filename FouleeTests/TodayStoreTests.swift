@@ -239,6 +239,130 @@ struct TodayStoreTests {
     }
 }
 
+@Suite("TodayStore streak history window")
+struct TodayStoreStreakWindowTests {
+    @Test("Refresh fetches the shared streak history window, not 30 days")
+    @MainActor
+    func refreshFetchesFullHistoryWindow() async {
+        let captured = LockedRef(0)
+        await withDependencies {
+            $0.healthKit.dailyMinutes = { daysBack in
+                captured.set(daysBack)
+                return []
+            }
+        } operation: {
+            let store = TodayStore()
+            await store.refresh()
+
+            #expect(captured.value == StreakCalculator.historyWindowDays)
+        }
+    }
+
+    @Test("A record older than 30 days shows on the home card (device report: 23 vs 12)")
+    @MainActor
+    func recordOlderThanThirtyDaysShowsOnHomeCard() async throws {
+        // 23-day run ending ~40 days ago, then a fresh 12-day run up to today.
+        var minutesByOffset: [Int: Int] = [:]
+        for offset in 40...62 { minutesByOffset[offset] = 25 }
+        for offset in 0...11 { minutesByOffset[offset] = 25 }
+        let crafted = history(minutesByOffset: minutesByOffset)
+        try await withDependencies {
+            $0.healthKit.dailyMinutes = Self.windowed(crafted)
+        } operation: {
+            let store = try makeEveryDayStore()
+            await store.refresh()
+
+            #expect(store.snapshot?.bestStreak == 23)
+            #expect(store.snapshot?.streak == 12)
+        }
+    }
+
+    @Test("A current streak longer than 30 days isn't capped")
+    @MainActor
+    func longCurrentStreakNotCapped() async throws {
+        let crafted = history(
+            minutesByOffset: Dictionary(uniqueKeysWithValues: (0...34).map { ($0, 25) })
+        )
+        try await withDependencies {
+            $0.healthKit.dailyMinutes = Self.windowed(crafted)
+        } operation: {
+            let store = try makeEveryDayStore()
+            await store.refresh()
+
+            #expect(store.snapshot?.streak == 35)
+            #expect(store.snapshot?.bestStreak == 35)
+        }
+    }
+
+    @Test("A year of history doesn't disturb the current week's bars")
+    @MainActor
+    func weekBarsUnaffectedByDeepHistory() async {
+        let calendar = Calendar.iso8601Monday
+        let today = calendar.startOfDay(for: .now)
+        let week = ISOWeek.days(containing: .now, calendar: calendar)
+        // A year of 25-minute days, with distinct values on this week's
+        // elapsed days so a misaligned lookup would be caught.
+        var byDay: [Date: Int] = [:]
+        for offset in 0..<StreakCalculator.historyWindowDays {
+            guard let day = calendar.date(byAdding: .day, value: -offset, to: today) else { continue }
+            byDay[day] = 25
+        }
+        for (index, day) in week.enumerated() where day <= today {
+            byDay[day] = (index + 1) * 10
+        }
+        let crafted = byDay.map { DailyMinutes(date: $0.key, minutes: $0.value) }
+        let expected = week.enumerated().map { index, day in day <= today ? (index + 1) * 10 : 0 }
+        await withDependencies {
+            $0.healthKit.dailyMinutes = { _ in crafted }
+        } operation: {
+            let store = TodayStore()
+            await store.refresh()
+
+            #expect(store.snapshot?.weekMinutes == expected)
+        }
+    }
+
+    /// Store with every weekday active, so streak counts don't depend on
+    /// which day of the week the test happens to run.
+    @MainActor
+    private func makeEveryDayStore() throws -> TodayStore {
+        let store = TodayStore()
+        let suiteName = "TodayStoreStreakWindowTests-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defaults.removePersistentDomain(forName: suiteName)
+        let preferences = UserPreferences(defaults: defaults)
+        preferences.activeDays = Set(Weekday.allCases)
+        store.apply(preferences: preferences)
+        return store
+    }
+
+    /// Stub that honors `daysBack` like the real query would — so a
+    /// regression to a shallow fetch makes the scenario tests fail exactly
+    /// the way the device did (bestStreak 12 instead of 23), instead of the
+    /// stub feeding the full crafted history regardless of the window.
+    private static func windowed(_ crafted: [DailyMinutes]) -> @Sendable (Int) async throws -> [DailyMinutes] {
+        { daysBack in
+            let calendar = Calendar.current
+            let today = calendar.startOfDay(for: .now)
+            guard let cutoff = calendar.date(byAdding: .day, value: -(daysBack - 1), to: today) else {
+                return crafted
+            }
+            return crafted.filter { $0.date >= cutoff }
+        }
+    }
+
+    /// `[daysAgo: minutes]` → history entries anchored on today. Absent
+    /// offsets read as 0 minutes downstream, i.e. a missed day.
+    private func history(minutesByOffset: [Int: Int]) -> [DailyMinutes] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        return minutesByOffset.compactMap { offset, minutes in
+            calendar.date(byAdding: .day, value: -offset, to: today)
+                .map { DailyMinutes(date: $0, minutes: minutes) }
+        }
+    }
+}
+
 @Suite("TodayStore optimistic walk overlay")
 struct TodayStoreWalkOverlayTests {
     @Test("A finished walk overlays its steps + distance, then reconciles to HealthKit")

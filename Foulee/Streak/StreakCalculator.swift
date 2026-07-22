@@ -9,6 +9,18 @@ import Foundation
 /// every weekday keeps the "every single day" behaviour (used by the widgets,
 /// which don't know the user's chosen days).
 enum StreakCalculator {
+    /// Months of history every streak surface covers — the calendar sheet's
+    /// browsable months (`StreakCalendarStore.monthsBack` mirrors this).
+    static let historyMonths = 12
+
+    /// Day window to fetch so `historyMonths` are fully covered: a 31-day
+    /// upper bound per month plus a week of slack past the 1st of the oldest
+    /// month. Every caller of `best`/`current` must feed a history fetched
+    /// with this same window — a shallower fetch silently turns the record
+    /// into "best of the last N days" (issue #176: home card said 12, the
+    /// calendar sheet said 23).
+    static let historyWindowDays = historyMonths * 31 + 7
+
     private static let everyDay: Set<Int> = [1, 2, 3, 4, 5, 6, 7]
 
     /// Count back from `today` over active days, skipping rest days, while each
