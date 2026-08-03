@@ -39,11 +39,14 @@ extension HealthKitClient {
                 async let distanceMeters = sumToday(store: store, type: distanceType, unit: .meter())
                 async let minutes = sumToday(store: store, type: minutesType, unit: .minute())
                 async let calories = sumToday(store: store, type: caloriesType, unit: .kilocalorie())
+                // Same max() as dailyMinutes (see ActiveMinutes): the hero
+                // ring must move for a Garmin-only user, not just the streak.
+                async let workoutMinutes = todayWorkoutMinutes(store: store)
 
                 return try await HealthMetrics(
                     steps: Int(steps),
                     distanceKm: distanceMeters / 1_000,
-                    activeMinutes: Int(minutes),
+                    activeMinutes: ActiveMinutes.merged(appleMinutes: Int(minutes), workoutMinutes: workoutMinutes),
                     activeCalories: Int(calories)
                 )
             },
@@ -91,11 +94,7 @@ extension HealthKitClient {
                 _ = try await builder.finishWorkout()
             },
             dailyMinutes: { daysBack in
-                try await dailyExerciseMinutes(
-                    store: store,
-                    type: minutesType,
-                    daysBack: daysBack
-                )
+                try await mergedDailyMinutes(store: store, minutesType: minutesType, daysBack: daysBack)
             },
             recentWorkouts: { daysBack in
                 try await recentWalkingWorkouts(store: store, daysBack: daysBack)
@@ -160,6 +159,14 @@ private func metricCollection(
     metric: WalkMetric,
     daysBack: Int
 ) async throws -> [MetricPoint] {
+    // The stats "minutes" series must match the hero and the streak: route
+    // through the source-agnostic merge instead of raw appleExerciseTime.
+    if metric == .minutes {
+        let merged = try await mergedDailyMinutes(
+            store: store, minutesType: HKQuantityType(.appleExerciseTime), daysBack: daysBack
+        )
+        return merged.map { MetricPoint(date: $0.date, value: Double($0.minutes)) }
+    }
     let calendar = Calendar.current
     let endOfToday = calendar.startOfDay(for: .now).addingTimeInterval(24 * 60 * 60)
     guard let start = calendar.date(
@@ -363,8 +370,9 @@ private func fetchStepsCount(
 /// `HKError.Code.noDataAvailable` (= 11) is the framework's way of
 /// saying "your predicate matched zero samples". Empty result, not a
 /// real failure — bubble it back as the type-appropriate zero value
-/// instead of letting the sheet show "Détail indisponible".
-private func isNoDataAvailable(_ error: (any Error)?) -> Bool {
+/// instead of letting the sheet show "Détail indisponible". Internal:
+/// also used by HealthKitClient+ActiveMinutes.swift.
+func isNoDataAvailable(_ error: (any Error)?) -> Bool {
     guard let hkError = error as? HKError else { return false }
     return hkError.code == .errorNoData
 }
@@ -405,59 +413,6 @@ private func recentWalkingWorkouts(
             let workouts = (samples as? [HKWorkout]) ?? []
             let summaries = workouts.map(WorkoutSummary.init(workout:))
             continuation.resume(returning: summaries)
-        }
-        store.execute(query)
-    }
-}
-
-/// Continuation-based bridge to `HKStatisticsCollectionQuery`. Buckets the
-/// minutes type by calendar day from `daysBack` days ago through today.
-/// Days with no samples land as `0` so the chart shows the gap.
-private func dailyExerciseMinutes(
-    store: HKHealthStore,
-    type: HKQuantityType,
-    daysBack: Int
-) async throws -> [DailyMinutes] {
-    let calendar = Calendar.current
-    let endOfToday = calendar.startOfDay(for: .now)
-        .addingTimeInterval(24 * 60 * 60)
-    guard let startOfRange = calendar.date(
-        byAdding: .day, value: -(daysBack - 1), to: calendar.startOfDay(for: .now)
-    ) else { return [] }
-
-    let predicate = HKQuery.predicateForSamples(
-        withStart: startOfRange, end: endOfToday, options: .strictStartDate
-    )
-    let interval = DateComponents(day: 1)
-
-    return try await withCheckedThrowingContinuation { continuation in
-        let query = HKStatisticsCollectionQuery(
-            quantityType: type,
-            quantitySamplePredicate: predicate,
-            options: .cumulativeSum,
-            anchorDate: startOfRange,
-            intervalComponents: interval
-        )
-        query.initialResultsHandler = { _, results, error in
-            // No exercise minutes in the range can surface as errorNoData — an
-            // empty history, not a failure. Treat it like the other queries do.
-            if isNoDataAvailable(error) {
-                continuation.resume(returning: [])
-                return
-            }
-            if let error {
-                continuation.resume(throwing: error)
-                return
-            }
-            var output: [DailyMinutes] = []
-            results?.enumerateStatistics(from: startOfRange, to: endOfToday) { statistic, _ in
-                let minutes = statistic.sumQuantity()?.doubleValue(for: .minute()) ?? 0
-                output.append(DailyMinutes(
-                    date: statistic.startDate,
-                    minutes: Int(minutes)
-                ))
-            }
-            continuation.resume(returning: output)
         }
         store.execute(query)
     }
