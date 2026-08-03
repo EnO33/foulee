@@ -4,6 +4,19 @@
 
 iOS 26 app that helps you keep a daily lunchtime walk streak going. Reads from HealthKit, reminds you just before noon, runs a Live Activity during the walk, and ships an Apple Watch companion.
 
+## Compatible watches
+
+- **Apple Watch** — native support (companion app, complications, live workouts).
+- **Garmin** — support in progress, via the **Garmin Connect → Apple Health** sync:
+  steps, distance, workouts and water intake flow into HealthKit, which Foulée
+  already reads. The streak's active-minutes metric requires the
+  source-agnostic fallback tracked in
+  [#181](https://github.com/EnO33/foulee/issues/181); full rollout is tracked in
+  the [Garmin epic](https://github.com/EnO33/foulee/issues/179). Architecture
+  decision: [ADR 0001](docs/adr/0001-garmin-integration.md) (French).
+- **Phase 2 (planned)** — a Connect IQ app on the watch for direct
+  watch↔iPhone sync (freshness + Garmin-native intensity minutes).
+
 ## Stack
 
 - **Swift 6.2**, **SwiftUI**, iOS 26 + watchOS 26
