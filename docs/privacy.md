@@ -1,6 +1,6 @@
 # Politique de confidentialité — Foulée
 
-_Dernière mise à jour : 10 juillet 2026_
+_Dernière mise à jour : 4 août 2026_
 
 Foulée est une application **locale**. Elle t'aide à entretenir une série de
 marches du midi à partir de tes données d'activité. **Aucune donnée n'est
@@ -10,16 +10,27 @@ créer.** Tout reste sur ton iPhone et ton Apple Watch.
 ## Données de santé (HealthKit)
 
 Avec ton autorisation, Foulée **lit** depuis l'app Santé : tes pas, ta distance,
-tes minutes d'exercice, ta fréquence cardiaque et tes séances de marche. Ces
-données servent uniquement à afficher tes statistiques dans l'app et à calculer
-ta série.
+tes minutes d'exercice, tes calories actives, ta fréquence cardiaque, l'eau que
+tu as bue et tes séances. Ces données servent uniquement à afficher tes
+statistiques dans l'app et à calculer ta série.
 
-Foulée **écrit** aussi tes marches du midi dans l'app Santé sous forme de
-séances, si tu le souhaites.
+Foulée **écrit** aussi dans l'app Santé, si tu le souhaites : tes marches du
+midi (sous forme de séances) et l'eau que tu enregistres dans le suivi
+d'hydratation.
 
 Ces données de santé **ne quittent jamais ton appareil** : elles ne sont ni
 transmises à un tiers, ni stockées ailleurs que dans l'app Santé d'Apple, que tu
 contrôles entièrement.
+
+## Montres Garmin
+
+Si tu portes une montre Garmin, tes données arrivent dans Foulée **par l'app
+Santé**, comme toutes les autres : c'est Garmin Connect qui les y écrit, et
+Foulée les lit sur ton appareil, sans faire de différence de source.
+
+Foulée **ne communique jamais avec les serveurs Garmin** : aucune connexion à
+un compte Garmin, aucune API Garmin, aucun échange réseau. La promesse
+reste inchangée — tes données de santé **ne quittent jamais ton appareil**.
 
 ## Localisation
 
