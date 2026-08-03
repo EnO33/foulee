@@ -123,6 +123,9 @@ let project = Project(
             ]),
             sources: [
                 "FouleeWidget/**",
+                // Pure active-minutes merge shared with the app so widget
+                // minutes match the hero ring (issue #181).
+                "Foulee/Health/ActiveMinutes.swift",
                 "Foulee/Shared/SharedWidgetData.swift",
                 "Foulee/Shared/NumberFormatting.swift",
                 "Foulee/Shared/UncheckedSendableBox.swift",

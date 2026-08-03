@@ -75,8 +75,18 @@ private func refreshSnapshotMetrics(store: HKHealthStore) async {
     async let meters = backgroundSum(store, .distanceWalkingRunning, .meter())
     async let kcal = backgroundSum(store, .activeEnergyBurned, .kilocalorie())
     async let water = backgroundSum(store, .dietaryWater, .literUnit(with: .milli))
+    // Same max() as the app and the widget (see ActiveMinutes): a background
+    // wake must not overwrite a Garmin user's merged minutes with raw zeros.
+    // Both legs must answer — merging a failed workout read as 0 would do
+    // exactly that overwrite for a Garmin-only user; keep the stored value.
+    async let workoutMinutes = todayWorkoutMinutes(store: store)
     if let steps = await steps { snapshot.steps = Int(steps) }
-    if let minutes = await minutes { snapshot.minutes = Int(minutes) }
+    if let minutes = await minutes, let workoutMinutes = try? await workoutMinutes {
+        snapshot.minutes = ActiveMinutes.merged(
+            appleMinutes: Int(minutes),
+            workoutMinutes: workoutMinutes
+        )
+    }
     if let meters = await meters { snapshot.distanceKm = meters / 1_000 }
     if let kcal = await kcal { snapshot.calories = Int(kcal) }
     if let water = await water { snapshot.waterML = Int(water) }
