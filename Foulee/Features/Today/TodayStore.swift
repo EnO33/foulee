@@ -113,6 +113,14 @@ final class TodayStore {
     /// previous walk's overlay into the next walk's target.
     @ObservationIgnored private var lastRawMetrics: HealthMetrics = .zero
 
+    /// The day `lastRawMetrics` was measured on. Kept because that baseline
+    /// survives failed reads (issue #203): without a stamp, an evening total
+    /// would baseline a walk taken after midnight and the overlay would show
+    /// yesterday's steps plus the walk as today's — for as long as the reads
+    /// keep failing, and beyond, since a caught-up read can't retire a target
+    /// that high.
+    @ObservationIgnored private var lastRawMetricsDay: Date?
+
     /// The overlay is a short-lived patch while HealthKit reconciles a walk,
     /// not a durable state — past this, trust HealthKit even if it never
     /// reaches the target.
@@ -233,7 +241,15 @@ final class TodayStore {
 
     /// Snapshot today's totals just before a walk begins, so when it finishes
     /// we can show the walk's contribution on top of the right baseline.
+    ///
+    /// A baseline measured on another day is worth no more than an unmeasured
+    /// one: today starts at 0, and the overlay covers the walk alone.
     func walkWillStart() {
+        guard lastRawMetricsDay == Calendar.current.startOfDay(for: date.now) else {
+            walkBaselineSteps = 0
+            walkBaselineDistanceKm = 0
+            return
+        }
         walkBaselineSteps = lastRawMetrics.steps
         walkBaselineDistanceKm = lastRawMetrics.distanceKm
     }
@@ -290,8 +306,22 @@ final class TodayStore {
         // and overlay verdict promptly — weather can take seconds, and
         // walkWillStart() must not read a stale baseline in the meantime.
         if generation == refreshGeneration {
-            lastRawMetrics = metrics
-            dropPendingWalkIfStale(metrics: metrics)
+            // Same rule for the metrics leg as for the history (issue #201): a
+            // refused read means "no new counters", not "zero steps". The
+            // `.zero` above still renders the screen — with the banner to
+            // explain it — but only a leg that answered may rewrite the
+            // counters the widgets read.
+            isMetricsKnown = fetchedMetrics != nil
+            // …and only such a leg may move the walk baseline (issue #203):
+            // baselining the next walk on an unmeasured 0 would make the
+            // post-walk overlay target far too low, so it would dissolve at
+            // once instead of covering the HealthKit lag it exists for. Stamped
+            // with the day it was measured on, so it can't outlive it.
+            if let fetchedMetrics {
+                lastRawMetrics = fetchedMetrics
+                lastRawMetricsDay = Calendar.current.startOfDay(for: date.now)
+            }
+            dropPendingWalkIfStale(metrics: fetchedMetrics)
         }
         let weatherSnapshot = await weatherTask
         let fetchedHistory = await historyTask
@@ -310,16 +340,12 @@ final class TodayStore {
         // With nothing cached, nothing is known — `isHistoryKnown` then keeps
         // the computed 0 inside the app instead of publishing it.
         isHistoryKnown = fetchedHistory != nil || !cachedHistory.isEmpty
-        // Same rule for the metrics leg (issue #201): a refused read means "no
-        // new counters", not "zero steps". The `.zero` above still renders the
-        // screen — with the banner to explain it — but only a leg that
-        // answered may rewrite the counters the widgets read.
-        isMetricsKnown = fetchedMetrics != nil
         let history = fetchedHistory ?? cachedHistory
         cachedHistory = history
-        // Short-circuited on purpose: the clock is only consulted once a
-        // Garmin source exists, so a refresh on an Apple-only setup keeps
-        // reading nothing but HealthKit — as it did before this hint existed.
+        // Short-circuited on purpose: the freshness verdict is only computed
+        // once a Garmin source exists, so a refresh on an Apple-only setup
+        // decides nothing from the clock beyond the baseline's day stamp — as
+        // it did before this hint existed.
         showsGarminSyncHint = garmin.hasGarminSource
             && GarminFreshness.needsSyncHint(status: garmin, now: date.now)
         snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot, history: history)
@@ -340,11 +366,18 @@ final class TodayStore {
     /// and the app deliberately never writes steps itself. Also drop it when
     /// the day changes or after `pendingWalkLifetime`: a stale overlay would
     /// show yesterday's post-walk totals as today's, in the app and widgets.
-    private func dropPendingWalkIfStale(metrics: HealthMetrics) {
+    ///
+    /// `metrics` is nil when the read was refused (issue #203). Only a measured
+    /// total can prove HealthKit caught up — a `.zero` fallback would clear a
+    /// short walk's overlay outright, its target sitting inside the tolerance.
+    /// The two clock-based reasons need no measurement and keep running: an
+    /// overlay from yesterday must expire even if today's read fails, or it
+    /// would ride the new day for as long as the reads keep failing.
+    private func dropPendingWalkIfStale(metrics: HealthMetrics?) {
         guard let pending = pendingWalk else { return }
         let now = date.now
         let tolerance = max(50, pending.targetSteps / 50)
-        let caughtUp = metrics.steps >= pending.targetSteps - tolerance
+        let caughtUp = metrics.map { $0.steps >= pending.targetSteps - tolerance } ?? false
         let dayChanged = Calendar.current.startOfDay(for: now) != pending.day
         let expired = now.timeIntervalSince(pending.registeredAt) >= Self.pendingWalkLifetime
         if caughtUp || dayChanged || expired {

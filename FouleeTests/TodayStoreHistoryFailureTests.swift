@@ -42,6 +42,7 @@ struct TodayStoreHistoryFailureTests {
     func failedHistoryKeepsLastKnownValues() async throws {
         let failing = LockedRef(false)
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = Self.failableHistory(failing, offsets: Array(0...10))
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
@@ -66,6 +67,7 @@ struct TodayStoreHistoryFailureTests {
     func failedHistoryKeepsTodaysMetrics() async throws {
         let failing = LockedRef(false)
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = Self.failableHistory(failing, offsets: Array(0...10))
             $0.healthKit.todayMetrics = {
                 HealthMetrics(steps: 8_120, distanceKm: 5.4, activeMinutes: 32, activeCalories: 240)
@@ -89,6 +91,7 @@ struct TodayStoreHistoryFailureTests {
     func failedHistoryKeepsCacheForPreferenceChanges() async throws {
         let failing = LockedRef(false)
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = Self.failableHistory(failing, offsets: Array(0...10))
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
@@ -109,6 +112,7 @@ struct TodayStoreHistoryFailureTests {
     @MainActor
     func firstLaunchWithoutCacheYieldsZero() async throws {
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = { _ in throw HistoryDown() }
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
@@ -127,6 +131,7 @@ struct TodayStoreHistoryFailureTests {
     @MainActor
     func coldLaunchWithFailingHistoryKeepsPublishedStreak() async throws {
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = { _ in throw HistoryDown() }
         } operation: {
             // Fresh process: the cache is empty and the very first read is
@@ -154,6 +159,7 @@ struct TodayStoreHistoryFailureTests {
     @MainActor
     func readHistoryPublishesItsOwnStreak() async throws {
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = StreakTestSupport.windowed {
                 StreakTestSupport.walkedDays(Array(0...10))
             }
@@ -176,6 +182,7 @@ struct TodayStoreHistoryFailureTests {
         let failing = LockedRef(false)
         let windowed = StreakTestSupport.windowed { history.value }
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = { daysBack in
                 if failing.value { throw HistoryDown() }
                 return try await windowed(daysBack)
@@ -203,6 +210,7 @@ struct TodayStoreHistoryFailureTests {
     func successfulEmptyHistoryStillZeroes() async throws {
         let history = LockedRef(StreakTestSupport.walkedDays(Array(0...10)))
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = StreakTestSupport.windowed { history.value }
         } operation: {
             let store = try StreakTestSupport.everyDayStore()

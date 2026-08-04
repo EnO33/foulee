@@ -29,6 +29,7 @@ struct TodayStoreErrorFreshnessTests {
         }
         let failing = LockedRef(true)
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit = healthKitStub {
                 if failing.value { throw Boom() }
                 return HealthMetrics(steps: 2_000, distanceKm: 1.2, activeMinutes: 15, activeCalories: 80)
@@ -58,6 +59,7 @@ struct TodayStoreErrorFreshnessTests {
         let (gate, release) = AsyncStream<Void>.makeStream()
         let parked = LockedRef(false)
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit = healthKitStub {
                 if !parked.value {
                     parked.set(true)

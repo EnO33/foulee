@@ -95,6 +95,7 @@ struct TodayStoreMetricsFailureTests {
     @MainActor
     func measuredMetricsWinOverStoredCounters() async throws {
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.todayMetrics = {
                 HealthMetrics(steps: 1_100, distanceKm: 0.8, activeMinutes: 6, activeCalories: 40)
             }
