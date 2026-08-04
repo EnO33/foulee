@@ -34,5 +34,6 @@ Précédent rassurant : **StepsApp** et **Gentler Streak** font exactement le ch
 
 - **La définition des « minutes actives » devient source-agnostique** ([#181](https://github.com/EnO33/foulee/issues/181)) : puisque `appleExerciseTime` ne peut jamais exister sans Apple Watch, le streak doit accepter des minutes dérivées d'autres échantillons (workouts, pas) — c'est le prérequis commun aux deux phases.
 - La synchro en rafales de la phase 1 impose des verdicts de jour **réparables après coup** (#182).
+- **L'agrégation multi-sources reste déléguée à HealthKit** ([#183](https://github.com/EnO33/foulee/issues/183)) : audit fait — tous les totaux passent par `HKStatisticsQuery`/`HKStatisticsCollectionQuery`, jamais par une somme manuelle d'échantillons.
 - Aucune donnée de santé ne transite par un serveur : la politique de confidentialité reste inchangée sur le fond (mise à jour éditoriale suivie dans #186).
 - La validation de bout en bout (phase 1 comme phase 2) exige une **montre physique** — aucun simulateur ne couvre ni la chaîne Garmin Connect → Santé, ni le canal BLE iOS (#191).

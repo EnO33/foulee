@@ -21,7 +21,9 @@ func mergedDailyMinutes(
     guard let start = calendar.date(byAdding: .day, value: -(daysBack - 1), to: startOfToday) else {
         return []
     }
-    async let appleTask = dailyAppleMinutes(store: store, type: minutesType, start: start, end: endOfToday)
+    async let appleTask = appleMinutesByBucket(
+        store: store, type: minutesType, start: start, end: endOfToday, bucket: .day
+    )
     async let workoutsTask = workoutIntervals(store: store, start: start, end: endOfToday)
     let appleByDay = try await appleTask
     let workoutsByDay = ActiveMinutes.workoutMinutesByDay(try await workoutsTask, calendar: calendar)
@@ -49,13 +51,72 @@ func todayWorkoutMinutes(store: HKHealthStore) async throws -> Int {
     return ActiveMinutes.workoutMinutesByDay(intervals, calendar: calendar)[start] ?? 0
 }
 
-/// Raw `appleExerciseTime` minutes keyed by day start — the merge happens in
-/// `mergedDailyMinutes`. Empty when the range has no samples.
-private func dailyAppleMinutes(
+/// Today's active minutes hour by hour (00:00 → now), oldest → newest and
+/// zero-filled. Without it the stats screen showed a Garmin-only user a daily
+/// bar at 25 min and an hourly curve flat at zero — the same number, two
+/// different answers. The merge rule (and why it is decided on the day's
+/// totals rather than hour by hour) lives in `ActiveMinutes`.
+func mergedHourlyMinutesToday(
+    store: HKHealthStore,
+    minutesType: HKQuantityType
+) async throws -> [MetricPoint] {
+    let calendar = Calendar.current
+    let start = calendar.startOfDay(for: .now)
+    let end = Date.now
+    async let appleTask = appleMinutesByBucket(
+        store: store, type: minutesType, start: start, end: end, bucket: .hour
+    )
+    async let workoutsTask = workoutIntervals(store: store, start: start, end: end)
+    let minutesByHour = ActiveMinutes.mergedHourlyMinutes(
+        appleMinutesByHour: try await appleTask,
+        workouts: try await workoutsTask,
+        calendar: calendar
+    )
+    var output: [MetricPoint] = []
+    var hour = start
+    while hour < end {
+        output.append(MetricPoint(date: hour, value: Double(minutesByHour[hour] ?? 0)))
+        let next = calendar.date(byAdding: .hour, value: 1, to: hour) ?? hour.addingTimeInterval(3_600)
+        guard next > hour else { break }
+        hour = next
+    }
+    return output
+}
+
+/// Bucket granularity understood by `appleMinutesByBucket`. A closed two-case
+/// enum rather than a `Calendar.Component`, so no caller can ask for a
+/// granularity the query has no interval for and silently get days back.
+private enum MinutesBucket {
+    case day
+    case hour
+
+    /// Interval handed to `HKStatisticsCollectionQuery`.
+    var interval: DateComponents {
+        switch self {
+        case .day: DateComponents(day: 1)
+        case .hour: DateComponents(hour: 1)
+        }
+    }
+
+    /// Calendar component the bucket keys are normalised to.
+    var component: Calendar.Component {
+        switch self {
+        case .day: .day
+        case .hour: .hour
+        }
+    }
+}
+
+/// Raw `appleExerciseTime` minutes keyed by bucket start — the merge happens
+/// in the callers. Empty when the range has no samples.
+/// `HKStatisticsCollectionQuery` merges every source before summing (Apple
+/// documented behaviour), so no manual per-source addition happens here.
+private func appleMinutesByBucket(
     store: HKHealthStore,
     type: HKQuantityType,
     start: Date,
-    end: Date
+    end: Date,
+    bucket: MinutesBucket
 ) async throws -> [Date: Int] {
     let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
     return try await withCheckedThrowingContinuation { continuation in
@@ -64,7 +125,7 @@ private func dailyAppleMinutes(
             quantitySamplePredicate: predicate,
             options: .cumulativeSum,
             anchorDate: start,
-            intervalComponents: DateComponents(day: 1)
+            intervalComponents: bucket.interval
         )
         query.initialResultsHandler = { _, results, error in
             if isNoDataAvailable(error) {
@@ -75,14 +136,16 @@ private func dailyAppleMinutes(
                 continuation.resume(throwing: error)
                 return
             }
-            var minutesByDay: [Date: Int] = [:]
+            var minutesByBucket: [Date: Int] = [:]
             results?.enumerateStatistics(from: start, to: end) { statistic, _ in
                 let minutes = statistic.sumQuantity()?.doubleValue(for: .minute()) ?? 0
                 // Normalize the bucket key through the calendar so it can't
-                // drift from the day keys `mergedDailyMinutes` enumerates.
-                minutesByDay[Calendar.current.startOfDay(for: statistic.startDate)] = Int(minutes)
+                // drift from the keys the callers enumerate.
+                let key = Calendar.current.dateInterval(of: bucket.component, for: statistic.startDate)?.start
+                    ?? statistic.startDate
+                minutesByBucket[key] = Int(minutes)
             }
-            continuation.resume(returning: minutesByDay)
+            continuation.resume(returning: minutesByBucket)
         }
         store.execute(query)
     }
