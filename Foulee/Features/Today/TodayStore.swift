@@ -146,7 +146,7 @@ final class TodayStore {
                 streak: StreakCalculator.current(
                     history: cachedHistory,
                     goalMinutes: minutesGoal,
-                    activeWeekdays: activeDays.calendarWeekdays,
+                    activeDays: activeDays,
                     today: .now
                 ),
                 bestStreak: StreakCalculator.best(
@@ -356,7 +356,7 @@ final class TodayStore {
         let currentStreak = StreakCalculator.current(
             history: history,
             goalMinutes: minutesGoal,
-            activeWeekdays: activeDays.calendarWeekdays,
+            activeDays: activeDays,
             today: .now
         )
         let bestStreak = StreakCalculator.best(

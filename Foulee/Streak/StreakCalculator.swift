@@ -65,6 +65,24 @@ enum StreakCalculator {
         return streak
     }
 
+    /// `current` fed from the preferences shape (`Set<Weekday>`) rather than
+    /// raw calendar numbers — the single entry point for every surface that
+    /// derives the streak from the user's settings (Today screen, background
+    /// wake), so they can't answer differently for the same day.
+    static func current(
+        history: [DailyMinutes],
+        goalMinutes: Int,
+        activeDays: Set<Weekday>,
+        today: Date
+    ) -> Int {
+        current(
+            history: history,
+            goalMinutes: goalMinutes,
+            activeWeekdays: activeDays.calendarWeekdays,
+            today: today
+        )
+    }
+
     /// Longest run of consecutive active days meeting `goalMinutes` across the
     /// history, with rest days skipped. Empty history → 0.
     static func best(

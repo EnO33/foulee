@@ -34,6 +34,9 @@ func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async
         for (type, frequency) in deliveries {
             try? await store.enableBackgroundDelivery(for: type, frequency: frequency)
             let isWater = type == HKQuantityType(.dietaryWater)
+            // A workout delivery is the one wake that can have repaired a past
+            // day for a Garmin user — see `BackgroundStreakRefresh`.
+            let wake: BackgroundStreakRefresh.Wake = type == HKWorkoutType.workoutType() ? .workout : .other
             let query = HKObserverQuery(sampleType: type, predicate: nil) { _, completionHandler, error in
                 let done = UncheckedSendableBox(completionHandler)
                 guard error == nil else { done.value(); return }
@@ -42,7 +45,7 @@ func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async
                     // isn't called — `defer` guarantees it on every exit,
                     // including task cancellation when the budget runs out.
                     defer { done.value() }
-                    await refreshSnapshotMetrics(store: store)
+                    await refreshSnapshotMetrics(store: store, wake: wake)
                     WidgetCenter.shared.reloadAllTimelines()
                     if isWater {
                         await reshiftHydrationRemindersIfWaterIncreased(store: store)
@@ -58,17 +61,67 @@ func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async
 /// BGAppRefresh task as an extra wake source between Health deliveries.
 func refreshWidgetSnapshotFromHealth() async {
     guard HKHealthStore.isHealthDataAvailable() else { return }
-    await refreshSnapshotMetrics(store: HKHealthStore())
+    await refreshSnapshotMetrics(store: HKHealthStore(), wake: .other)
 }
 
 /// Overlay today's live sums onto the stored widget snapshot. Skips silently
 /// when there's no snapshot yet (first launch publishes one) or a read fails
-/// (locked phone — keep the last known values).
-private func refreshSnapshotMetrics(store: HKHealthStore) async {
+/// (locked phone — keep the last known values). The streak rides along only
+/// when this wake can have changed it (`BackgroundStreakRefresh`).
+private func refreshSnapshotMetrics(store: HKHealthStore, wake: BackgroundStreakRefresh.Wake) async {
     guard let stored = SharedStore.read() else { return }
-    // Zero counters from a previous day before overlaying: a failed read
-    // below must not carry yesterday's totals into a freshly-stamped write.
-    var snapshot = stored.zeroedIfStale()
+    // Stale-zeroed: a snapshot written yesterday holds no minutes for today,
+    // so the goal crossing must be judged against 0, not yesterday's total.
+    let storedDay = stored.day
+    let storedMinutes = stored.zeroedIfStale().minutes
+    let measured = await measuredCounters(store: store)
+    let streak = await recomputedBackgroundStreak(
+        store: store,
+        storedDay: storedDay,
+        storedMinutes: storedMinutes,
+        todayMinutes: measured.minutes ?? storedMinutes,
+        wake: wake
+    )
+    // Commit against the snapshot as it stands *now*, not the copy read before
+    // the queries: several observers fire at once on a Garmin sync and the
+    // recompute above can take seconds. A full read-modify-write from the
+    // stale copy would put back the streak (and the counters) this pass read
+    // at its own start, silently undoing whatever landed meanwhile.
+    var snapshot = (SharedStore.read() ?? stored).zeroedIfStale()
+    if let steps = measured.steps { snapshot.steps = steps }
+    if let minutes = measured.minutes { snapshot.minutes = minutes }
+    if let distanceKm = measured.distanceKm { snapshot.distanceKm = distanceKm }
+    if let calories = measured.calories { snapshot.calories = calories }
+    if let waterML = measured.waterML { snapshot.waterML = waterML }
+    if let streak { snapshot.streak = streak }
+    SharedStore.write(snapshot)
+    // The watch complication reads what the phone pushed (`WatchSyncStore`),
+    // not the shared snapshot — without this it would keep a pre-repair streak
+    // all day for a user who never opens the app (issue #194). Only on a real
+    // recompute: quiet wakes would just add WatchConnectivity traffic.
+    guard streak != nil else { return }
+    PhoneWatchSync.shared.send(WatchSyncPayload(
+        streak: snapshot.streak,
+        minutesGoal: snapshot.minutesGoal,
+        stepsGoal: snapshot.stepsGoal,
+        hydrationEnabled: snapshot.hydrationEnabled,
+        hydrationGoalML: snapshot.waterGoalML,
+        hydrationGlassML: snapshot.hydrationGlassML
+    ))
+}
+
+/// Today's counters as this wake measured them. A nil leg is a read HealthKit
+/// refused (locked phone), which must keep the stored value rather than
+/// publish a zero.
+private struct MeasuredCounters {
+    var steps: Int?
+    var minutes: Int?
+    var distanceKm: Double?
+    var calories: Int?
+    var waterML: Int?
+}
+
+private func measuredCounters(store: HKHealthStore) async -> MeasuredCounters {
     // Independent sums — run concurrently to keep the background wake short.
     async let steps = backgroundSum(store, .stepCount, .count())
     async let minutes = backgroundSum(store, .appleExerciseTime, .minute())
@@ -80,17 +133,18 @@ private func refreshSnapshotMetrics(store: HKHealthStore) async {
     // Both legs must answer — merging a failed workout read as 0 would do
     // exactly that overwrite for a Garmin-only user; keep the stored value.
     async let workoutMinutes = todayWorkoutMinutes(store: store)
-    if let steps = await steps { snapshot.steps = Int(steps) }
+    var counters = MeasuredCounters()
+    if let steps = await steps { counters.steps = Int(steps) }
     if let minutes = await minutes, let workoutMinutes = try? await workoutMinutes {
-        snapshot.minutes = ActiveMinutes.merged(
+        counters.minutes = ActiveMinutes.merged(
             appleMinutes: Int(minutes),
             workoutMinutes: workoutMinutes
         )
     }
-    if let meters = await meters { snapshot.distanceKm = meters / 1_000 }
-    if let kcal = await kcal { snapshot.calories = Int(kcal) }
-    if let water = await water { snapshot.waterML = Int(water) }
-    SharedStore.write(snapshot)
+    if let meters = await meters { counters.distanceKm = meters / 1_000 }
+    if let kcal = await kcal { counters.calories = Int(kcal) }
+    if let water = await water { counters.waterML = Int(water) }
+    return counters
 }
 
 /// Last dietaryWater total this observer saw, kept in the app's own defaults
