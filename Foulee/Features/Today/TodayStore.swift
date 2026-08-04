@@ -68,6 +68,14 @@ final class TodayStore {
     /// streaks immediately when the goal or active days change.
     @ObservationIgnored private var cachedHistory: [DailyMinutes] = []
 
+    /// Whether the streak currently on screen was measured at all: the history
+    /// was read, or an earlier read left a cache to carry forward. False on a
+    /// cold launch whose first read is refused — the 0 the calculator answers
+    /// there is nobody's measurement, so it must not be published outside the
+    /// app (issue #200). A successful *empty* read is knowledge: it publishes
+    /// an honest 0.
+    @ObservationIgnored private var isHistoryKnown = false
+
     /// Long-lived subscription to HealthKit changes (live step updates).
     @ObservationIgnored private var observerTask: Task<Void, Never>?
 
@@ -170,36 +178,15 @@ final class TodayStore {
     /// read this snapshot instead — which keeps the Lock Screen from dropping to
     /// zero. Cheap; safe to call on every refresh / goal change.
     private func publishToWidgets() {
-        guard let snapshot else { return }
-        SharedStore.write(WidgetSnapshot(
-            steps: snapshot.steps,
-            stepsGoal: snapshot.stepsGoal,
-            minutes: snapshot.minutes,
-            minutesGoal: snapshot.minutesGoal,
-            distanceKm: snapshot.distanceKm,
-            calories: snapshot.calories,
-            streak: snapshot.streak,
-            // Water intake is owned by the hydration flow — carry the stored
-            // value forward so this full rewrite doesn't reset the ring.
-            // Stale-zeroed so yesterday's water doesn't survive midnight.
-            waterML: SharedStore.read()?.zeroedIfStale().waterML ?? 0,
-            waterGoalML: hydrationGoalML,
-            hydrationEnabled: hydrationEnabled,
-            hydrationGlassML: hydrationGlassML
-        ))
+        guard let publication = widgetPublication(stored: SharedStore.read()) else { return }
+        SharedStore.write(publication.snapshot)
         WidgetCenter.shared.reloadAllTimelines()
 
         // Push the phone-computed streak (+ goals) to the Watch. The watch's
         // local HealthKit only keeps a few days of history, so it can't
         // recompute long streaks correctly — it just displays this value.
-        PhoneWatchSync.shared.send(WatchSyncPayload(
-            streak: snapshot.streak,
-            minutesGoal: minutesGoal,
-            stepsGoal: stepsGoal,
-            hydrationEnabled: hydrationEnabled,
-            hydrationGoalML: hydrationGoalML,
-            hydrationGlassML: hydrationGlassML
-        ))
+        guard let payload = publication.watchPayload else { return }
+        PhoneWatchSync.shared.send(payload)
     }
 
     /// Ask for HealthKit + Location authorization and trigger an initial
@@ -261,8 +248,8 @@ final class TodayStore {
     /// (`StreakCalculator.historyWindowDays` — same window as the calendar
     /// sheet, so the record here can't diverge from the one shown there) in
     /// parallel. Always sets `snapshot` — falling back to zeros for
-    /// metrics and an empty history when a fetch fails — so the UI
-    /// renders even when HealthKit/WeatherKit are unavailable (sim, free
+    /// metrics and to the last known history when a fetch fails — so the
+    /// UI renders even when HealthKit/WeatherKit are unavailable (sim, free
     /// dev signing, denied perms). Failures are surfaced via `lastError`
     /// for an in-screen banner.
     func refresh(seedError: String? = nil) async {
@@ -298,11 +285,23 @@ final class TodayStore {
             dropPendingWalkIfStale(metrics: metrics)
         }
         let weatherSnapshot = await weatherTask
-        let history = await historyTask ?? []
+        let fetchedHistory = await historyTask
         let garmin = await garminTask
         // A newer refresh() started while these fetches were in flight — let
         // it publish; this pass's data (and error verdict) is already stale.
         guard generation == refreshGeneration else { return }
+        // A failed history read is "no new data", not "no days": an empty
+        // history computes a 0 streak, which publishToWidgets would push to
+        // the app group and the Watch (issue #200). Same policy as the
+        // background path. A successful *empty* read still means 0 — only the
+        // failure carries the last known history forward, and it carries
+        // everything derived from it: the streak, the record and the week
+        // bars. Today's bar can therefore lag the hero card's minutes (which
+        // come from the metrics leg) until a history read succeeds again.
+        // With nothing cached, nothing is known — `isHistoryKnown` then keeps
+        // the computed 0 inside the app instead of publishing it.
+        isHistoryKnown = fetchedHistory != nil || !cachedHistory.isEmpty
+        let history = fetchedHistory ?? cachedHistory
         cachedHistory = history
         // Short-circuited on purpose: the clock is only consulted once a
         // Garmin source exists, so a refresh on an Apple-only setup keeps
@@ -406,6 +405,59 @@ final class TodayStore {
         return days.map { byDay[$0] ?? 0 }
     }
 
+}
+
+// MARK: - Widget publication
+
+extension TodayStore {
+    /// What a pass hands to the outside world: the app-group snapshot the
+    /// widgets read, and the payload for the Watch — nil when this pass
+    /// measured no streak.
+    struct Publication {
+        var snapshot: WidgetSnapshot
+        var watchPayload: WatchSyncPayload?
+    }
+
+    /// Project the current snapshot onto `stored` — the app group as it stands
+    /// right now. Pure (and internal) so the rule below is testable without
+    /// racing on the process-global app group.
+    ///
+    /// Per-leg discipline, same as `refreshSnapshotMetrics` on the background
+    /// path: a leg nobody could read keeps the stored value instead of
+    /// publishing a zero. Here that leg is the streak — an unknown history
+    /// computes 0, and writing it would blank the widget and the Watch on the
+    /// first refresh of a cold launch with Santé locked (issue #200). The
+    /// in-app snapshot may still show that 0; the error banner explains it.
+    func widgetPublication(stored: WidgetSnapshot?) -> Publication? {
+        guard let snapshot else { return nil }
+        let published = WidgetSnapshot(
+            steps: snapshot.steps,
+            stepsGoal: snapshot.stepsGoal,
+            minutes: snapshot.minutes,
+            minutesGoal: snapshot.minutesGoal,
+            distanceKm: snapshot.distanceKm,
+            calories: snapshot.calories,
+            streak: isHistoryKnown ? snapshot.streak : (stored?.streak ?? snapshot.streak),
+            // Water intake is owned by the hydration flow — carry the stored
+            // value forward so this full rewrite doesn't reset the ring.
+            // Stale-zeroed so yesterday's water doesn't survive midnight.
+            waterML: stored?.zeroedIfStale().waterML ?? 0,
+            waterGoalML: hydrationGoalML,
+            hydrationEnabled: hydrationEnabled,
+            hydrationGlassML: hydrationGlassML
+        )
+        // No push at all when the streak is unmeasured: the Watch keeps the
+        // last value the phone actually computed, rather than one nobody did.
+        guard isHistoryKnown else { return Publication(snapshot: published, watchPayload: nil) }
+        return Publication(snapshot: published, watchPayload: WatchSyncPayload(
+            streak: snapshot.streak,
+            minutesGoal: minutesGoal,
+            stepsGoal: stepsGoal,
+            hydrationEnabled: hydrationEnabled,
+            hydrationGoalML: hydrationGoalML,
+            hydrationGlassML: hydrationGlassML
+        ))
+    }
 }
 
 // MARK: - Error boundary
