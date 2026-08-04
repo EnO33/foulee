@@ -183,6 +183,13 @@ private func metricHourlyToday(
     store: HKHealthStore,
     metric: WalkMetric
 ) async throws -> [MetricPoint] {
+    // Same reason as `metricCollection`: raw appleExerciseTime would show a
+    // Garmin-only user an empty hourly curve under a non-zero daily bar.
+    if metric == .minutes {
+        return try await mergedHourlyMinutesToday(
+            store: store, minutesType: HKQuantityType(.appleExerciseTime)
+        )
+    }
     let calendar = Calendar.current
     let start = calendar.startOfDay(for: .now)
     return try await statisticsCollection(
