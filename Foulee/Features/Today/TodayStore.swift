@@ -74,7 +74,15 @@ final class TodayStore {
     /// there is nobody's measurement, so it must not be published outside the
     /// app (issue #200). A successful *empty* read is knowledge: it publishes
     /// an honest 0.
-    @ObservationIgnored private var isHistoryKnown = false
+    @ObservationIgnored private(set) var isHistoryKnown = false
+
+    /// Whether today's counters on screen were measured at all. False when the
+    /// metrics read was refused: the `.zero` fallback below is nobody's
+    /// measurement either, so it must not overwrite the counters the widgets
+    /// and the background wakes maintain (issue #201). No cache to fall back
+    /// on here — unlike the history, the carry-forward source is the stored
+    /// snapshot itself.
+    @ObservationIgnored private(set) var isMetricsKnown = false
 
     /// Long-lived subscription to HealthKit changes (live step updates).
     @ObservationIgnored private var observerTask: Task<Void, Never>?
@@ -276,7 +284,8 @@ final class TodayStore {
         // hint", never a data error worth showing the user.
         async let garminTask = healthKit.garminStatus()
 
-        let metrics = await metricsTask ?? .zero
+        let fetchedMetrics = await metricsTask
+        let metrics = fetchedMetrics ?? .zero
         // Metrics return first (local HealthKit); commit the walk baseline
         // and overlay verdict promptly — weather can take seconds, and
         // walkWillStart() must not read a stale baseline in the meantime.
@@ -301,6 +310,11 @@ final class TodayStore {
         // With nothing cached, nothing is known — `isHistoryKnown` then keeps
         // the computed 0 inside the app instead of publishing it.
         isHistoryKnown = fetchedHistory != nil || !cachedHistory.isEmpty
+        // Same rule for the metrics leg (issue #201): a refused read means "no
+        // new counters", not "zero steps". The `.zero` above still renders the
+        // screen — with the banner to explain it — but only a leg that
+        // answered may rewrite the counters the widgets read.
+        isMetricsKnown = fetchedMetrics != nil
         let history = fetchedHistory ?? cachedHistory
         cachedHistory = history
         // Short-circuited on purpose: the clock is only consulted once a
@@ -405,59 +419,6 @@ final class TodayStore {
         return days.map { byDay[$0] ?? 0 }
     }
 
-}
-
-// MARK: - Widget publication
-
-extension TodayStore {
-    /// What a pass hands to the outside world: the app-group snapshot the
-    /// widgets read, and the payload for the Watch — nil when this pass
-    /// measured no streak.
-    struct Publication {
-        var snapshot: WidgetSnapshot
-        var watchPayload: WatchSyncPayload?
-    }
-
-    /// Project the current snapshot onto `stored` — the app group as it stands
-    /// right now. Pure (and internal) so the rule below is testable without
-    /// racing on the process-global app group.
-    ///
-    /// Per-leg discipline, same as `refreshSnapshotMetrics` on the background
-    /// path: a leg nobody could read keeps the stored value instead of
-    /// publishing a zero. Here that leg is the streak — an unknown history
-    /// computes 0, and writing it would blank the widget and the Watch on the
-    /// first refresh of a cold launch with Santé locked (issue #200). The
-    /// in-app snapshot may still show that 0; the error banner explains it.
-    func widgetPublication(stored: WidgetSnapshot?) -> Publication? {
-        guard let snapshot else { return nil }
-        let published = WidgetSnapshot(
-            steps: snapshot.steps,
-            stepsGoal: snapshot.stepsGoal,
-            minutes: snapshot.minutes,
-            minutesGoal: snapshot.minutesGoal,
-            distanceKm: snapshot.distanceKm,
-            calories: snapshot.calories,
-            streak: isHistoryKnown ? snapshot.streak : (stored?.streak ?? snapshot.streak),
-            // Water intake is owned by the hydration flow — carry the stored
-            // value forward so this full rewrite doesn't reset the ring.
-            // Stale-zeroed so yesterday's water doesn't survive midnight.
-            waterML: stored?.zeroedIfStale().waterML ?? 0,
-            waterGoalML: hydrationGoalML,
-            hydrationEnabled: hydrationEnabled,
-            hydrationGlassML: hydrationGlassML
-        )
-        // No push at all when the streak is unmeasured: the Watch keeps the
-        // last value the phone actually computed, rather than one nobody did.
-        guard isHistoryKnown else { return Publication(snapshot: published, watchPayload: nil) }
-        return Publication(snapshot: published, watchPayload: WatchSyncPayload(
-            streak: snapshot.streak,
-            minutesGoal: minutesGoal,
-            stepsGoal: stepsGoal,
-            hydrationEnabled: hydrationEnabled,
-            hydrationGoalML: hydrationGoalML,
-            hydrationGlassML: hydrationGlassML
-        ))
-    }
 }
 
 // MARK: - Error boundary
