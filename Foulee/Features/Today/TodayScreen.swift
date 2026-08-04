@@ -161,14 +161,21 @@ struct TodayScreen: View {
                 header(date: snapshot.date)
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
-                if snapshot.hasNoActivity {
-                    TodayEmptyStateCard()
-                        .padding(.horizontal, 20)
-                } else if store.lastError != nil {
-                    // A real fetch failed while we *do* have something to show.
-                    // The empty case is handled by the card above, so we never
-                    // surface both at once.
+                // One card at most, most-explanatory first. A failed fetch
+                // outranks both hints — a day can perfectly well hold data
+                // *and* a failed fetch, and only the banner explains why the
+                // numbers may be wrong.
+                if store.lastError != nil {
                     TodayErrorBanner()
+                        .padding(.horizontal, 20)
+                } else if store.showsGarminSyncHint {
+                    // Before the generic empty state: telling a Garmin user to
+                    // "faire quelques pas" when the real gap is an unsynced
+                    // Garmin Connect would send them nowhere.
+                    GarminSyncHintCard()
+                        .padding(.horizontal, 20)
+                } else if snapshot.hasNoActivity {
+                    TodayEmptyStateCard()
                         .padding(.horizontal, 20)
                 }
                 heroCard(snapshot: snapshot)

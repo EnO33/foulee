@@ -9,7 +9,9 @@ struct OnboardingWelcomeView: View {
     private let bullets: [(icon: String, text: String)] = [
         (FouleeIcon.walk, "Une marche du midi par jour ouvré"),
         (FouleeIcon.target, "Un objectif simple, pas un score"),
-        (FouleeIcon.watch, "Détection auto via Apple Watch")
+        // Neutral on purpose: Garmin (via Santé) works here too, and promising
+        // an Apple Watch feature to someone who doesn't own one is a dead end.
+        (FouleeIcon.watch, "Détection auto via ta montre")
     ]
 
     var body: some View {

@@ -81,6 +81,14 @@ struct HealthKitClient: Sendable {
     var waterWriteDenied: @Sendable () async -> Bool
         = { false }
 
+    /// Soft detection of the watch behind the user's Health data (issue #185):
+    /// is a Garmin source writing into Santé, is there any Apple Watch data,
+    /// and when did Garmin last push something today. Never throws — a missing
+    /// verdict just means "nothing detected", which keeps every adapted hint
+    /// off. Defaulted so stubs that don't care compile unchanged.
+    var garminStatus: @Sendable () async -> GarminStatus
+        = { GarminStatus() }
+
     /// Ask iOS to wake the app (hourly, the finest steps cadence allowed) when
     /// new Health samples land, so the widget snapshot stays fresh without the
     /// app being opened. Defaulted to a no-op.
