@@ -6,6 +6,12 @@ import SwiftUI
 struct SettingsScreen: View {
     @Bindable var preferences: UserPreferences
 
+    @State private var isShowingGarminGuide = false
+
+    /// A sheet presented from a sheet doesn't inherit the theme — resolve it
+    /// here, same as `TodayScreen` does for its own modals.
+    @Environment(\.colorScheme) private var systemColorScheme
+
     private let appVersion: String = Bundle.main
         .object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
 
@@ -18,11 +24,24 @@ struct SettingsScreen: View {
                 stepsSection
                 hydrationSection
                 notificationsSection
+                watchSection
                 aboutSection
             }
             .padding(.horizontal, 20)
             .padding(.top, 28)
             .padding(.bottom, 40)
+        }
+        .sheet(isPresented: $isShowingGarminGuide) {
+            GarminSetupSheet { isShowingGarminGuide = false }
+                .preferredColorScheme(preferences.themeMode.colorScheme ?? systemColorScheme)
+        }
+    }
+
+    /// The Garmin guide again, for the (common) case where the watch arrives
+    /// long after the onboarding.
+    private var watchSection: some View {
+        section(title: "Montre") {
+            GarminSetupLink { isShowingGarminGuide = true }
         }
     }
 

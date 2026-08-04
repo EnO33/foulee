@@ -16,25 +16,56 @@ struct OnboardingPermissionsView: View {
     @State private var healthGranted = false
     @State private var locationGranted = false
     @State private var notificationsGranted = false
+    @State private var isShowingGarminGuide = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 28) {
-            OnboardingStepIndicator(step: 2)
-                .frame(maxWidth: .infinity)
-            heading
+        VStack(alignment: .leading, spacing: 20) {
+            // Five glass rows plus the heading no longer fit a fixed stack —
+            // they clipped the title and the button at larger Dynamic Type
+            // sizes. Scroll the rows, keep the CTA pinned to the bottom.
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    OnboardingStepIndicator(step: 2)
+                        .frame(maxWidth: .infinity)
+                    heading
+                    rows
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 70)
+                .padding(.bottom, 8)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            footer
+                .padding(.horizontal, 24)
+                .padding(.bottom, 36)
+        }
+        .sheet(isPresented: $isShowingGarminGuide) {
+            GarminSetupSheet { isShowingGarminGuide = false }
+        }
+    }
+
+    private var rows: some View {
+        VStack(spacing: 12) {
             permissionRows
-            Spacer()
+            // A Garmin user has nothing to toggle here — their setup happens
+            // in Garmin Connect, so the guide is offered right where the watch
+            // question comes up.
+            GarminSetupLink { isShowingGarminGuide = true }
+                .padding(14)
+                .fouleeGlass(cornerRadius: 18)
+        }
+    }
+
+    private var footer: some View {
+        VStack(alignment: .leading, spacing: 20) {
             hint
             PrimaryButton(title: "Terminer l'installation", systemIcon: nil, action: onFinish)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 70)
-        .padding(.bottom, 36)
     }
 
     private var heading: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Connectons\nSanté & Apple Watch")
+            Text("Connectons\nSanté & ta montre")
                 .scaledSystemFont(size: 30, weight: .bold)
                 .lineSpacing(2)
             Text("Foulée lit uniquement tes pas et marches.\nAucune donnée n'est partagée.")
@@ -56,8 +87,8 @@ struct OnboardingPermissionsView: View {
             PermissionRow(
                 systemIcon: FouleeIcon.watch,
                 color: Color(hex: 0x0A84FF),
-                title: "Apple Watch",
-                subtitle: "Détection auto des marches",
+                title: "Montre",
+                subtitle: "Apple Watch ou Garmin",
                 isOn: .constant(true),
                 request: { true }
             )

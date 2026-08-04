@@ -9,6 +9,7 @@ extension HealthKitClient {
     /// in `HealthKitClient.swift`.
     static let liveValue: HealthKitClient = {
         let store = HKHealthStore()
+        let garminDetector = GarminSourceDetector()
 
         let stepsType = HKQuantityType(.stepCount)
         let distanceType = HKQuantityType(.distanceWalkingRunning)
@@ -129,6 +130,9 @@ extension HealthKitClient {
             },
             waterWriteDenied: {
                 store.authorizationStatus(for: waterType) == .sharingDenied
+            },
+            garminStatus: {
+                await garminDetector.status(store: store)
             },
             enableBackgroundDelivery: healthBackgroundDeliveryClosure(store: store)
         )

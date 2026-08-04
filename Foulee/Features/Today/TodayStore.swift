@@ -30,6 +30,11 @@ final class TodayStore {
     /// "refusées dans Réglages" instead of a lying "activés".
     private(set) var notificationsAuthorizationStatus: UNAuthorizationStatus = .notDetermined
 
+    /// Garmin-only setup whose day looks behind — see `GarminFreshness`. The
+    /// screen then shows "Ouvre Garmin Connect" instead of Apple-Watch-flavoured
+    /// copy, which would be useless advice for this user.
+    private(set) var showsGarminSyncHint = false
+
     @ObservationIgnored
     @Dependency(\.healthKit) private var healthKit
 
@@ -280,6 +285,9 @@ final class TodayStore {
         async let historyTask: [DailyMinutes]? = runOrTrap(generation: generation) {
             try await healthKit.dailyMinutes(StreakCalculator.historyWindowDays)
         }
+        // Non-throwing by design: a missing verdict only means "no adapted
+        // hint", never a data error worth showing the user.
+        async let garminTask = healthKit.garminStatus()
 
         let metrics = await metricsTask ?? .zero
         // Metrics return first (local HealthKit); commit the walk baseline
@@ -291,10 +299,16 @@ final class TodayStore {
         }
         let weatherSnapshot = await weatherTask
         let history = await historyTask ?? []
+        let garmin = await garminTask
         // A newer refresh() started while these fetches were in flight — let
         // it publish; this pass's data (and error verdict) is already stale.
         guard generation == refreshGeneration else { return }
         cachedHistory = history
+        // Short-circuited on purpose: the clock is only consulted once a
+        // Garmin source exists, so a refresh on an Apple-only setup keeps
+        // reading nothing but HealthKit — as it did before this hint existed.
+        showsGarminSyncHint = garmin.hasGarminSource
+            && GarminFreshness.needsSyncHint(status: garmin, now: date.now)
         snapshot = makeSnapshot(from: metrics, weather: weatherSnapshot, history: history)
         publishToWidgets()
         // Publish this pass's verdict last: a transient failure must not pin
