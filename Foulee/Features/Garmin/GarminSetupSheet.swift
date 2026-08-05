@@ -1,26 +1,33 @@
 import SwiftUI
 
 /// "J'ai une montre Garmin" — how to let Garmin Connect write into Santé
-/// (issue #185, corrected in #205). Reachable from the onboarding permissions
-/// step and from Réglages, since a user often connects the watch after install.
+/// (issue #185, corrected in #205, reordered in #210). Reachable from the
+/// onboarding permissions step and from Réglages, since a user often connects
+/// the watch after install.
 ///
-/// The numbered steps stay inside the **Apple Health app**, which is also what
-/// Garmin's own support page leads with: those labels are Apple's, stable and
-/// verifiable. Garmin Connect's own menu has been renamed at least twice
-/// ("3rd Party Apps" → "Connected Apps" → "Connect Apps") and Garmin's EN and
-/// FR pages disagree about it today, so that path is a hedged hint for the one
-/// case that needs it — never step 1, never a precondition.
+/// The ordering is first-hand, not researched (05/08/2026, owner's iPhone,
+/// Garmin Connect FR): the connection is started **in Garmin Connect**, and an
+/// app that has never requested HealthKit access is simply absent from Santé →
+/// Confidentialité → Apps. Leading with the Santé screen — as #206 did — thus
+/// opened on a step that necessarily fails for a first-time user. Santé keeps
+/// its place as the verify/repair path. Garmin has renamed that menu at least
+/// twice ("3rd Party Apps" → "Connected Apps" → "Connect Apps"), so the labels
+/// stay hedged; the path itself no longer is.
 struct GarminSetupSheet: View {
     var onClose: () -> Void
 
-    /// Apple's own path (iPhone User Guide, iOS 26). The row is "Apps", a
-    /// sibling of "Appareils" — not "Apps et services" (Garmin's stale label).
+    /// Garmin Connect FR, confirmed on device: the entry keeps its English name
+    /// "Apple Health" inside the French app. Step 5 is iOS's own permission
+    /// sheet, which Garmin triggers — the categories are Apple's wording.
     private let steps = [
-        "Ouvre l'app Santé, onglet Résumé.",
-        "Touche ta photo ou tes initiales, en haut à droite.",
-        "Sous « Confidentialité », touche « Apps ».",
-        "Touche « Garmin Connect » (ou « Connect ») dans la liste.",
-        "Active les catégories : Pas, Distance, Entraînements, Fréquence cardiaque, Calories — et Eau si tu suis ton hydratation."
+        "Ouvre Garmin Connect, onglet « Plus ».",
+        "Touche « Paramètres », puis « Applications connectées ».",
+        "Touche « Apple Health » — l'entrée garde son nom anglais.",
+        "Touche « Se connecter avec Apple Health ».",
+        """
+        Santé affiche sa fenêtre d'autorisation : active les catégories — Pas, Distance, \
+        Entraînements, Fréquence cardiaque, Calories, et Eau si tu suis ton hydratation.
+        """
     ]
 
     var body: some View {
@@ -30,7 +37,7 @@ struct GarminSetupSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     header
                     stepsCard
-                    diagnosticCard
+                    verifyCard
                     caveatsCard
                     labelsNote
                 }
@@ -53,7 +60,7 @@ struct GarminSetupSheet: View {
             Text("""
                 Une seule chose à obtenir : que Garmin Connect ait le droit d'écrire dans Santé. \
                 Foulée y lit ensuite tes données comme celles d'une Apple Watch — rien ne passe \
-                par un serveur. Ça se règle dans l'app Santé.
+                par un serveur. La connexion se lance depuis Garmin Connect.
                 """)
                 .font(FouleeFont.body)
                 .foregroundStyle(.secondary)
@@ -83,26 +90,27 @@ struct GarminSetupSheet: View {
         .fouleeGlass(cornerRadius: 22)
     }
 
-    /// The branch point that keeps this guide honest: Apple lists an app under
-    /// Santé → Apps as soon as it has *asked* for access, whatever the answer
-    /// was. Present therefore means everything is repairable in Santé alone;
-    /// absent is the only case that needs Garmin Connect — and that is exactly
-    /// where the menu labels are unreliable, hence the hedging.
-    private var diagnosticCard: some View {
+    /// Santé, demoted to verify/repair. Apple lists an app here as soon as it
+    /// has *asked* for access, whatever the answer was — so absence is not a
+    /// bug, it is the signal that the Garmin Connect step above never ran. That
+    /// asymmetry is what misled the owner; it is spelled out rather than implied.
+    private var verifyCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Garmin Connect n'est pas dans la liste ?")
+            Text("Vérifier ou réparer, côté Santé")
                 .font(FouleeFont.headline)
             Text("""
-                Une app y figure dès qu'elle a demandé l'accès à Santé, même si tu avais répondu \
-                « Ne pas autoriser ». Si tu la vois, tout se répare là, sans toucher à Garmin Connect.
+                Santé → Résumé → ta photo en haut à droite → sous « Confidentialité », « Apps » → \
+                « Connect ». Attention : l'entrée porte ce nom-là, donc elle est classée à la \
+                lettre C, pas à G — c'est ce qui fait chercher en vain. Tu y retrouves les mêmes catégories, à cocher \
+                ou décocher quand tu veux.
                 """)
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
             Text("""
-                Absente, c'est qu'elle n'a jamais demandé : ouvre Garmin Connect et lance la connexion \
-                à Apple Santé depuis la section des applications connectées — le libellé varie selon \
-                les versions (« Applications connectées », « Applications tierces »…) et l'entrée peut \
-                ne s'afficher que tant que la connexion n'est pas faite. Reprends ensuite à l'étape 1.
+                Garmin Connect n'apparaît dans cette liste qu'une fois la connexion établie : une app \
+                y entre quand elle a demandé l'accès, jamais avant. Donc pas dans la liste = la \
+                connexion n'a jamais été faite, commence par Garmin Connect ci-dessus. Dans la liste = \
+                tout se règle là, même si tu avais répondu « Ne pas autoriser ».
                 """)
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
@@ -129,8 +137,9 @@ struct GarminSetupSheet: View {
                 title: "Garmin Connect doit être ouverte",
                 detail: """
                     Le transfert vers Santé n'a lieu que quand l'app est au premier plan. Fermée, il se \
-                    met en pause et ne reprend qu'à la synchro suivante. Journée en retard dans Foulée ? \
-                    Ouvre Garmin Connect.
+                    met en pause et ne reprend qu'à la synchro suivante. Compte quelques minutes \
+                    (environ 5) avant de voir tes données dans Foulée — ce n'est pas instantané. \
+                    Journée en retard ? Ouvre Garmin Connect et laisse-la ouverte un moment.
                     """
             )
         }
@@ -157,8 +166,9 @@ struct GarminSetupSheet: View {
 
     private var labelsNote: some View {
         Text("""
-            Les menus de Garmin Connect changent d'une version à l'autre — ceux de l'app Santé, non. \
-            C'est pour ça que le réglage se fait d'abord côté Santé.
+            Les libellés de Garmin Connect changent d'une version à l'autre — « Applications \
+            connectées » s'est déjà appelé « Applications tierces ». Le chemin, lui, ne bouge pas : \
+            les paramètres, puis les applications connectées.
             """)
             .font(FouleeFont.caption)
             .foregroundStyle(.secondary)
@@ -203,6 +213,8 @@ struct GarminSetupLink: View {
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            // Without this the hit area is the glyphs only, not the row.
+            .contentShape(Rectangle())
         }
         .buttonStyle(.pressable)
     }
