@@ -77,6 +77,9 @@ struct TodayStoreTests {
             var errorDescription: String? { "Santé en feu" }
         }
         await withDependencies {
+            // Publication reads the clock unconditionally since #214 (the
+            // Garmin floor is day-scoped), so every pass needs one pinned.
+            $0.date = .constant(.now)
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: { throw Boom() },

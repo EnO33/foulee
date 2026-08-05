@@ -105,12 +105,34 @@ private func refreshSnapshotMetrics(store: HKHealthStore, wake: BackgroundStreak
     // max — never a sum, and only onto the legs HealthKit answered. A leg it
     // refused keeps the stored value, so a Garmin total can't ride a read
     // nobody made. Calories stay HealthKit-only (Garmin's are a *total* burn).
+    //
+    // Each rewritten leg carries its own floor into the app group beside it
+    // (#214): the widget process can't read `GarminSnapshotStore`, and without
+    // the number its own live HealthKit read would have to be floored against
+    // the stored *total* — which is what kept a legitimately falling counter
+    // pinned at the day's high. Clamped to the counter it accompanies, so the
+    // floor can never sit above the total it is holding up.
+    //
+    // Tied to the same `if let` on purpose. A refused leg keeps the stored
+    // counter, so it must keep the stored floor too — that number may hold a
+    // post-walk overlay (#158) this process knows nothing about, `pendingWalk`
+    // living in `TodayStore`'s memory. On a leg HealthKit *did* answer the walk
+    // component goes, exactly as the counter itself does: `max(measured,
+    // overlay)` has already dropped the walk lift from the total here, and a
+    // floor left above it would be the inconsistency of the line above.
     let overlay = GarminSnapshotStore.readFloor(now: now, from: defaults)
-    if let steps = measured.steps { snapshot.steps = max(steps, overlay?.steps ?? 0) }
+    if let steps = measured.steps {
+        snapshot.steps = max(steps, overlay?.steps ?? 0)
+        snapshot.floorSteps = min(overlay?.steps ?? 0, snapshot.steps)
+    }
     if let minutes = measured.minutes {
         snapshot.minutes = ActiveMinutes.merged(minutes, with: overlay?.activeMinutes ?? 0)
+        snapshot.floorMinutes = min(overlay?.activeMinutes ?? 0, snapshot.minutes)
     }
-    if let distanceKm = measured.distanceKm { snapshot.distanceKm = max(distanceKm, overlay?.distanceKm ?? 0) }
+    if let distanceKm = measured.distanceKm {
+        snapshot.distanceKm = max(distanceKm, overlay?.distanceKm ?? 0)
+        snapshot.floorDistanceKm = min(overlay?.distanceKm ?? 0, snapshot.distanceKm)
+    }
     if let calories = measured.calories { snapshot.calories = calories }
     if let waterML = measured.waterML { snapshot.waterML = waterML }
     if let streak { snapshot.streak = streak }

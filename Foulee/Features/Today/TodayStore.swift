@@ -105,6 +105,17 @@ final class TodayStore {
         var registeredAt: Date
     }
     @ObservationIgnored private var pendingWalk: PendingWalk?
+
+    /// The totals the post-walk overlay is currently holding up, or nil when no
+    /// walk is pending. Read by `widgetPublication(stored:)`: the overlay lifts
+    /// the published counters above raw HealthKit exactly like the Connect IQ
+    /// one, so the widget process has to be told about it or it would drop the
+    /// walk on its very next render (#214). The overlay itself stays private —
+    /// only the two numbers the widget may not fall below travel.
+    var pendingWalkFloor: (steps: Int, distanceKm: Double)? {
+        pendingWalk.map { (steps: $0.targetSteps, distanceKm: $0.targetDistanceKm) }
+    }
+
     @ObservationIgnored private var walkBaselineSteps = 0
     @ObservationIgnored private var walkBaselineDistanceKm = 0.0
 

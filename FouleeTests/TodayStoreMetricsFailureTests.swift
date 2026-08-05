@@ -25,6 +25,9 @@ struct TodayStoreMetricsFailureTests {
     @MainActor
     func failedMetricsCarriesStoredCountersForward() async throws {
         try await withDependencies {
+            // Publication reads the clock unconditionally since #214 (the
+            // Garmin floor is day-scoped), so every pass needs one pinned.
+            $0.date = .constant(.now)
             $0.healthKit.todayMetrics = { throw MetricsDown() }
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
@@ -49,6 +52,7 @@ struct TodayStoreMetricsFailureTests {
     @MainActor
     func failedMetricsStillPushesWatchPayload() async throws {
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.todayMetrics = { throw MetricsDown() }
             $0.healthKit.dailyMinutes = StreakTestSupport.windowed {
                 StreakTestSupport.walkedDays(Array(0...10))
@@ -69,6 +73,7 @@ struct TodayStoreMetricsFailureTests {
     @MainActor
     func failedMetricsDoesNotResurrectYesterdaysCounters() async throws {
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.todayMetrics = { throw MetricsDown() }
             $0.healthKit.dailyMinutes = { _ in throw MetricsDown() }
         } operation: {
@@ -118,6 +123,7 @@ struct TodayStoreMetricsFailureTests {
     @MainActor
     func bothLegsFailingOnColdLaunchInventsNothing() async throws {
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.todayMetrics = { throw MetricsDown() }
             $0.healthKit.dailyMinutes = { _ in throw MetricsDown() }
         } operation: {

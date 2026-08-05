@@ -191,6 +191,96 @@ struct TodayStoreGarminOverlayTests {
         }
     }
 
+    @Test("The floor travels to the app group, even when the Santé leg failed")
+    @MainActor
+    func floorIsPublishedRegardlessOfTheMetricsLeg() async throws {
+        try await withDependencies {
+            $0.date = .constant(Self.noon)
+            $0.healthKit.todayMetrics = { throw MetricsDown() }
+            $0.garminConnectIQ.todayOverlay = Self.watchOverlay(steps: 9_000, distanceCm: 700_000, activeMinutes: 44)
+        } operation: {
+            let store = try StreakTestSupport.everyDayStore()
+            await store.refresh()
+
+            // The counters stay carried forward — a value only the watch
+            // measured may not reach the app group on a refused metrics leg
+            // (#201). The *floor* is a different channel: it comes over BLE,
+            // its read cannot fail, and it is already day-stamped. Withholding
+            // it would leave the widget process comparing its own live read
+            // against the stored total, which is the #214 bug.
+            //
+            // Clamped to the counters it accompanies, though: the watch says
+            // 9 000, the snapshot going out says 4 200, and the floor's job is
+            // to stop the widget falling *below* what was published — not to
+            // let it climb above it. A widget rendering this snapshot over a
+            // silent Santé shows 4 200, the same number the app group holds.
+            let publication = try #require(store.widgetPublication(stored: Self.storedToday()))
+            #expect(publication.snapshot.steps == 4_200)
+            #expect(publication.snapshot.floorSteps == 4_200)
+            #expect(publication.snapshot.floorMinutes == 21)
+            #expect(publication.snapshot.floorDistanceKm == 3.1)
+        }
+    }
+
+    @Test("No watch and no walk: the published floor is a recorded zero, not an absent one")
+    @MainActor
+    func noWatchPublishesAZeroFloor() async throws {
+        try await withDependencies {
+            $0.date = .constant(Self.noon)
+            $0.healthKit.todayMetrics = {
+                HealthMetrics(steps: 4_100, distanceKm: 3.125, activeMinutes: 19, activeCalories: 150)
+            }
+            $0.garminConnectIQ.todayOverlay = { _ in nil }
+        } operation: {
+            let store = try StreakTestSupport.everyDayStore()
+            await store.refresh()
+            let publication = try #require(store.widgetPublication(stored: Self.storedToday()))
+            // Zero, never nil: nil is how a snapshot says "written before #214",
+            // and the widget answers that with the old max-against-the-total
+            // rule. Publishing nil here would re-pin every Apple-only user's
+            // counters at the day's high, which is the bug this closes.
+            #expect(publication.snapshot.floorSteps == 0)
+            #expect(publication.snapshot.floorMinutes == 0)
+            #expect(publication.snapshot.floorDistanceKm == 0)
+        }
+    }
+
+    @Test("A pending walk travels in the floor beside the watch's day")
+    @MainActor
+    func pendingWalkRidesTheFloor() async throws {
+        // The post-walk overlay (#158) lifts the published counters above raw
+        // HealthKit exactly like the watch does, and the widget process can see
+        // neither — so both have to travel. Steps and distance take the higher
+        // of the two; minutes stay the watch's alone, the walk overlay never
+        // touching them.
+        try await withDependencies {
+            $0.date = .constant(Self.noon)
+            $0.healthKit.todayMetrics = {
+                HealthMetrics(steps: 3_000, distanceKm: 2.0, activeMinutes: 12, activeCalories: 90)
+            }
+            $0.garminConnectIQ.todayOverlay = Self.watchOverlay(
+                steps: 3_500, distanceCm: 250_000, activeMinutes: 30
+            )
+        } operation: {
+            let store = try StreakTestSupport.everyDayStore()
+            await store.refresh()
+            store.walkWillStart()
+            var session = WalkSession(startedAt: Self.noon)
+            session.steps = 1_200
+            session.distanceMeters = 1_000
+            await store.registerFinishedWalk(session)
+
+            let publication = try #require(store.widgetPublication(stored: Self.storedToday()))
+            // 3 000 raw + the walk's 1 200 beats the watch's 3 500.
+            #expect(publication.snapshot.steps == 4_200)
+            #expect(publication.snapshot.floorSteps == 4_200)
+            #expect(publication.snapshot.distanceKm == 3.0)
+            #expect(publication.snapshot.floorDistanceKm == 3.0)
+            // Minutes: the watch's 30, with nothing from the walk.
+            #expect(publication.snapshot.floorMinutes == 30)
+        }
+    }
+
     @Test("With nothing stored either, a refused leg publishes zeros, not the watch's day")
     @MainActor
     func unknownMetricsLegOnFirstInstallPublishesZeros() async throws {
@@ -201,9 +291,23 @@ struct TodayStoreGarminOverlayTests {
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
             await store.refresh()
-            let publication = try #require(store.widgetPublication(stored: nil))
-            #expect(publication.snapshot.steps == 0)
-            #expect(publication.snapshot.minutes == 0)
+            var published = try #require(store.widgetPublication(stored: nil)).snapshot
+            #expect(published.steps == 0)
+            #expect(published.minutes == 0)
+            // …and the floor goes out zeroed with them, so the number stays
+            // zero at the far end too. A floor of 9 000 next to a count of 0 is
+            // an internally inconsistent snapshot: the widget would rebuild the
+            // watch's day out of it and show 9 000 while the app screen showed
+            // 0 behind its error banner, for the same second (#201).
+            #expect(published.floorSteps == 0)
+            #expect(published.floorMinutes == 0)
+            #expect(published.floorDistanceKm == 0)
+            published.day = Self.calendar.startOfDay(for: Self.noon)
+            let rendered = published.zeroedIfStale(today: Self.calendar.startOfDay(for: Self.noon))
+                .mergingLiveCounters(steps: 0, minutes: 0, distanceKm: 0, calories: 0, waterML: 0)
+            #expect(rendered.steps == 0)
+            #expect(rendered.minutes == 0)
+            #expect(rendered.distanceKm == 0)
         }
     }
 }

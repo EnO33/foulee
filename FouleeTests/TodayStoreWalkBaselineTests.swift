@@ -236,6 +236,49 @@ struct TodayStoreWalkBaselineTests {
         }
     }
 
+    @Test("A finished walk survives the widget's own lagging HealthKit read")
+    @MainActor
+    func finishedWalkSurvivesTheWidgetRender() async throws {
+        // End to end, in the order the app actually runs it: the walk ends,
+        // `registerFinishedWalk` refreshes, `publishToWidgets` writes the app
+        // group *and* reloads every timeline on the next line — so the widget
+        // re-renders against a HealthKit that has not flushed the walk yet. By
+        // construction its own read is below what was just published, which is
+        // the whole reason the overlay exists (#158).
+        //
+        // The widget can't measure the overlay any more than it can measure the
+        // Connect IQ one, so the snapshot has to carry it (#214). Nothing at
+        // the `WidgetSnapshot` level can tell this case from a deleted workout
+        // — stored high, live low — which is why it is pinned from the store.
+        try await withDependencies {
+            $0.date = .constant(.now)
+            $0.healthKit.todayMetrics = {
+                HealthMetrics(steps: 3_000, distanceKm: 2.0, activeMinutes: 12, activeCalories: 90)
+            }
+            $0.garminConnectIQ.todayOverlay = { _ in nil }
+        } operation: {
+            let store = TodayStore()
+            await store.refresh()
+            store.walkWillStart()
+            var session = WalkSession(startedAt: .now)
+            session.steps = 1_200
+            session.distanceMeters = 1_000
+            await store.registerFinishedWalk(session)
+            #expect(store.snapshot?.steps == 4_200)
+
+            var published = try #require(store.widgetPublication(stored: nil)).snapshot
+            #expect(published.steps == 4_200)
+            // `SharedStore.write` stamps the day; the widget zeroes stale
+            // snapshots before merging, so mirror both steps here.
+            published.day = Calendar.current.startOfDay(for: .now)
+            let rendered = published.zeroedIfStale().mergingLiveCounters(
+                steps: 3_000, minutes: 12, distanceKm: 2.0, calories: 90, waterML: 0
+            )
+            #expect(rendered.steps == 4_200)
+            #expect(rendered.distanceKm == 3.0)
+        }
+    }
+
     /// The app group as an earlier wake left it — here only to prove the
     /// published value is the fresh reading and not something carried forward.
     private static func storedToday() -> WidgetSnapshot {

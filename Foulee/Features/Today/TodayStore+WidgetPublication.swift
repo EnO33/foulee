@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 
 /// What a refresh pass hands to the outside world, and the per-leg rule that
@@ -60,6 +61,41 @@ extension TodayStore {
             }
             if !isHistoryKnown { published.streak = carried.streak }
         }
+        // How much of those counters the widget process cannot re-measure rides
+        // along with them (#214), so it can apply the same `max` the background
+        // path does. It has no way to work this out itself: `GarminSnapshotStore`
+        // lives in the app's own defaults, and `pendingWalk` only in this
+        // object's memory.
+        //
+        // Two contributors, one number per counter. Minutes see the watch only
+        // — the post-walk overlay deliberately never fakes exercise minutes, so
+        // there is nothing of it to carry there.
+        //
+        // Computed unconditionally, unlike the counters above: both legs are a
+        // different channel entirely. The watch's arrives over BLE and is read
+        // from local storage, so there is no "unknown" case to carry forward —
+        // `todayOverlay` cannot fail, it answers nil only when nothing speaks
+        // for today — and `GarminSnapshotOverlay.standing` has already dropped a
+        // floor stamped another day; the walk's is this process's own memory.
+        // Gating them on `isMetricsKnown` would blank a floor that is still
+        // perfectly valid whenever Santé was locked.
+        //
+        // Clamped to the counters they accompany, though, which is what keeps
+        // the snapshot internally consistent: on a refused metrics leg with
+        // nothing stored the published counters are zeros (#201), and a floor
+        // left standing above them would let the widget rebuild the watch's day
+        // out of a snapshot the app itself is showing as 0 behind its error
+        // banner. A floor may hold a total up; it may never invent one.
+        @Dependency(\.garminConnectIQ) var garminConnectIQ
+        @Dependency(\.date) var date
+        let watch = garminConnectIQ.todayOverlay(date.now)
+        let walk = pendingWalkFloor
+        published.floorSteps = min(max(watch?.steps ?? 0, walk?.steps ?? 0), published.steps)
+        published.floorMinutes = min(watch?.activeMinutes ?? 0, published.minutes)
+        published.floorDistanceKm = min(
+            max(watch?.distanceKm ?? 0, walk?.distanceKm ?? 0),
+            published.distanceKm
+        )
         // No push at all when the streak is unmeasured: the Watch keeps the
         // last value the phone actually computed, rather than one nobody did.
         // A failed metrics leg doesn't suppress it — the payload carries the
