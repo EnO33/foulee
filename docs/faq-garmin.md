@@ -6,49 +6,59 @@ Connect, qui les écrit dans l'app Santé, où Foulée les lit — le tout sur t
 appareil. Foulée ne parle jamais aux serveurs Garmin (voir la
 [politique de confidentialité](privacy.md)).
 
-## Activer (ou réparer) le partage
+## Activer le partage (première connexion)
 
-Tout se règle **depuis l'app Santé**. C'est aussi par là que commence la page
-d'aide de Garmin, et pour une bonne raison : ces libellés sont ceux d'Apple,
-ils ne bougent pas d'une version de Garmin Connect à l'autre.
+La connexion se lance **depuis Garmin Connect**, pas depuis Santé.
+
+1. Ouvre **Garmin Connect**, onglet **« Plus »**.
+2. Touche **« Paramètres »**, puis **« Applications connectées »**.
+3. Touche **« Apple Health »** — l'entrée garde son nom anglais, même dans
+   l'app en français.
+4. Touche **« Se connecter avec Apple Health »**.
+5. iOS affiche alors sa **fenêtre d'autorisation Santé** : **active les
+   catégories** — pas, distance, entraînements, fréquence cardiaque, calories,
+   et eau si tu suis ton hydratation.
+
+Les libellés peuvent varier d'une version de Garmin Connect à l'autre : Garmin
+a renommé ce menu plusieurs fois (« Applications tierces », « Connect Apps »).
+Le chemin, lui, reste le même : les paramètres, puis les applications
+connectées.
+
+### Vérifier ou réparer, côté Santé
+
+Une fois la connexion faite, tout se règle aussi depuis l'app Santé — ces
+libellés-là sont ceux d'Apple et ne bougent pas :
 
 1. Ouvre **Santé**, onglet **Résumé**.
 2. Touche ta **photo ou tes initiales**, en haut à droite.
 3. Sous **« Confidentialité »**, touche **« Apps »**.
 4. Touche **« Garmin Connect »** (l'app s'appelle aussi **« Connect »** selon
    les endroits) dans la liste.
-5. **Active les catégories** : pas, distance, entraînements, fréquence
+5. **Vérifie les catégories** : pas, distance, entraînements, fréquence
    cardiaque, calories — et eau si tu suis ton hydratation.
 
-Si tu avais touché « Ne pas autoriser » sur la fenêtre affichée la première
-fois, c'est ici que ça se répare : Garmin Connect ne la repropose pas.
+Si tu avais touché « Ne pas autoriser » sur la fenêtre d'autorisation, c'est
+ici que ça se répare : Garmin Connect ne la repropose pas.
 
-### Garmin Connect n'apparaît pas dans la liste
+### Garmin Connect n'apparaît pas dans cette liste
 
-Une app figure dans cette liste **dès qu'elle a demandé l'accès**, quelle
-qu'ait été ta réponse. D'où le diagnostic :
+C'est normal tant que la connexion n'a jamais été établie : une app entre dans
+cette liste **quand elle a demandé l'accès**, quelle qu'ait été ta réponse —
+jamais avant. D'où le diagnostic :
 
-- **Elle y est** → la demande a déjà eu lieu. Tout se règle dans Santé, tu n'as
-  aucune raison d'aller dans Garmin Connect.
-- **Elle n'y est pas** → l'app n'a jamais demandé. C'est le seul cas où il faut
-  passer par Garmin Connect.
-
-Dans ce cas, l'objectif est de **lancer la connexion depuis Garmin Connect**,
-dans la section des applications connectées / tierces. Attention, on ne peut
-pas te donner un chemin fiable : Garmin a renommé ce menu plusieurs fois, et
-ses propres pages d'aide ne disent pas la même chose en français et en anglais.
-Cherche une section du genre « Applications connectées », « Applications
-tierces » ou « Connect Apps » dans les paramètres, puis Apple Santé parmi les
-applications **disponibles** — l'entrée disparaît souvent une fois la connexion
-établie, ce qui explique qu'on ne la retrouve pas toujours. Une fois la
-connexion lancée, reprends la liste ci-dessus dans Santé pour vérifier les
-catégories.
+- **Elle n'y est pas** → la connexion n'a jamais été faite. Reprends
+  « Activer le partage » ci-dessus, dans Garmin Connect.
+- **Elle y est** → la demande a déjà eu lieu. Tout se règle dans Santé, même si
+  tu avais refusé, sans retourner dans Garmin Connect.
 
 ## Mes données du jour n'apparaissent pas (ou en retard)
 
 C'est le cas de loin le plus fréquent, et c'est documenté par Garmin :
 **l'app Garmin Connect doit être ouverte au premier plan pour envoyer des
-données vers Santé.** Si elle est fermée, le transfert est mis en pause et ne
+données vers Santé.** Compte **quelques minutes** avant de voir tes données
+arriver (environ 5 lors de nos essais) : ce n'est pas instantané, et beaucoup
+de gens concluent trop vite que rien ne marche.
+Si elle est fermée, le transfert est mis en pause et ne
 se termine qu'à la synchro suivante, app ouverte. Tant que ça n'a pas eu lieu,
 tes données restent côté Garmin et Santé (donc Foulée) ne les voit pas.
 
@@ -56,6 +66,15 @@ tes données restent côté Garmin et Santé (donc Foulée) ne les voit pas.
 arrivent dans Santé, et Foulée se met à jour au refresh suivant. Bonne
 nouvelle : si des minutes arrivent après coup, ta série est **réparée
 rétroactivement** — un jour validé en retard compte quand même.
+
+## Puis-je tester sans montre ?
+
+Oui. Les données que tu saisis **à la main** dans Garmin Connect (un verre
+d'eau, une activité créée manuellement) partent dans Santé exactement comme
+celles d'une montre — Foulée ne fait aucune différence, puisqu'elle lit Santé
+et jamais Garmin. C'est le moyen le plus simple de vérifier que ta connexion
+fonctionne : saisis une activité, laisse Garmin Connect ouverte quelques
+minutes, et regarde l'anneau des minutes bouger.
 
 ## Ma série ne valide pas alors que j'ai marché
 
@@ -103,8 +122,8 @@ totaux dédupliqués de Santé et reflète donc ce réglage.
 presque toujours un problème de synchro Garmin ↔ Santé, à vérifier en
 premier — pas un bug de l'app.** Le test : ouvre l'app Santé et cherche la
 donnée manquante. Si elle n'y est pas, Foulée ne peut pas l'afficher — reprends
-« Activer (ou réparer) le partage » ci-dessus, puis ouvre Garmin Connect pour
-déclencher une synchro. Si elle y est mais pas dans Foulée, vérifie d'abord
+« Activer le partage » et « Vérifier ou réparer, côté Santé » ci-dessus, puis
+ouvre Garmin Connect pour déclencher une synchro. Si elle y est mais pas dans Foulée, vérifie d'abord
 qu'il ne s'agit pas des minutes d'exercice (voir « Ma série ne valide pas alors
 que j'ai marché » : elles viennent de tes activités enregistrées, pas de tes
 pas) — sinon, écris-nous : **mattmar33@gmail.com**.
