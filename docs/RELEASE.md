@@ -156,6 +156,30 @@ deliberate, manual action:
 > `fastlane deliver` with versioned metadata/screenshots), that's a small
 > follow-up to the `release` lane.
 
+## 10. The Garmin watch app (separate store, separate cadence)
+
+The Connect IQ app in [`FouleeConnectIQ/`](../FouleeConnectIQ/README.md) is not
+part of this pipeline. It goes to the **Connect IQ Store**, not App Store
+Connect, it is versioned independently of the `v*` tags, and nothing here
+builds it — the Connect IQ SDK can't be installed on a GitHub runner without a
+Garmin *account* password, so the compile gate stays on the developer's
+machine. The full reasoning is in that README, under « Intégration continue ».
+
+What CI does check on every PR is the `Connect IQ` job: manifest, device matrix,
+launcher icon sizes and that the manifest still carries the *production* app id
+(a beta package needs a different one), via `FouleeConnectIQ/build.sh validate`.
+It does **not** compile the Monkey C — a green CI says nothing about that.
+
+Publishing is `./build.sh package` (→ `bin/foulee.iq`) then an upload at
+<https://apps.garmin.com/developer/upload>; the listing copy, the required
+image sizes, the beta channel and the ERA crash-report loop are all in
+[`FouleeConnectIQ/store/README.md`](../FouleeConnectIQ/store/README.md).
+
+No new GitHub secret is needed today. If a Monkey C compile is ever wired into
+CI it will want `CIQ_DEVELOPER_KEY_BASE64` (base64 of
+`$HOME/.garmin/foulee_developer_key.der`) alongside Garmin account credentials
+— the exact recipe, and why it isn't enabled, are in the Connect IQ README.
+
 ## Troubleshooting
 
 - **"Cloud signing permission error" / "No profiles … were found"** — almost
