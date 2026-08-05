@@ -4,6 +4,68 @@ import ProjectDescription
 let bundleIdBase = "com.eno33.foulee"
 let deploymentTargets: DeploymentTargets = .iOS("26.0")
 
+// URL scheme Garmin Connect Mobile calls back after the device-selection
+// flow. Kept in sync by hand with `GarminConnectIQConfiguration.returnURLScheme`
+// (Foulee/Connectivity/GarminConnectIQClient.swift) — a manifest can't import
+// app code, and a mismatch silently breaks the authorization round-trip.
+let garminReturnURLScheme = "foulee-ciq"
+
+private let garminBluetoothUsage =
+    "Foulée se connecte en Bluetooth à ta montre Garmin pour récupérer ta journée d'activité."
+
+// Extracted from the target literal: inline, the dictionary got large enough
+// that the manifest stopped type-checking in reasonable time.
+let fouleeAppInfoPlist: [String: Plist.Value] = [
+    "CFBundleDisplayName": "Foulée",
+    "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+    "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+    // foulee://hydration — widget deep link to the hydration card.
+    // foulee-ciq:// is the return scheme Garmin Connect Mobile calls back with
+    // the device-selection response (issue #187); it has to be distinctive
+    // enough not to collide with another app on the device.
+    "CFBundleURLTypes": [
+        [
+            "CFBundleURLName": "com.eno33.foulee",
+            "CFBundleURLSchemes": ["foulee"]
+        ],
+        [
+            "CFBundleURLName": "com.eno33.foulee.connectiq",
+            "CFBundleURLSchemes": [.string(garminReturnURLScheme)]
+        ]
+    ],
+    // The Connect IQ SDK probes this scheme to tell whether Garmin Connect
+    // Mobile is installed; without the declaration the check always answers
+    // "missing" and the device-selection flow can't start.
+    "LSApplicationQueriesSchemes": ["gcm-ciq"],
+    // Background app refresh keeps the widget snapshot moving between
+    // HealthKit background deliveries. `bluetooth-central` is the "Uses
+    // Bluetooth LE accessories" mode — paired with the SDK's state-restoration
+    // identifier it lets iOS relaunch the app when the Garmin watch has data.
+    "BGTaskSchedulerPermittedIdentifiers": ["com.eno33.foulee.refresh"],
+    "UIBackgroundModes": ["fetch", "bluetooth-central"],
+    // Required by App Store review for any CoreBluetooth use. The SDK guide
+    // still names the legacy peripheral key; iOS 13+ reads the "Always" one,
+    // so declare both.
+    "NSBluetoothAlwaysUsageDescription": .string(garminBluetoothUsage),
+    "NSBluetoothPeripheralUsageDescription": .string(garminBluetoothUsage),
+    "UILaunchScreen": [:],
+    "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
+    "NSHealthShareUsageDescription": .string(
+        "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, "
+            + "ainsi que tes marches et leur fréquence cardiaque, pour afficher ta journée."
+    ),
+    "NSHealthUpdateUsageDescription":
+        "Foulée enregistre tes marches comme séances dans Santé, ainsi que l'eau que tu bois.",
+    "NSMotionUsageDescription":
+        "Foulée compte tes pas en direct pendant la marche du midi.",
+    "NSLocationWhenInUseUsageDescription":
+        "Foulée utilise ta position pour afficher la météo de midi à ton endroit.",
+    "NSSupportsLiveActivities": true,
+    // Only standard HTTPS/system crypto — declare export-compliance exemption
+    // so TestFlight builds skip the manual encryption question on every upload.
+    "ITSAppUsesNonExemptEncryption": false
+]
+
 // Per-developer signing — read DEVELOPMENT_TEAM from Local.xcconfig if it
 // exists (gitignored). On CI the file is absent and the build targets the
 // simulator with no signing, so the default empty value is fine.
@@ -32,6 +94,12 @@ let project = Project(
         .remote(
             url: "https://github.com/pointfreeco/swift-dependencies",
             requirement: .upToNextMajor(from: "1.4.0")
+        ),
+        // Garmin Connect IQ companion SDK — a binary xcframework, iOS-only.
+        // Linked to the iPhone app target exclusively (issue #187).
+        .remote(
+            url: "https://github.com/garmin/connectiq-companion-app-sdk-ios",
+            requirement: .upToNextMinor(from: "1.8.0")
         )
     ],
     settings: .settings(
@@ -60,39 +128,7 @@ let project = Project(
             product: .app,
             bundleId: bundleIdBase,
             deploymentTargets: deploymentTargets,
-            infoPlist: .extendingDefault(with: [
-                "CFBundleDisplayName": "Foulée",
-                "CFBundleShortVersionString": "$(MARKETING_VERSION)",
-                "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
-                // foulee://hydration — widget deep link to the hydration card.
-                "CFBundleURLTypes": [
-                    [
-                        "CFBundleURLName": "com.eno33.foulee",
-                        "CFBundleURLSchemes": ["foulee"]
-                    ]
-                ],
-                // Background app refresh keeps the widget snapshot moving
-                // between HealthKit background deliveries.
-                "BGTaskSchedulerPermittedIdentifiers": ["com.eno33.foulee.refresh"],
-                "UIBackgroundModes": ["fetch"],
-                "UILaunchScreen": [:],
-                "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
-                "NSHealthShareUsageDescription": .string(
-                    "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, "
-                        + "ainsi que tes marches et leur fréquence cardiaque, pour afficher ta journée."
-                ),
-                "NSHealthUpdateUsageDescription":
-                    "Foulée enregistre tes marches comme séances dans Santé, ainsi que l'eau que tu bois.",
-                "NSMotionUsageDescription":
-                    "Foulée compte tes pas en direct pendant la marche du midi.",
-                "NSLocationWhenInUseUsageDescription":
-                    "Foulée utilise ta position pour afficher la météo de midi à ton endroit.",
-                "NSSupportsLiveActivities": true,
-                // Only standard HTTPS/system crypto — declare export-compliance
-                // exemption so TestFlight builds skip the manual encryption
-                // question on every upload.
-                "ITSAppUsesNonExemptEncryption": false
-            ]),
+            infoPlist: .extendingDefault(with: fouleeAppInfoPlist),
             sources: ["Foulee/**"],
             resources: [
                 .glob(pattern: "Foulee/Resources/**", excluding: ["Foulee/Resources/Foulee.entitlements"])
@@ -100,12 +136,22 @@ let project = Project(
             entitlements: .file(path: "Foulee/Resources/Foulee.entitlements"),
             dependencies: [
                 .package(product: "Dependencies"),
+                // iPhone app only — the widget and watch targets must never
+                // link the Connect IQ framework (iOS-only binary, and the
+                // BLE session belongs to the app process).
+                .package(product: "ConnectIQ"),
                 .target(name: "FouleeLiveActivity"),
                 .target(name: "FouleeWidget"),
                 // Embeds the watchOS companion app into the iOS app so it
                 // ships in the same App Store submission.
                 .target(name: "FouleeWatch")
-            ]
+            ],
+            settings: .settings(base: [
+                // The Connect IQ framework ships Objective-C categories; without
+                // -ObjC the linker drops them and the SDK crashes at runtime on
+                // unrecognised selectors (SDK guide, "Add required linker flags").
+                "OTHER_LDFLAGS": ["$(inherited)", "-ObjC"]
+            ])
         ),
         .target(
             name: "FouleeWidget",
