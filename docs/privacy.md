@@ -1,11 +1,12 @@
 # Politique de confidentialité — Foulée
 
-_Dernière mise à jour : 4 août 2026_
+_Dernière mise à jour : 5 août 2026_
 
 Foulée est une application **locale**. Elle t'aide à entretenir une série de
 marches du midi à partir de tes données d'activité. **Aucune donnée n'est
 envoyée vers un serveur qui nous appartiendrait, et il n'y a aucun compte à
-créer.** Tout reste sur ton iPhone et ton Apple Watch.
+créer.** Tout reste sur tes appareils : ton iPhone, ton Apple Watch, et ta
+montre Garmin si tu y installes l'app Connect IQ de Foulée.
 
 ## Données de santé (HealthKit)
 
@@ -29,8 +30,40 @@ Santé**, comme toutes les autres : c'est Garmin Connect qui les y écrit, et
 Foulée les lit sur ton appareil, sans faire de différence de source.
 
 Foulée **ne communique jamais avec les serveurs Garmin** : aucune connexion à
-un compte Garmin, aucune API Garmin, aucun échange réseau. La promesse
-reste inchangée — tes données de santé **ne quittent jamais ton appareil**.
+un compte Garmin, aucune API Garmin, aucun échange avec un serveur — ni le
+nôtre, ni celui de Garmin. La promesse reste inchangée — tes données de santé
+**ne quittent jamais tes appareils**.
+
+### L'app Foulée pour montre Garmin (Connect IQ)
+
+Foulée propose aussi une petite app à installer **sur la montre elle-même**,
+depuis le Connect IQ Store. Elle est facultative : sans elle, tout continue de
+fonctionner par l'app Santé, comme décrit ci-dessus.
+
+**Ce qu'elle lit sur la montre** — uniquement les compteurs du jour que la
+montre tient déjà (`ActivityMonitor`) : tes pas, ta distance, tes minutes
+actives, tes minutes actives intenses et tes calories. Pas de GPS, pas de
+fréquence cardiaque, pas de séances, aucun capteur allumé pour l'occasion.
+
+**Ce qu'elle envoie** — un instantané de ces **cinq valeurs**, plus l'heure de
+la mesure, le numéro de version du format et un numéro d'envoi qui permet à
+l'iPhone d'ignorer un instantané qu'il a déjà reçu. Le tout part **directement
+vers ton iPhone par Bluetooth**, au plus une fois toutes les cinq minutes, et
+**seulement si ces valeurs ont changé** depuis le dernier envoi. Quand le
+téléphone n'est pas à portée, la montre n'envoie rien et attend simplement le
+prochain passage.
+
+**Ce qu'elle n'envoie pas** — rien ne part vers les serveurs de Garmin, ni vers
+les nôtres (nous n'en avons pas). Il n'y a aucun compte à créer dans cette app,
+aucun réglage, et rien n'est enregistré ailleurs que sur la montre et sur ton
+iPhone.
+
+Une fois arrivées sur l'iPhone, ces valeurs suivent exactement le même chemin
+que les autres : elles servent à afficher tes statistiques et à calculer ta
+série, et restent sur ton appareil.
+
+**Elle ne sert à rien sans l'app iPhone.** Installée seule, elle se contente
+d'afficher tes compteurs du jour sur la montre.
 
 ## Localisation
 

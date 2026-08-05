@@ -26,6 +26,43 @@ jobs:
       - name: SwiftLint (strict)
         run: swiftlint lint --strict --reporter github-actions-logging
 
+  connectiq:
+    # Static checks on the Garmin watch app (FouleeConnectIQ/). This job does
+    # NOT compile Monkey C, and it can't:
+    #
+    #   * The SDK archive itself is public and scriptable — sdks.json lists it
+    #     and connectiq-sdk-lin-9.2.0-….zip serves anonymously (HTTP 200).
+    #   * But the SDK ships *no device profiles*. Verified: the zip contains no
+    #     Devices/ entry, and monkeyc on a clean home answers
+    #     "ERROR: Invalid device id specified: 'venu2'". Profiles come from
+    #     api.gcs.garmin.com/ciq-product-onboarding/devices, which is 401
+    #     without a Garmin *account* bearer token — the SDK Manager is a GUI
+    #     with an SSO login, and the only non-interactive route known
+    #     (lindell/connect-iq-sdk-manager-cli) wants GARMIN_USERNAME /
+    #     GARMIN_PASSWORD. That is the account holding the owner's Garmin
+    #     Connect health data; it does not belong in repository secrets.
+    #   * Vendoring the profiles instead is barred by the Connect IQ agreement
+    #     (§I(b): no hosting or redistributing Program Materials).
+    #
+    # So the compile gate lives on the developer's machine
+    # (`FouleeConnectIQ/build.sh build`, seven devices, -w -l 3) and CI checks
+    # everything that is knowable from the files: manifest well-formedness,
+    # device ids matching their resources folder, launcher icons at the exact
+    # per-device pixel size, no key material committed. Details and the
+    # opt-in recipe if this trade-off is ever revisited: FouleeConnectIQ/README.md.
+    name: Connect IQ
+    # Pinned to a version, like the macos-15 jobs around it: a floating label
+    # moves the runner image under us without a commit. This job only needs
+    # python3, so bumping it is a one-line, deliberate change.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate the Connect IQ project (no SDK required)
+        run: FouleeConnectIQ/build.sh validate
+
   build:
     # Keep this name "Build & Test": it's a required status check in main's
     # branch protection. The job also runs the dead-code scan (a final step),
