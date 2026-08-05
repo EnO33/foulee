@@ -37,6 +37,7 @@ struct TodayStoreLateDataTests {
         // flushed it yet, so the streak reads as "today only".
         let history = LockedRef(StreakTestSupport.walkedDays([0] + Array(2...10)))
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = StreakTestSupport.windowed { history.value }
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
@@ -59,6 +60,7 @@ struct TodayStoreLateDataTests {
         // is the day Garmin hasn't synced.
         let history = LockedRef(StreakTestSupport.walkedDays(Array(2...10)))
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = StreakTestSupport.windowed { history.value }
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
@@ -78,6 +80,7 @@ struct TodayStoreLateDataTests {
         // Two 10-day runs separated by a single unsynced day at J-11.
         let history = LockedRef(StreakTestSupport.walkedDays(Array(0...10) + Array(12...21)))
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = StreakTestSupport.windowed { history.value }
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
@@ -102,6 +105,7 @@ struct TodayStoreLateDataTests {
         // keep showing 11 here.
         let history = LockedRef(StreakTestSupport.walkedDays(Array(0...10)))
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = StreakTestSupport.windowed { history.value }
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
@@ -134,6 +138,7 @@ struct TodayVerdictRevisabilityTests {
             HealthMetrics(steps: 3_100, distanceKm: 2.1, activeMinutes: 4, activeCalories: 45)
         )
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.todayMetrics = { metrics.value }
         } operation: {
             let store = TodayStore()
@@ -156,6 +161,7 @@ struct TodayVerdictRevisabilityTests {
             HealthMetrics(steps: 6_400, distanceKm: 4.6, activeMinutes: 28, activeCalories: 190)
         )
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.todayMetrics = { metrics.value }
         } operation: {
             let store = TodayStore()

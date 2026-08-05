@@ -9,6 +9,7 @@ struct TodayStoreTests {
     @MainActor
     func refreshPopulatesSnapshot() async {
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: {
@@ -43,6 +44,7 @@ struct TodayStoreTests {
     @MainActor
     func hasWalkedTodayFlips() async {
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: {
@@ -101,6 +103,7 @@ struct TodayStoreTests {
     @MainActor
     func refreshPopulatesWeather() async {
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: {
@@ -137,6 +140,7 @@ struct TodayStoreTests {
     @MainActor
     func refreshSkipsWeatherWithoutLocation() async {
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: {
@@ -190,6 +194,7 @@ struct TodayStoreTests {
             )
         ]
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
@@ -217,6 +222,7 @@ struct TodayStoreTests {
     @MainActor
     func bootstrapPopulatesEvenWhenDenied() async {
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { false },
                 todayMetrics: { .zero },
@@ -246,6 +252,7 @@ struct TodayStoreStreakWindowTests {
     func refreshFetchesFullHistoryWindow() async {
         let captured = LockedRef(0)
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = { daysBack in
                 captured.set(daysBack)
                 return []
@@ -264,6 +271,7 @@ struct TodayStoreStreakWindowTests {
         // 23-day run ending ~40 days ago, then a fresh 12-day run up to today.
         let crafted = StreakTestSupport.walkedDays(Array(40...62) + Array(0...11))
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = StreakTestSupport.windowed { crafted }
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
@@ -279,6 +287,7 @@ struct TodayStoreStreakWindowTests {
     func longCurrentStreakNotCapped() async throws {
         let crafted = StreakTestSupport.walkedDays(Array(0...34))
         try await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = StreakTestSupport.windowed { crafted }
         } operation: {
             let store = try StreakTestSupport.everyDayStore()
@@ -308,6 +317,7 @@ struct TodayStoreStreakWindowTests {
         let crafted = byDay.map { DailyMinutes(date: $0.key, minutes: $0.value) }
         let expected = week.enumerated().map { index, day in day <= today ? (index + 1) * 10 : 0 }
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = { _ in crafted }
         } operation: {
             let store = TodayStore()
@@ -378,6 +388,7 @@ struct TodayStoreWeatherTests {
     func weatherFailureDoesNotSetLastError() async {
         struct WeatherDown: Error {}
         await withDependencies {
+            $0.date = .constant(.now)
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: {
