@@ -19,6 +19,7 @@ struct FouleeApp: App {
         _ = Self.registerAppRefreshOnce
         _ = Self.endOrphanedWalkActivitiesOnce
         _ = Self.startHealthObserversOnce
+        _ = Self.startGarminConnectIQOnce
     }
 
     var body: some Scene {
@@ -69,6 +70,24 @@ struct FouleeApp: App {
     private static let startHealthObserversOnce: Void = {
         @Dependency(\.healthKit) var healthKit
         Task { await healthKit.enableBackgroundDelivery() }
+    }()
+
+    // Connect IQ has to be initialized at *process* start, not when a screen
+    // appears: the point of the BLE state-restoration identifier is that iOS
+    // relaunches the app in the background when the paired Garmin watch has
+    // data, and on that path no UI is ever mounted. Re-registering the known
+    // devices immediately is what makes the wake useful.
+    //
+    // Deliberate dead end for now: snapshots are received, decoded and
+    // dropped. Merging them into HealthKit or the widget snapshot without
+    // double-counting what Garmin Connect already wrote to Santé is #189.
+    private static let startGarminConnectIQOnce: Void = {
+        @Dependency(\.garminConnectIQ) var garminConnectIQ
+        garminConnectIQ.initialize()
+        garminConnectIQ.startReceiving()
+        Task {
+            for await _ in garminConnectIQ.snapshots() {}
+        }
     }()
 
     /// Ask iOS for a background refresh in ~2 h. Called when the app goes to
