@@ -53,6 +53,14 @@ secrets/
 fastlane/asc_key.p8
 fastlane/dist_cert.p12
 
+# Connect IQ developer key (lives in $HOME/.garmin) and build output
+*.pem
+*.der
+*.prg
+*.prg.debug.xml
+*.iq
+FouleeConnectIQ/bin/
+
 # Local screenshots / captures (App Store assets, device + simulator grabs)
 IMG_*.PNG
 Simulator Screenshot*.png

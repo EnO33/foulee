@@ -1,0 +1,6 @@
+project.manifest = manifest.xml
+
+# Sources come from source/**.mc and resources from resources/ via the SDK
+# defaults. The per-device resources-<device>/ folders are picked up
+# automatically too: each one only carries the launcher icon at that device's
+# exact pixel size, since a mismatch makes the resource compiler rescale and warn.

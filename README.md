@@ -15,8 +15,11 @@ iOS 26 app that helps you keep a daily lunchtime walk streak going. Reads from H
   the [Garmin epic](https://github.com/EnO33/foulee/issues/179). Architecture
   decision: [ADR 0001](docs/adr/0001-garmin-integration.md) (French).
   Troubleshooting: [Garmin FAQ](docs/faq-garmin.md) (French).
-- **Phase 2 (planned)** — a Connect IQ app on the watch for direct
-  watch↔iPhone sync (freshness + Garmin-native intensity minutes).
+- **Phase 2 (in progress)** — a Connect IQ app on the watch for direct
+  watch↔iPhone sync (freshness + Garmin-native intensity minutes). The Monkey C
+  side lives in [`FouleeConnectIQ/`](FouleeConnectIQ/README.md), outside the
+  Tuist build; iOS ingestion is tracked in
+  [#189](https://github.com/EnO33/foulee/issues/189).
 
 ## Stack
 
@@ -74,6 +77,7 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 │   ├── Features/          # Today, Active, Stats, Onboarding, Settings
 │   └── Resources/         # Assets, Info.plist
 ├── FouleeTests/           # Unit tests
+├── FouleeConnectIQ/       # Garmin Connect IQ app (Monkey C) — not part of the Tuist build
 └── .github/workflows/     # CI (lint + build)
 ```
 
