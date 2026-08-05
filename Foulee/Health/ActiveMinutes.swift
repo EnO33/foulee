@@ -45,7 +45,16 @@ enum ActiveMinutes {
     /// One day's merged value: `max(apple, workouts)` clamped to
     /// `0...dailyCap`.
     static func merged(appleMinutes: Int, workoutMinutes: Int) -> Int {
-        min(max(appleMinutes, workoutMinutes, 0), dailyCap)
+        merged(appleMinutes, with: workoutMinutes)
+    }
+
+    /// Folds one more independent measurement of the same day into an
+    /// already-merged value, under the same rule. The Connect IQ snapshot's
+    /// active minutes (issue #189) enter here: they are a third *term of this
+    /// max*, never a third addend — Garmin's intensity minutes and the Garmin
+    /// workouts already in Santé are usually the same activity.
+    static func merged(_ minutes: Int, with other: Int) -> Int {
+        min(max(minutes, other, 0), dailyCap)
     }
 
     /// Today's active minutes hour by hour, keyed by the hour's start.

@@ -70,10 +70,17 @@ func refreshWidgetSnapshotFromHealth() async {
 /// when this wake can have changed it (`BackgroundStreakRefresh`).
 private func refreshSnapshotMetrics(store: HKHealthStore, wake: BackgroundStreakRefresh.Wake) async {
     guard let stored = SharedStore.read() else { return }
-    // Stale-zeroed: a snapshot written yesterday holds no minutes for today,
-    // so the goal crossing must be judged against 0, not yesterday's total.
+    let now = Date.now
+    let defaults = UserDefaults.standard
     let storedDay = stored.day
-    let storedMinutes = stored.zeroedIfStale().minutes
+    // The goal crossing is judged on a HealthKit-only scale of its own (#189).
+    // The shared snapshot's minutes now carry the Connect IQ overlay, so using
+    // them here would let a watch total pre-consume the crossing edge — or fire
+    // it on minutes HealthKit never measured, for a streak whose history is
+    // HealthKit's alone. `nil` (no measurement today: first wake after an
+    // install or an update) reads as 0, which at worst buys one extra recompute
+    // on the day's first wake.
+    let storedMinutes = BackgroundStreakRefresh.lastMeasuredMinutesToday(defaults: defaults, now: now) ?? 0
     let measured = await measuredCounters(store: store)
     let streak = await recomputedBackgroundStreak(
         store: store,
@@ -82,15 +89,28 @@ private func refreshSnapshotMetrics(store: HKHealthStore, wake: BackgroundStreak
         todayMinutes: measured.minutes ?? storedMinutes,
         wake: wake
     )
+    // Consume the edge, exactly like the crossing stamp above it: the next wake
+    // must compare against what this one measured, not against what the last
+    // one did.
+    if let minutes = measured.minutes {
+        BackgroundStreakRefresh.markMeasuredMinutes(minutes, at: now, defaults: defaults)
+    }
     // Commit against the snapshot as it stands *now*, not the copy read before
     // the queries: several observers fire at once on a Garmin sync and the
     // recompute above can take seconds. A full read-modify-write from the
     // stale copy would put back the streak (and the counters) this pass read
     // at its own start, silently undoing whatever landed meanwhile.
     var snapshot = (SharedStore.read() ?? stored).zeroedIfStale()
-    if let steps = measured.steps { snapshot.steps = steps }
-    if let minutes = measured.minutes { snapshot.minutes = minutes }
-    if let distanceKm = measured.distanceKm { snapshot.distanceKm = distanceKm }
+    // Connect IQ overlay (#189): the day's high-water floor, folded in with a
+    // max — never a sum, and only onto the legs HealthKit answered. A leg it
+    // refused keeps the stored value, so a Garmin total can't ride a read
+    // nobody made. Calories stay HealthKit-only (Garmin's are a *total* burn).
+    let overlay = GarminSnapshotStore.readFloor(now: now, from: defaults)
+    if let steps = measured.steps { snapshot.steps = max(steps, overlay?.steps ?? 0) }
+    if let minutes = measured.minutes {
+        snapshot.minutes = ActiveMinutes.merged(minutes, with: overlay?.activeMinutes ?? 0)
+    }
+    if let distanceKm = measured.distanceKm { snapshot.distanceKm = max(distanceKm, overlay?.distanceKm ?? 0) }
     if let calories = measured.calories { snapshot.calories = calories }
     if let waterML = measured.waterML { snapshot.waterML = waterML }
     if let streak { snapshot.streak = streak }

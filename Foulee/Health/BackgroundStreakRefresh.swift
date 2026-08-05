@@ -16,10 +16,10 @@ import os
 /// plus a workouts query — far too much to run on every hourly steps wake. The
 /// rule, in order:
 ///
-/// 1. **Today just crossed the goal** (stored minutes below it, freshly merged
-///    minutes at or above): today became a "done" day, so the streak gained
-///    one. Edge-triggered on the stored snapshot — the write that follows
-///    lifts the stored value over the goal — so it can only fire once a day
+/// 1. **Today just crossed the goal** (last measured minutes below it, freshly
+///    measured minutes at or above): today became a "done" day, so the streak
+///    gained one. Edge-triggered on `lastMeasuredMinutesToday` — the write that
+///    closes this wake lifts it over the goal — so it can only fire once a day
 ///    and deliberately ignores the throttle, which would otherwise swallow the
 ///    workout burst that caused the crossing.
 /// 2. Everything below is skipped less than `throttle` after the last
@@ -70,6 +70,8 @@ enum BackgroundStreakRefresh {
     private static let activeDaysKey = "preferences.activeDays"
     private static let lastRecomputeKey = "streak.lastBackgroundRecomputeAt"
     private static let pendingCrossingKey = "streak.pendingGoalCrossingAt"
+    private static let measuredMinutesKey = "streak.lastMeasuredMinutes"
+    private static let measuredMinutesDayKey = "streak.lastMeasuredMinutesAt"
 
     static func preferences(defaults: UserDefaults) -> Preferences {
         let goal = (defaults.object(forKey: minutesGoalKey) as? Int) ?? 20
@@ -114,6 +116,34 @@ enum BackgroundStreakRefresh {
         defaults.removeObject(forKey: pendingCrossingKey)
     }
 
+    /// Today's active minutes as the last background wake **measured** them —
+    /// HealthKit only, no Connect IQ overlay — or nil when none did today.
+    ///
+    /// The shared snapshot can no longer answer this question: since #189 its
+    /// `minutes` carry the Garmin overlay, and the crossing below decides a
+    /// streak whose history comes from HealthKit alone. Judging the edge
+    /// against an overlaid value would consume it before HealthKit ever
+    /// crossed the goal (or fire it on minutes HealthKit never saw). Same
+    /// shape, and the same reason, as the hydration observer's own
+    /// `hydration.observedWaterML` baseline: day-stamped, so yesterday's
+    /// measurement is never today's "before".
+    static func lastMeasuredMinutesToday(
+        defaults: UserDefaults,
+        now: Date = .now,
+        calendar: Calendar = .current
+    ) -> Int? {
+        let stamp = defaults.double(forKey: measuredMinutesDayKey)
+        guard stamp > 0,
+              calendar.isDate(Date(timeIntervalSince1970: stamp), inSameDayAs: now)
+        else { return nil }
+        return defaults.integer(forKey: measuredMinutesKey)
+    }
+
+    static func markMeasuredMinutes(_ minutes: Int, at date: Date, defaults: UserDefaults) {
+        defaults.set(minutes, forKey: measuredMinutesKey)
+        defaults.set(date.timeIntervalSince1970, forKey: measuredMinutesDayKey)
+    }
+
     /// Everything the decision looks at: the streak the shared snapshot
     /// carries, what this wake just measured, and when the last recompute
     /// landed.
@@ -121,9 +151,11 @@ enum BackgroundStreakRefresh {
         /// Day stamp of the stored snapshot (nil on snapshots from older
         /// builds — treated as another day).
         var storedDay: Date?
-        /// Today's minutes as the stored snapshot had them, stale-zeroed.
+        /// Today's minutes as the last wake measured them — HealthKit only,
+        /// day-stamped (`lastMeasuredMinutesToday`), never the shared
+        /// snapshot's overlaid value.
         var storedMinutes: Int
-        /// Today's freshly merged minutes, about to be written.
+        /// Today's freshly measured minutes, about to be written.
         var todayMinutes: Int
         var goalMinutes: Int
         var wake: Wake

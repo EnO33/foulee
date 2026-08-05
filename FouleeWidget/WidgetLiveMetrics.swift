@@ -12,10 +12,16 @@ enum WidgetLiveMetrics {
     /// delivery, BGAppRefresh) owns persistence — having every widget instance
     /// also write the app-group on each render only amplified writes and raced
     /// the app's own updates.
+    ///
+    /// The live reads are **merged into** the stored snapshot, not substituted
+    /// for it (`mergingLiveCounters`): the app can have written counters this
+    /// process cannot measure — the Connect IQ overlay (#189) never touches
+    /// HealthKit — and replacing them here would discard it on every render.
     static func freshSnapshot() async -> WidgetSnapshot {
         // Zero counters from a previous day up front: when locked-phone reads
-        // fail below, the fallback must not show yesterday's totals.
-        var snapshot = (SharedStore.read() ?? .placeholder).zeroedIfStale()
+        // fail below, the fallback must not show yesterday's totals — and the
+        // merge below must not have them on its other side either.
+        let snapshot = (SharedStore.read() ?? .placeholder).zeroedIfStale()
         guard HKHealthStore.isHealthDataAvailable() else { return snapshot }
         let store = HKHealthStore()
         // The six reads are independent — run them concurrently so the widget
@@ -27,18 +33,21 @@ enum WidgetLiveMetrics {
         async let kcal = todaySum(store, .activeEnergyBurned, .kilocalorie())
         async let water = todaySum(store, .dietaryWater, .literUnit(with: .milli))
         async let workouts = todayWorkoutIntervals(store)
-        if let steps = await steps { snapshot.steps = Int(steps) }
+        var liveMinutes: Int?
         if let minutes = await minutes {
             // Same max() as the app (see ActiveMinutes): a Garmin-only user's
             // widget minutes must match the hero ring.
             let startOfDay = Calendar.current.startOfDay(for: .now)
             let workoutMinutes = ActiveMinutes.workoutMinutesByDay((await workouts) ?? [])[startOfDay] ?? 0
-            snapshot.minutes = ActiveMinutes.merged(appleMinutes: Int(minutes), workoutMinutes: workoutMinutes)
+            liveMinutes = ActiveMinutes.merged(appleMinutes: Int(minutes), workoutMinutes: workoutMinutes)
         }
-        if let meters = await meters { snapshot.distanceKm = meters / 1_000 }
-        if let kcal = await kcal { snapshot.calories = Int(kcal) }
-        if let water = await water { snapshot.waterML = Int(water) }
-        return snapshot
+        return snapshot.mergingLiveCounters(
+            steps: (await steps).map { Int($0) },
+            minutes: liveMinutes,
+            distanceKm: (await meters).map { $0 / 1_000 },
+            calories: (await kcal).map { Int($0) },
+            waterML: (await water).map { Int($0) }
+        )
     }
 
     /// Today's cumulative sum, or nil when HealthKit can't answer (locked

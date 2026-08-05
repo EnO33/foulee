@@ -6,7 +6,7 @@ import WidgetKit
 /// renders it monochrome, so the two goals read as two concentric arcs; on the
 /// Home Screen they keep their colours (purple steps, green activity).
 struct TodayProgressWidget: Widget {
-    static let kind = "com.eno33.foulee.todayWidget"
+    static let kind = WidgetKind.today
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: Self.kind, provider: TodayProvider()) { entry in

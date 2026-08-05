@@ -114,7 +114,7 @@ struct StatProvider: AppIntentTimelineProvider {
 }
 
 struct StatWidget: Widget {
-    static let kind = "com.eno33.foulee.statWidget"
+    static let kind = WidgetKind.stat
 
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: Self.kind, intent: StatWidgetIntent.self, provider: StatProvider()) { entry in
