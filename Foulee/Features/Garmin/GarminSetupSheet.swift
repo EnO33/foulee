@@ -1,21 +1,26 @@
 import SwiftUI
 
-/// "J'ai une montre Garmin" — how to switch Garmin Connect's Apple Health
-/// export on (issue #185). Reachable from the onboarding permissions step and
-/// from Réglages, since a user often connects the watch after the install.
+/// "J'ai une montre Garmin" — how to let Garmin Connect write into Santé
+/// (issue #185, corrected in #205). Reachable from the onboarding permissions
+/// step and from Réglages, since a user often connects the watch after install.
 ///
-/// The steps describe a third-party app: Garmin Connect renames and moves its
-/// menus between versions, so the copy stays close to the wording it has used
-/// for years and the sheet says out loud that labels may differ. Re-check
-/// against the current Garmin Connect release before touching this file.
+/// The numbered steps stay inside the **Apple Health app**, which is also what
+/// Garmin's own support page leads with: those labels are Apple's, stable and
+/// verifiable. Garmin Connect's own menu has been renamed at least twice
+/// ("3rd Party Apps" → "Connected Apps" → "Connect Apps") and Garmin's EN and
+/// FR pages disagree about it today, so that path is a hedged hint for the one
+/// case that needs it — never step 1, never a precondition.
 struct GarminSetupSheet: View {
     var onClose: () -> Void
 
+    /// Apple's own path (iPhone User Guide, iOS 26). The row is "Apps", a
+    /// sibling of "Appareils" — not "Apps et services" (Garmin's stale label).
     private let steps = [
-        "Ouvre l'app Garmin Connect sur ton iPhone.",
-        "Va dans Réglages, puis Santé Apple.",
-        "Active Pas, Fréquence cardiaque, Entraînements, Calories et Distance — plus Eau si tu suis ton hydratation.",
-        "Accepte la feuille d'autorisation qu'iOS affiche ensuite."
+        "Ouvre l'app Santé, onglet Résumé.",
+        "Touche ta photo ou tes initiales, en haut à droite.",
+        "Sous « Confidentialité », touche « Apps ».",
+        "Touche « Garmin Connect » (ou « Connect ») dans la liste.",
+        "Active les catégories : Pas, Distance, Entraînements, Fréquence cardiaque, Calories — et Eau si tu suis ton hydratation."
     ]
 
     var body: some View {
@@ -25,6 +30,7 @@ struct GarminSetupSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     header
                     stepsCard
+                    diagnosticCard
                     caveatsCard
                     labelsNote
                 }
@@ -45,8 +51,9 @@ struct GarminSetupSheet: View {
             Text("J'ai une montre Garmin")
                 .font(FouleeFont.largeTitle)
             Text("""
-                Garmin Connect écrit tes données dans Santé. Foulée les lit ensuite comme celles \
-                d'une Apple Watch — rien ne passe par un serveur.
+                Une seule chose à obtenir : que Garmin Connect ait le droit d'écrire dans Santé. \
+                Foulée y lit ensuite tes données comme celles d'une Apple Watch — rien ne passe \
+                par un serveur. Ça se règle dans l'app Santé.
                 """)
                 .font(FouleeFont.body)
                 .foregroundStyle(.secondary)
@@ -76,21 +83,54 @@ struct GarminSetupSheet: View {
         .fouleeGlass(cornerRadius: 22)
     }
 
+    /// The branch point that keeps this guide honest: Apple lists an app under
+    /// Santé → Apps as soon as it has *asked* for access, whatever the answer
+    /// was. Present therefore means everything is repairable in Santé alone;
+    /// absent is the only case that needs Garmin Connect — and that is exactly
+    /// where the menu labels are unreliable, hence the hedging.
+    private var diagnosticCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Garmin Connect n'est pas dans la liste ?")
+                .font(FouleeFont.headline)
+            Text("""
+                Une app y figure dès qu'elle a demandé l'accès à Santé, même si tu avais répondu \
+                « Ne pas autoriser ». Si tu la vois, tout se répare là, sans toucher à Garmin Connect.
+                """)
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
+            Text("""
+                Absente, c'est qu'elle n'a jamais demandé : ouvre Garmin Connect et lance la connexion \
+                à Apple Santé depuis la section des applications connectées — le libellé varie selon \
+                les versions (« Applications connectées », « Applications tierces »…) et l'entrée peut \
+                ne s'afficher que tant que la connexion n'est pas faite. Reprends ensuite à l'étape 1.
+                """)
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fouleeGlass(cornerRadius: 22)
+    }
+
     /// The two honest caveats — both are Garmin behaviours Foulée can't fix,
     /// and knowing them up front avoids reading them as app bugs.
     private var caveatsCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             caveat(
                 icon: "clock.arrow.circlepath",
-                title: "Pas de rattrapage",
-                detail: "Seules les données postérieures à l'activation arrivent dans Santé. Ton historique Garmin, lui, ne remonte pas."
+                title: "Deux semaines d'historique",
+                detail: """
+                    À l'activation, Santé importe tes données Garmin des deux semaines précédentes. \
+                    Plus ancien que ça, ton historique ne remonte pas.
+                    """
             )
             caveat(
                 icon: "arrow.triangle.2.circlepath",
-                title: "Synchro par rafales",
+                title: "Garmin Connect doit être ouverte",
                 detail: """
-                    Garmin Connect pousse tes données quand tu ouvres l'app. \
-                    Si ta journée semble en retard dans Foulée, ouvre Garmin Connect.
+                    Le transfert vers Santé n'a lieu que quand l'app est au premier plan. Fermée, il se \
+                    met en pause et ne reprend qu'à la synchro suivante. Journée en retard dans Foulée ? \
+                    Ouvre Garmin Connect.
                     """
             )
         }
@@ -116,7 +156,10 @@ struct GarminSetupSheet: View {
     }
 
     private var labelsNote: some View {
-        Text("Les noms des menus changent d'une version de Garmin Connect à l'autre : cherche « Santé Apple » dans les réglages de l'app.")
+        Text("""
+            Les menus de Garmin Connect changent d'une version à l'autre — ceux de l'app Santé, non. \
+            C'est pour ça que le réglage se fait d'abord côté Santé.
+            """)
             .font(FouleeFont.caption)
             .foregroundStyle(.secondary)
             .padding(.horizontal, 4)
