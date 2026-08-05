@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
+    <iq:application
+        entry="FouleeApp"
+        id="859c7300a91149fdb6ce7e4453bfe59d"
+        launcherIcon="@Drawables.LauncherIcon"
+        minApiLevel="3.1.0"
+        name="@Strings.AppName"
+        type="watch-app">
+
+        <!-- Device matrix: every id below exists in the installed Connect IQ
+             device profiles and supports background services. fr55 and
+             instinct2 run CIQ 3.4.2, below the 4.0.0 a watch-app glance needs;
+             they get the app without the glance. See README.md. -->
+        <iq:products>
+            <iq:product id="fenix843mm"/>
+            <iq:product id="fr165"/>
+            <iq:product id="fr55"/>
+            <iq:product id="instinct2"/>
+            <iq:product id="venu2"/>
+            <iq:product id="venusq2"/>
+            <iq:product id="vivoactive5"/>
+        </iq:products>
+
+        <!-- ActivityMonitor needs no permission. Background is required by the
+             temporal event, Communications by the transmit to the phone. -->
+        <iq:permissions>
+            <iq:uses-permission id="Background"/>
+            <iq:uses-permission id="Communications"/>
+        </iq:permissions>
+
+        <iq:languages>
+            <iq:language>fre</iq:language>
+        </iq:languages>
+
+        <iq:barrels/>
+    </iq:application>
+</iq:manifest>
