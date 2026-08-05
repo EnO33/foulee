@@ -16,7 +16,10 @@ enum WidgetLiveMetrics {
     /// The live reads are **merged into** the stored snapshot, not substituted
     /// for it (`mergingLiveCounters`): the app can have written counters this
     /// process cannot measure — the Connect IQ overlay (#189) never touches
-    /// HealthKit — and replacing them here would discard it on every render.
+    /// HealthKit, and a walk that just ended has not been flushed into it yet
+    /// (#158) — and replacing them here would discard both on every render.
+    /// The snapshot carries how much they lifted (`floor*`), so this process
+    /// can hold exactly that much up and let everything else follow the read.
     static func freshSnapshot() async -> WidgetSnapshot {
         // Zero counters from a previous day up front: when locked-phone reads
         // fail below, the fallback must not show yesterday's totals — and the

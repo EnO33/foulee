@@ -28,6 +28,32 @@ struct WidgetSnapshot: Codable, Sendable {
     /// `SharedStore.write`). nil on snapshots from older builds — treated as
     /// stale, so readers zero the counters rather than show old totals.
     var day: Date?
+    // How much of the counters above the widget process cannot re-measure —
+    // the part the app lifted over raw HealthKit before writing them here, and
+    // the floor the widget's own live read may not drop below (issue #214).
+    //
+    // Two overlays feed it, and neither is visible from the widget target: the
+    // Connect IQ contribution (#189), which lives in the app's own
+    // `UserDefaults.standard` and only ever arrives over BLE, and the
+    // post-walk `PendingWalk` target (#158, #203), which lives in `TodayStore`'s
+    // memory and covers the minute HealthKit takes to flush a finished walk.
+    // Steps and distance take the max of both; minutes only ever see the watch,
+    // since the walk overlay deliberately never fakes exercise minutes.
+    //
+    // Primitive numbers on purpose — the widget must know the three values it
+    // may not drop, not either overlay's persistence format. Always ≤ the
+    // counters they sit under: a floor above the total it accompanies would let
+    // the widget rebuild a day the app itself refuses to show (#201).
+    //
+    // 0 means "measured, and nothing was lifted" — the ordinary pass of a user
+    // with no Garmin watch and no walk in flight. nil means "unknown", and only
+    // ever comes from a snapshot written before #214 shipped: `mergingLiveCounters`
+    // then falls back to the pre-#214 rule for that one snapshot, so the update
+    // itself can't drop a Garmin user's totals in the window before the app or a
+    // background wake republishes.
+    var floorSteps: Int?
+    var floorMinutes: Int?
+    var floorDistanceKm: Double?
 
     static let placeholder = WidgetSnapshot(
         steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20,
@@ -46,7 +72,10 @@ struct WidgetSnapshot: Codable, Sendable {
         waterGoalML: Int = 2_000,
         hydrationEnabled: Bool = false,
         hydrationGlassML: Int = 250,
-        day: Date? = nil
+        day: Date? = nil,
+        floorSteps: Int? = nil,
+        floorMinutes: Int? = nil,
+        floorDistanceKm: Double? = nil
     ) {
         self.steps = steps
         self.stepsGoal = stepsGoal
@@ -60,6 +89,9 @@ struct WidgetSnapshot: Codable, Sendable {
         self.hydrationEnabled = hydrationEnabled
         self.hydrationGlassML = hydrationGlassML
         self.day = day
+        self.floorSteps = floorSteps
+        self.floorMinutes = floorMinutes
+        self.floorDistanceKm = floorDistanceKm
     }
 
     /// A copy with the daily counters zeroed when the snapshot was written on
@@ -73,6 +105,14 @@ struct WidgetSnapshot: Codable, Sendable {
         copy.distanceKm = 0
         copy.calories = 0
         copy.waterML = 0
+        // The floor is day-scoped like every overlay that feeds it (#144, #152,
+        // #203): what the watch measured yesterday, or a walk taken yesterday,
+        // may not hold up a counter today. Zero rather than nil — the counters
+        // above are now known-zero, so the floor under them is known-zero too,
+        // and nil is reserved for "written before #214" (see the fields).
+        copy.floorSteps = 0
+        copy.floorMinutes = 0
+        copy.floorDistanceKm = 0
         return copy
     }
 
@@ -80,21 +120,45 @@ struct WidgetSnapshot: Codable, Sendable {
     /// in. A `nil` leg is a read HealthKit refused (locked phone) and keeps the
     /// stored value, as before.
     ///
-    /// **`max`, not replacement, on steps/minutes/distance.** Those three are
-    /// the counters the app can have lifted above raw HealthKit before writing
-    /// them here — today the Connect IQ overlay (#189), which lives in the app
-    /// process only. Overwriting them with the widget's own HealthKit read
-    /// would silently throw that away on every render and show a Garmin-only
-    /// user numbers lower than the app's, from the same second. Never a sum:
-    /// both terms describe the same day, so the rule is the same `max` the app
-    /// applies (`GarminSnapshotOverlay`), with the minutes cap of
+    /// **`max` against the travelling floor, not against the stored total.**
+    /// Steps, minutes and distance are the three counters the app can have
+    /// lifted above raw HealthKit before writing them here — the Connect IQ
+    /// overlay (#189) and the post-walk `PendingWalk` target (#158) — and the
+    /// widget process can measure neither, since it only ever talks to
+    /// HealthKit. Overwriting them with the live read would discard both on
+    /// every render: a Garmin-only user would see numbers lower than the app's
+    /// from the same second, and a walk that just ended would vanish from the
+    /// widget the instant `publishToWidgets` reloaded the timeline. So what
+    /// those overlays contributed stays a floor — `floor*`, which carries their
+    /// combined lift (see the fields).
+    ///
+    /// That lift, though — and nothing else. Comparing against `self.steps`,
+    /// which is itself `max(healthKit, lift)`, also pinned the *purely
+    /// HealthKit* part at the day's high: a walk deleted in Santé, or a
+    /// duplicate Garmin Connect corrected downwards, stayed on the widget until
+    /// the app republished, and for a user with no watch and no walk in flight
+    /// the `max` was pure latency for no invariant at all (issue #214).
+    /// Comparing against `floor*` instead keeps both guarantees and lets a
+    /// legitimate fall through on the next render — the same rule the
+    /// background path has always applied (`HealthKitClient+BackgroundDelivery`).
+    ///
+    /// A `nil` floor is not "no floor", it is "not recorded": only a snapshot
+    /// written before #214 shipped has one, and for that snapshot the pre-#214
+    /// rule applies unchanged (`?? self.steps`). Reading it as zero instead
+    /// would collapse a Garmin user's counters to a not-yet-synced HealthKit on
+    /// the first render after the update — briefly the exact #189 symptom this
+    /// snapshot exists to prevent. Every snapshot this build writes records the
+    /// floor, so the fallback lasts until the first refresh or background wake.
+    ///
+    /// Never a sum: both terms describe the same day, so this is the `max` the
+    /// app applies (`GarminSnapshotOverlay`), with the minutes cap of
     /// `ActiveMinutes`.
     ///
     /// Calories and water are plain overwrites: no overlay ever raises them,
     /// and water legitimately goes *down* when a glass is deleted.
     ///
     /// Call on a `zeroedIfStale()` receiver — the `max` must not have
-    /// yesterday's totals on the other side.
+    /// yesterday's floor on the other side.
     func mergingLiveCounters(
         steps: Int?,
         minutes: Int?,
@@ -103,9 +167,9 @@ struct WidgetSnapshot: Codable, Sendable {
         waterML: Int?
     ) -> WidgetSnapshot {
         var merged = self
-        if let steps { merged.steps = max(steps, self.steps) }
-        if let minutes { merged.minutes = ActiveMinutes.merged(minutes, with: self.minutes) }
-        if let distanceKm { merged.distanceKm = max(distanceKm, self.distanceKm) }
+        if let steps { merged.steps = max(steps, floorSteps ?? self.steps) }
+        if let minutes { merged.minutes = ActiveMinutes.merged(minutes, with: floorMinutes ?? self.minutes) }
+        if let distanceKm { merged.distanceKm = max(distanceKm, floorDistanceKm ?? self.distanceKm) }
         if let calories { merged.calories = calories }
         if let waterML { merged.waterML = waterML }
         return merged
@@ -125,6 +189,11 @@ struct WidgetSnapshot: Codable, Sendable {
         hydrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .hydrationEnabled) ?? false
         hydrationGlassML = try container.decodeIfPresent(Int.self, forKey: .hydrationGlassML) ?? 250
         day = try container.decodeIfPresent(Date.self, forKey: .day)
+        // Absent on pre-#214 payloads only, and deliberately left nil there
+        // rather than defaulted to 0 — see `mergingLiveCounters`.
+        floorSteps = try container.decodeIfPresent(Int.self, forKey: .floorSteps)
+        floorMinutes = try container.decodeIfPresent(Int.self, forKey: .floorMinutes)
+        floorDistanceKm = try container.decodeIfPresent(Double.self, forKey: .floorDistanceKm)
     }
 }
 
