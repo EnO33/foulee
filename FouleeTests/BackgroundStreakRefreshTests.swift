@@ -213,4 +213,49 @@ import Testing
             defaults: defaults, now: date(12, 22), calendar: calendar
         ))
     }
+
+    // MARK: - The crossing scale stays HealthKit-only (issue #189)
+
+    @Test func measuredMinutesAreDayStamped() {
+        let defaults = cleanDefaults()
+        #expect(BackgroundStreakRefresh.lastMeasuredMinutesToday(
+            defaults: defaults, now: date(12, 8), calendar: calendar
+        ) == nil)
+        BackgroundStreakRefresh.markMeasuredMinutes(14, at: date(12, 8), defaults: defaults)
+        #expect(BackgroundStreakRefresh.lastMeasuredMinutesToday(
+            defaults: defaults, now: date(12, 19), calendar: calendar
+        ) == 14)
+        // Yesterday's measurement is never today's "before".
+        #expect(BackgroundStreakRefresh.lastMeasuredMinutesToday(
+            defaults: defaults, now: date(13, 8), calendar: calendar
+        ) == nil)
+    }
+
+    @Test func theGarminOverlayCannotPreConsumeTheCrossing() {
+        // Since #189 the shared snapshot's minutes carry the Connect IQ
+        // overlay: the watch reported 30 minutes hours ago, so the app group
+        // already reads 30 against a 20-minute goal. Judged on that scale the
+        // crossing edge is gone before HealthKit ever measured it, and the
+        // streak would wait for tomorrow's rollover.
+        let contaminated = crossed(storedMinutes: 30, todayMinutes: 24)
+        #expect(!contaminated)
+
+        // Judged on the HealthKit-only scale the wake actually measured —
+        // 6 minutes before, 24 after — the edge fires exactly once.
+        #expect(crossed(storedMinutes: 6, todayMinutes: 24))
+        #expect(!crossed(storedMinutes: 24, todayMinutes: 26))
+    }
+
+    private func crossed(storedMinutes: Int, todayMinutes: Int) -> Bool {
+        BackgroundStreakRefresh.crossedGoal(BackgroundStreakRefresh.Trigger(
+            storedDay: date(12, 0),
+            storedMinutes: storedMinutes,
+            todayMinutes: todayMinutes,
+            goalMinutes: 20,
+            wake: .workout,
+            lastRecomputeAt: date(12, 7),
+            pendingCrossing: false,
+            now: date(12, 8)
+        ))
+    }
 }

@@ -78,16 +78,15 @@ struct FouleeApp: App {
     // data, and on that path no UI is ever mounted. Re-registering the known
     // devices immediately is what makes the wake useful.
     //
-    // Deliberate dead end for now: snapshots are received, decoded and
-    // dropped. Merging them into HealthKit or the widget snapshot without
-    // double-counting what Garmin Connect already wrote to Santé is #189.
+    // Each decoded snapshot then goes to `GarminSnapshotIngestion`, which owns
+    // the day-stamped overlay and the merge (#189). Nothing on this path ever
+    // writes to HealthKit: Garmin Connect syncs the same day later, and a
+    // sample written here would double-count it forever.
     private static let startGarminConnectIQOnce: Void = {
         @Dependency(\.garminConnectIQ) var garminConnectIQ
         garminConnectIQ.initialize()
         garminConnectIQ.startReceiving()
-        Task {
-            for await _ in garminConnectIQ.snapshots() {}
-        }
+        Task { await GarminSnapshotIngestion.run(garminConnectIQ.snapshots()) }
     }()
 
     /// Ask iOS for a background refresh in ~2 h. Called when the app goes to

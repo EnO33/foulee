@@ -79,6 +79,16 @@ struct GarminConnectIQClient: Sendable {
     /// Snapshots as they are decoded. Undecodable messages are dropped
     /// silently — a foreign or malformed payload is not an app error.
     var snapshots: @Sendable () -> AsyncStream<GarminDailySnapshot>
+
+    /// Today's Garmin overlay as of the given instant — the high-water floor
+    /// the day's snapshots left, or nil when none can speak for today. Read by
+    /// `TodayStore` on every refresh; persisted, so a background relaunch keeps
+    /// it (`GarminSnapshotStore`, #189).
+    ///
+    /// Takes `now` rather than reading the clock itself, so the whole pass —
+    /// the day stamp here, the merge, the walk baseline — is decided by the one
+    /// clock the caller injected.
+    var todayOverlay: @Sendable (Date) -> GarminSnapshotOverlay.Contribution?
 }
 
 extension GarminConnectIQClient: DependencyKey {
@@ -90,7 +100,8 @@ extension GarminConnectIQClient: DependencyKey {
             [GarminDevice(id: UUID(), modelName: "Forerunner 965", friendlyName: "Ma Forerunner")]
         },
         startReceiving: {},
-        snapshots: { AsyncStream { $0.finish() } }
+        snapshots: { AsyncStream { $0.finish() } },
+        todayOverlay: { _ in nil }
     )
 
     static let testValue = GarminConnectIQClient(
@@ -99,7 +110,8 @@ extension GarminConnectIQClient: DependencyKey {
         handleDeviceSelection: { _ in [] },
         knownDevices: { [] },
         startReceiving: {},
-        snapshots: { AsyncStream { $0.finish() } }
+        snapshots: { AsyncStream { $0.finish() } },
+        todayOverlay: { _ in nil }
     )
 }
 

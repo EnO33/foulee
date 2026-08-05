@@ -301,7 +301,7 @@ final class TodayStore {
         async let garminTask = healthKit.garminStatus()
 
         let fetchedMetrics = await metricsTask
-        let metrics = fetchedMetrics ?? .zero
+        let metrics = metricsWithGarminOverlay(fetchedMetrics)
         // Metrics return first (local HealthKit); commit the walk baseline
         // and overlay verdict promptly — weather can take seconds, and
         // walkWillStart() must not read a stale baseline in the meantime.

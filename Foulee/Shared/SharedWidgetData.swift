@@ -76,6 +76,41 @@ struct WidgetSnapshot: Codable, Sendable {
         return copy
     }
 
+    /// This snapshot with a widget process's own live HealthKit reads folded
+    /// in. A `nil` leg is a read HealthKit refused (locked phone) and keeps the
+    /// stored value, as before.
+    ///
+    /// **`max`, not replacement, on steps/minutes/distance.** Those three are
+    /// the counters the app can have lifted above raw HealthKit before writing
+    /// them here — today the Connect IQ overlay (#189), which lives in the app
+    /// process only. Overwriting them with the widget's own HealthKit read
+    /// would silently throw that away on every render and show a Garmin-only
+    /// user numbers lower than the app's, from the same second. Never a sum:
+    /// both terms describe the same day, so the rule is the same `max` the app
+    /// applies (`GarminSnapshotOverlay`), with the minutes cap of
+    /// `ActiveMinutes`.
+    ///
+    /// Calories and water are plain overwrites: no overlay ever raises them,
+    /// and water legitimately goes *down* when a glass is deleted.
+    ///
+    /// Call on a `zeroedIfStale()` receiver — the `max` must not have
+    /// yesterday's totals on the other side.
+    func mergingLiveCounters(
+        steps: Int?,
+        minutes: Int?,
+        distanceKm: Double?,
+        calories: Int?,
+        waterML: Int?
+    ) -> WidgetSnapshot {
+        var merged = self
+        if let steps { merged.steps = max(steps, self.steps) }
+        if let minutes { merged.minutes = ActiveMinutes.merged(minutes, with: self.minutes) }
+        if let distanceKm { merged.distanceKm = max(distanceKm, self.distanceKm) }
+        if let calories { merged.calories = calories }
+        if let waterML { merged.waterML = waterML }
+        return merged
+    }
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         steps = try container.decode(Int.self, forKey: .steps)

@@ -136,6 +136,7 @@ extension GarminConnectIQClient {
         handleDeviceSelection: { GarminConnectIQBridge.shared.handleDeviceSelection($0) },
         knownDevices: { GarminDeviceStore.read() },
         startReceiving: { GarminConnectIQBridge.shared.startReceiving() },
-        snapshots: { GarminConnectIQBridge.shared.snapshots() }
+        snapshots: { GarminConnectIQBridge.shared.snapshots() },
+        todayOverlay: { GarminSnapshotStore.readFloor(now: $0) }
     )
 }

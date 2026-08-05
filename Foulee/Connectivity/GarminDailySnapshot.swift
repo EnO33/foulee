@@ -19,9 +19,13 @@ import Foundation
 ///
 /// Units follow `Toybox.ActivityMonitor.Info` exactly: distance in centimetres,
 /// minutes in whole minutes, calories in kilocalories. No conversion happens
-/// here — decoding this struct is the end of this issue's scope; merging it
-/// into HealthKit or the widget snapshot is #189.
-struct GarminDailySnapshot: Equatable, Sendable {
+/// here. How these values are merged with what Garmin Connect already wrote
+/// into Santé — and why they are never written there themselves — is
+/// `GarminSnapshotOverlay` (#189).
+/// `Codable` so the overlay survives a relaunch — iOS wakes the app in the
+/// background on BLE activity and kills it again between wakes
+/// (`GarminSnapshotStore`, #189).
+struct GarminDailySnapshot: Codable, Equatable, Sendable {
     /// Frozen schema version. Bumping it means the watch app changed shape;
     /// old phone builds must then reject the payload instead of guessing.
     static let schemaVersion = 1
@@ -32,7 +36,9 @@ struct GarminDailySnapshot: Equatable, Sendable {
     /// the native equivalent of `appleExerciseTime` (ADR 0001).
     var activeMinutes: Int
     /// The vigorous share of `activeMinutes`, kept apart because Garmin counts
-    /// vigorous minutes double in its own totals. Interpreting that is #189.
+    /// vigorous minutes double in its own totals — `GarminSnapshotOverlay`
+    /// subtracts it back out to get wall-clock minutes comparable to
+    /// `appleExerciseTime`.
     var activeMinutesVigorous: Int
     var calories: Int
     var timestamp: Date
@@ -91,9 +97,9 @@ extension GarminDailySnapshot {
     /// Pure, so the ordering rule is unit-testable without any BLE hardware.
     /// A strictly newer generation always wins; within one generation only a
     /// strictly newer timestamp does, which drops the duplicate deliveries BLE
-    /// is prone to. A *lower* generation is always stale — if the watch app's
-    /// counter ever resets (reinstall), the pairing has to be redone; #189
-    /// owns that recovery.
+    /// is prone to. A *lower* generation is always stale — a watch-side counter
+    /// reset (app reinstall) recovers on its own because `GarminSnapshotIngestion`
+    /// compares against the *fresh* stored snapshot, which expires (#189).
     static func supersedes(_ incoming: GarminDailySnapshot, lastAccepted: GarminDailySnapshot?) -> Bool {
         guard let last = lastAccepted else { return true }
         if incoming.generation != last.generation { return incoming.generation > last.generation }
