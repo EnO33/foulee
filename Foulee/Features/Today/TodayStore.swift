@@ -2,7 +2,6 @@ import Dependencies
 import Foundation
 import Observation
 import UserNotifications
-import WidgetKit
 
 /// Owns the Today snapshot and refreshes it from HealthKit.
 ///
@@ -149,11 +148,8 @@ final class TodayStore {
     /// so the ring, streak and countdown update immediately — no need to
     /// wait for the next refresh.
     func apply(preferences: UserPreferences) {
-        let newWindow = DateComponents(
-            hour: preferences.walkWindowStart.hour,
-            minute: preferences.walkWindowStart.minute
-        )
-        let changed = hasChanged(preferences: preferences, newWindow: newWindow)
+        let newWindow = Self.window(for: preferences)
+        let changed = hasChanged(preferences: preferences)
         stepsGoal = preferences.stepsGoal
         minutesGoal = preferences.minutesGoal
         walkWindowStart = newWindow
@@ -194,25 +190,6 @@ final class TodayStore {
             )
             publishToWidgets()
         }
-    }
-
-    /// Whether anything the mirrored copy holds differs from `preferences`.
-    ///
-    /// Gates both halves of `apply`: the snapshot re-derivation (goal, days and
-    /// window are what the ring and the streak are computed against) *and* the
-    /// publish, which is the only thing that carries the hydration prefs and
-    /// the activity mode to the Watch. Neither of the latter two is a snapshot
-    /// input — they're compared here so a settings change reaches the wrist
-    /// without waiting for the next refresh (issue #223).
-    private func hasChanged(preferences: UserPreferences, newWindow: DateComponents) -> Bool {
-        preferences.stepsGoal != stepsGoal
-            || preferences.minutesGoal != minutesGoal
-            || newWindow != walkWindowStart
-            || preferences.activeDays != activeDays
-            || preferences.hydrationEnabled != hydrationEnabled
-            || preferences.hydrationGoalML != hydrationGoalML
-            || preferences.hydrationGlassML != hydrationGlassML
-            || preferences.activityMode != activityMode
     }
 
     /// Ask for HealthKit + Location authorization and trigger an initial

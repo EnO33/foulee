@@ -58,7 +58,10 @@ struct SessionActivityTests {
         // *samples* (they'd double-count the daily total), so this estimate is
         // the only energy a phone-recorded run will ever carry.
         #expect(run.estimatedCalories > walk.estimatedCalories)
-        #expect(run.estimatedCalories == Int(5_000 * SessionActivity.running.kcalPerStep))
+        // The literal 0.09 kcal/step produces, not the expression the code
+        // under test uses: recomputing `5_000 * kcalPerStep` here would be
+        // true for any value of the constant — the trap line 21 warns about.
+        #expect(run.estimatedCalories == 450)
     }
 
     @Test("A session defaults to walking when no activity is given")

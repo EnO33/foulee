@@ -69,7 +69,10 @@ struct TodayScreen: View {
             .fullScreenCover(isPresented: $isWalking) {
                 ActiveWalkScreen(
                     minutesGoal: store.minutesGoal,
-                    activity: SessionActivity(mode: preferences.activityMode)
+                    // Resolved by the store, not here (issue #223): the mode
+                    // it mirrors is the same one it syncs to the Watch, and
+                    // unlike this body it is reachable from a test.
+                    activity: store.sessionActivity
                 ) { session in
                     isWalking = false
                     Task { await store.registerFinishedWalk(session) }

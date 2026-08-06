@@ -19,6 +19,12 @@ private final class WorkoutHealthKitStub {
     var finishError: Error?
 
     private(set) var startCalls = 0
+    /// The types the last `start(activity:)` asked to share. A type the data
+    /// source collects but we never asked to share is what makes
+    /// `finishWorkout()` fail with an authorization error, so the two lists
+    /// agreeing is a real invariant, not bookkeeping.
+    private(set) var requestedShareTypes: Set<HKSampleType> = []
+    private(set) var requestedReadTypes: Set<HKObjectType> = []
     /// The configuration handed to the last `startSession` — this is verbatim
     /// what HealthKit stamps the saved workout with, so asserting on it is
     /// asserting on what lands in Santé (issue #223).
@@ -34,7 +40,9 @@ private final class WorkoutHealthKitStub {
     func makeStore() -> WatchWorkoutStore {
         WatchWorkoutStore(healthKit: WatchWorkoutHealthKit(
             isAvailable: { self.isAvailable },
-            requestAuthorization: { _, _ in
+            requestAuthorization: { toShare, read in
+                self.requestedShareTypes = toShare
+                self.requestedReadTypes = read
                 if let error = self.authError { throw error }
             },
             startSession: { configuration, _ in
@@ -97,6 +105,21 @@ struct WatchWorkoutStoreTests {
         #expect(stub.startedConfiguration?.activityType == expected)
         // The location type is not part of the change — outdoor either way.
         #expect(stub.startedConfiguration?.locationType == .outdoor)
+    }
+
+    @Test("Every collected type is asked for, to share and to read")
+    func startAuthorizesEveryCollectedType() async {
+        let stub = WorkoutHealthKitStub()
+        let store = stub.makeStore()
+        await store.start(activity: .running)
+        // Same list the data source collects (issue #223). Collected but not
+        // shareable is exactly the authorization error that makes a perfectly
+        // good session fail to save at the end.
+        for type in collectedQuantityTypes {
+            #expect(stub.requestedShareTypes.contains(type))
+            #expect(stub.requestedReadTypes.contains(type))
+        }
+        #expect(stub.requestedShareTypes.contains(HKWorkoutType.workoutType()))
     }
 
     @Test("start() is a no-op while a walk is already active")

@@ -66,7 +66,10 @@ enum WatchSyncStore {
     private static let key = "watch.sync.payload"
     private static let suiteName = "group.com.eno33.foulee"
 
-    private static var sharedDefaults: UserDefaults {
+    /// Not private: it is the default every call site below binds, and the
+    /// value a caller that owns its own default argument has to name to keep
+    /// production behaviour (see `WatchRootView.startActivity`).
+    static var sharedDefaults: UserDefaults {
         UserDefaults(suiteName: suiteName) ?? .standard
     }
 
