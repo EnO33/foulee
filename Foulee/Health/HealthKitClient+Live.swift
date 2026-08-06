@@ -16,7 +16,7 @@ extension HealthKitClient {
         let minutesType = HKQuantityType(.appleExerciseTime)
         let caloriesType = HKQuantityType(.activeEnergyBurned)
         let heartRateType = HKQuantityType(.heartRate)
-        let walkingWorkoutType = HKWorkoutType.workoutType()
+        let workoutType = HKWorkoutType.workoutType()
         let waterType = HKQuantityType(.dietaryWater)
 
         // Heart rate is read-only and only surfaces in WorkoutDetailSheet
@@ -25,9 +25,9 @@ extension HealthKitClient {
         // Water is read+write for the hydration tracker.
         let readTypes: Set<HKObjectType> = [
             stepsType, distanceType, minutesType, caloriesType,
-            heartRateType, walkingWorkoutType, waterType
+            heartRateType, workoutType, waterType
         ]
-        let writeTypes: Set<HKSampleType> = [walkingWorkoutType, waterType]
+        let writeTypes: Set<HKSampleType> = [workoutType, waterType]
 
         return HealthKitClient(
             requestAuthorization: {
@@ -98,7 +98,7 @@ extension HealthKitClient {
                 try await mergedDailyMinutes(store: store, minutesType: minutesType, daysBack: daysBack)
             },
             recentWorkouts: { daysBack in
-                try await recentWalkingWorkouts(store: store, daysBack: daysBack)
+                try await recentWorkoutSummaries(store: store, daysBack: daysBack)
             },
             workoutDetail: { summary in
                 try await fetchWorkoutDetail(for: summary, store: store)
@@ -388,26 +388,19 @@ func isNoDataAvailable(_ error: (any Error)?) -> Bool {
     return hkError.code == .errorNoData
 }
 
-/// All walking workouts (activityType `.walking`) started in the last
-/// `daysBack` days (today included), regardless of which app or device
-/// wrote them. Newest first.
-private func recentWalkingWorkouts(
+/// All workouts of a `WorkoutActivityFilter` type (walk, run, hike)
+/// started in the last `daysBack` days (today included), regardless of
+/// which app or device wrote them. Newest first.
+private func recentWorkoutSummaries(
     store: HKHealthStore,
     daysBack: Int
 ) async throws -> [WorkoutSummary] {
-    let calendar = Calendar.current
-    let endOfDay = calendar.startOfDay(for: .now).addingTimeInterval(24 * 60 * 60)
-    guard let start = calendar.date(
-        byAdding: .day, value: -(daysBack - 1), to: calendar.startOfDay(for: .now)
+    // Activity types *and* date window both come from the filter: this
+    // function is private, so anything composed here would be unreachable
+    // from a test — which is how #217 shipped in the first place.
+    guard let predicate = WorkoutActivityFilter.recentWorkoutsPredicate(
+        daysBack: daysBack
     ) else { return [] }
-
-    let activityPredicate = HKQuery.predicateForWorkouts(with: .walking)
-    let datePredicate = HKQuery.predicateForSamples(
-        withStart: start, end: endOfDay, options: .strictStartDate
-    )
-    let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-        activityPredicate, datePredicate
-    ])
     let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
 
     return try await withCheckedThrowingContinuation { continuation in

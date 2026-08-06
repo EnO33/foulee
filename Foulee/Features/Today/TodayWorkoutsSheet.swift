@@ -2,9 +2,9 @@ import Dependencies
 import SwiftUI
 
 /// Modal sheet presented when the user taps "Voir le résumé" — shows the
-/// last 7 days of walking workouts, grouped by day with today first.
-/// Days without a recorded walk get a discreet placeholder so the user
-/// also sees what they missed.
+/// last 7 days of workouts (see `WorkoutActivityFilter`), grouped by day
+/// with today first. Days without a recorded session get a discreet
+/// placeholder so the user also sees what they missed.
 struct TodayWorkoutsSheet: View {
     private static let daysBack = 7
 
@@ -101,7 +101,10 @@ struct TodayWorkoutsSheet: View {
             Image(systemName: "moon.zzz")
                 .scaledSystemFont(size: 18)
                 .foregroundStyle(.secondary)
-            Text("Aucune marche enregistrée")
+            // "Aucune marche" was the placeholder's exact contradiction for a
+            // runner (#217): the filter now lists runs and hikes too, so the
+            // empty day has to speak about sessions, not walks.
+            Text("Aucune séance enregistrée")
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
             Spacer()

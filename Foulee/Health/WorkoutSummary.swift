@@ -12,7 +12,7 @@ enum FouleeWorkoutMetadata {
     static let calories = "com.eno33.foulee.workout.calories"
 }
 
-/// Plain bag describing a walking `HKWorkout` for the summary sheet —
+/// Plain bag describing an `HKWorkout` for the summary sheet —
 /// keeps `HKWorkout` (non-`Sendable`, framework-specific) out of view code.
 struct WorkoutSummary: Equatable, Hashable, Sendable, Identifiable {
     var id: UUID

@@ -27,10 +27,10 @@ struct HealthKitClient: Sendable {
     /// minutes for days that had no exercise (so charts/streaks see gaps).
     var dailyMinutes: @Sendable (_ daysBack: Int) async throws -> [DailyMinutes]
 
-    /// Walking workouts (HKWorkoutActivityType.walking) started in the
-    /// last `daysBack` days (today included), newest first. Covers walks
-    /// from Foulée, Forme and the Apple Watch — anything in HealthKit.
-    /// Pass `1` for today only.
+    /// Workouts of a `WorkoutActivityFilter` type (walk, run, hike) started
+    /// in the last `daysBack` days (today included), newest first. Covers
+    /// sessions from Foulée, Forme and the Apple Watch — anything in
+    /// HealthKit. Pass `1` for today only.
     var recentWorkouts: @Sendable (_ daysBack: Int) async throws -> [WorkoutSummary]
 
     /// Drill-down for a single workout — heart-rate samples + steps
