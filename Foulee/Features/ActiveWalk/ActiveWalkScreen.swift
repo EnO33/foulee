@@ -77,7 +77,7 @@ struct ActiveWalkScreen: View {
                     .foregroundStyle(FouleeColor.accentGradient)
                     .symbolEffect(.bounce, value: isFinishedState)
             }
-            Text("Marche terminée")
+            Text("Sortie terminée")
                 .font(FouleeFont.title2)
             VStack(spacing: 4) {
                 Text(session.elapsed.walkClockText)
@@ -116,7 +116,10 @@ struct ActiveWalkScreen: View {
                 tint: paused ? FouleeColor.warning : FouleeColor.success,
                 fill: (paused ? FouleeColor.warning : FouleeColor.success).opacity(0.16)
             )
-            Text("Marche du midi")
+            // Neutral, and no longer tied to a time of day (#222): this screen
+            // is opened whenever the user taps start, and the chip above it
+            // already says whether it is running or paused.
+            Text("Ta sortie")
                 .font(FouleeFont.largeTitle)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -163,7 +166,7 @@ struct ActiveWalkScreen: View {
         .frame(width: 232, height: 232)
         .padding(.top, 22)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Marche en cours")
+        .accessibilityLabel("Sortie en cours")
         .accessibilityValue(
             "\(session.steps.formattedFR) pas, "
             + "\(session.distanceKm.kmText(fractionDigits: 1)), "

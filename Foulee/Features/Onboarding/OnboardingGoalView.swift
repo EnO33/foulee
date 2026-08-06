@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Third onboarding screen — pick walk days, time window and minutes
+/// Third onboarding screen — pick active days, time window and minutes
 /// goal. All edits land in `UserPreferences` immediately (no save button).
 struct OnboardingGoalView: View {
     @Bindable var preferences: UserPreferences
@@ -24,7 +24,10 @@ struct OnboardingGoalView: View {
 
     private var heading: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Quand veux-tu\nmarcher ?")
+            // "bouger", not "marcher": this screen comes right after the user
+            // may have answered "Course" (#221/#222), and the window it sets
+            // is the same one whatever they picked.
+            Text("Quand veux-tu\nbouger ?")
                 .scaledSystemFont(size: 30, weight: .bold)
                 .lineSpacing(2)
             Text("On t'enverra un petit rappel juste avant.")

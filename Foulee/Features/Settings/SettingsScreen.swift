@@ -106,7 +106,7 @@ struct SettingsScreen: View {
     }
 
     /// Daily step goal — independent from the activity goal: it's tracked all
-    /// day (the midday walk just contributes to it), so it stands on its own.
+    /// day (a session just contributes to it), so it stands on its own.
     private var stepsSection: some View {
         section(title: "Objectif de pas") {
             VStack(alignment: .leading, spacing: 10) {
@@ -126,7 +126,7 @@ struct SettingsScreen: View {
                     step: 500
                 )
                 .tint(FouleeColor.accentMid)
-                Text("Compté toute la journée, ta marche du midi incluse.")
+                Text("Compté toute la journée, ta sortie incluse.")
                     .font(FouleeFont.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -148,10 +148,10 @@ struct SettingsScreen: View {
         }
     }
 
-    /// "Fenêtre horaire", not "Fenêtre de marche": this row now sits directly
-    /// under a picker that can say "Course", and the old label would contradict
-    /// it on screen. Deliberately the only copy touched here — the rest of the
-    /// app's walking vocabulary is #222's sweep, not this issue's.
+    /// "Fenêtre horaire", not "Fenêtre de marche": this row sits directly under
+    /// a picker that can say "Course", and the old label would contradict it on
+    /// screen. It stays a single window for all three modes — #222 dropped the
+    /// "midi" framing around it, not the window itself.
     private var windowRow: some View {
         VStack(alignment: .leading, spacing: 10) {
             rowLabel("Fenêtre horaire")
@@ -179,8 +179,8 @@ struct SettingsScreen: View {
         }
     }
 
-    /// Activity goal — the midday-walk duration that drives the ring + the
-    /// "start walk" flow. Distinct from the all-day step goal below.
+    /// Activity goal — the session duration that drives the ring + the
+    /// "démarrer ta sortie" flow. Distinct from the all-day step goal below.
     private var minutesGoalRow: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
@@ -212,7 +212,7 @@ struct SettingsScreen: View {
         section(title: "Notifications") {
             Toggle(isOn: $preferences.notificationsEnabled) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Rappel avant la marche")
+                    Text("Rappel avant ta sortie")
                         .font(FouleeFont.headline)
                     Text("10 minutes avant ta fenêtre, sur les jours actifs.")
                         .font(FouleeFont.footnote)

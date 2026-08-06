@@ -123,7 +123,10 @@ struct TodayWorkoutsSheet: View {
                     .fill(FouleeColor.accentMid.opacity(0.18))
                     .frame(width: 44, height: 44)
                     .overlay {
-                        Image(systemName: "figure.walk.motion")
+                        // Neutral glyph (#222): this list mixes walks, runs and
+                        // hikes, and `WorkoutSummary` carries no activity type
+                        // yet — #223 is what will let the row show its own.
+                        Image(systemName: FouleeIcon.mixedCardio)
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(FouleeColor.accentMid)
                     }

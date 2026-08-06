@@ -71,7 +71,7 @@ struct StreakMonthBrowser: View {
         HStack(spacing: 0) {
             statCell(value: "\(month?.rate ?? 0) %", label: "Réussite")
             divider
-            statCell(value: "\(month?.walks ?? 0)", label: (month?.walks ?? 0) == 1 ? "marche" : "marches")
+            statCell(value: "\(month?.walks ?? 0)", label: (month?.walks ?? 0) == 1 ? "sortie" : "sorties")
             divider
             statCell(value: "\(month?.minutes ?? 0)", label: "minutes")
         }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 7 mini bars showing minutes per weekday vs. goal, plus the
-/// "X / 5 marches" chip and weekday labels.
+/// "X / 5 sorties" chip and weekday labels.
 struct TodayWeekBars: View {
     var snapshot: TodaySnapshot
     var activeDays: Set<Weekday>
@@ -39,7 +39,7 @@ struct TodayWeekBars: View {
                     .font(FouleeFont.headline)
                 Spacer()
                 Chip(
-                    label: "\(completedCount) / \(activeDays.count) marches",
+                    label: "\(completedCount) / \(activeDays.count) sorties",
                     systemIcon: FouleeIcon.check,
                     tint: FouleeColor.success,
                     fill: Color.gray.opacity(0.16)
@@ -67,7 +67,7 @@ struct TodayWeekBars: View {
         }
         .frame(height: 84)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Minutes de marche par jour cette semaine")
+        .accessibilityLabel("Minutes d'activité par jour cette semaine")
         .accessibilityValue(weekSpokenSummary)
     }
 

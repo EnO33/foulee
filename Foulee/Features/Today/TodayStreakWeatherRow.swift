@@ -52,10 +52,20 @@ struct TodayStreakWeatherRow: View {
                 Image(systemName: FouleeIcon.sun)
                     .scaledSystemFont(size: 20)
                     .foregroundStyle(FouleeColor.warning)
-                Text("MIDI")
+                // Was "MIDI" (#222). Dropping the lunchtime *framing* is the
+                // point; dropping the hour is not — `WeatherClient` still
+                // returns the 12:00 entry, so a user whose window is at 18:30
+                // has to be able to see that the reading isn't theirs. Making
+                // the forecast follow `walkWindowStart` is the real fix and is
+                // out of this copy pass's scope.
+                Text("MÉTÉO · 12 H")
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .tracking(1)
+                    // Two words where "SÉRIE" has one, in a half-width card:
+                    // shrink rather than truncate the hour away.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(snapshot.weather.temperatureCelsius)°")

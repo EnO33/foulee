@@ -43,7 +43,7 @@ struct DesignSystemGallery: View {
                 Text("Large title").font(FouleeFont.largeTitle)
                 Text("Title 2").font(FouleeFont.title2)
                 Text("Headline").font(FouleeFont.headline)
-                Text("Body — bouge un peu, chaque midi.").font(FouleeFont.body)
+                Text("Body — bouge un peu, chaque jour.").font(FouleeFont.body)
                 Text("Footnote").font(FouleeFont.footnote).foregroundStyle(.secondary)
                 Text("1 712").font(FouleeFont.numeric(size: 32))
             }
@@ -53,7 +53,7 @@ struct DesignSystemGallery: View {
     private var chips: some View {
         section("Chips") {
             HStack(spacing: 8) {
-                Chip(label: "Marche dans 18 min", systemIcon: FouleeIcon.timer,
+                Chip(label: "Départ dans 18 min", systemIcon: FouleeIcon.timer,
                      tint: FouleeColor.accentMid,
                      fill: FouleeColor.accentMid.opacity(0.16))
                 Chip(label: "Terminée", systemIcon: FouleeIcon.check,
@@ -68,7 +68,7 @@ struct DesignSystemGallery: View {
             HStack(spacing: 20) {
                 ProgressRing(progress: 0.42) {
                     VStack(spacing: 2) {
-                        Image(systemName: FouleeIcon.walk)
+                        Image(systemName: FouleeIcon.mixedCardio)
                             .font(.title2)
                             .foregroundStyle(FouleeColor.accentMid)
                         Text("1 342").font(FouleeFont.numeric(size: 20))
@@ -107,7 +107,7 @@ struct DesignSystemGallery: View {
     private var buttons: some View {
         section("Boutons") {
             VStack(spacing: 12) {
-                PrimaryButton(title: "Démarrer la marche",
+                PrimaryButton(title: "Démarrer ta sortie",
                               systemIcon: FouleeIcon.play) {}
                 SecondaryButton(title: "Voir le résumé",
                                 systemIcon: FouleeIcon.sparkle) {}

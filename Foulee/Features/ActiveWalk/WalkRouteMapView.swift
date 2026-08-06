@@ -40,7 +40,9 @@ struct WalkRouteMapView: View {
             }
             if let last = coordinates.last {
                 Annotation("Position", coordinate: last) {
-                    Image(systemName: FouleeIcon.walk)
+                    // Neutral glyph (#222): the map is drawn from a route, and
+                    // nothing here knows whether it was walked or run.
+                    Image(systemName: FouleeIcon.mixedCardio)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(8)
