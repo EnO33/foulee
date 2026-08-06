@@ -46,6 +46,11 @@ final class TodayStore {
     @ObservationIgnored
     @Dependency(\.weather) private var weather
 
+    /// The store's only clock. Everything dated — the header's day, which days
+    /// the streak counts back over, which ISO week the bars show — reads it, so
+    /// the whole screen answers for one instant. Production still gets
+    /// `Date.now` (that is the live generator); a test, and the screenshot mode
+    /// of issue #235, can pin the day the screen thinks it is.
     @ObservationIgnored
     @Dependency(\.date) private var date
 
@@ -181,7 +186,7 @@ final class TodayStore {
                     history: cachedHistory,
                     goalMinutes: minutesGoal,
                     activeDays: activeDays,
-                    today: .now
+                    today: date.now
                 ),
                 bestStreak: StreakCalculator.best(
                     history: cachedHistory,
@@ -397,7 +402,7 @@ final class TodayStore {
             history: history,
             goalMinutes: minutesGoal,
             activeDays: activeDays,
-            today: .now
+            today: date.now
         )
         let bestStreak = StreakCalculator.best(
             history: history,
@@ -409,7 +414,7 @@ final class TodayStore {
         let displaySteps = max(metrics.steps, pendingWalk?.targetSteps ?? 0)
         let displayDistanceKm = max(metrics.distanceKm, pendingWalk?.targetDistanceKm ?? 0)
         return TodaySnapshot(
-            date: .now,
+            date: date.now,
             steps: displaySteps,
             stepsGoal: stepsGoal,
             minutes: metrics.activeMinutes,
@@ -429,7 +434,7 @@ final class TodayStore {
 
     /// Today isn't one of the user's active weekdays — no walk is planned.
     private var isTodayRestDay: Bool {
-        let weekday = Calendar.current.component(.weekday, from: .now)
+        let weekday = Calendar.current.component(.weekday, from: date.now)
         return !activeDays.calendarWeekdays.contains(weekday)
     }
 
@@ -441,7 +446,7 @@ final class TodayStore {
         let byDay = Dictionary(uniqueKeysWithValues: history.map {
             (calendar.startOfDay(for: $0.date), $0.minutes)
         })
-        let days = ISOWeek.days(containing: .now, calendar: calendar)
+        let days = ISOWeek.days(containing: date.now, calendar: calendar)
         guard days.count == 7 else { return Array(repeating: 0, count: 7) }
         return days.map { byDay[$0] ?? 0 }
     }

@@ -75,5 +75,6 @@ struct TodayStatsGrid: View {
         }
         .buttonStyle(.pressable)
         .accessibilityHint("Voir les statistiques")
+        .accessibilityIdentifier(TodayAccessibility.metricCard(metric))
     }
 }

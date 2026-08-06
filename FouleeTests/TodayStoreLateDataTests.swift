@@ -184,10 +184,14 @@ struct StreakCalendarLateDataTests {
     @MainActor
     func yesterdayCellRepairs() async throws {
         let calendar = Calendar.current
-        let today = calendar.startOfDay(for: .now)
+        // One instant for the fixture and for the store, so "yesterday" means
+        // the same day on both sides even if the suite straddles midnight.
+        let now = Date.now
+        let today = calendar.startOfDay(for: now)
         let yesterday = try #require(calendar.date(byAdding: .day, value: -1, to: today))
         let history = LockedRef<[DailyMinutes]>([])
         await withDependencies {
+            $0.date = .constant(now)
             $0.healthKit.dailyMinutes = { _ in history.value }
         } operation: {
             let store = StreakCalendarStore(

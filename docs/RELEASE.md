@@ -156,6 +156,44 @@ deliberate, manual action:
 > `fastlane deliver` with versioned metadata/screenshots), that's a small
 > follow-up to the `release` lane.
 
+### Regenerating the screenshots
+
+```bash
+tools/capture_screenshots.sh                       # iPhone 6.9" (1320 × 2868)
+tools/capture_screenshots.sh "iPhone 17 Pro" iphone-6.3
+```
+
+The script boots the simulator, pins its status bar to 09:41 / full bars /
+charged, runs the `FouleeScreenshots` UI-test target and exports the ten PNGs
+into `appstore-screenshots/raw/<set>/`. It takes about two minutes and needs no
+supervision — there is no Health data to enter by hand any more.
+
+What makes it repeatable is the **capture mode** (issue #235): the target
+launches the app with `-FouleeScreenshotMode`, which swaps every `@Dependency`
+client for a deterministic double and freezes the clock at Thursday 14 May
+2026, 14:35. Two runs on two different days produce byte-identical files —
+that is checked by running it twice and comparing checksums. The numbers live
+in `Foulee/Screenshots/ScreenshotSeed.swift`; `FouleeTests/ScreenshotSeedTests`
+holds them consistent (the 34-day streak on the card really is what the seeded
+history computes).
+
+Three things worth knowing:
+
+- The mode is **compiled out of Release builds** — everything under
+  `Foulee/Screenshots/` and its single call site in `FouleeApp.init()` are
+  inside `#if DEBUG` — and inside a Debug build it still needs the explicit
+  launch argument. `FouleeTests/ScreenshotModeTests` asserts a normal launch
+  doesn't activate it.
+- The doubles **write nothing**: no `HKWorkout`, no `dietaryWater`, no
+  Connect IQ session. Capturing a running session records nothing in Santé.
+- `appstore-screenshots/` is **not tracked by git** (issue #72) and must stay
+  that way. `raw/` is the capture output; the finished marketing boards are
+  composed from it separately.
+
+Not automated: the three Apple Watch captures and the five iPad ones. The watch
+app has no capture mode of its own, and the iPad set was taken with the iPhone
+app running on an iPad — both are still done by hand.
+
 ## 10. The Garmin watch app (separate store, separate cadence)
 
 The Connect IQ app in [`FouleeConnectIQ/`](../FouleeConnectIQ/README.md) is not
