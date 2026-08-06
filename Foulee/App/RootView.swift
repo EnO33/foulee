@@ -5,10 +5,18 @@ import SwiftUI
 /// Also keeps the walk-reminder schedule in sync with the prefs that
 /// drive it (active days + window start + notifications toggle).
 struct RootView: View {
-    @State private var preferences = UserPreferences()
+    @State private var preferences: UserPreferences
     @Environment(\.scenePhase) private var scenePhase
     private let scheduler = WalkReminderScheduler()
     private let hydrationScheduler = HydrationReminderScheduler()
+
+    /// Injectable defaults for the same reason `UserPreferences` takes them:
+    /// a test can seed an install — one that finished the pre-#221 flow, say —
+    /// in a clean suite and check which branch this view actually renders.
+    /// Gating onboarding is the one thing here no test could reach before.
+    init(defaults: UserDefaults = .standard) {
+        _preferences = State(initialValue: UserPreferences(defaults: defaults))
+    }
 
     var body: some View {
         Group {

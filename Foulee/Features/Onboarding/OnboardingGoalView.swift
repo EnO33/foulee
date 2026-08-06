@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Second onboarding screen — pick walk days, time window and minutes
+/// Third onboarding screen — pick walk days, time window and minutes
 /// goal. All edits land in `UserPreferences` immediately (no save button).
 struct OnboardingGoalView: View {
     @Bindable var preferences: UserPreferences
@@ -8,7 +8,7 @@ struct OnboardingGoalView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
-            OnboardingStepIndicator(step: 1)
+            OnboardingStepIndicator(step: .goal)
                 .frame(maxWidth: .infinity)
             heading
             daysSection
