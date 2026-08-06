@@ -34,6 +34,28 @@ enum SessionActivity: String, Codable, Sendable, CaseIterable {
         }
     }
 
+    /// How the app names a session of this activity to the person doing it,
+    /// while it runs: « Ta marche » / « Ta course ».
+    ///
+    /// Spelled here rather than on either surface because two of them show it
+    /// at the same moment — `ActiveWalkScreen`'s header on the phone and the
+    /// Live Activity's row on the Lock Screen — and #222 asked for one voice
+    /// across the surfaces a user sees during a session. A literal in each
+    /// would let them drift, which is exactly what happened when #225 moved
+    /// only the Lock Screen.
+    ///
+    /// Distinct from `ActivityMode.label` (« Marche » / « Course »), which is
+    /// the short form the Settings picker needs; no new word either way. The
+    /// neutral « Ta sortie » is not here on purpose: it belongs to the one
+    /// caller that can fail to have a `SessionActivity` at all
+    /// (`WalkActivityAttributes`, for a payload written before #225).
+    var sessionTitle: String {
+        switch self {
+        case .walking: "Ta marche"
+        case .running: "Ta course"
+        }
+    }
+
     /// Kilocalories per step used by `WalkSession.estimatedCalories`.
     ///
     /// The phone deliberately writes no `activeEnergyBurned` samples (they

@@ -56,9 +56,11 @@ struct FouleeApp: App {
     // An app *update* lands on the same path — this is what bounds how long an
     // activity started by a previous build can survive the change of attributes
     // shape (#225): the first launch of the new binary, foreground or
-    // background, ends it. Until that launch the new extension renders it, so
-    // the attributes have to keep decoding the old payload; the sweep is the
-    // cleanup, not the compatibility (WalkActivityAttributes.init(from:)).
+    // background, ends it. It runs after the extension has had the chance to
+    // re-render that activity, so the sweep is the cleanup and the tolerant
+    // decode is what has to hold in the window — see
+    // WalkActivityAttributes.init(from:), which is also explicit about which
+    // half of that story is verified and which is reasoned.
     private static let endOrphanedWalkActivitiesOnce: Void = {
         Task {
             for activity in Activity<WalkActivityAttributes>.activities {

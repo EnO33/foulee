@@ -2,27 +2,30 @@ import Foundation
 import Testing
 @testable import Foulee
 
-/// Cover for what the Lock Screen says while a session runs (#225).
+/// Cover for the value the Lock Screen reads while a session runs (#225).
 ///
-/// The views in `FouleeLiveActivity` cannot be exercised from a test process —
-/// they are a `Widget`, rendered by WidgetKit out of process — so the title and
-/// the glyph were pulled onto `WalkActivityAttributes`, which is a plain value
-/// type. Asserting them here asserts what the four surfaces draw, because
-/// after this change they all read those two members and hold no literal of
-/// their own.
-///
-/// The decoding half is not hygiene. ActivityKit keeps an activity alive across
-/// an app update, and both sweeps that can end a stranded one
-/// (`FouleeApp.endOrphanedWalkActivitiesOnce`, `ActiveWalkStore.
-/// startLiveActivity`) reach it only by enumerating
-/// `Activity<WalkActivityAttributes>.activities` — an enumeration that has to
-/// rebuild the attributes. Attributes that throw on last version's payload
-/// would strand the activity on the Lock Screen with nothing able to end it.
-/// What is *not* covered: that ActivityKit's own persistence goes through
-/// `Codable` at all. That is the documented conformance requirement and the
-/// only serialization contract the type exposes, but the archive format is
-/// private and no test process can leave an activity in flight across a binary
-/// swap. The tests below pin the contract this type owns.
+/// Scope, stated precisely — this suite covers `WalkActivityAttributes` and
+/// nothing else:
+/// * **covered here** — what a given attributes value says: its title, its
+///   glyph, and its decoding of a payload written by another build.
+/// * **covered next door** — that `ActiveWalkStore` builds that value off the
+///   session's own activity rather than a constant
+///   (`ActiveWalkStoreTests.liveActivityCarriesTheStartedActivity`). Without
+///   that test, the wiring could go back to a hardcoded `.walking` with every
+///   expectation below still green.
+/// * **not covered** — the four reads in `FouleeLiveActivity.WalkLiveActivity`
+///   (Lock Screen row, Dynamic Island expanded/compact/minimal). They live in a
+///   `Widget`, which WidgetKit renders out of process, and no test target can
+///   instantiate one. The title and the glyph were pulled onto this value type
+///   so that the *derivation* is testable; that the views read it back is held
+///   by review only.
+/// * **not covered** — that ActivityKit persists attributes through `Codable`
+///   at all, or that `Activity.activities` surfaces an activity whose
+///   attributes type changed shape between builds. The archive format is
+///   private and no test process can leave an activity in flight across a
+///   binary swap. The decoding tests below therefore prove Foundation-level
+///   tolerance, not the app-update scenario that motivates it — see
+///   `WalkActivityAttributes.init(from:)`, which says the same in the code.
 @Suite("Live Activity attributes")
 struct WalkActivityAttributesTests {
     @Test("A run announces itself as a run")
@@ -102,6 +105,53 @@ struct WalkActivityAttributesTests {
         #expect(decoded.goalMinutes == 30)
         #expect(decoded.activity == nil)
         #expect(decoded.glyph == "figure.mixed.cardio")
+    }
+
+    @Test("A payload whose activity is not even a string decodes too")
+    func mistypedActivityDecodes() throws {
+        // Third shape of the same problem, and the one a corrupted or
+        // re-encoded archive would produce. `try?` covers it like the other
+        // two rather than only the cases that were anticipated.
+        let mistyped = Data(#"{"goalMinutes":30,"activity":42}"#.utf8)
+
+        let decoded = try JSONDecoder().decode(WalkActivityAttributes.self, from: mistyped)
+
+        #expect(decoded.goalMinutes == 30)
+        #expect(decoded.activity == nil)
+        #expect(decoded.title(isPaused: false) == "Ta sortie")
+    }
+
+    @Test("The tolerance holds under the property-list coder, not just JSON")
+    func toleranceHoldsUnderPropertyListCoder() throws {
+        // Which Foundation coder ActivityKit hands these attributes to is not
+        // documented — the archive format is private. So the tolerance is
+        // checked under both coders rather than assumed of the one the tests
+        // above happen to use.
+        struct LegacyPayload: Encodable { let goalMinutes: Int }
+        struct FuturePayload: Encodable { let goalMinutes: Int, activity: String }
+
+        let legacy = try PropertyListEncoder().encode(LegacyPayload(goalMinutes: 30))
+        let future = try PropertyListEncoder().encode(
+            FuturePayload(goalMinutes: 30, activity: "cycling")
+        )
+
+        for payload in [legacy, future] {
+            let decoded = try PropertyListDecoder().decode(WalkActivityAttributes.self, from: payload)
+
+            #expect(decoded.goalMinutes == 30)
+            #expect(decoded.activity == nil)
+            #expect(decoded.glyph == "figure.mixed.cardio")
+        }
+
+        // And a payload this build wrote survives the same round trip, so the
+        // tolerance is not bought by losing the field under that coder.
+        let current = try PropertyListEncoder().encode(
+            WalkActivityAttributes(goalMinutes: 45, activity: .running)
+        )
+        let restored = try PropertyListDecoder().decode(WalkActivityAttributes.self, from: current)
+
+        #expect(restored.activity == .running)
+        #expect(restored.title(isPaused: false) == "Ta course")
     }
 
     @Test("A payload that does name an activity round-trips")

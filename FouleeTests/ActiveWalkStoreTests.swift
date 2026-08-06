@@ -107,6 +107,42 @@ struct ActiveWalkStoreTests {
         }
     }
 
+    @Test("The Live Activity is handed the activity the session was started with")
+    @MainActor
+    func liveActivityCarriesTheStartedActivity() async {
+        await withDependencies {
+            $0.date = .constant(Date(timeIntervalSince1970: 1_700_000_000))
+            $0.pedometer = .testValue
+            $0.healthKit = .testValue
+            $0.continuousClock = TestClock()
+        } operation: {
+            // The other half of #225: `WalkActivityAttributesTests` pins what a
+            // given attributes value says, this pins that the store builds the
+            // value off the session rather than off a constant. Without it, the
+            // wiring can go back to a hardcoded `.walking` — every run
+            // announcing itself as a walk again — with that whole suite green,
+            // since `Activity.request` needs a live ActivityKit and cannot run
+            // here. What stays uncovered is the four reads in
+            // `FouleeLiveActivity`, which WidgetKit renders out of process.
+            let run = ActiveWalkStore()
+            run.start(minutesGoal: 30, activity: .running)
+            let running = run.liveActivityAttributes(minutesGoal: 30)
+
+            #expect(running.activity == .running)
+            #expect(running.goalMinutes == 30)
+            #expect(running.title(isPaused: false) == "Ta course")
+            #expect(running.glyph == "figure.run")
+
+            let walk = ActiveWalkStore()
+            walk.start(minutesGoal: 20, activity: .walking)
+            let walking = walk.liveActivityAttributes(minutesGoal: 20)
+
+            #expect(walking.activity == .walking)
+            #expect(walking.title(isPaused: false) == "Ta marche")
+            #expect(walking.glyph == "figure.walk")
+        }
+    }
+
     @Test("save failure surfaces lastError but still ends the session")
     @MainActor
     func saveFailureSurfaces() async {

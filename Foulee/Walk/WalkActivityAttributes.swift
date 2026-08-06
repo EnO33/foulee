@@ -19,14 +19,17 @@ struct WalkActivityAttributes: ActivityAttributes {
     /// the Lock Screen stops announcing a run as a walk (issue #225).
     ///
     /// Optional, and the optionality is the compatibility story rather than a
-    /// convenience. ActivityKit keeps an activity alive across app launches
-    /// *and across app updates*, so the moment this field ships, the new
-    /// extension binary can be handed an activity whose persisted attributes
-    /// were written by a build that had no such field. `nil` is that payload:
-    /// a session the app cannot name. It renders exactly what the build that
-    /// started it rendered — « Ta sortie » and the neutral figure (#222) —
-    /// rather than guessing `.walking`, which would resurrect the very bug
-    /// this field exists to kill on the one payload that cannot answer.
+    /// convenience. ActivityKit keeps an activity alive across app launches,
+    /// and an app *update* is on that path, so the new extension binary may be
+    /// handed an activity whose persisted attributes were written by a build
+    /// that had no such field. `nil` is that payload: a session the app cannot
+    /// name. It renders exactly what the build that started it rendered —
+    /// « Ta sortie » and the neutral figure (#222) — rather than guessing
+    /// `.walking`, which would resurrect the very bug this field exists to
+    /// kill on the one payload that cannot answer.
+    ///
+    /// How far that scenario is *verified* rather than reasoned: see
+    /// `init(from:)` below, which is explicit about it.
     ///
     /// Deliberately *not* defaulted: `init(goalMinutes:activity:)` below
     /// replaces the memberwise initializer (which would have handed an
@@ -41,10 +44,11 @@ struct WalkActivityAttributes: ActivityAttributes {
 
     /// Title for the Lock Screen row, in the app's own registre.
     ///
-    /// « Marche » and « Course » are the two activities the rest of the app
-    /// names (`ActivityMode.label`), and « sortie » stays the noun for a
-    /// session whose activity is unknown — no third word is introduced here.
-    /// The paused suffix keeps the shape #222 gave it.
+    /// The two named cases come from `SessionActivity.sessionTitle`, which is
+    /// also what the phone's own live screen draws — the two surfaces are on
+    /// screen at the same moment and #222 asked for one voice across them.
+    /// « sortie » stays the noun for a session whose activity is unknown; no
+    /// third word is introduced here. The paused suffix keeps #222's shape.
     func title(isPaused: Bool) -> String {
         isPaused ? "\(baseTitle) · En pause" : baseTitle
     }
@@ -61,11 +65,7 @@ struct WalkActivityAttributes: ActivityAttributes {
     }
 
     private var baseTitle: String {
-        switch activity {
-        case .walking: "Ta marche"
-        case .running: "Ta course"
-        case nil: "Ta sortie"
-        }
+        activity?.sessionTitle ?? "Ta sortie"
     }
 
     /// Pushed on walk events (start, pause, resume, pedometer samples) —
@@ -93,15 +93,28 @@ extension WalkActivityAttributes {
     /// persisted payload — the same discipline #214 and #222 applied to the
     /// widget snapshot, and here it is load-bearing rather than defensive.
     ///
-    /// The failure it prevents is specific. Both sweeps that clean up a
+    /// **What is verified, and what is not.** The tolerance itself is tested:
+    /// this type decodes a pre-#225 payload, an unknown raw value and a type
+    /// mismatch, under `JSONDecoder` *and* `PropertyListDecoder`
+    /// (`WalkActivityAttributesTests`). What no test here can reach is the step
+    /// upstream of the decoder — whether ActivityKit persists attributes
+    /// through `Codable` at all, and whether `Activity.activities` surfaces an
+    /// activity whose attributes type changed shape between two builds. The
+    /// archive format is private and no test process can leave an activity in
+    /// flight across a binary swap. #225 shipped without that being observed on
+    /// a device, so the paragraph below is the *reason* the tolerance is worth
+    /// its few lines, not an established failure mode.
+    ///
+    /// The failure it is insurance against: both sweeps that clean up a
     /// stranded activity — `FouleeApp.endOrphanedWalkActivitiesOnce` at
     /// process start and `ActiveWalkStore.startLiveActivity` before requesting
     /// a new one — reach an activity only by enumerating
     /// `Activity<WalkActivityAttributes>.activities`, and ActivityKit offers no
-    /// way to end an activity whose attributes it cannot rebuild. An attributes
-    /// type that throws on last version's payload would therefore not just
-    /// render wrong: it would put the stale activity out of reach of the only
-    /// two things that can end it, and leave it on the Lock Screen.
+    /// documented way to end an activity whose attributes it cannot rebuild.
+    /// *If* the rebuild does run through this initializer, then a type that
+    /// throws on last version's payload would not just render wrong: it would
+    /// put the stale activity out of reach of the only two things that can end
+    /// it. Cheap to buy out; expensive and un-hotfixable to get wrong.
     ///
     /// Two ways the field can be unreadable, both mapped to `nil`:
     /// * **absent** — written by a build before #225. Swift's synthesized
