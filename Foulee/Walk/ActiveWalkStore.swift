@@ -93,7 +93,10 @@ final class ActiveWalkStore {
         routeTask = makeRouteTask()
         state = .active(session)
         tickerTask = makeTickerTask()
-        startLiveActivity(minutesGoal: minutesGoal)
+        // Read off the session rather than off the parameter: the Lock Screen
+        // then cannot name the activity differently from what Santé will be
+        // stamped with (issue #225).
+        startLiveActivity(minutesGoal: minutesGoal, activity: session.activity)
     }
 
     /// Freeze the clock + pedometer without ending the walk.
@@ -274,14 +277,18 @@ final class ActiveWalkStore {
 // MARK: - Live Activity
 
 private extension ActiveWalkStore {
-    func startLiveActivity(minutesGoal: Int) {
+    func startLiveActivity(minutesGoal: Int, activity: SessionActivity) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         // A crash/force-quit mid-walk can leave a stray activity behind; end
-        // it before requesting so the Lock Screen never shows two walks.
+        // it before requesting so the Lock Screen never shows two walks. Also
+        // the second of the two places that clear an activity left in flight
+        // by a previous *build* — see `WalkActivityAttributes.init(from:)` for
+        // why that enumeration is only reachable while the attributes still
+        // decode last version's payload.
         for stray in Activity<WalkActivityAttributes>.activities {
             Task { await stray.end(nil, dismissalPolicy: .immediate) }
         }
-        let attributes = WalkActivityAttributes(goalMinutes: minutesGoal)
+        let attributes = WalkActivityAttributes(goalMinutes: minutesGoal, activity: activity)
         let state = WalkActivityAttributes.WalkActivityState(
             timerBasis: date.now,
             pausedAt: nil,
