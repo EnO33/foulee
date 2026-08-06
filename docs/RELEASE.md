@@ -59,7 +59,7 @@ This record must exist before the first TestFlight upload.
 Under the app's **App Privacy** section, declare:
 
 - **Health & Fitness** — read access (steps, distance, exercise minutes, heart rate, workouts).
-- **Location** — used while in use (midday weather + walk route).
+- **Location** — used while in use (local weather + the route of an outing).
 
 A **privacy policy URL** is mandatory because the app touches Health and
 Location data. Host a short policy somewhere stable (GitHub Pages works) and
@@ -140,7 +140,100 @@ Watch **Actions → Release**. After it's green, the build shows up in
 **App Store Connect → TestFlight** within a few minutes (processing time).
 Add it to an internal testing group to install via the TestFlight app.
 
-## 9. Promote to the public App Store (manual, when you're ready)
+## 9. Screenshots
+
+The store boards live in `appstore-screenshots/` and are **not** versioned
+(they're in `.gitignore` — binary churn, regenerated on demand). What *is*
+versioned is the way to rebuild them:
+[`tools/compose_appstore_screenshots.swift`](../tools/compose_appstore_screenshots.swift).
+
+```
+appstore-screenshots/
+├── raw/                 ← what you capture (untouched simulator grabs)
+│   ├── iphone-6.9/
+│   ├── ipad-13/
+│   └── watch/
+├── iphone-6.9/          ← what the composer writes (what you upload)
+├── ipad-13/
+└── watch/
+```
+
+### 9.1 Capture
+
+One simulator per size class. The names matter only through their native
+resolution — App Store Connect accepts exactly these, and the composer asserts
+them before writing:
+
+| Folder | Simulator | Native resolution |
+|--------|-----------|-------------------|
+| `iphone-6.9` | iPhone 17 Pro Max (any 6.9" iPhone) | 1320 × 2868 |
+| `ipad-13` | iPad Pro 13-inch (M4 or M5) | 2064 × 2752 |
+| `watch` | Apple Watch Series 10 / 11 (46 mm) | 416 × 496 |
+
+`xcrun simctl io <device> screenshot` on any of those writes exactly that
+resolution, which is why the raws need no resizing at all.
+
+Launch the app in **screenshot mode** so the numbers, the date and the streak
+are the same every run, then grab each screen:
+
+```sh
+xcrun simctl boot "iPhone 17 Pro Max"
+xcrun simctl status_bar "iPhone 17 Pro Max" override --time 09:41 \
+  --cellularBars 4 --wifiBars 3 --batteryState charging --batteryLevel 100
+xcrun simctl io "iPhone 17 Pro Max" screenshot appstore-screenshots/raw/iphone-6.9/02_home.png
+```
+
+The file names the composer expects are the `file:` values in its `shots`
+table — `02_home`, `04_streak`, `watch-01-today`, and so on.
+
+Three rules, each of them a defect the previous set actually shipped:
+
+- **Never crop, never resize a raw capture.** The composer scales the whole
+  thing to fit; anything you shave off by hand shows up as a wrong aspect ratio.
+- **Capture a sheet full-screen.** A modal presented over a dimmed parent leaks
+  a grey band above the sheet into the grab (that band is visible on the old
+  `04_streak`). Push the screen, or present it as its own root, so the capture
+  is the sheet and nothing else. If a leak is unavoidable, shave it explicitly
+  with `trimTop:` on that shot rather than cropping the PNG.
+- **Park scrolling screens on a boundary.** Leave the scroll where a card edge —
+  not a button cut in half — meets the bottom of the display. Screens flagged
+  `scrolls: true` also get a short fade into the background, so what remains
+  reads as "there's more below" instead of a bad crop.
+
+### 9.2 Compose
+
+```sh
+swift tools/compose_appstore_screenshots.swift
+```
+
+It reads `appstore-screenshots/raw/`, writes `appstore-screenshots/<family>/`,
+prints one line per board and exits non-zero listing any raw capture it
+couldn't find. `--input` and `--output` override both roots if you want to try
+a set somewhere else.
+
+Each board is the brand gradient, the two caption lines in white, and the
+capture below with rounded corners and a shadow. **Captions are data**: the
+`shots` table at the top of the script is the one place to edit them. Keep them
+short (they auto-shrink to fit, which is a safety net, not a licence), keep the
+tutoiement, and keep the vocabulary the app uses — « sortie » is the noun for
+what the user does, « séance » is reserved for a HealthKit workout record.
+
+### 9.3 Upload
+
+App Store Connect → your app → the version → **Media Manager**, one tab per
+size class:
+
+| Tab | Folder | Required |
+|-----|--------|----------|
+| iPhone 6.9" Display | `appstore-screenshots/iphone-6.9/` | yes |
+| iPad 13" Display | `appstore-screenshots/ipad-13/` | yes — the app runs on iPad |
+| Apple Watch | `appstore-screenshots/watch/` | yes — the app ships a Watch app |
+
+Order matters: the first three are what shows on the product page without
+scrolling. Screenshots are only needed at promotion (step 10), never for
+TestFlight.
+
+## 10. Promote to the public App Store (manual, when you're ready)
 
 TestFlight is the CI's final step on purpose — promotion to the store stays a
 deliberate, manual action:
@@ -148,15 +241,15 @@ deliberate, manual action:
 1. App Store Connect → your app → **+ Version**, set the version string.
 2. Attach the processed build.
 3. Fill the listing: description, keywords, support URL, **screenshots**
-   (6.9" iPhone + Apple Watch are the required sizes), age rating, category.
+   (step 9), age rating, category.
 4. **Submit for Review**.
 
-> Screenshots and the full listing are only needed at this promotion step, not
-> for TestFlight. If you later want CI to submit for review too (via
-> `fastlane deliver` with versioned metadata/screenshots), that's a small
-> follow-up to the `release` lane.
+> The full listing is only needed at this promotion step, not for TestFlight.
+> If you later want CI to submit for review too (via `fastlane deliver` with
+> versioned metadata/screenshots), that's a small follow-up to the `release`
+> lane.
 
-## 10. The Garmin watch app (separate store, separate cadence)
+## 11. The Garmin watch app (separate store, separate cadence)
 
 The Connect IQ app in [`FouleeConnectIQ/`](../FouleeConnectIQ/README.md) is not
 part of this pipeline. It goes to the **Connect IQ Store**, not App Store
