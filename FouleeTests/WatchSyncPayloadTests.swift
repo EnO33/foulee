@@ -13,7 +13,8 @@ struct WatchSyncPayloadTests {
             stepsGoal: 8_000,
             hydrationEnabled: true,
             hydrationGoalML: 1_500,
-            hydrationGlassML: 200
+            hydrationGlassML: 200,
+            activityMode: .running
         )
         let data = try JSONEncoder().encode(payload)
         let decoded = try JSONDecoder().decode(WatchSyncPayload.self, from: data)
@@ -23,6 +24,9 @@ struct WatchSyncPayloadTests {
         #expect(decoded.hydrationEnabled)
         #expect(decoded.hydrationGoalML == 1_500)
         #expect(decoded.hydrationGlassML == 200)
+        // The watch has no settings screen: this field is the only way it can
+        // know it should stamp sessions as runs (issue #223).
+        #expect(decoded.activityMode == .running)
     }
 
     @Test("Pre-hydration payloads decode with hydration defaults")
@@ -35,6 +39,10 @@ struct WatchSyncPayloadTests {
         #expect(!decoded.hydrationEnabled)
         #expect(decoded.hydrationGoalML == 2_000)
         #expect(decoded.hydrationGlassML == 250)
+        // Same tolerance for the activity mode: a payload the watch persisted
+        // before this shipped must keep decoding, and an install that never
+        // chose is a walking install.
+        #expect(decoded.activityMode == .walking)
     }
 }
 

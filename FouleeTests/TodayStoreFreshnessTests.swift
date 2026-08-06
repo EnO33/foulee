@@ -10,7 +10,7 @@ private func healthKitStub(
     HealthKitClient(
         requestAuthorization: { true },
         todayMetrics: todayMetrics,
-        saveWalkingWorkout: { _ in },
+        saveWorkout: { _ in },
         dailyMinutes: { _ in [] },
         recentWorkouts: { _ in [] },
         workoutDetail: { summary in

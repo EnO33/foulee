@@ -76,9 +76,14 @@ final class ActiveWalkStore {
 
     /// Begin a fresh session. No-op when already active or finished — call
     /// `reset()` first to start a second walk in the same screen lifetime.
-    func start(minutesGoal: Int = 20) {
+    ///
+    /// `activity` is what the finished workout will be stamped with in Santé
+    /// (issue #223); the screen derives it from the user's `ActivityMode`. It
+    /// defaults to `.walking` like the rest of this path, so a caller that
+    /// doesn't care gets the app's historical behaviour.
+    func start(minutesGoal: Int = 20, activity: SessionActivity = .walking) {
         guard case .idle = state else { return }
-        let session = WalkSession(startedAt: date.now)
+        let session = WalkSession(startedAt: date.now, activity: activity)
         bankedElapsed = 0
         bankedSteps = 0
         bankedDistance = 0
@@ -135,7 +140,7 @@ final class ActiveWalkStore {
         cancelObservers()
         routeTask?.cancel()
         state = .finished(session)
-        await runOrTrap { try await healthKit.saveWalkingWorkout(session) }
+        await runOrTrap { try await healthKit.saveWorkout(session) }
         await endLiveActivity(with: session)
 
         // Today's walk just landed in HealthKit — push the streak +

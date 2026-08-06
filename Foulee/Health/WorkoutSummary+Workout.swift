@@ -1,11 +1,12 @@
 import HealthKit
 
 extension WorkoutSummary {
-    /// Map an `HKWorkout` to the view-facing summary. For walks Foulée
-    /// recorded, steps / distance / energy come from our own metadata (we don't
-    /// write those as samples — they'd double-count the daily totals); for walks
-    /// from other sources (Watch, Apple Workouts) they fall back to the
-    /// workout's statistics. Elevation gain comes from the standard
+    /// Map an `HKWorkout` to the view-facing summary. For sessions Foulée
+    /// recorded on the phone, steps / distance come from our own metadata (we
+    /// don't write those as samples — they'd double-count the daily totals);
+    /// for sessions from other sources (Watch, Apple Workouts) they fall back
+    /// to the workout's statistics. Energy goes the other way round — see
+    /// below. Elevation gain comes from the standard
     /// `HKMetadataKeyElevationAscended` metadata (0 when not recorded).
     init(workout: HKWorkout) {
         let metadata = workout.metadata
@@ -15,11 +16,24 @@ extension WorkoutSummary {
                 .sumQuantity()?
                 .doubleValue(for: .meter())
             ?? 0
-        let kcal = (metadata?[FouleeWorkoutMetadata.calories] as? Int).map(Double.init)
-            ?? workout
-                .statistics(for: HKQuantityType(.activeEnergyBurned))?
-                .sumQuantity()?
-                .doubleValue(for: .kilocalorie())
+        // Energy is the one field where the order is measurement first,
+        // metadata second — the reverse of distance above (issue #223).
+        //
+        // Our metadata number is not a measurement: it is
+        // `WalkSession.estimatedCalories`, kilocalories-per-step times steps.
+        // Preferring it over a real `activeEnergyBurned` total meant an
+        // estimate could overwrite something HealthKit actually measured, and
+        // the estimate is stored in the workout forever. In practice this
+        // changes nothing for the sessions already in Santé: the phone writes
+        // no energy samples at all (see `HealthKitClient+Live`), so a workout
+        // carrying our metadata has no statistics to prefer and falls straight
+        // through to the same value it has always shown. It only decides the
+        // case where both exist — where the measurement is the better answer.
+        let kcal = workout
+            .statistics(for: HKQuantityType(.activeEnergyBurned))?
+            .sumQuantity()?
+            .doubleValue(for: .kilocalorie())
+            ?? (metadata?[FouleeWorkoutMetadata.calories] as? Int).map(Double.init)
             ?? 0
         let steps = metadata?[FouleeWorkoutMetadata.steps] as? Int ?? 0
         let elevation = (metadata?[HKMetadataKeyElevationAscended] as? HKQuantity)?

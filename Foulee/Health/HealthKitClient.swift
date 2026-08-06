@@ -17,10 +17,13 @@ struct HealthKitClient: Sendable {
     /// and now, in the user's current calendar.
     var todayMetrics: @Sendable () async throws -> HealthMetrics
 
-    /// Persists a finished walk as an `HKWorkout` (activity type: walking,
-    /// location: outdoor). Idempotent at the call site — duplicate saves on
-    /// the same session are caller-controlled, not deduplicated here.
-    var saveWalkingWorkout: @Sendable (_ session: WalkSession) async throws -> Void
+    /// Persists a finished session as an `HKWorkout` (location: outdoor).
+    /// The activity type travels on the session (`WalkSession.activity`) — it
+    /// used to be the literal `.walking` here, which is what stamped every
+    /// session Foulée ever wrote as a walk (issue #223). Idempotent at the call
+    /// site — duplicate saves on the same session are caller-controlled, not
+    /// deduplicated here.
+    var saveWorkout: @Sendable (_ session: WalkSession) async throws -> Void
 
     /// Active minutes per calendar day for the last `daysBack` days,
     /// including today. Returns entries from oldest to newest with `0`
@@ -105,7 +108,7 @@ extension HealthKitClient: DependencyKey {
         todayMetrics: {
             HealthMetrics(steps: 4_218, distanceKm: 1.8, activeMinutes: 24, activeCalories: 142)
         },
-        saveWalkingWorkout: { _ in },
+        saveWorkout: { _ in },
         dailyMinutes: { daysBack in previewDailyMinutes(daysBack: daysBack) },
         recentWorkouts: { daysBack in previewRecentWorkouts(daysBack: daysBack) },
         workoutDetail: { summary in previewWorkoutDetail(summary: summary) },
@@ -117,7 +120,7 @@ extension HealthKitClient: DependencyKey {
     static let testValue = HealthKitClient(
         requestAuthorization: { false },
         todayMetrics: { .zero },
-        saveWalkingWorkout: { _ in },
+        saveWorkout: { _ in },
         dailyMinutes: { _ in [] },
         recentWorkouts: { _ in [] },
         workoutDetail: { summary in

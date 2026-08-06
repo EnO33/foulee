@@ -57,17 +57,25 @@ enum BackgroundStreakRefresh {
     /// stored streak rather than keep the wake open.
     static let recomputeDeadline: TimeInterval = 8
 
-    /// Goal + active days as the background process sees them. `UserPreferences`
-    /// is `@MainActor` and owns no background-readable accessor, so the values
-    /// are read straight from the same defaults keys it writes — same approach
-    /// as the hydration observer (issue #169) — with the same fallbacks.
+    /// Goal + active days + activity mode as the background process sees them.
+    /// `UserPreferences` is `@MainActor` and owns no background-readable
+    /// accessor, so the values are read straight from the same defaults keys it
+    /// writes — same approach as the hydration observer (issue #169) — with the
+    /// same fallbacks.
     struct Preferences: Sendable {
         var goalMinutes: Int
         var activeDays: Set<Weekday>
+        /// Not a streak input, and it never will be: the streak is
+        /// activity-agnostic on purpose. It rides along because the payload the
+        /// background wake pushes to the Watch carries it (issue #223), and
+        /// this is the one place that already knows how to read a preference
+        /// without `UserPreferences`.
+        var activityMode: ActivityMode
     }
 
     private static let minutesGoalKey = "preferences.minutesGoal"
     private static let activeDaysKey = "preferences.activeDays"
+    private static let activityModeKey = "preferences.activityMode"
     private static let lastRecomputeKey = "streak.lastBackgroundRecomputeAt"
     private static let pendingCrossingKey = "streak.pendingGoalCrossingAt"
     private static let measuredMinutesKey = "streak.lastMeasuredMinutes"
@@ -76,7 +84,14 @@ enum BackgroundStreakRefresh {
     static func preferences(defaults: UserDefaults) -> Preferences {
         let goal = (defaults.object(forKey: minutesGoalKey) as? Int) ?? 20
         let days = (defaults.object(forKey: activeDaysKey) as? Int).map(Set<Weekday>.init(bitmask:))
-        return Preferences(goalMinutes: goal, activeDays: days ?? Weekday.workWeek)
+        let mode = defaults.string(forKey: activityModeKey).flatMap(ActivityMode.init(rawValue:))
+        return Preferences(
+            goalMinutes: goal,
+            activeDays: days ?? Weekday.workWeek,
+            // Same fallback as `UserPreferences`: an install that never wrote
+            // the key is a walking install.
+            activityMode: mode ?? .walking
+        )
     }
 
     /// When the last recompute succeeded, or nil when none ever did. A stamp

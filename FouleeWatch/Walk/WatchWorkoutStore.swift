@@ -40,23 +40,23 @@ final class WatchWorkoutStore: NSObject {
     // `finishWorkout()` fail with an authorization error. Unlike the phone, the
     // watch is the authoritative source during a workout, so these don't
     // double-count the daily totals.
-    private static let writeTypes: Set<HKSampleType> = [
-        HKWorkoutType.workoutType(),
-        HKQuantityType(.stepCount),
-        HKQuantityType(.distanceWalkingRunning),
-        HKQuantityType(.activeEnergyBurned),
-        HKQuantityType(.heartRate)
-    ]
-    private static let readTypes: Set<HKObjectType> = [
-        HKQuantityType(.stepCount),
-        HKQuantityType(.distanceWalkingRunning),
-        HKQuantityType(.activeEnergyBurned),
-        HKQuantityType(.heartRate),
-        HKWorkoutType.workoutType()
-    ]
+    //
+    // Derived from `collectedQuantityTypes` rather than spelled out again: the
+    // set that must be authorized *is* the set the data source collects, and
+    // the two drifting apart is precisely the authorization failure above.
+    private static let writeTypes: Set<HKSampleType> = Set(
+        collectedQuantityTypes.map { $0 as HKSampleType }
+    ).union([HKWorkoutType.workoutType()])
+    private static let readTypes: Set<HKObjectType> = Set(writeTypes.map { $0 as HKObjectType })
 
-    /// Begin a fresh walking session. Idempotent: no-op when already active.
-    func start() async {
+    /// Begin a fresh session of `activity`. Idempotent: no-op when already
+    /// active.
+    ///
+    /// The activity is a parameter, not a literal, because it decides what
+    /// Santé records the session as — and that stamp is permanent (issue
+    /// #223). It comes from the mode the phone synced; #224 will hand it a
+    /// per-session choice instead, with no other change to this path.
+    func start(activity: SessionActivity) async {
         guard case .idle = state else { return }
         guard healthKit.isAvailable() else {
             lastError = "HealthKit n'est pas disponible sur ce device."
@@ -77,7 +77,7 @@ final class WatchWorkoutStore: NSObject {
             return true
         }
         guard granted == true else { return }
-        await beginSession()
+        await beginSession(activity: activity)
     }
 
     /// End the session, save the workout and surface a summary. On a save
@@ -119,9 +119,9 @@ final class WatchWorkoutStore: NSObject {
         state = .idle
     }
 
-    private func beginSession() async {
+    private func beginSession(activity: SessionActivity) async {
         let configuration = HKWorkoutConfiguration()
-        configuration.activityType = .walking
+        configuration.activityType = activity.hkActivityType
         configuration.locationType = .outdoor
 
         let handle = await runOrTrap {

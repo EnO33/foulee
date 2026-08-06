@@ -14,6 +14,16 @@ struct WatchSyncPayload: Codable, Sendable {
     var hydrationEnabled: Bool
     var hydrationGoalML: Int
     var hydrationGlassML: Int
+    /// The user's walk/run choice. The watch has no settings screen of its
+    /// own, so this is the only way it can know what to stamp a session with
+    /// (issue #223) — without it every watch session stays a walk, whatever
+    /// the phone is set to. Both producers push it, including the background
+    /// one: a payload that defaulted it would silently reset the watch to
+    /// walking on the first Health wake.
+    ///
+    /// The raw mode, not a resolved activity: #224 adds the "les deux" picker
+    /// on the watch, and it needs to see `both` to know it has to ask.
+    var activityMode: ActivityMode
 
     init(
         streak: Int,
@@ -21,7 +31,8 @@ struct WatchSyncPayload: Codable, Sendable {
         stepsGoal: Int,
         hydrationEnabled: Bool = false,
         hydrationGoalML: Int = 2_000,
-        hydrationGlassML: Int = 250
+        hydrationGlassML: Int = 250,
+        activityMode: ActivityMode = .walking
     ) {
         self.streak = streak
         self.minutesGoal = minutesGoal
@@ -29,11 +40,13 @@ struct WatchSyncPayload: Codable, Sendable {
         self.hydrationEnabled = hydrationEnabled
         self.hydrationGoalML = hydrationGoalML
         self.hydrationGlassML = hydrationGlassML
+        self.activityMode = activityMode
     }
 
-    // Tolerant decoding: payloads written before hydration shipped lack the
-    // hydration keys — fall back to defaults instead of failing the whole
-    // decode (which would briefly blank the streak after an update).
+    // Tolerant decoding: payloads written before hydration (or before the
+    // activity mode) shipped lack those keys — fall back to defaults instead
+    // of failing the whole decode (which would briefly blank the streak after
+    // an update).
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         streak = try container.decode(Int.self, forKey: .streak)
@@ -42,6 +55,7 @@ struct WatchSyncPayload: Codable, Sendable {
         hydrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .hydrationEnabled) ?? false
         hydrationGoalML = try container.decodeIfPresent(Int.self, forKey: .hydrationGoalML) ?? 2_000
         hydrationGlassML = try container.decodeIfPresent(Int.self, forKey: .hydrationGlassML) ?? 250
+        activityMode = try container.decodeIfPresent(ActivityMode.self, forKey: .activityMode) ?? .walking
     }
 }
 
@@ -52,7 +66,10 @@ enum WatchSyncStore {
     private static let key = "watch.sync.payload"
     private static let suiteName = "group.com.eno33.foulee"
 
-    private static var sharedDefaults: UserDefaults {
+    /// Not private: it is the default every call site below binds, and the
+    /// value a caller that owns its own default argument has to name to keep
+    /// production behaviour (see `WatchRootView.startActivity`).
+    static var sharedDefaults: UserDefaults {
         UserDefaults(suiteName: suiteName) ?? .standard
     }
 

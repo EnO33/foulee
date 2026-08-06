@@ -156,7 +156,7 @@ struct TodayStoreGarminHintTests {
         HealthKitClient(
             requestAuthorization: { true },
             todayMetrics: { .zero },
-            saveWalkingWorkout: { _ in },
+            saveWorkout: { _ in },
             dailyMinutes: { _ in [] },
             recentWorkouts: { _ in [] },
             workoutDetail: { summary in
