@@ -46,6 +46,17 @@ struct UserPreferencesTests {
         #expect(second.activityMode == .both)
     }
 
+    /// #220 puts a picker on this preference, so all three of its cases now
+    /// reach `UserDefaults` — the round-trip above only ever exercised `.both`.
+    @Test("Every activity mode survives a relaunch")
+    func activityModeRoundTripsForEveryCase() {
+        for mode in ActivityMode.allCases {
+            let defaults = cleanDefaults()
+            UserPreferences(defaults: defaults).activityMode = mode
+            #expect(UserPreferences(defaults: defaults).activityMode == mode)
+        }
+    }
+
     @Test("Notifications default to enabled and theme to system")
     func defaultsForNewFields() {
         let prefs = UserPreferences(defaults: cleanDefaults())
