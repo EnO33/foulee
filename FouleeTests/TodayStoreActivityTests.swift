@@ -26,15 +26,18 @@ struct TodayStoreActivityTests {
         try await body(UserPreferences(defaults: defaults))
     }
 
-    @Test("A running user starts a run, a walking user a walk")
+    @Test("A running user starts a run, a walking user a walk, a « les deux » user is asked")
     @MainActor
-    func sessionActivityFollowsThePreference() async throws {
+    func startIntentFollowsThePreference() async throws {
         try await withPreferences { preferences in
             let store = TodayStore()
 
+            // One gesture, no question: the mode already answered it. Adding a
+            // tap here would be a regression for a user who has said « marche »
+            // once and for all (issue #224).
             preferences.activityMode = .walking
             store.apply(preferences: preferences)
-            #expect(store.sessionActivity == .walking)
+            #expect(store.startIntent == .start(.walking))
 
             // This is what `TodayScreen` hands `ActiveWalkScreen`, which hands
             // it to the session, which the live client turns into
@@ -42,13 +45,14 @@ struct TodayStoreActivityTests {
             // wrote `.walking` here whatever the user had chosen.
             preferences.activityMode = .running
             store.apply(preferences: preferences)
-            #expect(store.sessionActivity == .running)
+            #expect(store.startIntent == .start(.running))
 
-            // "Les deux" has no per-session picker until #224 — see
-            // `SessionActivityTests.bothFallsBackToWalking`.
+            // « Les deux »: the phone must ask rather than guess. Until #224
+            // this resolved to `.walking`, and every session such a user
+            // recorded went into Santé mislabelled — permanently.
             preferences.activityMode = .both
             store.apply(preferences: preferences)
-            #expect(store.sessionActivity == .walking)
+            #expect(store.startIntent == .ask)
         }
     }
 
@@ -134,7 +138,7 @@ struct TodayStoreActivityTests {
 
             store.apply(preferences: preferences)
             #expect(store.activityMode == .running)
-            #expect(store.sessionActivity == .running)
+            #expect(store.startIntent == .start(.running))
             // And it settles: a preference set that already matches publishes
             // nothing.
             #expect(!store.hasChanged(preferences: preferences))

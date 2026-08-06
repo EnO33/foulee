@@ -69,14 +69,22 @@ struct TodayScreen: View {
             .fullScreenCover(isPresented: $isWalking) {
                 ActiveWalkScreen(
                     minutesGoal: store.minutesGoal,
-                    // Resolved by the store, not here (issue #223): the mode
-                    // it mirrors is the same one it syncs to the Watch, and
-                    // unlike this body it is reachable from a test.
-                    activity: store.sessionActivity
-                ) { session in
-                    isWalking = false
-                    Task { await store.registerFinishedWalk(session) }
-                }
+                    // Resolved by the store, not here (issues #223, #224): the
+                    // mode it mirrors is the same one it syncs to the Watch,
+                    // and unlike this body it is reachable from a test. In
+                    // « les deux » it is `.ask`, and the session screen opens
+                    // on the picker.
+                    intent: store.startIntent,
+                    onDismiss: { session in
+                        isWalking = false
+                        Task { await store.registerFinishedWalk(session) }
+                    },
+                    // Backed out of the picker: close, and register nothing.
+                    // The baseline `walkWillStart` captured is simply left
+                    // unused — no `PendingWalk` is created, so the home shows
+                    // the same numbers it already showed.
+                    onCancel: { isWalking = false }
+                )
                 .preferredColorScheme(preferredScheme)
             }
             .sheet(

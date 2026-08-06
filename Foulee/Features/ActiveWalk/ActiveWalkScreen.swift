@@ -6,10 +6,18 @@ import SwiftUI
 /// depending on `store.state`.
 struct ActiveWalkScreen: View {
     let minutesGoal: Int
-    /// What Santé will record this session as (issue #223). Comes from the
-    /// user's `ActivityMode`; the per-session picker for "les deux" is #224.
-    let activity: SessionActivity
+    /// What Santé will record this session as (issue #223) — or `.ask` when
+    /// the user is in « les deux » and only they can say (issue #224).
+    ///
+    /// Resolved by `TodayStore`, not here: a `View` body is out of reach of the
+    /// test process, and this is the value the stamp is made of.
+    let intent: ActivityStartIntent
     var onDismiss: (WalkSession) -> Void
+    /// Backed out of the picker without starting anything. Distinct from
+    /// `onDismiss`, which carries a finished session for the home to overlay —
+    /// there is no session here, and registering an empty one would move the
+    /// step baseline for a walk that never happened.
+    var onCancel: () -> Void
 
     @State private var store = ActiveWalkStore()
     @State private var showRoute = false
@@ -19,7 +27,13 @@ struct ActiveWalkScreen: View {
             SheetBackground()
             content
         }
-        .onAppear { store.start(minutesGoal: minutesGoal, activity: activity) }
+        // Only when the mode already answers the question. In « les deux » the
+        // screen opens on the picker instead and starts on the answer, so
+        // nothing is recorded before the user has said what it is.
+        .onAppear {
+            guard let activity = intent.immediate else { return }
+            store.start(minutesGoal: minutesGoal, activity: activity)
+        }
         .onDisappear { store.reset() }
         .sheet(isPresented: $showRoute) {
             WalkRouteMapView(route: store.route) { showRoute = false }
@@ -44,7 +58,17 @@ struct ActiveWalkScreen: View {
     private var content: some View {
         switch store.state {
         case .idle:
-            ProgressView()
+            // Idle means "nothing started yet", which is where the question
+            // belongs: `.ask` shows the picker, every other mode shows the
+            // brief spinner it always did while `onAppear` starts the session.
+            if case .ask = intent {
+                ActivityChoiceScreen(
+                    onChoose: { store.start(minutesGoal: minutesGoal, activity: $0) },
+                    onCancel: onCancel
+                )
+            } else {
+                ProgressView()
+            }
         case .active(let session):
             walkBody(session: session, paused: false)
         case .paused(let session):
@@ -273,7 +297,7 @@ private struct ActiveWalkPreview: View {
         }
     }
     var body: some View {
-        ActiveWalkScreen(minutesGoal: 20, activity: .walking, onDismiss: { _ in })
+        ActiveWalkScreen(minutesGoal: 20, intent: .start(.walking), onDismiss: { _ in }, onCancel: {})
     }
 }
 

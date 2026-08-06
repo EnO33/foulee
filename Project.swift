@@ -280,6 +280,12 @@ let project = Project(
                 "Foulee/Shared/SessionActivity.swift",
                 "Foulee/Shared/SessionActivity+HealthKit.swift",
                 "Foulee/Preferences/ActivityMode.swift",
+                // « Les deux » makes the watch ask which activity before it
+                // records one (issue #224): the intent is the shared decision,
+                // and the glyphs are what its two buttons draw — the watch has
+                // no DesignSystem, so `SessionActivity.icon` reads these.
+                "Foulee/Shared/ActivityStartIntent.swift",
+                "Foulee/Shared/ActivityGlyph.swift",
                 "Foulee/Notifications/HydrationNotification.swift"
             ],
             resources: [
@@ -346,7 +352,14 @@ let project = Project(
             product: .unitTests,
             bundleId: "\(bundleIdBase).watchkitapp.tests",
             deploymentTargets: .watchOS("26.0"),
-            sources: ["FouleeWatchTests/**"],
+            sources: [
+                "FouleeWatchTests/**",
+                // The SwiftUI tree walker the phone suite uses (issue #221).
+                // Shared rather than copied: the watch's own start flow is now
+                // a routed view too (issue #224), and two divergent probes
+                // would be two things to keep true.
+                "FouleeTests/ViewTreeProbe.swift"
+            ],
             dependencies: [
                 .target(name: "FouleeWatch")
             ]

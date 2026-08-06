@@ -54,8 +54,9 @@ final class WatchWorkoutStore: NSObject {
     ///
     /// The activity is a parameter, not a literal, because it decides what
     /// Santé records the session as — and that stamp is permanent (issue
-    /// #223). It comes from the mode the phone synced; #224 will hand it a
-    /// per-session choice instead, with no other change to this path.
+    /// #223). It comes from the mode the phone synced, or from the user
+    /// answering the « les deux » question (issue #224); this path is the same
+    /// either way.
     func start(activity: SessionActivity) async {
         guard case .idle = state else { return }
         guard healthKit.isAvailable() else {

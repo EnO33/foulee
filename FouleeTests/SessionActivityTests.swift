@@ -27,19 +27,21 @@ struct SessionActivityTests {
         #expect(SessionActivity.allCases.count == 2)
     }
 
-    @Test("Walk-only and run-only modes resolve to themselves")
-    func modeResolution() {
-        #expect(SessionActivity(mode: .walking) == .walking)
-        #expect(SessionActivity(mode: .running) == .running)
-    }
+    // `SessionActivity(mode:)` is gone (#224). It answered "which activity for
+    // this mode?" with a value it had to invent for « les deux » — a walk,
+    // permanently, for every session such a user recorded. The question now
+    // has its own type, which can say « ask »: see `ActivityStartIntentTests`.
 
-    @Test("« Les deux » still resolves to walking until #224 adds the picker")
-    func bothFallsBackToWalking() {
-        // Deliberate, and the conservative choice: a wrong stamp is permanent
-        // in Santé, so with no per-session picker yet the mode keeps the app's
-        // historical behaviour rather than guessing. #224 replaces this with an
-        // explicit choice; when it does, this expectation is what changes.
-        #expect(SessionActivity(mode: .both) == .walking)
+    @Test("The two activities are named the way the rest of the app names them")
+    func labels() {
+        // The same two words as `ActivityMode.label`, `OnboardingActivityView`
+        // and the Réglages picker. Spelled out rather than compared to
+        // `ActivityMode.label`, which would make both sides free to drift
+        // together — the point is the exact string a user reads on the wrist.
+        #expect(SessionActivity.walking.label == "Marche")
+        #expect(SessionActivity.running.label == "Course")
+        #expect(SessionActivity.walking.icon == ActivityGlyph.walk)
+        #expect(SessionActivity.running.icon == ActivityGlyph.run)
     }
 
     @Test("The calorie estimate is activity-aware, and walking is untouched")

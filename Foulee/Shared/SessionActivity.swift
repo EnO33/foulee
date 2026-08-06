@@ -17,20 +17,30 @@ enum SessionActivity: String, Codable, Sendable, CaseIterable {
     case walking
     case running
 
-    /// The activity to record for a user in `mode`, when nothing more specific
-    /// is known.
+    /// How the two pickers name this activity — « Marche » and « Course », the
+    /// same two words `ActivityMode.label` uses in Réglages and in onboarding
+    /// (issues #220, #221). One table rather than one per screen: the phone
+    /// sheet and the watch screen ask the same question, and a user who picked
+    /// « Course » in Réglages must read the same word on the wrist.
     ///
-    /// `.both` falls back to `.walking` on purpose and only for now: there is
-    /// no per-session picker yet, and issue #224 is what adds one (on the
-    /// phone's start screen *and* on the watch's home screen). Until it lands,
-    /// a "les deux" user gets the app's historical behaviour rather than a
-    /// coin flip — a wrong stamp is permanent, so the conservative default is
-    /// the one that matches what they already have in Santé. #224 only has to
-    /// pass its `SessionActivity` in explicitly; nothing here needs to move.
-    init(mode: ActivityMode) {
-        switch mode {
-        case .walking, .both: self = .walking
-        case .running: self = .running
+    /// No `init(mode:)` any more. It used to answer "which activity for this
+    /// mode?" and had to invent `.walking` for « les deux » — see
+    /// `ActivityStartIntent`, which asks instead of inventing.
+    var label: String {
+        switch self {
+        case .walking: "Marche"
+        case .running: "Course"
+        }
+    }
+
+    /// The figure the pickers draw. `ActivityGlyph` rather than `FouleeIcon`
+    /// because this file is compiled into the watch app, which has no
+    /// DesignSystem — the exact cross-target mismatch `ActivityMode+Icon`
+    /// documents.
+    var icon: String {
+        switch self {
+        case .walking: ActivityGlyph.walk
+        case .running: ActivityGlyph.run
         }
     }
 

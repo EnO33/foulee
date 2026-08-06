@@ -21,8 +21,8 @@ struct WatchSyncPayload: Codable, Sendable {
     /// one: a payload that defaulted it would silently reset the watch to
     /// walking on the first Health wake.
     ///
-    /// The raw mode, not a resolved activity: #224 adds the "les deux" picker
-    /// on the watch, and it needs to see `both` to know it has to ask.
+    /// The raw mode, not a resolved activity: the "les deux" picker on the
+    /// watch (issue #224) needs to see `both` to know it has to ask.
     var activityMode: ActivityMode
 
     init(
@@ -68,7 +68,7 @@ enum WatchSyncStore {
 
     /// Not private: it is the default every call site below binds, and the
     /// value a caller that owns its own default argument has to name to keep
-    /// production behaviour (see `WatchRootView.startActivity`).
+    /// production behaviour (see `WatchRootView.startIntent`).
     static var sharedDefaults: UserDefaults {
         UserDefaults(suiteName: suiteName) ?? .standard
     }
