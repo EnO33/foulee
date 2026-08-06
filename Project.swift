@@ -224,11 +224,19 @@ let project = Project(
                 "Foulee/Walk/WalkActivityAttributes.swift",
                 "Foulee/Shared/WalkFormatting.swift",
                 "Foulee/Shared/NumberFormatting.swift",
-                // Only the glyph names, not `ActivityMode`: this extension has
-                // no app-group entitlement and no channel to the preference
-                // (issue #225). What it needs is the neutral figure, spelled
-                // once (issue #222).
-                "Foulee/Shared/ActivityGlyph.swift"
+                // The glyph names plus the activity vocabulary the attributes
+                // now carry (issue #225): this extension still has no
+                // app-group entitlement and no channel to the *preference*,
+                // but `WalkActivityAttributes.activity` hands it what the
+                // session in flight is, so it must be able to decode a
+                // `SessionActivity`. `ActivityMode` rides along only because
+                // `SessionActivity.init(mode:)` names it — same transitive
+                // reason the watch target lists it. All three Foundation-only;
+                // `SessionActivity+HealthKit` deliberately stays out, so no
+                // HealthKit is pulled into an extension that writes nothing.
+                "Foulee/Shared/ActivityGlyph.swift",
+                "Foulee/Shared/SessionActivity.swift",
+                "Foulee/Preferences/ActivityMode.swift"
             ],
             resources: [
                 .glob(

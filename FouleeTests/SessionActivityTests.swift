@@ -66,6 +66,22 @@ struct SessionActivityTests {
         #expect(run.estimatedCalories == 450)
     }
 
+    @Test("One title per activity, shared by the live screen and the Lock Screen")
+    func sessionTitleIsTheOneSpelling() {
+        // Read by `ActiveWalkScreen`'s header and, through
+        // `WalkActivityAttributes.title(isPaused:)`, by the Live Activity's row
+        // — both visible at the same moment, so a literal in each would let
+        // them drift (#222's one-voice rule, which #225 nearly broke by moving
+        // only the Lock Screen). The screen is a SwiftUI view and cannot be
+        // asserted from here; the string it draws can.
+        #expect(SessionActivity.walking.sessionTitle == "Ta marche")
+        #expect(SessionActivity.running.sessionTitle == "Ta course")
+        #expect(
+            WalkActivityAttributes(goalMinutes: 20, activity: .running).title(isPaused: false)
+                == SessionActivity.running.sessionTitle
+        )
+    }
+
     @Test("A session defaults to walking when no activity is given")
     func defaultsToWalking() {
         #expect(WalkSession(startedAt: .now).activity == .walking)

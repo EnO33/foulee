@@ -52,6 +52,15 @@ struct FouleeApp: App {
     // without this it sits on the Lock Screen as "en cours" for hours.
     // Once-gated: SwiftUI can re-construct FouleeApp mid-walk, and a second
     // sweep would kill the legitimate live activity.
+    //
+    // An app *update* lands on the same path — this is what bounds how long an
+    // activity started by a previous build can survive the change of attributes
+    // shape (#225): the first launch of the new binary, foreground or
+    // background, ends it. It runs after the extension has had the chance to
+    // re-render that activity, so the sweep is the cleanup and the tolerant
+    // decode is what has to hold in the window — see
+    // WalkActivityAttributes.init(from:), which is also explicit about which
+    // half of that story is verified and which is reasoned.
     private static let endOrphanedWalkActivitiesOnce: Void = {
         Task {
             for activity in Activity<WalkActivityAttributes>.activities {
