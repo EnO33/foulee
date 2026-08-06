@@ -20,7 +20,7 @@ struct SettingsScreen: View {
             VStack(spacing: 16) {
                 header
                 appearanceSection
-                walkSection
+                activitySection
                 stepsSection
                 hydrationSection
                 notificationsSection
@@ -68,13 +68,40 @@ struct SettingsScreen: View {
         }
     }
 
-    private var walkSection: some View {
-        section(title: "Marche") {
+    /// Was `section(title: "Marche")` until #220: it groups the days, the time
+    /// window and the minutes goal, which are the same three settings whatever
+    /// the user moves at — naming it after one activity was what made the
+    /// walk/run choice impossible to file anywhere.
+    private var activitySection: some View {
+        section(title: "Activité") {
             VStack(alignment: .leading, spacing: 20) {
+                modeRow
                 daysRow
                 windowRow
                 minutesGoalRow
             }
+        }
+    }
+
+    /// The walk/run choice (#220). Segmented like the theme picker — three
+    /// short labels, one tap, no drill-down; the layout below it is identical
+    /// in all three modes, so nothing is disclosed conditionally.
+    ///
+    /// The footnote states the project's contract to the user, and it is the
+    /// literal truth rather than reassurance: the streak, the record and the
+    /// calendar count exercise minutes across every activity type and never
+    /// read this preference, so switching here moves no history.
+    private var modeRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Picker("Activité", selection: $preferences.activityMode) {
+                ForEach(ActivityMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            Text("Ta série compte toutes tes activités, quel que soit ce choix.")
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -121,9 +148,13 @@ struct SettingsScreen: View {
         }
     }
 
+    /// "Fenêtre horaire", not "Fenêtre de marche": this row now sits directly
+    /// under a picker that can say "Course", and the old label would contradict
+    /// it on screen. Deliberately the only copy touched here — the rest of the
+    /// app's walking vocabulary is #222's sweep, not this issue's.
     private var windowRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            rowLabel("Fenêtre de marche")
+            rowLabel("Fenêtre horaire")
             HStack(spacing: 16) {
                 timePicker(
                     label: "Début",

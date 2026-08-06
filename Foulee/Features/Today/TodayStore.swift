@@ -145,6 +145,13 @@ final class TodayStore {
     /// snapshot from the cached HealthKit history if any of them changed
     /// so the ring, streak and countdown update immediately — no need to
     /// wait for the next refresh.
+    ///
+    /// `preferences.activityMode` is absent below on purpose (issue #220):
+    /// this method is the one place where a preference becomes a streak, so
+    /// mirroring the walk/run choice here — even just into `changed` — is
+    /// exactly how an existing user's series would start moving when they
+    /// pick "Course". The streak stays activity-agnostic; the mode only
+    /// steers what the app proposes.
     func apply(preferences: UserPreferences) {
         let newStepsGoal = preferences.stepsGoal
         let newMinutesGoal = preferences.minutesGoal
