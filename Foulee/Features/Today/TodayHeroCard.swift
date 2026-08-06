@@ -1,11 +1,21 @@
 import SwiftUI
 
 /// The big top card of the Today screen. Switches between
-/// "marche à venir" and "marche terminée" presentations driven by
+/// "séance à venir" and "séance terminée" presentations driven by
 /// `snapshot.hasWalkedToday`. The bell next to the primary CTA opens
 /// a menu to snooze the reminder or flip the global notifications
 /// toggle without leaving the screen.
+///
+/// The copy is activity-neutral on purpose (#222): the card is read every
+/// day, and naming one activity is what made a runner feel the app wasn't
+/// for them. Only the ring glyph follows `activityMode` — it can say
+/// "course" in one symbol without a sentence having to commit to it.
 struct TodayHeroCard: View {
+    /// Read from the environment rather than passed in: `RootView` injects it
+    /// app-wide, and the alternative was threading a purely cosmetic value
+    /// through `TodayScreen` and `TodaySnapshot`.
+    @Environment(UserPreferences.self) private var preferences
+
     var snapshot: TodaySnapshot
     var notificationsEnabled: Bool
     /// System permission is denied: the pref alone would lie ("activés" while
@@ -25,7 +35,7 @@ struct TodayHeroCard: View {
         return min(max(Double(snapshot.steps) / Double(snapshot.stepsGoal), 0), 1)
     }
 
-    /// Activity-goal fill (inner ring). Full once the walk is marked done so
+    /// Activity-goal fill (inner ring). Full once the session is marked done so
     /// the ring closes even if the logged minutes round just under the goal.
     private var minutesProgress: Double {
         if snapshot.hasWalkedToday { return 1 }
@@ -75,7 +85,7 @@ struct TodayHeroCard: View {
                     .font(FouleeFont.footnote.weight(.semibold))
             }
         } else {
-            Image(systemName: FouleeIcon.walk)
+            Image(systemName: preferences.activityMode.icon)
                 .font(.system(size: 30, weight: .semibold))
                 .foregroundStyle(FouleeColor.accentMid)
         }
@@ -86,12 +96,12 @@ struct TodayHeroCard: View {
         if snapshot.hasWalkedToday {
             VStack(alignment: .leading, spacing: 10) {
                 Chip(
-                    label: "Marche terminée",
+                    label: "Séance terminée",
                     systemIcon: FouleeIcon.check,
                     tint: FouleeColor.success,
                     fill: FouleeColor.success.opacity(0.16)
                 )
-                Text("Bravo, \(Text("\(snapshot.minutes) min").foregroundStyle(FouleeColor.accentMid)) de marche")
+                Text("Bravo, \(Text("\(snapshot.minutes) min").foregroundStyle(FouleeColor.accentMid)) d'activité")
                     .font(FouleeFont.title3)
                 Text("Streak prolongée à \(snapshot.streak) jours")
                     .font(FouleeFont.footnote)
@@ -105,7 +115,7 @@ struct TodayHeroCard: View {
                     tint: FouleeColor.accentSecondary,
                     fill: FouleeColor.accentSecondary.opacity(0.16)
                 )
-                Text("Pas de marche prévue aujourd'hui — profite de ta pause.")
+                Text("Pas de sortie prévue aujourd'hui — profite de ta pause.")
                     .font(FouleeFont.title3)
             }
         } else {
@@ -122,7 +132,7 @@ struct TodayHeroCard: View {
         }
     }
 
-    // MARK: - Walk window countdown
+    // MARK: - Window countdown
 
     /// Minutes between `Date.now` and `snapshot.walkWindowStart` (today).
     /// Negative when the window already opened today.
@@ -141,14 +151,17 @@ struct TodayHeroCard: View {
         return String(format: "%02d:%02d", hour, minute)
     }
 
+    /// "Départ dans …" rather than the old "Marche dans …" / "Marche du midi":
+    /// the chip counts down to the window, and the window is the same one
+    /// whatever the user does inside it (#222).
     private var countdownLabel: String {
-        guard let minutes = minutesUntilWindow else { return "Marche du midi" }
+        guard let minutes = minutesUntilWindow else { return "Ta fenêtre" }
         if minutes <= 0 { return "C'est l'heure de bouger" }
-        if minutes < 60 { return "Marche dans \(minutes) min" }
+        if minutes < 60 { return "Départ dans \(minutes) min" }
         let hours = minutes / 60
         let remaining = minutes % 60
-        if remaining == 0 { return "Marche dans \(hours) h" }
-        return "Marche dans \(hours) h \(remaining)"
+        if remaining == 0 { return "Départ dans \(hours) h" }
+        return "Départ dans \(hours) h \(remaining)"
     }
 
     @ViewBuilder
@@ -157,7 +170,7 @@ struct TodayHeroCard: View {
         if let minutes = minutesUntilWindow, minutes <= 0 {
             Text("Ta fenêtre est ouverte — départ depuis \(accent)")
         } else {
-            Text("Ta fenêtre de marche s'ouvre à \(accent)")
+            Text("Ta fenêtre s'ouvre à \(accent)")
         }
     }
 
@@ -169,12 +182,12 @@ struct TodayHeroCard: View {
             : AnyLayout(HStackLayout(spacing: 10))
         return layout {
             if snapshot.hasWalkedToday {
-                // Already walked: still let the user start another walk — the
-                // single "Voir le résumé" button used to be the only option.
+                // Goal already met: still let the user start another session —
+                // the single "Voir le résumé" button used to be the only option.
                 SecondaryButton(title: "Voir le résumé", systemIcon: FouleeIcon.sparkle, action: onSummary)
-                PrimaryButton(title: "Marcher encore", systemIcon: FouleeIcon.play, action: onStart)
+                PrimaryButton(title: "Repartir", systemIcon: FouleeIcon.play, action: onStart)
             } else {
-                PrimaryButton(title: "Démarrer la marche", systemIcon: FouleeIcon.play, action: onStart)
+                PrimaryButton(title: "Démarrer la séance", systemIcon: FouleeIcon.play, action: onStart)
                 reminderMenu
             }
         }
@@ -220,7 +233,7 @@ struct TodayHeroCard: View {
                 .background(Color.gray.opacity(0.16), in: Circle())
         }
         .menuOrder(.fixed)
-        .accessibilityLabel("Rappels de marche")
+        .accessibilityLabel("Rappels de sortie")
         .accessibilityValue(bellAccessibilityValue)
         .accessibilityHint("Reporter le rappel ou activer les rappels")
     }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Pill-shaped CTA with the accent gradient — "Démarrer la marche",
+/// Pill-shaped CTA with the accent gradient — "Démarrer la séance",
 /// "Continuer", "Terminer l'installation".
 struct PrimaryButton: View {
     var title: String

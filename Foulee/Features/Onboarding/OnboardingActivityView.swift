@@ -78,7 +78,9 @@ struct OnboardingActivityView: View {
 /// One tappable glass row per mode. The copy lives here rather than on
 /// `ActivityMode`: onboarding wants a title *and* a line of explanation, and
 /// the enum deliberately carries no display label until the settings picker
-/// needs one (#220).
+/// needs one (#220). The glyph did move onto the enum (#222) — unlike the
+/// prose it is reused verbatim by the Today ring, and two copies of that
+/// mapping is exactly how a runner ends up with a walking figure.
 ///
 /// Internal rather than private only so the tests can name it: rows are built
 /// inside a `ForEach`, which stores a closure instead of its rows, and calling
@@ -127,18 +129,10 @@ struct ActivityChoiceRow: View {
             )
             .frame(width: 40, height: 40)
             .overlay {
-                Image(systemName: systemIcon)
+                Image(systemName: mode.icon)
                     .font(.system(size: 20))
                     .foregroundStyle(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(FouleeColor.accentMid))
             }
-    }
-
-    private var systemIcon: String {
-        switch mode {
-        case .walking: FouleeIcon.walk
-        case .running: FouleeIcon.run
-        case .both: FouleeIcon.mixedCardio
-        }
     }
 
     private var title: String {

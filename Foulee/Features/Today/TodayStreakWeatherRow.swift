@@ -52,7 +52,11 @@ struct TodayStreakWeatherRow: View {
                 Image(systemName: FouleeIcon.sun)
                     .scaledSystemFont(size: 20)
                     .foregroundStyle(FouleeColor.warning)
-                Text("MIDI")
+                // Was "MIDI" (#222): the forecast is still the midday one, but
+                // labelling the card with a time of day framed the whole app
+                // around a lunchtime outing. The hour is spelled out in the
+                // detail sheet instead.
+                Text("MÉTÉO")
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .tracking(1)

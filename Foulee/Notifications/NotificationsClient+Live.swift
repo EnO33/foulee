@@ -47,7 +47,7 @@ extension NotificationsClient {
             scheduleSnooze: { interval in
                 let content = UNMutableNotificationContent()
                 content.title = "Foulée"
-                content.body = "C'est l'heure de bouger — direction la pause marche."
+                content.body = "C'est l'heure de bouger — ta sortie t'attend."
                 content.sound = .default
 
                 let trigger = UNTimeIntervalNotificationTrigger(

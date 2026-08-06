@@ -33,7 +33,7 @@ struct WeatherDetailSheet: View {
                     .font(FouleeFont.title2)
                 adviceRow
                 Spacer()
-                Text("Météo du midi à ton emplacement")
+                Text("Prévision de 12 h à ton emplacement")
                     .font(FouleeFont.footnote)
                     .foregroundStyle(.secondary)
                 WeatherAttributionView()
@@ -48,7 +48,7 @@ struct WeatherDetailSheet: View {
 
     private var adviceRow: some View {
         HStack(spacing: 8) {
-            Image(systemName: FouleeIcon.walk)
+            Image(systemName: FouleeIcon.mixedCardio)
                 .foregroundStyle(FouleeColor.accentMid)
             Text("Conseil : \(weather.advice)")
                 .font(FouleeFont.callout.weight(.medium))
@@ -65,7 +65,7 @@ struct WeatherDetailSheet: View {
                 .foregroundStyle(.secondary)
             Text("Météo indisponible")
                 .font(FouleeFont.headline)
-            Text("Autorise la localisation pour voir la météo de midi à ton endroit.")
+            Text("Autorise la localisation pour voir la météo à ton endroit.")
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

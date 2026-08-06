@@ -132,7 +132,7 @@ struct StreakCalendarSheet: View {
             Text("12 derniers mois")
                 .font(FouleeFont.headline)
             HStack(spacing: 0) {
-                totalCell(value: "\(store.totalWalks)", label: store.totalWalks == 1 ? "marche" : "marches")
+                totalCell(value: "\(store.totalWalks)", label: store.totalWalks == 1 ? "sortie" : "sorties")
                 divider
                 totalCell(value: formattedDuration(store.totalMinutes), label: "d'activité")
                 divider

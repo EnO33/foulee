@@ -26,4 +26,16 @@ enum ActivityMode: String, CaseIterable, Codable, Sendable, Identifiable {
         case .both: "Les deux"
         }
     }
+
+    /// The glyph that stands for the mode. Lives here rather than in each view
+    /// so the onboarding rows and the Today ring can never drift apart (#222):
+    /// a runner who picked "Course" must not be shown a walking figure on the
+    /// screen they open every day.
+    var icon: String {
+        switch self {
+        case .walking: FouleeIcon.walk
+        case .running: FouleeIcon.run
+        case .both: FouleeIcon.mixedCardio
+        }
+    }
 }

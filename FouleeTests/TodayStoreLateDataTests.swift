@@ -126,7 +126,7 @@ struct TodayStoreLateDataTests {
 /// Today's own verdict is derived on every refresh, never latched — a Garmin
 /// burst landing at 22:00 must be able to close the ring, and samples the user
 /// deletes in Santé must be able to re-open it. The hero card (ring centre,
-/// "Marche terminée" chip, "Marcher encore") reads `hasWalkedToday` straight
+/// "Séance terminée" chip, "Repartir") reads `hasWalkedToday` straight
 /// from the snapshot, so it follows both ways; `CelebrationBurst` is bound to
 /// the end-of-walk screen, not to this flag, so it can't re-fire on a refresh.
 @Suite("TodayStore day verdict revisability")

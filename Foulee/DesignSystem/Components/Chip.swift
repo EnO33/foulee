@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Small pill with optional leading SF Symbol — used for status badges
-/// ("EN COURS", "Marche dans 18 min", "3 / 5 marches", …).
+/// ("EN COURS", "Départ dans 18 min", "3 / 5 sorties", …).
 struct Chip: View {
     var label: String
     var systemIcon: String?

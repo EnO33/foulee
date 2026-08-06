@@ -11,7 +11,9 @@ struct WorkoutDetailHero: View {
                 .fill(FouleeColor.accentMid.opacity(0.18))
                 .frame(width: 64, height: 64)
                 .overlay {
-                    Image(systemName: "figure.walk.motion")
+                    // Neutral glyph (#222), same reason as the résumé rows: the
+                    // session may be a run, and nothing here can tell yet.
+                    Image(systemName: FouleeIcon.mixedCardio)
                         .font(.system(size: 32, weight: .bold))
                         .foregroundStyle(FouleeColor.accentMid)
                 }

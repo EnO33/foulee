@@ -68,7 +68,7 @@ struct OnboardingPermissionsView: View {
             Text("Connectons\nSanté & ta montre")
                 .scaledSystemFont(size: 30, weight: .bold)
                 .lineSpacing(2)
-            Text("Foulée lit uniquement tes pas et marches.\nAucune donnée n'est partagée.")
+            Text("Foulée lit uniquement tes pas et tes séances.\nAucune donnée n'est partagée.")
                 .font(FouleeFont.body)
                 .foregroundStyle(.secondary)
         }

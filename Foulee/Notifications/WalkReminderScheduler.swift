@@ -33,7 +33,10 @@ struct WalkReminderScheduler {
                     weekday: day,
                     time: time,
                     title: "Foulée",
-                    body: "C'est l'heure de bouger — direction la pause marche."
+                    // No activity and no time of day (#222): one body has to
+                    // serve marche, course and les deux, and it lands 10 min
+                    // before a window the user chose themselves.
+                    body: "C'est l'heure de bouger — ta sortie t'attend."
                 )
             }
     }
