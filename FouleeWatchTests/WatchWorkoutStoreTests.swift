@@ -19,6 +19,16 @@ private final class WorkoutHealthKitStub {
     var finishError: Error?
 
     private(set) var startCalls = 0
+    /// The types the last `start(activity:)` asked to share. A type the data
+    /// source collects but we never asked to share is what makes
+    /// `finishWorkout()` fail with an authorization error, so the two lists
+    /// agreeing is a real invariant, not bookkeeping.
+    private(set) var requestedShareTypes: Set<HKSampleType> = []
+    private(set) var requestedReadTypes: Set<HKObjectType> = []
+    /// The configuration handed to the last `startSession` — this is verbatim
+    /// what HealthKit stamps the saved workout with, so asserting on it is
+    /// asserting on what lands in Santé (issue #223).
+    private(set) var startedConfiguration: HKWorkoutConfiguration?
     private(set) var endCalls = 0
     private(set) var endCollectionCalls = 0
     private(set) var finishCalls = 0
@@ -30,11 +40,14 @@ private final class WorkoutHealthKitStub {
     func makeStore() -> WatchWorkoutStore {
         WatchWorkoutStore(healthKit: WatchWorkoutHealthKit(
             isAvailable: { self.isAvailable },
-            requestAuthorization: { _, _ in
+            requestAuthorization: { toShare, read in
+                self.requestedShareTypes = toShare
+                self.requestedReadTypes = read
                 if let error = self.authError { throw error }
             },
-            startSession: { _, _ in
+            startSession: { configuration, _ in
                 self.startCalls += 1
+                self.startedConfiguration = configuration
                 if let error = self.startError { throw error }
                 return self.makeHandle()
             }
@@ -70,18 +83,51 @@ struct WatchWorkoutStoreTests {
     func startActivates() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         #expect(store.state == .active(.zero))
         #expect(store.lastError == nil)
         #expect(stub.startCalls == 1)
+    }
+
+    @Test("A run is configured as a run, a walk as a walk", arguments: [
+        (SessionActivity.walking, HKWorkoutActivityType.walking),
+        (SessionActivity.running, HKWorkoutActivityType.running)
+    ])
+    func startStampsTheRequestedActivity(
+        activity: SessionActivity,
+        expected: HKWorkoutActivityType
+    ) async {
+        let stub = WorkoutHealthKitStub()
+        let store = stub.makeStore()
+        await store.start(activity: activity)
+        // Until #223 this was `.walking` for both rows: every session the
+        // watch ever saved went into Santé as a walk, permanently.
+        #expect(stub.startedConfiguration?.activityType == expected)
+        // The location type is not part of the change — outdoor either way.
+        #expect(stub.startedConfiguration?.locationType == .outdoor)
+    }
+
+    @Test("Every collected type is asked for, to share and to read")
+    func startAuthorizesEveryCollectedType() async {
+        let stub = WorkoutHealthKitStub()
+        let store = stub.makeStore()
+        await store.start(activity: .running)
+        // Same list the data source collects (issue #223). Collected but not
+        // shareable is exactly the authorization error that makes a perfectly
+        // good session fail to save at the end.
+        for type in collectedQuantityTypes {
+            #expect(stub.requestedShareTypes.contains(type))
+            #expect(stub.requestedReadTypes.contains(type))
+        }
+        #expect(stub.requestedShareTypes.contains(HKWorkoutType.workoutType()))
     }
 
     @Test("start() is a no-op while a walk is already active")
     func startWhileActiveIsNoOp() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
-        await store.start()
-        await store.start()
+        await store.start(activity: .walking)
+        await store.start(activity: .walking)
         #expect(stub.startCalls == 1)
         #expect(store.state == .active(.zero))
     }
@@ -91,7 +137,7 @@ struct WatchWorkoutStoreTests {
         let stub = WorkoutHealthKitStub()
         stub.isAvailable = false
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         #expect(store.state == .idle)
         #expect(store.lastError == "HealthKit n'est pas disponible sur ce device.")
         #expect(stub.startCalls == 0)
@@ -102,7 +148,7 @@ struct WatchWorkoutStoreTests {
         let stub = WorkoutHealthKitStub()
         stub.authError = StubError()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         #expect(store.state == .idle)
         #expect(store.lastError == "boom")
         #expect(stub.startCalls == 0)
@@ -113,7 +159,7 @@ struct WatchWorkoutStoreTests {
         let stub = WorkoutHealthKitStub()
         stub.startError = StubError()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         #expect(store.state == .idle)
         #expect(store.lastError == "boom")
         #expect(stub.startCalls == 1)
@@ -123,7 +169,7 @@ struct WatchWorkoutStoreTests {
     func stopSavesAndReleasesBuilder() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         await store.stop()
         #expect(store.state == .ended(.zero, saveFailed: false))
         #expect(store.lastError == nil)
@@ -137,7 +183,7 @@ struct WatchWorkoutStoreTests {
     func stopSaveFailureRetainsBuilder() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         stub.finishError = StubError()
         await store.stop()
         #expect(store.state == .ended(.zero, saveFailed: true))
@@ -150,7 +196,7 @@ struct WatchWorkoutStoreTests {
     func retrySaveSkipsEndedCollection() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         stub.finishError = StubError()
         await store.stop()
         stub.finishError = nil
@@ -167,7 +213,7 @@ struct WatchWorkoutStoreTests {
     func retrySaveRerunsFailedEndCollection() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         stub.endCollectionError = StubError()
         await store.stop()
         #expect(store.state == .ended(.zero, saveFailed: true))
@@ -183,7 +229,7 @@ struct WatchWorkoutStoreTests {
     func retrySaveFailureStaysFailed() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         stub.finishError = StubError()
         await store.stop()
         await store.retrySave()
@@ -197,7 +243,7 @@ struct WatchWorkoutStoreTests {
     func retrySaveAfterSuccessIsNoOp() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         await store.stop()
         await store.retrySave()
         #expect(stub.finishCalls == 1)
@@ -208,7 +254,7 @@ struct WatchWorkoutStoreTests {
     func sessionFailureMidWalk() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         store.handleSessionFailure("session interrompue")
         #expect(store.state == .ended(.zero, saveFailed: true))
         #expect(store.lastError == "session interrompue")
@@ -233,7 +279,7 @@ struct WatchWorkoutStoreTests {
     func resetReturnsToIdle() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
-        await store.start()
+        await store.start(activity: .walking)
         stub.finishError = StubError()
         await store.stop()
         store.reset()

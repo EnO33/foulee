@@ -51,10 +51,13 @@ extension HealthKitClient {
                     activeCalories: Int(calories)
                 )
             },
-            saveWalkingWorkout: { session in
+            saveWorkout: { session in
                 guard let endedAt = session.endedAt else { return }
                 let config = HKWorkoutConfiguration()
-                config.activityType = .walking
+                // Whatever the session says it is (#223). No literal, no
+                // branch: Santé keeps this stamp forever and nothing here can
+                // rewrite the walks already saved under the old one.
+                config.activityType = session.activity.hkActivityType
                 config.locationType = .outdoor
 
                 let builder = HKWorkoutBuilder(

@@ -20,7 +20,7 @@ struct TodayStoreTests {
                         activeCalories: 50
                     )
                 },
-                saveWalkingWorkout: { _ in },
+                saveWorkout: { _ in },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in
@@ -55,7 +55,7 @@ struct TodayStoreTests {
                         activeCalories: 120
                     )
                 },
-                saveWalkingWorkout: { _ in },
+                saveWorkout: { _ in },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in
@@ -83,7 +83,7 @@ struct TodayStoreTests {
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: { throw Boom() },
-                saveWalkingWorkout: { _ in },
+                saveWorkout: { _ in },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in
@@ -112,7 +112,7 @@ struct TodayStoreTests {
                 todayMetrics: {
                     HealthMetrics(steps: 100, distanceKm: 0.05, activeMinutes: 1, activeCalories: 4)
                 },
-                saveWalkingWorkout: { _ in },
+                saveWorkout: { _ in },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in
@@ -149,7 +149,7 @@ struct TodayStoreTests {
                 todayMetrics: {
                     HealthMetrics(steps: 100, distanceKm: 0.05, activeMinutes: 1, activeCalories: 4)
                 },
-                saveWalkingWorkout: { _ in },
+                saveWorkout: { _ in },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in
@@ -201,7 +201,7 @@ struct TodayStoreTests {
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
-                saveWalkingWorkout: { _ in },
+                saveWorkout: { _ in },
                 dailyMinutes: { _ in crafted },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in
@@ -229,7 +229,7 @@ struct TodayStoreTests {
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { false },
                 todayMetrics: { .zero },
-                saveWalkingWorkout: { _ in },
+                saveWorkout: { _ in },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in
@@ -351,7 +351,7 @@ struct TodayStoreWalkOverlayTests {
                         activeCalories: 30
                     )
                 },
-                saveWalkingWorkout: { _ in },
+                saveWorkout: { _ in },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in
@@ -397,7 +397,7 @@ struct TodayStoreWeatherTests {
                 todayMetrics: {
                     HealthMetrics(steps: 5_000, distanceKm: 3, activeMinutes: 25, activeCalories: 120)
                 },
-                saveWalkingWorkout: { _ in },
+                saveWorkout: { _ in },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in

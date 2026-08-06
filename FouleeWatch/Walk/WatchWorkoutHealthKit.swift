@@ -34,7 +34,57 @@ struct WatchWorkoutSessionHandle: Sendable {
     var collectionEndDate: @MainActor () -> Date?
 }
 
+/// The quantity types a live session collects, and the single list the whole
+/// watch workout path is built from: `makeDataSource` force-enables exactly
+/// these on the data source, `WatchWorkoutStore` asks to share and read
+/// exactly these (plus the workout type itself), and `ingest` reads back
+/// exactly these. Three lists that had to agree by hand — a type collected but
+/// not shareable is what makes `finishWorkout()` fail with an authorization
+/// error, and a type read back but never collected is a counter frozen at 0.
+let collectedQuantityTypes: [HKQuantityType] = [
+    HKQuantityType(.stepCount),
+    HKQuantityType(.distanceWalkingRunning),
+    HKQuantityType(.activeEnergyBurned),
+    HKQuantityType(.heartRate)
+]
+
 extension WatchWorkoutHealthKit {
+    /// The live data source for `configuration`, with every type the store
+    /// reads back in `ingest` force-enabled.
+    ///
+    /// The data source infers the types to collect from the config, and the
+    /// inference is not the same for both activities. It is not a mystery
+    /// either: `typesToCollect` is the source's own answer and reads fine in
+    /// the simulator, so `WatchWorkoutCollectionTests` holds what it actually
+    /// says. For `.walking` it omits step count — which is why the explicit
+    /// enable exists at all: without it the live "pas" counter stayed at 0
+    /// while distance and heart rate updated. For `.running` it already infers
+    /// step count too, so the enable changes nothing there.
+    ///
+    /// Enable them anyway rather than depend on that: enabling a type the
+    /// source would have inferred is a no-op, while missing one silently zeroes
+    /// a live counter for a whole session (issue #223). The set is the same for
+    /// both activities on purpose: a run reports its distance under the same
+    /// `distanceWalkingRunning` type a walk does, so there is nothing to branch
+    /// on.
+    ///
+    /// Split out of `live` because that closure also builds an
+    /// `HKWorkoutSession`, which needs a real watch — this part does not, and
+    /// it is the part that can be got wrong.
+    @MainActor static func makeDataSource(
+        healthStore: HKHealthStore,
+        configuration: HKWorkoutConfiguration
+    ) -> HKLiveWorkoutDataSource {
+        let dataSource = HKLiveWorkoutDataSource(
+            healthStore: healthStore,
+            workoutConfiguration: configuration
+        )
+        for type in collectedQuantityTypes {
+            dataSource.enableCollection(for: type, predicate: nil)
+        }
+        return dataSource
+    }
+
     @MainActor static var live: WatchWorkoutHealthKit {
         let store = HKHealthStore()
         return WatchWorkoutHealthKit(
@@ -48,15 +98,7 @@ extension WatchWorkoutHealthKit {
                     configuration: configuration
                 )
                 let builder = session.associatedWorkoutBuilder()
-                let dataSource = HKLiveWorkoutDataSource(
-                    healthStore: store,
-                    workoutConfiguration: configuration
-                )
-                // The data source infers the types to collect from the config —
-                // distance, active energy and heart rate for a walk, but NOT step
-                // count. Enable it explicitly, otherwise the live "pas" counter
-                // stays at 0 while distance and heart rate update.
-                dataSource.enableCollection(for: HKQuantityType(.stepCount), predicate: nil)
+                let dataSource = makeDataSource(healthStore: store, configuration: configuration)
                 builder.dataSource = dataSource
                 session.delegate = delegate
                 builder.delegate = delegate

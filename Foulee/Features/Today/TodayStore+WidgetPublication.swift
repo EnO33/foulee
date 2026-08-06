@@ -1,5 +1,6 @@
 import Dependencies
 import Foundation
+import WidgetKit
 
 /// What a refresh pass hands to the outside world, and the per-leg rule that
 /// decides it. Split out of `TodayStore.swift` to keep that file within the
@@ -10,6 +11,26 @@ extension TodayStore {
     struct Publication {
         var snapshot: WidgetSnapshot
         var watchPayload: WatchSyncPayload?
+    }
+
+    /// Mirror the current snapshot into the shared app group and refresh the
+    /// widgets. Widgets can't read HealthKit while the phone is locked, so they
+    /// read this snapshot instead — which keeps the Lock Screen from dropping to
+    /// zero. Cheap; safe to call on every refresh / goal change.
+    ///
+    /// Lives here rather than in `TodayStore.swift` for the reason that file
+    /// exists at all — it is at the length limit — and it belongs next to the
+    /// projection it publishes.
+    func publishToWidgets() {
+        guard let publication = widgetPublication(stored: SharedStore.read()) else { return }
+        SharedStore.write(publication.snapshot)
+        WidgetCenter.shared.reloadAllTimelines()
+
+        // Push the phone-computed streak (+ goals) to the Watch. The watch's
+        // local HealthKit only keeps a few days of history, so it can't
+        // recompute long streaks correctly — it just displays this value.
+        guard let payload = publication.watchPayload else { return }
+        PhoneWatchSync.shared.send(payload)
     }
 
     /// Project the current snapshot onto `stored` — the app group as it stands
@@ -108,7 +129,8 @@ extension TodayStore {
             stepsGoal: stepsGoal,
             hydrationEnabled: hydrationEnabled,
             hydrationGoalML: hydrationGoalML,
-            hydrationGlassML: hydrationGlassML
+            hydrationGlassML: hydrationGlassML,
+            activityMode: activityMode
         ))
     }
 }

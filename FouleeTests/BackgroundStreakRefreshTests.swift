@@ -163,6 +163,7 @@ import Testing
         let preferences = BackgroundStreakRefresh.preferences(defaults: cleanDefaults())
         #expect(preferences.goalMinutes == 20)
         #expect(preferences.activeDays == Weekday.workWeek)
+        #expect(preferences.activityMode == .walking)
     }
 
     /// Through the writer rather than the raw keys: pinning literals here
@@ -175,9 +176,14 @@ import Testing
         let prefs = UserPreferences(defaults: defaults)
         prefs.minutesGoal = 45
         prefs.activeDays = [.saturday, .sunday]
+        // Read here only to be pushed to the Watch, never to feed the streak
+        // (issue #223): a background wake that fell back to `.walking` would
+        // reset a runner's watch to stamping walks.
+        prefs.activityMode = .running
         let preferences = BackgroundStreakRefresh.preferences(defaults: defaults)
         #expect(preferences.goalMinutes == 45)
         #expect(preferences.activeDays == [.saturday, .sunday])
+        #expect(preferences.activityMode == .running)
     }
 
     @Test func recomputeStampRoundTrips() {
