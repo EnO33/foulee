@@ -54,6 +54,21 @@ struct WidgetSnapshot: Codable, Sendable {
     var floorSteps: Int?
     var floorMinutes: Int?
     var floorDistanceKm: Double?
+    /// Which activity the user picked, so the widgets' glyph can follow it the
+    /// way the app's own ring does (issue #222).
+    ///
+    /// A presentation input, never a measurement: nothing downstream of it
+    /// counts anything, it only chooses between a walking, a running and a
+    /// mixed figure. The widget process has no other way to know — it can't
+    /// read `UserDefaults.standard`, only the app group — and this snapshot is
+    /// written by the same pass that already publishes the mode to the Watch
+    /// (`TodayStore+WidgetPublication`), so it costs one field and no new
+    /// channel.
+    ///
+    /// Defaults to `.walking` when absent, matching `UserPreferences`: a
+    /// snapshot written before this shipped belongs to an install that had no
+    /// choice to make, and walking is what it was showing.
+    var activityMode: ActivityMode
 
     static let placeholder = WidgetSnapshot(
         steps: 0, stepsGoal: 6_000, minutes: 0, minutesGoal: 20,
@@ -75,7 +90,8 @@ struct WidgetSnapshot: Codable, Sendable {
         day: Date? = nil,
         floorSteps: Int? = nil,
         floorMinutes: Int? = nil,
-        floorDistanceKm: Double? = nil
+        floorDistanceKm: Double? = nil,
+        activityMode: ActivityMode = .walking
     ) {
         self.steps = steps
         self.stepsGoal = stepsGoal
@@ -92,6 +108,7 @@ struct WidgetSnapshot: Codable, Sendable {
         self.floorSteps = floorSteps
         self.floorMinutes = floorMinutes
         self.floorDistanceKm = floorDistanceKm
+        self.activityMode = activityMode
     }
 
     /// A copy with the daily counters zeroed when the snapshot was written on
@@ -194,6 +211,13 @@ struct WidgetSnapshot: Codable, Sendable {
         floorSteps = try container.decodeIfPresent(Int.self, forKey: .floorSteps)
         floorMinutes = try container.decodeIfPresent(Int.self, forKey: .floorMinutes)
         floorDistanceKm = try container.decodeIfPresent(Double.self, forKey: .floorDistanceKm)
+        // Decoded through the raw string rather than as `ActivityMode` so an
+        // unknown case can never take the whole snapshot down with it. A build
+        // that adds a fourth mode would otherwise blank every widget of anyone
+        // who downgrades — for a field that only picks a glyph. Absent, or a
+        // case this build doesn't know, both mean "show the default figure".
+        let rawActivityMode = try container.decodeIfPresent(String.self, forKey: .activityMode)
+        activityMode = rawActivityMode.flatMap(ActivityMode.init(rawValue:)) ?? .walking
     }
 }
 

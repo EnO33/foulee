@@ -3,10 +3,14 @@ import SwiftUI
 /// SF Symbol names used across screens, mapped to the design's icon vocabulary
 /// (`walk`, `timer`, `flame`, …). Centralised so a future swap is one-line.
 enum FouleeIcon {
-    static let walk = "figure.walk"
-    static let run = "figure.run"
+    // The three activity figures are the one part of this table that surfaces
+    // outside the app — the widgets draw them too, and they can't compile this
+    // file (SwiftUI, DesignSystem). They live in `ActivityGlyph`, which is
+    // Foundation-only, and are re-exported here so screens keep one icon table.
+    static let walk = ActivityGlyph.walk
+    static let run = ActivityGlyph.run
     /// Walk *and* run — the "les deux" option of the onboarding activity step.
-    static let mixedCardio = "figure.mixed.cardio"
+    static let mixedCardio = ActivityGlyph.mixedCardio
     static let timer = "timer"
     static let check = "checkmark"
     static let footsteps = "shoe"

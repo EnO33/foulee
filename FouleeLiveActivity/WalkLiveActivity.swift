@@ -10,14 +10,18 @@ import WidgetKit
 ///
 /// The copy and the glyph are activity-neutral (issue #222): nothing in
 /// `WalkActivityAttributes` says whether the session in flight is a walk or a
-/// run, and this extension cannot read the preference either. Making the
-/// surface follow the *session's* activity is issue #225; until then « ta
-/// sortie » and `figure.mixed.cardio` are true for both, which « Marche du
-/// midi » and `figure.walk` were not.
+/// run, and this extension cannot read the preference either — it has no
+/// app-group entitlement, so the snapshot the widgets read is out of reach.
+/// Making the surface follow the *session's* activity is issue #225; until
+/// then « ta sortie » and `ActivityGlyph.mixedCardio` are true for both, which
+/// « Marche du midi » and `figure.walk` were not.
 struct WalkLiveActivity: Widget {
-    /// Neutral stand-in for the running/walking figure. `FouleeIcon` is not
-    /// compiled into this target (see Project.swift), hence the literal.
-    fileprivate static let activityIcon = "figure.mixed.cardio"
+    /// Neutral stand-in for the running/walking figure, and the one surface
+    /// where it stays neutral: this extension has no app-group entitlement
+    /// (`FouleeLiveActivity.entitlements` is empty), so unlike the widgets it
+    /// cannot read the snapshot that carries the mode. `WalkActivityAttributes`
+    /// is the only channel into it — that is issue #225.
+    fileprivate static let activityIcon = ActivityGlyph.mixedCardio
 
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: WalkActivityAttributes.self) { context in
@@ -120,8 +124,8 @@ struct LockScreenView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Label(
                     // "Ta sortie" is the phone's own title for the same
-                    // session (TodayHeroCard, #222) — one voice across the two
-                    // surfaces the user sees while a session runs.
+                    // session (ActiveWalkScreen, #222) — one voice across the
+                    // two surfaces the user sees while a session runs.
                     state.isPaused ? "Ta sortie · En pause" : "Ta sortie",
                     systemImage: state.isPaused ? "pause.fill" : WalkLiveActivity.activityIcon
                 )

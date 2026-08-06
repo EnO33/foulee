@@ -21,7 +21,7 @@ Le compagnon montre de Foulée : tes compteurs du jour, envoyés à ton iPhone.
 ## Description complète
 
 ```
-Foulée est une app iPhone qui t'aide à garder ta série de marches du midi.
+Foulée est une app iPhone qui t'aide à garder ta série de sorties quotidiennes.
 Cette app Connect IQ en est le compagnon montre.
 
 ELLE NE FONCTIONNE PAS TOUTE SEULE. Sans Foulée installée sur ton iPhone, elle

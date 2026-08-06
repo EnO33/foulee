@@ -183,6 +183,14 @@ let project = Project(
                 "Foulee/Shared/WidgetTimelineBuilder.swift",
                 "Foulee/Shared/WidgetKind.swift",
                 "Foulee/Shared/LogWaterIntent.swift",
+                // The activity preference and the glyph it maps to, so the
+                // widget's figure follows the user's mode like the app's own
+                // ring (issue #222). Both Foundation-only — `ActivityMode+Icon`
+                // reads `ActivityGlyph`, not `FouleeIcon`, precisely so it can
+                // be listed here.
+                "Foulee/Preferences/ActivityMode.swift",
+                "Foulee/Preferences/ActivityMode+Icon.swift",
+                "Foulee/Shared/ActivityGlyph.swift",
                 "FouleeWatchWidget/StreakEntry.swift"
             ],
             resources: [
@@ -215,7 +223,12 @@ let project = Project(
                 "FouleeLiveActivity/**",
                 "Foulee/Walk/WalkActivityAttributes.swift",
                 "Foulee/Shared/WalkFormatting.swift",
-                "Foulee/Shared/NumberFormatting.swift"
+                "Foulee/Shared/NumberFormatting.swift",
+                // Only the glyph names, not `ActivityMode`: this extension has
+                // no app-group entitlement and no channel to the preference
+                // (issue #225). What it needs is the neutral figure, spelled
+                // once (issue #222).
+                "Foulee/Shared/ActivityGlyph.swift"
             ],
             resources: [
                 .glob(

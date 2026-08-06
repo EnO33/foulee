@@ -23,7 +23,12 @@ struct StreakSnapshotProvider: TimelineProvider {
     }
 
     private func entry() -> StreakEntry {
-        StreakEntry(date: .now, streak: SharedStore.read()?.streak ?? 0)
+        let snapshot = SharedStore.read()
+        return StreakEntry(
+            date: .now,
+            streak: snapshot?.streak ?? 0,
+            activityMode: snapshot?.activityMode ?? .walking
+        )
     }
 }
 
@@ -62,13 +67,12 @@ struct StreakWidget: Widget {
 }
 
 struct StreakWidgetView: View {
-    /// Neutral activity glyph, replacing `figure.walk.motion` (issue #222).
-    /// The snapshot this widget reads carries a streak and nothing else — no
-    /// activity preference — so the glyph cannot follow the mode the way the
-    /// app's own ring does. `FouleeIcon` is not compiled into this target
-    /// (see Project.swift), hence the literal rather than
-    /// `FouleeIcon.mixedCardio`.
-    fileprivate static let activityIcon = "figure.mixed.cardio"
+    /// The activity figure, following the user's mode exactly as the app's own
+    /// Today ring does (issue #222): the snapshot in the app group carries
+    /// `activityMode`, written by the same pass that publishes it to the Watch.
+    /// A walker keeps `figure.walk` — the glyph this widget always showed —
+    /// and only a runner gets a runner.
+    private var activityIcon: String { entry.activityMode.icon }
 
     @Environment(\.widgetFamily) private var family
     let entry: StreakEntry
@@ -125,7 +129,7 @@ struct StreakWidgetView: View {
     private var systemSmallView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: StreakWidgetView.activityIcon)
+                Image(systemName: activityIcon)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.white.opacity(0.9))
                 Spacer()
@@ -167,7 +171,7 @@ struct StreakWidgetView: View {
                 .fill(.white.opacity(0.15))
                 .frame(width: 1)
             VStack(alignment: .leading, spacing: 6) {
-                Label("Foulée", systemImage: StreakWidgetView.activityIcon)
+                Label("Foulée", systemImage: activityIcon)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
                 Text("Bouge un peu, chaque jour.")

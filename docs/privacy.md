@@ -1,11 +1,11 @@
 # Politique de confidentialité — Foulée
 
-_Dernière mise à jour : 5 août 2026_
+_Dernière mise à jour : 6 août 2026_
 
 Foulée est une application **locale**. Elle t'aide à entretenir une série de
-marches du midi à partir de tes données d'activité. **Aucune donnée n'est
-envoyée vers un serveur qui nous appartiendrait, et il n'y a aucun compte à
-créer.** Tout reste sur tes appareils : ton iPhone, ton Apple Watch, et ta
+sorties — marche ou course — à partir de tes données d'activité. **Aucune
+donnée n'est envoyée vers un serveur qui nous appartiendrait, et il n'y a aucun
+compte à créer.** Tout reste sur tes appareils : ton iPhone, ton Apple Watch, et ta
 montre Garmin si tu y installes l'app Connect IQ de Foulée.
 
 ## Données de santé (HealthKit)
@@ -15,8 +15,8 @@ tes minutes d'exercice, tes calories actives, ta fréquence cardiaque, l'eau que
 tu as bue et tes séances. Ces données servent uniquement à afficher tes
 statistiques dans l'app et à calculer ta série.
 
-Foulée **écrit** aussi dans l'app Santé, si tu le souhaites : tes marches du
-midi (sous forme de séances) et l'eau que tu enregistres dans le suivi
+Foulée **écrit** aussi dans l'app Santé, si tu le souhaites : tes sorties
+(sous forme de séances) et l'eau que tu enregistres dans le suivi
 d'hydratation.
 
 Ces données de santé **ne quittent jamais ton appareil** : elles ne sont ni
@@ -70,19 +70,19 @@ d'afficher tes compteurs du jour sur la montre.
 Avec ton autorisation, Foulée utilise ta position **uniquement pendant que
 l'app est ouverte** (« lorsque l'app est active ») pour deux usages :
 
-- afficher la **météo du midi** à ton endroit ;
-- tracer le **parcours** de ta marche en cours sur une carte.
+- afficher la **météo** à ton endroit ;
+- tracer le **parcours** de ta sortie en cours sur une carte.
 
 Pour la météo, tes coordonnées sont transmises à **Apple WeatherKit**, qui
 renvoie les conditions locales (voir la
 [politique de confidentialité d'Apple](https://www.apple.com/legal/privacy/)).
-Le tracé de la marche reste sur ton appareil pendant la séance et n'est ni
+Le tracé de la sortie reste sur ton appareil pendant la séance et n'est ni
 enregistré durablement, ni partagé.
 
 ## Mouvement et forme
 
 Foulée utilise le **podomètre** (CoreMotion) pour compter tes pas en direct
-pendant la marche. Ces données sont traitées localement, en temps réel.
+pendant ta sortie. Ces données sont traitées localement, en temps réel.
 
 ## Ce que Foulée ne fait pas
 
@@ -92,7 +92,7 @@ pendant la marche. Ces données sont traitées localement, en temps réel.
 
 ## Préférences
 
-Tes réglages (objectif, fenêtre de marche, thème, rappels) sont enregistrés
+Tes réglages (objectif, activité, fenêtre, thème, rappels) sont enregistrés
 **localement** sur ton appareil. Désinstaller l'app les supprime.
 
 ## Manifeste de confidentialité Apple

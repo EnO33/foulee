@@ -78,6 +78,41 @@ struct TodayStoreActivityTests {
         }
     }
 
+    @Test("The app-group snapshot carries the mode, so the widgets can draw it")
+    @MainActor
+    func widgetSnapshotCarriesTheActivityMode() async throws {
+        try await withDependencies {
+            $0.date = .constant(.now)
+            $0.healthKit.dailyMinutes = StreakTestSupport.windowed {
+                StreakTestSupport.walkedDays([0])
+            }
+        } operation: {
+            try await withPreferences { preferences in
+                preferences.activeDays = Set(Weekday.allCases)
+                preferences.activityMode = .running
+                let store = TodayStore()
+                store.apply(preferences: preferences)
+                await store.refresh()
+
+                // Same argument as the watch payload above, for the iPhone
+                // widgets: the widget process cannot read `UserDefaults
+                // .standard`, so this snapshot is its only sight of the
+                // preference. Without the field, a runner's Home Screen keeps
+                // showing whatever glyph was hardcoded (issue #222).
+                let publication = try #require(store.widgetPublication(stored: nil))
+                #expect(publication.snapshot.activityMode == .running)
+
+                // And it is not carried forward from what was there before: a
+                // mode is mirrored, never measured, so a stored snapshot from
+                // an older preference must not win.
+                let stale = WidgetSnapshot.placeholder
+                #expect(stale.activityMode == .walking)
+                let republished = try #require(store.widgetPublication(stored: stale))
+                #expect(republished.snapshot.activityMode == .running)
+            }
+        }
+    }
+
     @Test("Switching only the activity mode counts as a change worth publishing")
     @MainActor
     func changingOnlyTheActivityModeIsNoticed() async throws {
@@ -88,9 +123,10 @@ struct TodayStoreActivityTests {
             #expect(store.activityMode == .walking)
 
             // Nothing else moves: same goals, same days, same window, same
-            // hydration. The mode feeds no snapshot value, so a publish is the
-            // only effect a change of it can have — and `hasChanged` is what
-            // allows one. Without this clause the user switches to "course" in
+            // hydration. The mode moves no counter — it only picks the glyph
+            // and the session's activity type — so a publish is the only
+            // effect a change of it can have, and `hasChanged` is what allows
+            // one. Without this clause the user switches to "course" in
             // Réglages, taps start on the watch, and still records a walk
             // until some unrelated refresh happens to push a payload.
             preferences.activityMode = .running
