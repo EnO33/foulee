@@ -68,7 +68,10 @@ struct OnboardingPermissionsView: View {
             Text("Connectons\nSanté & ta montre")
                 .scaledSystemFont(size: 30, weight: .bold)
                 .lineSpacing(2)
-            Text("Foulée lit uniquement tes pas et tes séances.\nAucune donnée n'est partagée.")
+            // No "uniquement": the very next tap shows a Santé sheet listing
+            // seven types (HealthKitClient+Live), so the narrowing was false.
+            // The half that carries the reassurance is the second sentence.
+            Text("Foulée lit tes pas, tes sorties et quelques mesures de ta journée.\nAucune donnée n'est partagée.")
                 .font(FouleeFont.body)
                 .foregroundStyle(.secondary)
         }

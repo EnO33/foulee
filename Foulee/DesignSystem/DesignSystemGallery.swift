@@ -107,7 +107,7 @@ struct DesignSystemGallery: View {
     private var buttons: some View {
         section("Boutons") {
             VStack(spacing: 12) {
-                PrimaryButton(title: "Démarrer la séance",
+                PrimaryButton(title: "Démarrer ta sortie",
                               systemIcon: FouleeIcon.play) {}
                 SecondaryButton(title: "Voir le résumé",
                                 systemIcon: FouleeIcon.sparkle) {}

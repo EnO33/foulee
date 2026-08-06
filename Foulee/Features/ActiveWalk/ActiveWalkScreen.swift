@@ -74,7 +74,7 @@ struct ActiveWalkScreen: View {
                     .foregroundStyle(FouleeColor.accentGradient)
                     .symbolEffect(.bounce, value: isFinishedState)
             }
-            Text("Séance terminée")
+            Text("Sortie terminée")
                 .font(FouleeFont.title2)
             VStack(spacing: 4) {
                 Text(session.elapsed.walkClockText)
@@ -163,7 +163,7 @@ struct ActiveWalkScreen: View {
         .frame(width: 232, height: 232)
         .padding(.top, 22)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Séance en cours")
+        .accessibilityLabel("Sortie en cours")
         .accessibilityValue(
             "\(session.steps.formattedFR) pas, "
             + "\(session.distanceKm.kmText(fractionDigits: 1)), "

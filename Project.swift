@@ -50,16 +50,20 @@ let fouleeAppInfoPlist: [String: Plist.Value] = [
     "NSBluetoothPeripheralUsageDescription": .string(garminBluetoothUsage),
     "UILaunchScreen": [:],
     "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
+    // Activity-neutral, and no time of day (#222): these four alerts fire from
+    // the onboarding permissions step, i.e. two taps after the user may have
+    // answered "Course". "Séance" stays only where the thing really is an
+    // HKWorkout record.
     "NSHealthShareUsageDescription": .string(
         "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, "
-            + "ainsi que tes marches et leur fréquence cardiaque, pour afficher ta journée."
+            + "ainsi que tes séances et leur fréquence cardiaque, pour afficher ta journée."
     ),
     "NSHealthUpdateUsageDescription":
-        "Foulée enregistre tes marches comme séances dans Santé, ainsi que l'eau que tu bois.",
+        "Foulée enregistre tes sorties comme séances dans Santé, ainsi que l'eau que tu bois.",
     "NSMotionUsageDescription":
-        "Foulée compte tes pas en direct pendant la marche du midi.",
+        "Foulée compte tes pas en direct pendant ta sortie.",
     "NSLocationWhenInUseUsageDescription":
-        "Foulée utilise ta position pour afficher la météo de midi à ton endroit.",
+        "Foulée utilise ta position pour afficher la météo à ton endroit.",
     "NSSupportsLiveActivities": true,
     // Only standard HTTPS/system crypto — declare export-compliance exemption
     // so TestFlight builds skip the manual encryption question on every upload.

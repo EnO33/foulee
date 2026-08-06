@@ -280,7 +280,10 @@ private struct TodayFooter: View {
         }
         .buttonStyle(.pressable)
         .padding(.horizontal, 20)
-        .accessibilityHint("Voir l'historique des marches")
+        // Matches the label of the view it wraps ("Minutes d'activité par jour
+        // cette semaine") and the chip inside it ("x / y sorties") — VoiceOver
+        // reads label then hint, so the two have to agree (#222).
+        .accessibilityHint("Voir l'historique de tes sorties")
         if snapshot.weather.isAvailable {
             WeatherAttributionView()
                 .padding(.horizontal, 20)
@@ -312,14 +315,19 @@ private struct TodayErrorBanner: View {
 /// Shown on a fresh install / denied access / no activity yet, instead of
 /// a screen full of muted zeros.
 private struct TodayEmptyStateCard: View {
+    /// Same environment value the hero card reads (#222): this is the first
+    /// Today screen a fresh install shows, so it is the last place that should
+    /// hand a runner a walking figure and a lunchtime promise.
+    @Environment(UserPreferences.self) private var preferences
+
     var body: some View {
         VStack(spacing: 12) {
-            Image(systemName: FouleeIcon.walkMotion)
+            Image(systemName: preferences.activityMode.icon)
                 .scaledSystemFont(size: 40, weight: .semibold)
                 .foregroundStyle(FouleeColor.accentMid)
             Text("Pas encore de données")
                 .font(FouleeFont.headline)
-            Text("Connecte Santé et fais quelques pas — ta marche du midi s'affichera ici.")
+            Text("Connecte Santé et bouge un peu — ta première sortie s'affichera ici.")
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

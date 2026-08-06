@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The big top card of the Today screen. Switches between
-/// "séance à venir" and "séance terminée" presentations driven by
+/// "sortie à venir" and "sortie terminée" presentations driven by
 /// `snapshot.hasWalkedToday`. The bell next to the primary CTA opens
 /// a menu to snooze the reminder or flip the global notifications
 /// toggle without leaving the screen.
@@ -10,6 +10,8 @@ import SwiftUI
 /// day, and naming one activity is what made a runner feel the app wasn't
 /// for them. Only the ring glyph follows `activityMode` — it can say
 /// "course" in one symbol without a sentence having to commit to it.
+/// "Sortie" is the app's single user-facing noun for the thing you go and
+/// do; "séance" is kept for the HealthKit record it produces.
 struct TodayHeroCard: View {
     /// Read from the environment rather than passed in: `RootView` injects it
     /// app-wide, and the alternative was threading a purely cosmetic value
@@ -96,7 +98,7 @@ struct TodayHeroCard: View {
         if snapshot.hasWalkedToday {
             VStack(alignment: .leading, spacing: 10) {
                 Chip(
-                    label: "Séance terminée",
+                    label: "Sortie terminée",
                     systemIcon: FouleeIcon.check,
                     tint: FouleeColor.success,
                     fill: FouleeColor.success.opacity(0.16)
@@ -187,7 +189,7 @@ struct TodayHeroCard: View {
                 SecondaryButton(title: "Voir le résumé", systemIcon: FouleeIcon.sparkle, action: onSummary)
                 PrimaryButton(title: "Repartir", systemIcon: FouleeIcon.play, action: onStart)
             } else {
-                PrimaryButton(title: "Démarrer la séance", systemIcon: FouleeIcon.play, action: onStart)
+                PrimaryButton(title: "Démarrer ta sortie", systemIcon: FouleeIcon.play, action: onStart)
                 reminderMenu
             }
         }

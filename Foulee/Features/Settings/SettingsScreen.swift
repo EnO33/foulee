@@ -180,7 +180,7 @@ struct SettingsScreen: View {
     }
 
     /// Activity goal — the session duration that drives the ring + the
-    /// "démarrer la séance" flow. Distinct from the all-day step goal below.
+    /// "démarrer ta sortie" flow. Distinct from the all-day step goal below.
     private var minutesGoalRow: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {

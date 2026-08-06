@@ -33,7 +33,9 @@ struct WeatherDetailSheet: View {
                     .font(FouleeFont.title2)
                 adviceRow
                 Spacer()
-                Text("Prévision de 12 h à ton emplacement")
+                // "à 12 h", not "de 12 h": the latter reads as a 12-hour
+                // horizon as easily as a noon reading.
+                Text("Prévision à 12 h à ton emplacement")
                     .font(FouleeFont.footnote)
                     .foregroundStyle(.secondary)
                 WeatherAttributionView()
