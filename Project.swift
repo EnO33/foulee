@@ -201,7 +201,10 @@ let project = Project(
             bundleId: "\(bundleIdBase).liveactivity",
             deploymentTargets: deploymentTargets,
             infoPlist: .extendingDefault(with: [
-                "CFBundleDisplayName": "Foulée Marche",
+                // Surfaced by Réglages and by Stockage/Batterie next to the
+                // app. "Sortie" is the app's user-facing noun for a session
+                // (#222); "Marche" named an activity the user may not do.
+                "CFBundleDisplayName": "Foulée Sortie",
                 "CFBundleShortVersionString": "$(MARKETING_VERSION)",
                 "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
                 "NSExtension": [
@@ -236,14 +239,18 @@ let project = Project(
                 "WKApplication": true,
                 "WKWatchOnly": false,
                 "WKCompanionAppBundleIdentifier": .string(bundleIdBase),
+                // Same registre as the iPhone target's four (#222): system
+                // alerts can't vary with the activity preference, so they name
+                // no activity. "Séance" stays only where the thing really is
+                // an HKWorkout record.
                 "NSHealthShareUsageDescription": .string(
                     "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, "
-                        + "tes marches enregistrées et ta fréquence cardiaque pendant la marche, "
+                        + "ainsi que tes séances et leur fréquence cardiaque, "
                         + "pour afficher ta journée au poignet."
                 ),
                 "NSHealthUpdateUsageDescription": .string(
-                    "Foulée enregistre tes marches dans Santé, avec les pas, la distance, les calories et la fréquence "
-                        + "cardiaque mesurés pendant la séance, ainsi que l'eau que tu bois."
+                    "Foulée enregistre tes sorties comme séances dans Santé, avec les pas, la distance, les calories et "
+                        + "la fréquence cardiaque mesurés au poignet, ainsi que l'eau que tu bois."
                 )
             ]),
             sources: [

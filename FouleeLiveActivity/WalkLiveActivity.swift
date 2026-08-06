@@ -2,12 +2,23 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-/// Live Activity rendered while a walk session is active. Three surfaces:
+/// Live Activity rendered while a session is active. Three surfaces:
 /// - Lock Screen / banner: full row with timer + ring + counters
-/// - Dynamic Island compact: walk icon left, elapsed right
+/// - Dynamic Island compact: activity icon left, elapsed right
 /// - Dynamic Island expanded: timer + steps + km + kcal
-/// - Dynamic Island minimal: walk icon
+/// - Dynamic Island minimal: activity icon
+///
+/// The copy and the glyph are activity-neutral (issue #222): nothing in
+/// `WalkActivityAttributes` says whether the session in flight is a walk or a
+/// run, and this extension cannot read the preference either. Making the
+/// surface follow the *session's* activity is issue #225; until then « ta
+/// sortie » and `figure.mixed.cardio` are true for both, which « Marche du
+/// midi » and `figure.walk` were not.
 struct WalkLiveActivity: Widget {
+    /// Neutral stand-in for the running/walking figure. `FouleeIcon` is not
+    /// compiled into this target (see Project.swift), hence the literal.
+    fileprivate static let activityIcon = "figure.mixed.cardio"
+
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: WalkActivityAttributes.self) { context in
             LockScreenView(
@@ -28,7 +39,7 @@ struct WalkLiveActivity: Widget {
                         .font(.system(.title2, design: .rounded, weight: .semibold))
                         .monospacedDigit()
                     } icon: {
-                        Image(systemName: context.state.isPaused ? "pause.fill" : "figure.walk")
+                        Image(systemName: context.state.isPaused ? "pause.fill" : WalkLiveActivity.activityIcon)
                             .foregroundStyle(.tint)
                     }
                 }
@@ -57,7 +68,7 @@ struct WalkLiveActivity: Widget {
                     }
                 }
             } compactLeading: {
-                Image(systemName: context.state.isPaused ? "pause.fill" : "figure.walk")
+                Image(systemName: context.state.isPaused ? "pause.fill" : WalkLiveActivity.activityIcon)
                     .foregroundStyle(.tint)
             } compactTrailing: {
                 Text(
@@ -71,7 +82,7 @@ struct WalkLiveActivity: Widget {
                 .foregroundStyle(context.state.isPaused ? .secondary : .primary)
                 .frame(maxWidth: 60)
             } minimal: {
-                Image(systemName: context.state.isPaused ? "pause.fill" : "figure.walk")
+                Image(systemName: context.state.isPaused ? "pause.fill" : WalkLiveActivity.activityIcon)
                     .foregroundStyle(.tint)
             }
         }
@@ -108,8 +119,11 @@ struct LockScreenView: View {
             ring
             VStack(alignment: .leading, spacing: 4) {
                 Label(
-                    state.isPaused ? "Marche du midi · En pause" : "Marche du midi",
-                    systemImage: state.isPaused ? "pause.fill" : "figure.walk"
+                    // "Ta sortie" is the phone's own title for the same
+                    // session (TodayHeroCard, #222) — one voice across the two
+                    // surfaces the user sees while a session runs.
+                    state.isPaused ? "Ta sortie · En pause" : "Ta sortie",
+                    systemImage: state.isPaused ? "pause.fill" : WalkLiveActivity.activityIcon
                 )
                 .font(.system(.callout, weight: .semibold))
                 .foregroundStyle(.primary)

@@ -120,6 +120,16 @@ struct TodayProvider: TimelineProvider {
 }
 
 struct TodayProgressView: View {
+    /// The steps line gets the footprints glyph rather than a walking figure
+    /// (issue #222): it labels a step count, which a run produces just as well,
+    /// and it is already what `StatWidget` and the watch's Today grid use for
+    /// the same number.
+    private static let stepsIcon = "shoeprints.fill"
+    /// Neutral activity glyph for the circular family, where the symbol stands
+    /// for the app rather than for a metric. Literal because `FouleeIcon` is
+    /// not compiled into this target (see Project.swift).
+    private static let activityIcon = "figure.mixed.cardio"
+
     @Environment(\.widgetFamily) private var family
     let entry: TodayEntry
 
@@ -144,7 +154,7 @@ struct TodayProgressView: View {
         ZStack {
             AccessoryWidgetBackground()
             rings(lineWidth: 5, inset: 7)
-            Image(systemName: "figure.walk").font(.system(size: 10, weight: .bold))
+            Image(systemName: Self.activityIcon).font(.system(size: 10, weight: .bold))
         }
     }
 
@@ -152,7 +162,7 @@ struct TodayProgressView: View {
         HStack(spacing: 8) {
             rings(lineWidth: 4, inset: 5).frame(width: 34, height: 34)
             VStack(alignment: .leading, spacing: 1) {
-                Label("\(entry.steps.formatted()) / \(entry.stepsGoal.formatted())", systemImage: "figure.walk")
+                Label("\(entry.steps.formatted()) / \(entry.stepsGoal.formatted())", systemImage: Self.stepsIcon)
                 Label("\(entry.minutes) / \(entry.minutesGoal) min", systemImage: "timer")
                 FreshnessStamp(fetchedAt: entry.fetchedAt).foregroundStyle(.secondary)
             }
@@ -161,7 +171,7 @@ struct TodayProgressView: View {
     }
 
     private var inlineView: some View {
-        Label("\(entry.steps.formatted()) pas · \(entry.minutes) min", systemImage: "figure.walk")
+        Label("\(entry.steps.formatted()) pas · \(entry.minutes) min", systemImage: Self.stepsIcon)
     }
 
     private var smallView: some View {
