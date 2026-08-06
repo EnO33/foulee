@@ -9,6 +9,16 @@ import SwiftUI
 /// Everything here is a plain `let` or closure, so a test builds the screen,
 /// pulls `WatchTodayView` out of the tree and taps its real « Démarrer »
 /// action, then checks whether it started or asked.
+///
+/// The question replaces the home rather than being presented over it as a
+/// sheet, and that costs something real: cancelling rebuilds `WatchTodayView`
+/// scrolled back to the top, so a « les deux » user who opened the picker by
+/// mistake scrolls down to « Démarrer » again. It is still the better trade.
+/// A `.sheet`/`.fullScreenCover` stores its content in a closure, which puts
+/// the picker out of reach of `ViewTreeProbe` — and the probe is what makes
+/// « choosing Course records a run » assertable at all; and on watchOS a modal
+/// adds a title bar, taking exactly the vertical space the picker is short of
+/// on a 40 mm screen.
 struct WatchIdleScreen: View {
     let today: WatchTodayStore
     var errorMessage: String?

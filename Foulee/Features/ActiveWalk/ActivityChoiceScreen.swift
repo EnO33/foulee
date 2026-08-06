@@ -13,6 +13,13 @@ import SwiftUI
 /// The question is asked every time on purpose. A remembered default would be
 /// one tap cheaper and would eventually write a run into Santé labelled as a
 /// walk, which `HKWorkout` makes permanent.
+///
+/// What this removes is the *silent* mislabelling, not the mis-tap: answering
+/// starts the session at once, and from there `ActiveWalkStore.stop()` saves
+/// unconditionally — there is no discard. A user who taps « Marche » meaning
+/// « Course » still gets a permanent walk. Closing that needs a way to throw a
+/// session away after the fact, which is a change to the active screen and its
+/// own issue; « Annuler » here only covers the tap that opened this screen.
 struct ActivityChoiceScreen: View {
     var onChoose: (SessionActivity) -> Void
     var onCancel: () -> Void

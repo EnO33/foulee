@@ -13,26 +13,40 @@ import SwiftUI
 /// reach it.
 ///
 /// « Annuler » is a real button rather than a swipe: it is the only way back,
-/// so it must be visible.
+/// so it must be visible — and it is pinned outside the `ScrollView`, exactly
+/// as the phone's `ActivityChoiceScreen` pins its own. Inside it, on a 40 mm
+/// watch, it sat below the bottom of the screen at the default text size and
+/// was gone entirely at the larger ones, leaving a screen whose only visible
+/// controls each start a permanent workout and no way out at all.
+///
+/// What this screen removes is the *silent* mislabelling, not the mis-tap:
+/// answering starts the session at once and `WatchWorkoutStore.stop()` saves
+/// unconditionally, so « Course » tapped by mistake is still a permanent run.
+/// Discarding a session already under way would be an action on the active
+/// screen — its own issue.
 struct WatchActivityChoiceView: View {
     var onChoose: (SessionActivity) -> Void
     var onCancel: () -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 8) {
-                Text("Marche ou course ?")
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.7)
-                    .padding(.bottom, 2)
-                ForEach(SessionActivity.allCases, id: \.self) { activity in
-                    WatchActivityChoiceButton(activity: activity, select: { onChoose(activity) })
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 8) {
+                    Text("Marche ou course ?")
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.7)
+                        .padding(.bottom, 2)
+                    ForEach(SessionActivity.allCases, id: \.self) { activity in
+                        WatchActivityChoiceButton(activity: activity, select: { onChoose(activity) })
+                    }
                 }
-                WatchActivityCancelButton(cancel: onCancel)
-                    .padding(.top, 2)
+                .padding(.horizontal, 2)
             }
-            .padding(.horizontal, 2)
+            .scrollBounceBehavior(.basedOnSize)
+            WatchActivityCancelButton(cancel: onCancel)
+                .padding(.horizontal, 2)
+                .padding(.top, 4)
         }
     }
 }

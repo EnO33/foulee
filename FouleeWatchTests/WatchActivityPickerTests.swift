@@ -172,6 +172,44 @@ struct WatchActivityPickerTests {
         #expect(box.started.isEmpty)
     }
 
+    @Test("The way out is pinned to the screen, not scrolled away with the answers")
+    func cancelIsOutsideTheScrolledRegion() throws {
+        let box = Taps()
+        let screen = idle(intent: .ask, isChoosingActivity: true, into: box)
+        let picker = try #require(ViewTreeProbe.first(WatchActivityChoiceView.self, in: screen.body))
+        let scrolled = try #require(scrolledRegion(of: picker.body))
+
+        // The answers scroll: on a 40 mm screen two full-width buttons plus the
+        // question already overflow at the larger Dynamic Type sizes, and the
+        // crown is how the second one is reached.
+        #expect(ViewTreeProbe.contains(
+            ForEach<[SessionActivity], SessionActivity, WatchActivityChoiceButton>.self,
+            in: scrolled
+        ))
+        // « Annuler » must not. It is the only way back — there is no
+        // navigation bar behind this screen to swipe to — so scrolled with the
+        // content it is off the bottom of a 40 mm screen at the default text
+        // size and gone entirely at the larger ones, leaving a screen whose
+        // only visible controls both start a permanent workout.
+        #expect(ViewTreeProbe.contains(WatchActivityCancelButton.self, in: scrolled) == false)
+        #expect(ViewTreeProbe.contains(WatchActivityCancelButton.self, in: picker.body))
+    }
+
+    /// The part of the picker the crown can push off the screen.
+    ///
+    /// Matched on the type's name because a `ScrollView`'s type spells out the
+    /// whole of its content — naming it would mean rewriting the layout inside
+    /// the test on every tweak, which is how a structural pin stops pinning
+    /// anything.
+    private func scrolledRegion(of value: Any, depth: Int = 24) -> Any? {
+        if String(describing: type(of: value)).hasPrefix("ScrollView<") { return value }
+        guard depth > 0 else { return nil }
+        for child in Mirror(reflecting: value).children {
+            if let found = scrolledRegion(of: child.value, depth: depth - 1) { return found }
+        }
+        return nil
+    }
+
     private func button(
         _ activity: SessionActivity,
         _ picker: WatchActivityChoiceView

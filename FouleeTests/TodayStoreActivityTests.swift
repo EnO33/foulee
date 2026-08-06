@@ -117,6 +117,28 @@ struct TodayStoreActivityTests {
         }
     }
 
+    @Test("Switching only the activity mode re-syncs the Today screen")
+    @MainActor
+    func theModeIsPartOfTheTodayScreenTaskKey() async throws {
+        try await withPreferences { preferences in
+            // `TodayScreen` calls `apply` from `.task(id: todayPreferencesKey(…))`,
+            // so this key is what decides whether a settings change is seen at
+            // all in the session it was made. Without the mode in it, a user
+            // who turns « les deux » on in Réglages taps start and is *not*
+            // asked — the store still mirrors the mode it read at mount — and
+            // every refresh re-publishes that stale mode to the wrist, so the
+            // watch does not ask either (issue #224).
+            var keys: Set<String> = []
+            for mode in ActivityMode.allCases {
+                preferences.activityMode = mode
+                keys.insert(todayPreferencesKey(preferences))
+            }
+            // One distinct key per mode: two modes sharing one means the
+            // switch between them is invisible to `.task(id:)`.
+            #expect(keys.count == ActivityMode.allCases.count)
+        }
+    }
+
     @Test("Switching only the activity mode counts as a change worth publishing")
     @MainActor
     func changingOnlyTheActivityModeIsNoticed() async throws {
