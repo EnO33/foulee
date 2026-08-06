@@ -34,6 +34,20 @@ struct WatchWorkoutSessionHandle: Sendable {
     var collectionEndDate: @MainActor () -> Date?
 }
 
+/// The quantity types a live session collects, and the single list the whole
+/// watch workout path is built from: `WatchWorkoutHealthKit.live` force-enables
+/// exactly these on the data source, `WatchWorkoutStore` asks to share and read
+/// exactly these (plus the workout type itself), and `ingest` reads back
+/// exactly these. Three lists that had to agree by hand — a type collected but
+/// not shareable is what makes `finishWorkout()` fail with an authorization
+/// error, and a type read back but never collected is a counter frozen at 0.
+let collectedQuantityTypes: [HKQuantityType] = [
+    HKQuantityType(.stepCount),
+    HKQuantityType(.distanceWalkingRunning),
+    HKQuantityType(.activeEnergyBurned),
+    HKQuantityType(.heartRate)
+]
+
 extension WatchWorkoutHealthKit {
     @MainActor static var live: WatchWorkoutHealthKit {
         let store = HKHealthStore()
@@ -52,11 +66,24 @@ extension WatchWorkoutHealthKit {
                     healthStore: store,
                     workoutConfiguration: configuration
                 )
-                // The data source infers the types to collect from the config —
-                // distance, active energy and heart rate for a walk, but NOT step
-                // count. Enable it explicitly, otherwise the live "pas" counter
-                // stays at 0 while distance and heart rate update.
-                dataSource.enableCollection(for: HKQuantityType(.stepCount), predicate: nil)
+                // The data source infers the types to collect from the config.
+                // For a walk that inference was measured: distance, active
+                // energy and heart rate, but NOT step count — hence the
+                // explicit enable, without which the live "pas" counter stayed
+                // at 0 while distance and heart rate updated.
+                //
+                // What it infers for `.running` is NOT established, and cannot
+                // be without a real watch (the simulator has no sensors). So
+                // don't depend on it: enable every type `WatchWorkoutStore`
+                // reads back in `ingest` — enabling one the source would have
+                // inferred anyway is a no-op, while missing one silently zeroes
+                // a live counter for the whole session (issue #223). The set is
+                // the same for both activities on purpose: a run reports its
+                // distance under the same `distanceWalkingRunning` type a walk
+                // does, so there is nothing to branch on.
+                for type in collectedQuantityTypes {
+                    dataSource.enableCollection(for: type, predicate: nil)
+                }
                 builder.dataSource = dataSource
                 session.delegate = delegate
                 builder.delegate = delegate

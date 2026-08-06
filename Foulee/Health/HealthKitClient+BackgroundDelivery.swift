@@ -148,7 +148,13 @@ private func refreshSnapshotMetrics(store: HKHealthStore, wake: BackgroundStreak
         stepsGoal: snapshot.stepsGoal,
         hydrationEnabled: snapshot.hydrationEnabled,
         hydrationGoalML: snapshot.waterGoalML,
-        hydrationGlassML: snapshot.hydrationGlassML
+        hydrationGlassML: snapshot.hydrationGlassML,
+        // Read from the defaults rather than the snapshot: the widget snapshot
+        // carries no activity mode (no widget shows one), and defaulting the
+        // field here would push `.walking` over a running user's mode on every
+        // Health wake — the watch would quietly go back to stamping walks
+        // (issue #223).
+        activityMode: BackgroundStreakRefresh.preferences(defaults: defaults).activityMode
     ))
 }
 

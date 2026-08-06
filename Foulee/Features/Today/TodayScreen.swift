@@ -67,7 +67,10 @@ struct TodayScreen: View {
                 if url.host() == "hydration" { scrollToHydration = true }
             }
             .fullScreenCover(isPresented: $isWalking) {
-                ActiveWalkScreen(minutesGoal: store.minutesGoal) { session in
+                ActiveWalkScreen(
+                    minutesGoal: store.minutesGoal,
+                    activity: SessionActivity(mode: preferences.activityMode)
+                ) { session in
                     isWalking = false
                     Task { await store.registerFinishedWalk(session) }
                 }
@@ -397,7 +400,7 @@ private struct TodayPreviewLoading: View {
                     return true
                 },
                 todayMetrics: { .zero },
-                saveWalkingWorkout: { _ in },
+                saveWorkout: { _ in },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in

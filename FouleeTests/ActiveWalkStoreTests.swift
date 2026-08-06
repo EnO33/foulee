@@ -54,7 +54,7 @@ struct ActiveWalkStoreTests {
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
-                saveWalkingWorkout: { session in saved.set(session) },
+                saveWorkout: { session in saved.set(session) },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in
@@ -76,6 +76,37 @@ struct ActiveWalkStoreTests {
         }
     }
 
+    @Test("The session handed to HealthKit carries the activity it was started with")
+    @MainActor
+    func stopSavesTheStartedActivity() async {
+        let frozen = Date(timeIntervalSince1970: 1_700_000_000)
+        let saved = LockedRef<WalkSession?>(nil)
+        await withDependencies {
+            $0.date = .constant(frozen)
+            $0.pedometer = .testValue
+            $0.continuousClock = TestClock()
+            $0.healthKit = HealthKitClient(
+                requestAuthorization: { true },
+                todayMetrics: { .zero },
+                saveWorkout: { session in saved.set(session) },
+                dailyMinutes: { _ in [] },
+                recentWorkouts: { _ in [] },
+                workoutDetail: { summary in
+                    WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: 0)
+                }
+            )
+        } operation: {
+            let store = ActiveWalkStore()
+            store.start(activity: .running)
+            await store.stop()
+
+            // The live client maps this to `HKWorkoutConfiguration.activityType`
+            // (`SessionActivity.hkActivityType`); before #223 the type never
+            // left the client, which wrote `.walking` for every session.
+            #expect(saved.value?.activity == .running)
+        }
+    }
+
     @Test("save failure surfaces lastError but still ends the session")
     @MainActor
     func saveFailureSurfaces() async {
@@ -90,7 +121,7 @@ struct ActiveWalkStoreTests {
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
-                saveWalkingWorkout: { _ in throw Boom() },
+                saveWorkout: { _ in throw Boom() },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in
@@ -199,7 +230,7 @@ struct ActiveWalkStoreTests {
             $0.healthKit = HealthKitClient(
                 requestAuthorization: { true },
                 todayMetrics: { .zero },
-                saveWalkingWorkout: { session in saved.set(session) },
+                saveWorkout: { session in saved.set(session) },
                 dailyMinutes: { _ in [] },
                 recentWorkouts: { _ in [] },
                 workoutDetail: { summary in

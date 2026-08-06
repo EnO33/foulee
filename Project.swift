@@ -250,6 +250,12 @@ let project = Project(
                 "Foulee/Shared/WatchSyncPayload.swift",
                 "Foulee/Shared/WatchComplicationKind.swift",
                 "Foulee/Shared/WatchComplicationCache.swift",
+                // The watch writes its own workouts, so it needs the same
+                // activity vocabulary as the phone (issue #223) — and the
+                // preference it resolves from, which rides in the sync payload.
+                "Foulee/Shared/SessionActivity.swift",
+                "Foulee/Shared/SessionActivity+HealthKit.swift",
+                "Foulee/Preferences/ActivityMode.swift",
                 "Foulee/Notifications/HydrationNotification.swift"
             ],
             resources: [
@@ -284,6 +290,9 @@ let project = Project(
                 "Foulee/Shared/WidgetRefresh.swift",
                 "Foulee/Shared/WidgetTimelineBuilder.swift",
                 "Foulee/Shared/WatchSyncPayload.swift",
+                // Only because the payload above carries it — no complication
+                // renders the activity mode.
+                "Foulee/Preferences/ActivityMode.swift",
                 "Foulee/Shared/WatchComplicationKind.swift",
                 "Foulee/Shared/WatchComplicationCache.swift"
             ],

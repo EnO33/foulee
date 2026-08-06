@@ -6,6 +6,9 @@ import SwiftUI
 /// depending on `store.state`.
 struct ActiveWalkScreen: View {
     let minutesGoal: Int
+    /// What Santé will record this session as (issue #223). Comes from the
+    /// user's `ActivityMode`; the per-session picker for "les deux" is #224.
+    let activity: SessionActivity
     var onDismiss: (WalkSession) -> Void
 
     @State private var store = ActiveWalkStore()
@@ -16,7 +19,7 @@ struct ActiveWalkScreen: View {
             SheetBackground()
             content
         }
-        .onAppear { store.start(minutesGoal: minutesGoal) }
+        .onAppear { store.start(minutesGoal: minutesGoal, activity: activity) }
         .onDisappear { store.reset() }
         .sheet(isPresented: $showRoute) {
             WalkRouteMapView(route: store.route) { showRoute = false }
@@ -267,7 +270,7 @@ private struct ActiveWalkPreview: View {
         }
     }
     var body: some View {
-        ActiveWalkScreen(minutesGoal: 20, onDismiss: { _ in })
+        ActiveWalkScreen(minutesGoal: 20, activity: .walking, onDismiss: { _ in })
     }
 }
 

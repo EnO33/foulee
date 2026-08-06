@@ -63,6 +63,9 @@ final class TodayStore {
     private(set) var hydrationEnabled = false
     private(set) var hydrationGoalML = 2_000
     private(set) var hydrationGlassML = 250
+    /// Mirrored for the same reason as the hydration prefs: the Watch needs it
+    /// to stamp its own sessions (issue #223) and can't read `UserPreferences`.
+    private(set) var activityMode: ActivityMode = .walking
 
     /// Last fetched history, kept so `apply(preferences:)` can re-derive the
     /// streaks immediately when the goal or active days change.
@@ -146,26 +149,19 @@ final class TodayStore {
     /// so the ring, streak and countdown update immediately — no need to
     /// wait for the next refresh.
     func apply(preferences: UserPreferences) {
-        let newStepsGoal = preferences.stepsGoal
-        let newMinutesGoal = preferences.minutesGoal
         let newWindow = DateComponents(
             hour: preferences.walkWindowStart.hour,
             minute: preferences.walkWindowStart.minute
         )
-        let changed = newStepsGoal != stepsGoal
-            || newMinutesGoal != minutesGoal
-            || newWindow != walkWindowStart
-            || preferences.activeDays != activeDays
-            || preferences.hydrationEnabled != hydrationEnabled
-            || preferences.hydrationGoalML != hydrationGoalML
-            || preferences.hydrationGlassML != hydrationGlassML
-        stepsGoal = newStepsGoal
-        minutesGoal = newMinutesGoal
+        let changed = hasChanged(preferences: preferences, newWindow: newWindow)
+        stepsGoal = preferences.stepsGoal
+        minutesGoal = preferences.minutesGoal
         walkWindowStart = newWindow
         activeDays = preferences.activeDays
         hydrationEnabled = preferences.hydrationEnabled
         hydrationGoalML = preferences.hydrationGoalML
         hydrationGlassML = preferences.hydrationGlassML
+        activityMode = preferences.activityMode
         // Re-derive from the cached history: changing the goal or the active
         // days changes both the ring threshold and which missed days break the
         // streak, so recompute the streaks rather than copying the old ones.
@@ -200,20 +196,23 @@ final class TodayStore {
         }
     }
 
-    /// Mirror the current snapshot into the shared app group and refresh the
-    /// widgets. Widgets can't read HealthKit while the phone is locked, so they
-    /// read this snapshot instead — which keeps the Lock Screen from dropping to
-    /// zero. Cheap; safe to call on every refresh / goal change.
-    private func publishToWidgets() {
-        guard let publication = widgetPublication(stored: SharedStore.read()) else { return }
-        SharedStore.write(publication.snapshot)
-        WidgetCenter.shared.reloadAllTimelines()
-
-        // Push the phone-computed streak (+ goals) to the Watch. The watch's
-        // local HealthKit only keeps a few days of history, so it can't
-        // recompute long streaks correctly — it just displays this value.
-        guard let payload = publication.watchPayload else { return }
-        PhoneWatchSync.shared.send(payload)
+    /// Whether anything the mirrored copy holds differs from `preferences`.
+    ///
+    /// Gates both halves of `apply`: the snapshot re-derivation (goal, days and
+    /// window are what the ring and the streak are computed against) *and* the
+    /// publish, which is the only thing that carries the hydration prefs and
+    /// the activity mode to the Watch. Neither of the latter two is a snapshot
+    /// input — they're compared here so a settings change reaches the wrist
+    /// without waiting for the next refresh (issue #223).
+    private func hasChanged(preferences: UserPreferences, newWindow: DateComponents) -> Bool {
+        preferences.stepsGoal != stepsGoal
+            || preferences.minutesGoal != minutesGoal
+            || newWindow != walkWindowStart
+            || preferences.activeDays != activeDays
+            || preferences.hydrationEnabled != hydrationEnabled
+            || preferences.hydrationGoalML != hydrationGoalML
+            || preferences.hydrationGlassML != hydrationGlassML
+            || preferences.activityMode != activityMode
     }
 
     /// Ask for HealthKit + Location authorization and trigger an initial
