@@ -150,16 +150,56 @@ enum ActiveMinutes {
         return minutesByBucket
     }
 
+    /// The stretch of clock a session covers: `start..<start + duration`,
+    /// half-open. `nil` for a zero or negative duration — a session with no
+    /// length covers no clock and can neither add minutes nor overlap
+    /// anything.
+    ///
+    /// Exposed so the 7-day résumé builds its spans exactly like the minute
+    /// count does (#218): a sheet measuring sessions from `endDate` while the
+    /// ring measures them from `duration` would disagree about which sessions
+    /// are the same one as soon as a workout carries a pause.
+    static func span(of interval: WorkoutInterval) -> Range<Date>? {
+        guard interval.duration > 0 else { return nil }
+        return interval.start..<interval.start.addingTimeInterval(interval.duration)
+    }
+
+    /// Two spans overlap when each starts strictly before the other ends.
+    ///
+    /// Strict on purpose: spans are half-open, so a session ending exactly
+    /// when the next starts (10:00→10:30 then 10:30→11:00) does **not**
+    /// overlap. That is a back-to-back pair the user really did twice, not one
+    /// session written twice, and the résumé must keep listing both (#218).
+    ///
+    /// The minute count (#183) and the résumé's deduplication (#218) share this
+    /// predicate instead of each carrying a copy, so neither can quietly grow
+    /// its own idea of "overlapping". They are not the *same rule*, though:
+    /// `unionedSpans` folds touching spans on top of this predicate (see there),
+    /// and the résumé deliberately does not. That fold is invisible while both
+    /// halves of a back-to-back pair fall on one day — it only shows across
+    /// midnight, where it decides which day is credited: 23:30→00:00 then
+    /// 00:00→00:30 is 60 minutes on the first day for the ring and two 30-minute
+    /// rows on two days for the résumé. Pre-dates #218 and is left alone there:
+    /// folding those rows would delete a session the user really did twice.
+    static func overlap(_ lhs: Range<Date>, _ rhs: Range<Date>) -> Bool {
+        lhs.lowerBound < rhs.upperBound && rhs.lowerBound < lhs.upperBound
+    }
+
     /// Positive-length workout spans, sorted and merged so overlapping (or
     /// duplicated) sessions count once.
     private static func unionedSpans(_ workouts: [WorkoutInterval]) -> [Range<Date>] {
         let spans = workouts
-            .filter { $0.duration > 0 }
-            .map { $0.start..<$0.start.addingTimeInterval($0.duration) }
+            .compactMap(span(of:))
             .sorted { $0.lowerBound < $1.lowerBound }
         var unioned: [Range<Date>] = []
         for span in spans {
-            guard let last = unioned.last, span.lowerBound <= last.upperBound else {
+            // Touching spans fold in here as well as overlapping ones, unlike
+            // the résumé's rule: for *counting* minutes 10:00→10:30 followed by
+            // 10:30→11:00 covers the very same clock whether it is one range or
+            // two, and folding keeps this loop's invariant (one range per
+            // uninterrupted stretch of covered clock).
+            let touches = span.lowerBound == unioned.last?.upperBound
+            guard let last = unioned.last, overlap(span, last) || touches else {
                 unioned.append(span)
                 continue
             }

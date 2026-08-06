@@ -5,6 +5,9 @@ import SwiftUI
 /// last 7 days of workouts (see `WorkoutActivityFilter`), grouped by day
 /// with today first. Days without a recorded session get a discreet
 /// placeholder so the user also sees what they missed.
+///
+/// One outing written by several sources is one row: see
+/// `WorkoutDeduplication` (#218).
 struct TodayWorkoutsSheet: View {
     private static let daysBack = 7
 
@@ -203,7 +206,7 @@ struct TodayWorkoutsSheet: View {
         do {
             let workouts = try await healthKit.recentWorkouts(Self.daysBack)
             // Group once, here — not in a `body`-evaluated computed property.
-            sections = Self.groupByDay(workouts)
+            sections = Self.sections(from: workouts)
         } catch {
             lastError = error.localizedDescription
             sections = []
@@ -212,13 +215,29 @@ struct TodayWorkoutsSheet: View {
 
     // MARK: - Grouping
 
-    private static func groupByDay(_ workouts: [WorkoutSummary]) -> [DaySection] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: .now)
+    /// The résumé's day list: seven day-starts ending on `now`'s, each holding
+    /// the deduplicated sessions filed under it.
+    ///
+    /// Internal, and taking its calendar and clock as parameters, so a test can
+    /// reach it (#218). The two lines below are an ordering the unit tests on
+    /// `WorkoutDeduplication` cannot see: they pin the algorithm, not the fact
+    /// that this sheet runs it, nor that it runs it *before* grouping. Both were
+    /// removable with the whole suite still green.
+    static func sections(
+        from workouts: [WorkoutSummary],
+        calendar: Calendar = .current,
+        now: Date = .now
+    ) -> [DaySection] {
+        let today = calendar.startOfDay(for: now)
         let dayStarts = (0..<daysBack).compactMap { offset in
             calendar.date(byAdding: .day, value: -offset, to: today)
         }
-        let byDay = Dictionary(grouping: workouts) {
+        // Deduplicate first, group second (#218): the copies of one outing come
+        // from different writers and can start seconds apart, so a session begun
+        // just before midnight can have its twin recorded just after. Grouping
+        // first would file them under two days and neither bucket would ever see
+        // the overlap.
+        let byDay = Dictionary(grouping: WorkoutDeduplication.collapsingOverlaps(workouts)) {
             calendar.startOfDay(for: $0.startedAt)
         }
         return dayStarts.map { day in
