@@ -16,10 +16,23 @@ import Foundation
 /// `ScreenshotSeed`, and hand `RootView` a throwaway `UserDefaults` suite so a
 /// capture run cannot disturb the developer's own preferences.
 ///
-/// It writes nothing anywhere — not to HealthKit, not to `UserDefaults.standard`,
-/// not to the network. `ScreenshotDoubles.healthKit` implements `saveWorkout`
-/// and `logWater` as no-ops precisely so capturing a running session records
-/// nothing.
+/// **Every store a capture run can reach is diverted or muted**, and the list
+/// is exhaustive on purpose, because "it writes nothing" was once claimed here
+/// while the run was quietly publishing its fabricated counters into the real
+/// widget app group:
+///
+/// * Santé — `ScreenshotDoubles.healthKit` implements `saveWorkout` and
+///   `logWater` as no-ops, so capturing a session records nothing. Nothing
+///   under `Foulee/Screenshots/` names HealthKit at all, which is what
+///   `ScreenshotModeTests` checks rather than takes on trust.
+/// * The app's own preferences — read from `preferencesDefaults`, a throwaway
+///   suite, never the app's default store.
+/// * The widget app group — `SharedStore.activeSuiteName` is pointed at a
+///   second throwaway suite below. Two refreshes write there on a normal run.
+/// * The Watch — `PhoneWatchSync` is muted, so the seeded streak never leaves
+///   the phone.
+/// * The network — the weather, location and Connect IQ doubles talk to
+///   nobody.
 @MainActor
 enum ScreenshotMode {
     /// The argument the capture target passes on launch. Distinctive on
@@ -35,6 +48,14 @@ enum ScreenshotMode {
     /// the onboarding flow is what `RootView` renders. Without it the seeded
     /// install has finished onboarding and the app opens on Aujourd'hui.
     static let onboardingArgument = "-FouleeScreenshotOnboarding"
+
+    /// The throwaway suite the seeded preferences live in.
+    static let preferencesSuite = "com.eno33.foulee.screenshots"
+
+    /// The throwaway suite the app-group snapshot is diverted into. A separate
+    /// domain from the preferences one so a capture leaves the two kinds of
+    /// state as separate as the app keeps them.
+    static let sharedStoreSuite = "com.eno33.foulee.screenshots.appgroup"
 
     /// Whether `arguments` asks for the capture mode. Pure and parameterised so
     /// the "a normal launch does not activate it" test can assert on the real
@@ -61,10 +82,17 @@ enum ScreenshotMode {
         arguments: [String] = ProcessInfo.processInfo.arguments
     ) {
         guard !isActive, isRequested(arguments: arguments) else { return }
+        // Everything this mode does hangs off a throwaway suite. Without one
+        // there is nowhere safe to seed, so the mode stays off rather than
+        // falling back on the app's own store: a capture that doesn't happen
+        // is recoverable, a polluted install is not.
+        guard let defaults = UserDefaults(suiteName: preferencesSuite) else { return }
         isActive = true
         preferencesDefaults = seededDefaults(
+            defaults,
             hasCompletedOnboarding: !arguments.contains(onboardingArgument)
         )
+        divertSharedWrites()
         prepareDependencies { values in
             // Every date the app shows is derived from this one clock, so the
             // capture reads the same day whatever day it is run on. The only
@@ -82,17 +110,36 @@ enum ScreenshotMode {
         }
     }
 
-    /// A throwaway suite holding exactly the preferences `ScreenshotSeed`
-    /// describes. Wiped first: a suite that survived a previous capture run
-    /// would carry whatever that run left behind (a theme toggled on camera, a
-    /// finished onboarding) into the next one.
+    /// Send every write that would otherwise leave this process into a
+    /// throwaway domain, or nowhere at all.
+    ///
+    /// Separate from `activateIfRequested` so the test that proves a capture
+    /// run leaves the real app group alone can drive exactly this, without
+    /// activating the mode in the test host (which would make the "a normal
+    /// launch stays off" assertions depend on test ordering).
+    ///
+    /// The app-group suite is wiped like the preferences one, and for the same
+    /// reason: a snapshot left by the previous run is state the next one did
+    /// not compute.
+    static func divertSharedWrites() {
+        SharedStore.activeSuiteName = sharedStoreSuite
+        UserDefaults(suiteName: sharedStoreSuite)?
+            .removePersistentDomain(forName: sharedStoreSuite)
+        PhoneWatchSync.isMuted = true
+    }
+
+    /// Seed `defaults` with exactly the preferences `ScreenshotSeed` describes.
+    /// Wiped first: a suite that survived a previous capture run would carry
+    /// whatever that run left behind (a theme toggled on camera, a finished
+    /// onboarding) into the next one.
     ///
     /// Seeded through `UserPreferences` rather than by writing raw keys, so the
     /// defaults keys stay spelled in exactly one place.
-    private static func seededDefaults(hasCompletedOnboarding: Bool) -> UserDefaults {
-        let suite = "com.eno33.foulee.screenshots"
-        guard let defaults = UserDefaults(suiteName: suite) else { return .standard }
-        defaults.removePersistentDomain(forName: suite)
+    private static func seededDefaults(
+        _ defaults: UserDefaults,
+        hasCompletedOnboarding: Bool
+    ) -> UserDefaults {
+        defaults.removePersistentDomain(forName: preferencesSuite)
         ScreenshotSeed.seed(
             UserPreferences(defaults: defaults),
             hasCompletedOnboarding: hasCompletedOnboarding

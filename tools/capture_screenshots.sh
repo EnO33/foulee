@@ -8,6 +8,15 @@
 #
 #   tools/capture_screenshots.sh                       # iPhone 6.9"
 #   tools/capture_screenshots.sh "iPhone 17 Pro" iphone-6.3
+#   tools/capture_screenshots.sh 02175924-56FF-…-0216  # a UDID, when a name is
+#                                                      # ambiguous
+#
+# The first argument is a simulator NAME or a UDID. A name shared by two
+# available simulators is refused rather than resolved: the runtime a same-named
+# device runs decides what the PNGs look like — verified, all ten files differ
+# between iOS 26.0 and 26.5 on the same device model — so picking one silently
+# would make "the same numbers whatever day it is run" quietly depend on which
+# runtimes happen to be installed.
 #
 # Output is NOT tracked by git: appstore-screenshots/ is ignored on purpose
 # (#72), and generated PNGs must stay that way.
@@ -31,18 +40,36 @@ if [ ! -d "Foulee.xcworkspace" ]; then
 fi
 
 echo "==> Resolving simulator: $DEVICE"
-UDID="$(xcrun simctl list devices available -j \
+if ! UDID="$(xcrun simctl list devices available -j \
   | python3 -c "
 import json, sys
-name = sys.argv[1]
+wanted = sys.argv[1]
 devices = json.load(sys.stdin)['devices']
-match = [d for runtime in devices.values() for d in runtime if d['name'] == name]
-print(match[0]['udid'] if match else '')
-" "$DEVICE")"
-
-if [ -z "$UDID" ]; then
-  echo "No available simulator named '$DEVICE'. Create one in Xcode, or pass another name." >&2
-  echo "Note: the App Store 6.9\" slot needs a 1320 × 2868 device." >&2
+matches = [
+    (runtime, device)
+    for runtime, listed in devices.items()
+    for device in listed
+    if device['name'] == wanted or device['udid'].lower() == wanted.lower()
+]
+if not matches:
+    sys.stderr.write(
+        'No available simulator named (or with UDID) %r.\n'
+        'Create one in Xcode, or pass another name.\n'
+        'Note: the App Store 6.9\" slot needs a 1320 x 2868 device.\n' % wanted
+    )
+    sys.exit(1)
+if len(matches) > 1:
+    sys.stderr.write('%d available simulators are named %r:\n' % (len(matches), wanted))
+    for runtime, device in matches:
+        sys.stderr.write(
+            '  %s  (%s)\n' % (device['udid'], runtime.rsplit('.', 1)[-1])
+        )
+    sys.stderr.write(
+        'They render differently. Re-run with the UDID you mean.\n'
+    )
+    sys.exit(1)
+print(matches[0][1]['udid'])
+" "$DEVICE")"; then
   exit 1
 fi
 

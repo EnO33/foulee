@@ -161,6 +161,7 @@ deliberate, manual action:
 ```bash
 tools/capture_screenshots.sh                       # iPhone 6.9" (1320 × 2868)
 tools/capture_screenshots.sh "iPhone 17 Pro" iphone-6.3
+tools/capture_screenshots.sh 02175924-56FF-…-0216  # by UDID
 ```
 
 The script boots the simulator, pins its status bar to 09:41 / full bars /
@@ -171,21 +172,31 @@ supervision — there is no Health data to enter by hand any more.
 What makes it repeatable is the **capture mode** (issue #235): the target
 launches the app with `-FouleeScreenshotMode`, which swaps every `@Dependency`
 client for a deterministic double and freezes the clock at Thursday 14 May
-2026, 14:35. Two runs on two different days produce byte-identical files —
-that is checked by running it twice and comparing checksums. The numbers live
-in `Foulee/Screenshots/ScreenshotSeed.swift`; `FouleeTests/ScreenshotSeedTests`
-holds them consistent (the 34-day streak on the card really is what the seeded
-history computes).
+2026, 14:35. Two runs on two different days, **on the same simulator**, produce
+byte-identical files — that is checked by running it twice and comparing
+checksums. The numbers live in `Foulee/Screenshots/ScreenshotSeed.swift`;
+`FouleeTests/ScreenshotSeedTests` holds them consistent (the 34-day streak on
+the card really is what the seeded history computes).
 
-Three things worth knowing:
+Four things worth knowing:
 
 - The mode is **compiled out of Release builds** — everything under
   `Foulee/Screenshots/` and its single call site in `FouleeApp.init()` are
   inside `#if DEBUG` — and inside a Debug build it still needs the explicit
   launch argument. `FouleeTests/ScreenshotModeTests` asserts a normal launch
   doesn't activate it.
-- The doubles **write nothing**: no `HKWorkout`, no `dietaryWater`, no
-  Connect IQ session. Capturing a running session records nothing in Santé.
+- A capture run **leaves nothing behind**. The doubles write no `HKWorkout`, no
+  `dietaryWater` and no Connect IQ session, so capturing a session records
+  nothing in Santé; the preferences and the widget app group are both diverted
+  into throwaway suites, so the fabricated counters never reach the widgets;
+  and the Watch push is muted. `ScreenshotModeTests` checks each of those, the
+  HealthKit one at the source — no file under `Foulee/Screenshots/` may name an
+  `HKHealthStore`.
+- The **runtime is part of the output**: the same device model on iOS 26.0 and
+  on 26.5 renders all ten PNGs differently. That is why the script refuses a
+  simulator name shared by two available devices and asks for a UDID instead —
+  reproducibility that depends on which runtimes happen to be installed is not
+  reproducibility.
 - `appstore-screenshots/` is **not tracked by git** (issue #72) and must stay
   that way. `raw/` is the capture output; the finished marketing boards are
   composed from it separately.
