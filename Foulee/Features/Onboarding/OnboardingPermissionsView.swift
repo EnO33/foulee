@@ -2,7 +2,7 @@ import Dependencies
 import SwiftUI
 import UserNotifications
 
-/// Third onboarding screen — Santé / Watch / Notifications / Position.
+/// Fourth onboarding screen — Santé / Watch / Notifications / Position.
 /// Tapping each row triggers the underlying iOS permission sheet.
 /// Notifications + Position run real authorization here; HealthKit is
 /// deferred to `TodayStore.bootstrap()` since it requires a HKHealthStore.
@@ -25,7 +25,7 @@ struct OnboardingPermissionsView: View {
             // sizes. Scroll the rows, keep the CTA pinned to the bottom.
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
-                    OnboardingStepIndicator(step: 2)
+                    OnboardingStepIndicator(step: .permissions)
                         .frame(maxWidth: .infinity)
                     heading
                     rows

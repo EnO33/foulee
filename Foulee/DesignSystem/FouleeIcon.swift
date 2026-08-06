@@ -5,6 +5,9 @@ import SwiftUI
 enum FouleeIcon {
     static let walk = "figure.walk"
     static let walkMotion = "figure.walk.motion"
+    static let run = "figure.run"
+    /// Walk *and* run — the "les deux" option of the onboarding activity step.
+    static let mixedCardio = "figure.mixed.cardio"
     static let timer = "timer"
     static let check = "checkmark"
     static let footsteps = "shoe"

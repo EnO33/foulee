@@ -7,7 +7,10 @@ struct OnboardingWelcomeView: View {
     var onContinue: () -> Void
 
     private let bullets: [(icon: String, text: String)] = [
-        (FouleeIcon.walk, "Une marche du midi par jour ouvré"),
+        // Neutral wording, because the very next screen asks marche / course /
+        // les deux (#221): promising "une marche" here and then offering the
+        // choice reads as if the answer were already decided.
+        (FouleeIcon.walk, "Une sortie du midi par jour ouvré"),
         (FouleeIcon.target, "Un objectif simple, pas un score"),
         // Neutral on purpose: Garmin (via Santé) works here too, and promising
         // an Apple Watch feature to someone who doesn't own one is a dead end.

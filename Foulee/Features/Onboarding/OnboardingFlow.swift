@@ -1,40 +1,42 @@
 import SwiftUI
 
-/// 3-step onboarding container. Linear (no back nav by design — every step
+/// 4-step onboarding container. Linear (no back nav by design — every step
 /// either commits a default-acceptable value or doesn't change anything).
+///
+/// The activity question sits at `.activity`, right after the welcome: with no
+/// way back, a decision the later screens are written around has to be taken
+/// before them, not after (issue #221).
 struct OnboardingFlow: View {
     @Bindable var preferences: UserPreferences
     var onFinish: () -> Void
 
-    @State private var step: Int = 0
+    @State private var step: OnboardingStep = .welcome
 
     var body: some View {
         ZStack {
             Wallpaper()
-            content
-                .id(step)
-                .transition(.opacity.combined(with: .move(edge: .trailing)))
+            // The step → screen mapping lives in `OnboardingStepScreen`: from
+            // in here it would sit behind `@State private var step`, out of
+            // reach of any test.
+            OnboardingStepScreen(
+                step: step,
+                preferences: preferences,
+                advance: advance,
+                // Just forwards: `RootView` owns the completion flag, because
+                // it owns the gate that reads it. Writing it here as well —
+                // as this flow did until #221's review — made two writers for
+                // one boolean, and the copy that mattered was never the one
+                // any test could reach.
+                finish: onFinish
+            )
+            .id(step)
+            .transition(.opacity.combined(with: .move(edge: .trailing)))
         }
         .animation(.easeOut(duration: 0.25), value: step)
     }
 
-    @ViewBuilder
-    private var content: some View {
-        switch step {
-        case 0:
-            OnboardingWelcomeView { advance() }
-        case 1:
-            OnboardingGoalView(preferences: preferences) { advance() }
-        default:
-            OnboardingPermissionsView(preferences: preferences) {
-                preferences.hasCompletedOnboarding = true
-                onFinish()
-            }
-        }
-    }
-
     private func advance() {
-        step = min(step + 1, 2)
+        step = step.next
     }
 }
 
