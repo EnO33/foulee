@@ -40,6 +40,27 @@ struct ActiveWalkScreen: View {
         return false
     }
 
+    /// What the session in flight is called — « Ta marche » / « Ta course »,
+    /// through the same `SessionActivity.sessionTitle` the Live Activity's
+    /// Lock Screen row reads (#225).
+    ///
+    /// The two are under the user's eyes at the same moment, so they say the
+    /// same thing rather than « Ta sortie » here and « Ta course » there; a
+    /// literal in each would let them drift, which is what happened when #225
+    /// moved only the Lock Screen. Read off the session in flight rather than
+    /// off what this screen was handed, for the reason
+    /// `ActiveWalkStore.liveActivityAttributes` is: the session is what Santé
+    /// gets stamped with. « Ta sortie » stays for the states where there is no
+    /// session to name.
+    private var sessionTitle: String {
+        switch store.state {
+        case .active(let session), .paused(let session), .finished(let session):
+            session.activity.sessionTitle
+        case .idle:
+            "Ta sortie"
+        }
+    }
+
     @ViewBuilder
     private var content: some View {
         switch store.state {
@@ -56,7 +77,7 @@ struct ActiveWalkScreen: View {
 
     private func walkBody(session: WalkSession, paused: Bool) -> some View {
         VStack(spacing: 0) {
-            header(session: session, paused: paused)
+            header(paused: paused)
             timer(session: session)
             ring(session: session)
             heartRatePlaceholder
@@ -108,7 +129,7 @@ struct ActiveWalkScreen: View {
         return parts.joined(separator: " · ")
     }
 
-    private func header(session: WalkSession, paused: Bool) -> some View {
+    private func header(paused: Bool) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Chip(
                 label: paused ? "EN PAUSE" : "EN COURS",
@@ -116,16 +137,10 @@ struct ActiveWalkScreen: View {
                 tint: paused ? FouleeColor.warning : FouleeColor.success,
                 fill: (paused ? FouleeColor.warning : FouleeColor.success).opacity(0.16)
             )
-            // Names the session's activity (#225), through the same
-            // `SessionActivity.sessionTitle` the Live Activity's Lock Screen
-            // row reads: both are on screen while one session runs, so they
-            // say the same thing rather than « Ta sortie » here and
-            // « Ta course » there. Read off the session in flight, not off
-            // what the screen was handed, for the reason the Live Activity is
-            // (`ActiveWalkStore.liveActivityAttributes`): the session is what
-            // Santé gets stamped with. No longer tied to a time of day (#222),
-            // and the chip above already says running or paused.
-            Text(session.activity.sessionTitle)
+            // Names the session's activity (#225) — see `sessionTitle`. No
+            // longer tied to a time of day (#222), and the chip above already
+            // says whether it is running or paused.
+            Text(sessionTitle)
                 .font(FouleeFont.largeTitle)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
