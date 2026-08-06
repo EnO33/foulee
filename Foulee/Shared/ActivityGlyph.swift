@@ -14,9 +14,10 @@ import Foundation
 /// Foundation-only on purpose, so it can be listed in any target's sources —
 /// the same move `ActivityMode+Icon.swift` made in the other direction. It is
 /// the *names* that are shared here, not the design vocabulary: `FouleeIcon`
-/// stays the app's single icon table and reads its activity figures from this
-/// one (`FouleeIcon.walk`, `.run`, `.mixedCardio`), so a future swap is still
-/// one line and now propagates past the app target.
+/// stays the app's single icon table and re-exports the neutral figure from
+/// this one (`FouleeIcon.mixedCardio`), so a future swap is still one line and
+/// now propagates past the app target. The walk and run names are read through
+/// `ActivityMode.icon` instead — a screen that knows the mode asks the mode.
 enum ActivityGlyph {
     static let walk = "figure.walk"
     static let run = "figure.run"
