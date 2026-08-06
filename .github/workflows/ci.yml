@@ -26,6 +26,24 @@ jobs:
       - name: SwiftLint (strict)
         run: swiftlint lint --strict --reporter github-actions-logging
 
+      # tools/ is outside the Xcode project and outside .swiftlint.yml's
+      # `included:`, so nothing else here would notice a broken script — and
+      # SwiftLint does not fail on parse errors anyway (verified: it reports
+      # 0 violations on a file swiftc rejects with 20 errors). The composer's
+      # caption table is the one thing docs/RELEASE.md invites the owner to
+      # edit between releases; a stray comma there must not wait until release
+      # day. One file per invocation: each script has top-level code, and only
+      # a `main.swift` may have that when several files share a compilation.
+      - name: Type-check the release scripts (tools/)
+        run: |
+          set -o pipefail
+          status=0
+          for script in tools/*.swift; do
+            echo "swiftc -typecheck $script"
+            swiftc -typecheck "$script" || status=1
+          done
+          exit $status
+
   connectiq:
     # Static checks on the Garmin watch app (FouleeConnectIQ/). This job does
     # NOT compile Monkey C, and it can't:

@@ -161,8 +161,9 @@ appstore-screenshots/
 ### 9.1 Capture
 
 One simulator per size class. The names matter only through their native
-resolution — App Store Connect accepts exactly these, and the composer asserts
-them before writing:
+resolution — App Store Connect accepts exactly these, and the composer refuses
+any raw that doesn't measure them (it lists the offenders and exits non-zero,
+just like a missing capture):
 
 | Folder | Simulator | Native resolution |
 |--------|-----------|-------------------|
@@ -173,8 +174,16 @@ them before writing:
 `xcrun simctl io <device> screenshot` on any of those writes exactly that
 resolution, which is why the raws need no resizing at all.
 
-Launch the app in **screenshot mode** so the numbers, the date and the streak
-are the same every run, then grab each screen:
+`appstore-screenshots/` is gitignored, so a fresh clone has no folders to write
+into and `simctl io` fails with `No such file or directory`. Create the raw
+tree once:
+
+```sh
+mkdir -p appstore-screenshots/raw/{iphone-6.9,ipad-13,watch}
+```
+
+Then launch the app in **screenshot mode** so the numbers, the date and the
+streak are the same every run, and grab each screen:
 
 ```sh
 xcrun simctl boot "iPhone 17 Pro Max"
@@ -195,6 +204,9 @@ Three rules, each of them a defect the previous set actually shipped:
   `04_streak`). Push the screen, or present it as its own root, so the capture
   is the sheet and nothing else. If a leak is unavoidable, shave it explicitly
   with `trimTop:` on that shot rather than cropping the PNG.
+  **`04_streak` has to be recaptured**, not just recomposed: no shot in the
+  committed `shots` table sets `trimTop`, so re-running the composer over the
+  old raws reproduces the band verbatim.
 - **Park scrolling screens on a boundary.** Leave the scroll where a card edge —
   not a button cut in half — meets the bottom of the display. Screens flagged
   `scrolls: true` also get a short fade into the background, so what remains
@@ -208,8 +220,10 @@ swift tools/compose_appstore_screenshots.swift
 
 It reads `appstore-screenshots/raw/`, writes `appstore-screenshots/<family>/`,
 prints one line per board and exits non-zero listing any raw capture it
-couldn't find. `--input` and `--output` override both roots if you want to try
-a set somewhere else.
+couldn't find or that isn't at its family's native resolution. `--input` and
+`--output` override both roots if you want to try a set somewhere else — either
+spelling (`--input /tmp/raw` or `--input=/tmp/raw`); anything else it doesn't
+recognise stops the run instead of quietly falling back to the defaults.
 
 Each board is the brand gradient, the two caption lines in white, and the
 capture below with rounded corners and a shadow. **Captions are data**: the

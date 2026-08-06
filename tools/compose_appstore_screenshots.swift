@@ -9,8 +9,9 @@
 // Output: <output>/<family>/<name>.png  — the boards uploaded to App Store Connect
 //
 // A board is the brand gradient, a two-line white caption at the top, and the
-// capture below with rounded corners and a soft shadow. Output sizes are fixed
-// by App Store Connect and asserted before writing:
+// capture below with rounded corners and a soft shadow. Sizes are fixed by App
+// Store Connect; raw captures are rejected unless they measure exactly that,
+// and every board is asserted against it before writing:
 //
 //   iphone-6.9  1320 × 2868
 //   ipad-13     2064 × 2752
@@ -35,6 +36,20 @@ enum Family: String {
     case ipad = "ipad-13"
     case watch = "watch"
 }
+
+/// Native pixel size per family: what `simctl io screenshot` writes on the
+/// devices listed in docs/RELEASE.md §9.1, and — the same numbers, because a
+/// board is exactly device-sized — what App Store Connect requires of the
+/// upload.
+///
+/// This is a literal of its own on purpose, never read from `geometries`. Both
+/// checks it feeds exist to catch a typo in that table, so they must not take
+/// their expectation from the very value they are meant to police.
+let nativeSize: [Family: (width: Int, height: Int)] = [
+    .iphone: (width: 1320, height: 2868),
+    .ipad: (width: 2064, height: 2752),
+    .watch: (width: 416, height: 496)
+]
 
 // MARK: - Captions — edit here
 
@@ -323,11 +338,14 @@ func drawScreen(_ image: CGImage, in context: CGContext, rect: CGRect, shot: Sho
 
 // MARK: - Compose
 
-func loadCapture(_ url: URL, shot: Shot) -> CGImage? {
-    guard let image = NSImage(contentsOf: url),
-          let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-        return nil
-    }
+func loadCapture(_ url: URL) -> CGImage? {
+    guard let image = NSImage(contentsOf: url) else { return nil }
+    return image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+}
+
+/// Shaves `trimTop` / `trimBottom` source pixels off a capture. Applied *after*
+/// the native-resolution check, so a trimmed shot is still a validated grab.
+func trimmed(_ cgImage: CGImage, shot: Shot) -> CGImage {
     guard shot.trimTop > 0 || shot.trimBottom > 0 else { return cgImage }
     let height = cgImage.height - shot.trimTop - shot.trimBottom
     guard height > 0 else {
@@ -352,9 +370,14 @@ func compose(_ shot: Shot, capture: CGImage, geometry: Geometry) -> Data {
     guard let image = context.makeImage() else {
         fatalError("\(shot.file): CGImage creation failed")
     }
-    guard image.width == Int(geometry.canvas.width), image.height == Int(geometry.canvas.height) else {
+    // Compared against `nativeSize`, never against the `canvas` the context was
+    // made from — that would only ever restate itself and could not fail.
+    guard let required = nativeSize[shot.family] else {
+        fatalError("\(shot.file): no required size declared for \(shot.family.rawValue)")
+    }
+    guard image.width == required.width, image.height == required.height else {
         fatalError("\(shot.file): produced \(image.width)×\(image.height), App Store Connect wants "
-            + "\(Int(geometry.canvas.width))×\(Int(geometry.canvas.height))")
+            + "\(required.width)×\(required.height) — check `geometries[.\(shot.family)]`")
     }
     guard let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else {
         fatalError("\(shot.file): PNG encoding failed")
@@ -364,28 +387,54 @@ func compose(_ shot: Shot, capture: CGImage, geometry: Geometry) -> Data {
 
 // MARK: - Entry point
 
-func argument(_ name: String, default fallback: String) -> String {
-    let arguments = CommandLine.arguments
-    guard let index = arguments.firstIndex(of: name), index + 1 < arguments.count else {
-        return fallback
-    }
-    return arguments[index + 1]
+func fail(_ message: String) -> Never {
+    FileHandle.standardError.write(Data("error: \(message)\n".utf8))
+    exit(2)
 }
 
-let inputRoot = URL(fileURLWithPath: argument("--input", default: "appstore-screenshots/raw"))
-let outputRoot = URL(fileURLWithPath: argument("--output", default: "appstore-screenshots"))
+/// Accepts both `--name value` and `--name=value`, and stops on anything else:
+/// falling through to the default root would report a missing capture in a
+/// directory the operator never named, which blames the wrong path.
+func parseArguments(known: [String]) -> [String: String] {
+    var values: [String: String] = [:]
+    var iterator = CommandLine.arguments.dropFirst().makeIterator()
+    while let token = iterator.next() {
+        let name = token.firstIndex(of: "=").map { String(token[..<$0]) } ?? token
+        guard known.contains(name) else {
+            fail("unexpected argument '\(token)'; expected \(known.joined(separator: " and/or "))")
+        }
+        let inline = token.firstIndex(of: "=").map { String(token[token.index(after: $0)...]) }
+        guard let value = inline ?? iterator.next(), !value.isEmpty else {
+            fail("'\(name)' needs a value")
+        }
+        values[name] = value
+    }
+    return values
+}
+
+let options = parseArguments(known: ["--input", "--output"])
+let inputRoot = URL(fileURLWithPath: options["--input"] ?? "appstore-screenshots/raw")
+let outputRoot = URL(fileURLWithPath: options["--output"] ?? "appstore-screenshots")
 
 var missing: [String] = []
+var wrongSize: [String] = []
 var written = 0
 
 for shot in shots {
-    guard let geometry = geometries[shot.family] else { continue }
+    guard let geometry = geometries[shot.family], let native = nativeSize[shot.family] else { continue }
     let source = inputRoot.appendingPathComponent(shot.family.rawValue).appendingPathComponent("\(shot.file).png")
-    guard let capture = loadCapture(source, shot: shot) else {
+    guard let raw = loadCapture(source) else {
         missing.append(source.path)
         continue
     }
-    let data = compose(shot, capture: capture, geometry: geometry)
+    // A raw from the wrong device composes into a board that is the right size
+    // but shows a card at the wrong aspect ratio — silent until someone looks.
+    guard raw.width == native.width, raw.height == native.height else {
+        wrongSize.append("\(source.path) is \(raw.width)×\(raw.height), "
+            + "\(shot.family.rawValue) wants \(native.width)×\(native.height)")
+        continue
+    }
+    let data = compose(shot, capture: trimmed(raw, shot: shot), geometry: geometry)
     let destination = outputRoot
         .appendingPathComponent(shot.family.rawValue)
         .appendingPathComponent("\(shot.file).png")
@@ -404,5 +453,11 @@ print("\(written)/\(shots.count) boards composed")
 if !missing.isEmpty {
     print("missing raw captures:")
     for path in missing { print("  \(path)") }
-    exit(1)
 }
+
+if !wrongSize.isEmpty {
+    print("raw captures at the wrong resolution (never crop or resize a grab):")
+    for report in wrongSize { print("  \(report)") }
+}
+
+if !missing.isEmpty || !wrongSize.isEmpty { exit(1) }
