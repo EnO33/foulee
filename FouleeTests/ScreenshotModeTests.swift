@@ -194,8 +194,9 @@ struct ScreenshotModeTests {
         let group = try #require(UserDefaults(suiteName: SharedStore.suiteName))
         let stored = group.persistentDomain(forName: SharedStore.suiteName) ?? [:]
         let leaked = stored.values.contains { value in
-            guard let data = value as? Data else { return false }
-            return String(decoding: data, as: UTF8.self).contains("\(sentinel)")
+            guard let data = value as? Data,
+                  let text = String(bytes: data, encoding: .utf8) else { return false }
+            return text.contains("\(sentinel)")
         }
         #expect(leaked == false)
     }
