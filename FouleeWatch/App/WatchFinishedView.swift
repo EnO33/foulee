@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Post-walk summary — quick recap + a button to clear the slate. When the
+/// Post-session summary — quick recap + a button to clear the slate. When the
 /// workout could not be saved to Health, says so and offers a retry instead
-/// of celebrating a walk that never landed.
+/// of celebrating a session that never landed.
 struct WatchFinishedView: View {
     let metrics: WatchWorkoutMetrics
     var saveFailed: Bool
@@ -14,7 +14,10 @@ struct WatchFinishedView: View {
             Image(systemName: saveFailed ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
                 .font(.system(size: saveFailed ? 32 : 40, weight: .bold))
                 .foregroundStyle(saveFailed ? AnyShapeStyle(.orange) : AnyShapeStyle(Color("AccentColor")))
-            Text(saveFailed ? "Marche non enregistrée dans Santé" : "Bravo")
+            // "Sortie", the app's single user-facing noun (issue #222), and
+            // exactly as many characters as the "Marche" it replaces — this
+            // line already wraps to two on the smallest watch.
+            Text(saveFailed ? "Sortie non enregistrée dans Santé" : "Bravo")
                 .font(saveFailed ? .caption : .headline)
                 .multilineTextAlignment(.center)
             VStack(spacing: 2) {

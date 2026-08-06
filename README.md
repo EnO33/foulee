@@ -1,8 +1,8 @@
 # Foulée
 
-> Bouge un peu, chaque midi.
+> Bouge un peu, chaque jour.
 
-iOS 26 app that helps you keep a daily lunchtime walk streak going. Reads from HealthKit, reminds you just before noon, runs a Live Activity during the walk, and ships an Apple Watch companion.
+iOS 26 app that helps you keep a daily activity streak going — walking or running. Reads from HealthKit, reminds you just before your window, runs a Live Activity during the session, and ships an Apple Watch companion.
 
 ## Compatible watches
 
@@ -24,9 +24,9 @@ iOS 26 app that helps you keep a daily lunchtime walk streak going. Reads from H
 ## Stack
 
 - **Swift 6.2**, **SwiftUI**, iOS 26 + watchOS 26
-- **HealthKit** — steps, distance, calories, walking workouts
+- **HealthKit** — steps, distance, calories, workouts (walks and runs)
 - **ActivityKit** — Live Activity for the active walk (Dynamic Island + Lock Screen)
-- **WeatherKit** — midday weather card
+- **WeatherKit** — local weather card
 - **WidgetKit** — iPhone + Watch streak widgets and complications
 - **UserNotifications** — pre-walk reminder
 - **CoreLocation / MapKit** — walk route recording + map

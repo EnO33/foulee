@@ -65,7 +65,12 @@ extension TodayStore {
             waterML: carried?.waterML ?? 0,
             waterGoalML: hydrationGoalML,
             hydrationEnabled: hydrationEnabled,
-            hydrationGlassML: hydrationGlassML
+            hydrationGlassML: hydrationGlassML,
+            // Never carried forward from `stored`, unlike the counters below:
+            // the mode is a preference this object mirrors, not a leg that can
+            // fail to be measured. It rides the same pass as the Watch payload
+            // just under here, so the two surfaces switch glyph together.
+            activityMode: activityMode
         )
         if let carried {
             // Field-by-field commits, mirroring the background path's `if let`.

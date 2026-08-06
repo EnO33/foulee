@@ -2,7 +2,13 @@ import Combine
 import SwiftUI
 
 /// Watch home: today's streak + key numbers, and the "Démarrer" CTA. Replaces
-/// the old bare idle screen so the watch is useful at a glance, not only mid-walk.
+/// the old bare idle screen so the watch is useful at a glance, not only
+/// mid-session.
+///
+/// Nothing here names an activity (issue #222): the CTA is the bare verb, and
+/// the steps tile carries the footprints glyph — a step count, not a walking
+/// figure. The mode does reach this target (`WatchSyncStore`, issue #223), but
+/// it decides what Santé records, not how this screen reads.
 struct WatchTodayView: View {
     let store: WatchTodayStore
     var errorMessage: String?

@@ -15,7 +15,11 @@ struct StreakComplication: Widget {
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("Série")
-        .description("Le nombre de jours d'affilée où tu as marché.")
+        // Same compile-time constraint as the iPhone widget's gallery text
+        // (issue #222): it cannot follow the activity preference, so it has to
+        // hold for a walker and a runner alike. Kept word-for-word identical to
+        // `StreakWidget`'s so the two galleries read as one app.
+        .description("Le nombre de jours d'affilée où tu as bougé.")
         .supportedFamilies([
             .accessoryCircular,
             .accessoryRectangular,

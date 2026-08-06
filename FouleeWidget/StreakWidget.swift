@@ -1,7 +1,7 @@
 import SwiftUI
 import WidgetKit
 
-/// iPhone widget showing the current walk streak. Supports the three Lock
+/// iPhone widget showing the current streak. Supports the three Lock
 /// Screen accessory families (matches what we already ship on the Watch)
 /// plus the two most useful Home Screen sizes (`.systemSmall` and
 /// `.systemMedium`).
@@ -23,7 +23,12 @@ struct StreakSnapshotProvider: TimelineProvider {
     }
 
     private func entry() -> StreakEntry {
-        StreakEntry(date: .now, streak: SharedStore.read()?.streak ?? 0)
+        let snapshot = SharedStore.read()
+        return StreakEntry(
+            date: .now,
+            streak: snapshot?.streak ?? 0,
+            activityMode: snapshot?.activityMode ?? .walking
+        )
     }
 }
 
@@ -36,7 +41,12 @@ struct StreakWidget: Widget {
                 .containerBackground(StreakWidget.containerBackground, for: .widget)
         }
         .configurationDisplayName("Série Foulée")
-        .description("Le nombre de jours d'affilée où tu as marché.")
+        // Gallery text is compile-time: it cannot follow the activity
+        // preference, so it has to be true for a walker *and* a runner
+        // (issue #222). "bougé" is the one verb that covers both, and it is
+        // also what the streak actually counts — active minutes, whatever
+        // produced them.
+        .description("Le nombre de jours d'affilée où tu as bougé.")
         .supportedFamilies([
             .accessoryCircular,
             .accessoryRectangular,
@@ -57,6 +67,13 @@ struct StreakWidget: Widget {
 }
 
 struct StreakWidgetView: View {
+    /// The activity figure, following the user's mode exactly as the app's own
+    /// Today ring does (issue #222): the snapshot in the app group carries
+    /// `activityMode`, written by the same pass that publishes it to the Watch.
+    /// A walker keeps `figure.walk` — the glyph this widget always showed —
+    /// and only a runner gets a runner.
+    private var activityIcon: String { entry.activityMode.icon }
+
     @Environment(\.widgetFamily) private var family
     let entry: StreakEntry
 
@@ -112,7 +129,7 @@ struct StreakWidgetView: View {
     private var systemSmallView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: "figure.walk.motion")
+                Image(systemName: activityIcon)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.white.opacity(0.9))
                 Spacer()
@@ -154,10 +171,10 @@ struct StreakWidgetView: View {
                 .fill(.white.opacity(0.15))
                 .frame(width: 1)
             VStack(alignment: .leading, spacing: 6) {
-                Label("Foulée", systemImage: "figure.walk.motion")
+                Label("Foulée", systemImage: activityIcon)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
-                Text("Marche du midi")
+                Text("Bouge un peu, chaque jour.")
                     .font(.system(size: 11))
                     .foregroundStyle(.white.opacity(0.7))
                 Spacer(minLength: 0)
