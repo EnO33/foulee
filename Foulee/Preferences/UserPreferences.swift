@@ -60,6 +60,11 @@ final class UserPreferences {
     var hydrationSnoozeMinutes: Int {
         didSet { defaults.set(hydrationSnoozeMinutes, forKey: Keys.hydrationSnoozeMinutes) }
     }
+    /// Which activity the app supports. Defaults to walking so existing
+    /// installs — which never wrote this key — stay exactly where they are.
+    var activityMode: ActivityMode {
+        didSet { defaults.set(activityMode.rawValue, forKey: Keys.activityMode) }
+    }
 
     @ObservationIgnored
     private let defaults: UserDefaults
@@ -88,6 +93,8 @@ final class UserPreferences {
         self.hydrationWindowEnd = rawHydrationEnd.map(TimeOfDay.init(rawMinutes:)) ?? TimeOfDay(rawMinutes: 21 * 60)
         self.hydrationIntervalMinutes = (defaults.object(forKey: Keys.hydrationIntervalMinutes) as? Int) ?? 120
         self.hydrationSnoozeMinutes = (defaults.object(forKey: Keys.hydrationSnoozeMinutes) as? Int) ?? 15
+        let rawActivity = defaults.string(forKey: Keys.activityMode)
+        self.activityMode = rawActivity.flatMap(ActivityMode.init(rawValue:)) ?? .walking
     }
 }
 
@@ -108,4 +115,5 @@ private enum Keys {
     static let hydrationWindowEnd = "preferences.hydrationWindowEnd"
     static let hydrationIntervalMinutes = "preferences.hydrationIntervalMinutes"
     static let hydrationSnoozeMinutes = "preferences.hydrationSnoozeMinutes"
+    static let activityMode = "preferences.activityMode"
 }

@@ -15,6 +15,9 @@ struct UserPreferencesTests {
         #expect(prefs.minutesGoal == 20)
         #expect(prefs.stepsGoal == 6_000)
         #expect(prefs.hasCompletedOnboarding == false)
+        // Issue #219: an install that never wrote the key must read walking,
+        // so shipping the running work moves nobody off their current app.
+        #expect(prefs.activityMode == .walking)
     }
 
     @Test("Edits round-trip through UserDefaults across instances")
@@ -29,6 +32,7 @@ struct UserPreferencesTests {
         first.hasCompletedOnboarding = true
         first.notificationsEnabled = false
         first.themeMode = .dark
+        first.activityMode = .both
 
         let second = UserPreferences(defaults: defaults)
         #expect(second.activeDays == [.monday, .wednesday, .friday])
@@ -39,6 +43,7 @@ struct UserPreferencesTests {
         #expect(second.hasCompletedOnboarding == true)
         #expect(second.notificationsEnabled == false)
         #expect(second.themeMode == .dark)
+        #expect(second.activityMode == .both)
     }
 
     @Test("Notifications default to enabled and theme to system")
