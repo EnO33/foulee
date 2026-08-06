@@ -69,14 +69,22 @@ struct TodayScreen: View {
             .fullScreenCover(isPresented: $isWalking) {
                 ActiveWalkScreen(
                     minutesGoal: store.minutesGoal,
-                    // Resolved by the store, not here (issue #223): the mode
-                    // it mirrors is the same one it syncs to the Watch, and
-                    // unlike this body it is reachable from a test.
-                    activity: store.sessionActivity
-                ) { session in
-                    isWalking = false
-                    Task { await store.registerFinishedWalk(session) }
-                }
+                    // Resolved by the store, not here (issues #223, #224): the
+                    // mode it mirrors is the same one it syncs to the Watch,
+                    // and unlike this body it is reachable from a test. In
+                    // « les deux » it is `.ask`, and the session screen opens
+                    // on the picker.
+                    intent: store.startIntent,
+                    onDismiss: { session in
+                        isWalking = false
+                        Task { await store.registerFinishedWalk(session) }
+                    },
+                    // Backed out of the picker: close, and register nothing.
+                    // The baseline `walkWillStart` captured is simply left
+                    // unused — no `PendingWalk` is created, so the home shows
+                    // the same numbers it already showed.
+                    onCancel: { isWalking = false }
+                )
                 .preferredColorScheme(preferredScheme)
             }
             .sheet(
@@ -383,12 +391,22 @@ private struct HydrationDeepLinkScroll: ViewModifier {
 /// Single value that flips whenever any preference the Today store reads
 /// changes — drives the `.task(id:)` re-sync. File-scope so it stays out of
 /// the view's body-length budget.
+///
+/// Internal rather than private, for the same reason `TodayStore.hasChanged`
+/// is: `.task(id:)` lives in a `View` and cannot be driven from a test
+/// process, so this key is the only assertable answer to "will a settings
+/// change be noticed in the session it was made?".
 @MainActor
-private func todayPreferencesKey(_ preferences: UserPreferences) -> String {
+func todayPreferencesKey(_ preferences: UserPreferences) -> String {
     let goals = "\(preferences.stepsGoal)-\(preferences.minutesGoal)"
     let window = "\(preferences.walkWindowStart.rawMinutes)-\(preferences.activeDays.bitmask)"
     let hydration = "\(preferences.hydrationEnabled)-\(preferences.hydrationGoalML)-\(preferences.hydrationGlassML)"
-    return "\(goals)-\(window)-\(hydration)"
+    // The mode moves no counter, and it still belongs here: it is the only
+    // input to `startIntent`, so without it a user who turns « les deux » on
+    // is never asked in that session — the store keeps the mode it mirrored at
+    // mount, and each refresh re-publishes it to the wrist, so the watch does
+    // not ask either (issue #224).
+    return "\(goals)-\(window)-\(hydration)-\(preferences.activityMode.rawValue)"
 }
 
 private struct TodayPreviewWithData: View {

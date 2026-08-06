@@ -5,15 +5,15 @@ import Foundation
 /// publishing. Split out of `TodayStore.swift` for the same reason
 /// `TodayStore+WidgetPublication.swift` is — that file is at the length limit.
 extension TodayStore {
-    /// What a session started from the Today screen right now will be recorded
-    /// as in Santé (issue #223).
+    /// What tapping start on the Today screen right now has to do: begin a
+    /// session of a known activity, or ask which one (issue #224).
     ///
     /// The phone's single resolution point, and the reason it lives on the
     /// store rather than in `TodayScreen`: a `View` body is not reachable from
-    /// a test process, so with the `mode -> activity` step inlined there the
+    /// a test process, so with the `mode -> intent` step inlined there the
     /// whole phone path could go back to stamping walks with the suite green.
     /// `TodayScreen` only forwards this value to `ActiveWalkScreen`.
-    var sessionActivity: SessionActivity { SessionActivity(mode: activityMode) }
+    var startIntent: ActivityStartIntent { ActivityStartIntent(mode: activityMode) }
 
     /// The walk window as the mirrored copy stores it — hour and minute only.
     /// Not private: `apply` (in `TodayStore.swift`) stores what it returns and

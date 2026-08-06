@@ -26,15 +26,18 @@ struct TodayStoreActivityTests {
         try await body(UserPreferences(defaults: defaults))
     }
 
-    @Test("A running user starts a run, a walking user a walk")
+    @Test("A running user starts a run, a walking user a walk, a « les deux » user is asked")
     @MainActor
-    func sessionActivityFollowsThePreference() async throws {
+    func startIntentFollowsThePreference() async throws {
         try await withPreferences { preferences in
             let store = TodayStore()
 
+            // One gesture, no question: the mode already answered it. Adding a
+            // tap here would be a regression for a user who has said « marche »
+            // once and for all (issue #224).
             preferences.activityMode = .walking
             store.apply(preferences: preferences)
-            #expect(store.sessionActivity == .walking)
+            #expect(store.startIntent == .start(.walking))
 
             // This is what `TodayScreen` hands `ActiveWalkScreen`, which hands
             // it to the session, which the live client turns into
@@ -42,13 +45,14 @@ struct TodayStoreActivityTests {
             // wrote `.walking` here whatever the user had chosen.
             preferences.activityMode = .running
             store.apply(preferences: preferences)
-            #expect(store.sessionActivity == .running)
+            #expect(store.startIntent == .start(.running))
 
-            // "Les deux" has no per-session picker until #224 — see
-            // `SessionActivityTests.bothFallsBackToWalking`.
+            // « Les deux »: the phone must ask rather than guess. Until #224
+            // this resolved to `.walking`, and every session such a user
+            // recorded went into Santé mislabelled — permanently.
             preferences.activityMode = .both
             store.apply(preferences: preferences)
-            #expect(store.sessionActivity == .walking)
+            #expect(store.startIntent == .ask)
         }
     }
 
@@ -113,6 +117,28 @@ struct TodayStoreActivityTests {
         }
     }
 
+    @Test("Switching only the activity mode re-syncs the Today screen")
+    @MainActor
+    func theModeIsPartOfTheTodayScreenTaskKey() async throws {
+        try await withPreferences { preferences in
+            // `TodayScreen` calls `apply` from `.task(id: todayPreferencesKey(…))`,
+            // so this key is what decides whether a settings change is seen at
+            // all in the session it was made. Without the mode in it, a user
+            // who turns « les deux » on in Réglages taps start and is *not*
+            // asked — the store still mirrors the mode it read at mount — and
+            // every refresh re-publishes that stale mode to the wrist, so the
+            // watch does not ask either (issue #224).
+            var keys: Set<String> = []
+            for mode in ActivityMode.allCases {
+                preferences.activityMode = mode
+                keys.insert(todayPreferencesKey(preferences))
+            }
+            // One distinct key per mode: two modes sharing one means the
+            // switch between them is invisible to `.task(id:)`.
+            #expect(keys.count == ActivityMode.allCases.count)
+        }
+    }
+
     @Test("Switching only the activity mode counts as a change worth publishing")
     @MainActor
     func changingOnlyTheActivityModeIsNoticed() async throws {
@@ -134,7 +160,7 @@ struct TodayStoreActivityTests {
 
             store.apply(preferences: preferences)
             #expect(store.activityMode == .running)
-            #expect(store.sessionActivity == .running)
+            #expect(store.startIntent == .start(.running))
             // And it settles: a preference set that already matches publishes
             // nothing.
             #expect(!store.hasChanged(preferences: preferences))

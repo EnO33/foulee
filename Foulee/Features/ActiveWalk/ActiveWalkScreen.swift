@@ -6,20 +6,49 @@ import SwiftUI
 /// depending on `store.state`.
 struct ActiveWalkScreen: View {
     let minutesGoal: Int
-    /// What Santé will record this session as (issue #223). Comes from the
-    /// user's `ActivityMode`; the per-session picker for "les deux" is #224.
-    let activity: SessionActivity
+    /// What Santé will record this session as (issue #223) — or `.ask` when
+    /// the user is in « les deux » and only they can say (issue #224).
+    ///
+    /// Resolved by `TodayStore`, not here: a `View` body is out of reach of the
+    /// test process, and this is the value the stamp is made of.
+    let intent: ActivityStartIntent
     var onDismiss: (WalkSession) -> Void
+    /// Backed out of the picker without starting anything. Distinct from
+    /// `onDismiss`, which carries a finished session for the home to overlay —
+    /// there is no session here, and registering an empty one would move the
+    /// step baseline for a walk that never happened.
+    var onCancel: () -> Void
 
-    @State private var store = ActiveWalkStore()
+    @State private var store: ActiveWalkStore
     @State private var showRoute = false
+
+    /// The store is a defaulted parameter for the same reason `WatchIdleScreen`
+    /// takes its `onStart` from above: built inside the body it is invisible to
+    /// a test, and the two hops it hides — the `.onAppear` guard that must
+    /// *not* start anything in « les deux », and the answer that carries the
+    /// chosen activity into the session — are where the phone turns a tap into
+    /// a permanent Santé stamp (issue #224). Handed in, a test drives the
+    /// screen that ships and reads what it actually started.
+    init(
+        minutesGoal: Int,
+        intent: ActivityStartIntent,
+        store: ActiveWalkStore = ActiveWalkStore(),
+        onDismiss: @escaping (WalkSession) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        self.minutesGoal = minutesGoal
+        self.intent = intent
+        self.onDismiss = onDismiss
+        self.onCancel = onCancel
+        _store = State(wrappedValue: store)
+    }
 
     var body: some View {
         ZStack {
             SheetBackground()
             content
         }
-        .onAppear { store.start(minutesGoal: minutesGoal, activity: activity) }
+        .onAppear { startIfKnown() }
         .onDisappear { store.reset() }
         .sheet(isPresented: $showRoute) {
             WalkRouteMapView(route: store.route) { showRoute = false }
@@ -28,6 +57,20 @@ struct ActiveWalkScreen: View {
         // it's finished. The closure form fires only on the rising edge.
         .sensoryFeedback(trigger: isActiveState) { _, now in now ? .impact(weight: .medium) : nil }
         .sensoryFeedback(trigger: isFinishedState) { _, now in now ? .success : nil }
+    }
+
+    /// Starts the session as soon as the screen appears — but only when the
+    /// mode already answers the question. In « les deux » it does nothing at
+    /// all: the picker is what the screen shows instead, and nothing may be
+    /// recorded before the user has said what this session is.
+    ///
+    /// A named method rather than the body of `.onAppear`, and internal rather
+    /// than private, because `.onAppear` never fires in a test process: inlined
+    /// there, this guard could be dropped — every « les deux » session silently
+    /// stamped a walk again — with the whole suite green.
+    func startIfKnown() {
+        guard let activity = intent.immediate else { return }
+        store.start(minutesGoal: minutesGoal, activity: activity)
     }
 
     private var isActiveState: Bool {
@@ -44,7 +87,17 @@ struct ActiveWalkScreen: View {
     private var content: some View {
         switch store.state {
         case .idle:
-            ProgressView()
+            // Idle means "nothing started yet", which is where the question
+            // belongs: `.ask` shows the picker, every other mode shows the
+            // brief spinner it always did while `onAppear` starts the session.
+            if case .ask = intent {
+                ActivityChoiceScreen(
+                    onChoose: { store.start(minutesGoal: minutesGoal, activity: $0) },
+                    onCancel: onCancel
+                )
+            } else {
+                ProgressView()
+            }
         case .active(let session):
             walkBody(session: session, paused: false)
         case .paused(let session):
@@ -65,47 +118,6 @@ struct ActiveWalkScreen: View {
         }
         .padding(.top, 60)
         .padding(.bottom, 56)
-    }
-
-    private func finishedBody(session: WalkSession) -> some View {
-        VStack(spacing: 24) {
-            Spacer()
-            ZStack {
-                CelebrationBurst()
-                Image(systemName: FouleeIcon.check)
-                    .font(.system(size: 84, weight: .bold))
-                    .foregroundStyle(FouleeColor.accentGradient)
-                    .symbolEffect(.bounce, value: isFinishedState)
-            }
-            Text("Sortie terminée")
-                .font(FouleeFont.title2)
-            VStack(spacing: 4) {
-                Text(session.elapsed.walkClockText)
-                    .scaledNumericFont(size: 48)
-                Text(finishedSummary(session: session))
-                    .font(FouleeFont.callout)
-                    .foregroundStyle(.secondary)
-            }
-            if let lastError = store.lastError {
-                Text(lastError)
-                    .font(FouleeFont.footnote)
-                    .foregroundStyle(FouleeColor.danger)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-            Spacer()
-            PrimaryButton(title: "Terminer", systemIcon: FouleeIcon.check) { onDismiss(session) }
-                .padding(.horizontal, 24)
-        }
-        .padding(.bottom, 32)
-    }
-
-    private func finishedSummary(session: WalkSession) -> String {
-        var parts = ["\(session.steps.formattedFR) pas", session.distanceKm.kmText()]
-        if session.elevationGainMeters >= 1 {
-            parts.append("↑ \(Int(session.elevationGainMeters)) m")
-        }
-        return parts.joined(separator: " · ")
     }
 
     private func header(paused: Bool) -> some View {
@@ -265,6 +277,52 @@ struct ActiveWalkScreen: View {
 
 }
 
+/// The end-of-session presentation. In an extension so the screen's own
+/// type body stays inside the length budget — and it reads as one piece:
+/// nothing here decides anything, it draws a session that is already over.
+private extension ActiveWalkScreen {
+    func finishedBody(session: WalkSession) -> some View {
+        VStack(spacing: 24) {
+            Spacer()
+            ZStack {
+                CelebrationBurst()
+                Image(systemName: FouleeIcon.check)
+                    .font(.system(size: 84, weight: .bold))
+                    .foregroundStyle(FouleeColor.accentGradient)
+                    .symbolEffect(.bounce, value: isFinishedState)
+            }
+            Text("Sortie terminée")
+                .font(FouleeFont.title2)
+            VStack(spacing: 4) {
+                Text(session.elapsed.walkClockText)
+                    .scaledNumericFont(size: 48)
+                Text(finishedSummary(session: session))
+                    .font(FouleeFont.callout)
+                    .foregroundStyle(.secondary)
+            }
+            if let lastError = store.lastError {
+                Text(lastError)
+                    .font(FouleeFont.footnote)
+                    .foregroundStyle(FouleeColor.danger)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+            Spacer()
+            PrimaryButton(title: "Terminer", systemIcon: FouleeIcon.check) { onDismiss(session) }
+                .padding(.horizontal, 24)
+        }
+        .padding(.bottom, 32)
+    }
+
+    func finishedSummary(session: WalkSession) -> String {
+        var parts = ["\(session.steps.formattedFR) pas", session.distanceKm.kmText()]
+        if session.elevationGainMeters >= 1 {
+            parts.append("↑ \(Int(session.elevationGainMeters)) m")
+        }
+        return parts.joined(separator: " · ")
+    }
+}
+
 private struct ActiveWalkPreview: View {
     init() {
         prepareDependencies {
@@ -273,7 +331,7 @@ private struct ActiveWalkPreview: View {
         }
     }
     var body: some View {
-        ActiveWalkScreen(minutesGoal: 20, activity: .walking, onDismiss: { _ in })
+        ActiveWalkScreen(minutesGoal: 20, intent: .start(.walking), onDismiss: { _ in }, onCancel: {})
     }
 }
 
