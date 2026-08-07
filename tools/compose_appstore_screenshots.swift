@@ -73,18 +73,35 @@ struct Shot {
     var trimBottom: Int = 0
 }
 
+/// Source pixels to shave off a screen captured as a modal sheet on a 6.9"
+/// iPhone, where the dimmed parent shows above it.
+///
+/// Measured, not guessed, and the profile is why this is 210 rather than the
+/// obvious number. The dim tint (R0.834 G0.825 B0.837) is uniform for 186 px
+/// down the middle of the capture — that is where the sheet's top edge sits —
+/// but the sheet has rounded top corners, so at the very edges the dim reaches
+/// 255 px on the left and 295 px on the right. Trimming 186 leaves a grey arc
+/// in both top corners; trimming 295 removes them and eats the sheet's own top
+/// padding, pinning the first row against the card edge. At 210 the residue is
+/// confined to x < 40, which the card's rounded mask covers, and the padding
+/// survives. Verified by rendering all three values and looking at them.
+///
+/// 6.9" only. The other families must be re-measured against their own
+/// captures rather than inheriting this number.
+let sheetDimBand = 210
+
 let shots: [Shot] = [
     // iPhone 6.9"
     Shot(family: .iphone, file: "01_onboarding", lines: ["Bouge un peu,", "chaque jour"]),
     Shot(family: .iphone, file: "02_home", lines: ["Ta journée,", "en un coup d'œil"], scrolls: true),
-    Shot(family: .iphone, file: "03_walk", lines: ["Suis ta sortie", "en direct"]),
-    Shot(family: .iphone, file: "04_streak", lines: ["Garde ta", "série vivante"], scrolls: true),
+    Shot(family: .iphone, file: "03_session", lines: ["Suis ta sortie", "en direct"]),
+    Shot(family: .iphone, file: "04_streak", lines: ["Garde ta", "série vivante"], scrolls: true, trimTop: sheetDimBand),
     Shot(family: .iphone, file: "05_stats", lines: ["Visualise", "tes progrès"], scrolls: true),
     Shot(family: .iphone, file: "06_minutes", lines: ["Chaque métrique", "compte"], scrolls: true),
     Shot(family: .iphone, file: "07_hydration", lines: ["N'oublie plus", "de boire"], scrolls: true),
-    Shot(family: .iphone, file: "08_summary", lines: ["Tout ton", "historique"], scrolls: true),
+    Shot(family: .iphone, file: "08_summary", lines: ["Tout ton", "historique"], scrolls: true, trimTop: sheetDimBand),
     Shot(family: .iphone, file: "09_settings", lines: ["Tes objectifs,", "ton rythme"], scrolls: true),
-    Shot(family: .iphone, file: "10_weather", lines: ["La météo,", "avant de sortir"]),
+    Shot(family: .iphone, file: "10_weather", lines: ["La météo,", "avant de sortir"], trimTop: sheetDimBand),
 
     // iPad 13"
     Shot(family: .ipad, file: "01_onboarding-ipad", lines: ["Bouge un peu,", "chaque jour"]),
