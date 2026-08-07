@@ -225,8 +225,30 @@ struct WidgetSnapshot: Codable, Sendable {
 enum SharedStore {
     static let suiteName = "group.com.eno33.foulee"
 
+    #if DEBUG
+    /// The suite reads and writes actually go to. Production is `suiteName`,
+    /// and the only thing that ever moves it is the screenshot capture mode
+    /// (`ScreenshotMode.activateIfRequested`), which points it at a throwaway
+    /// domain before any store exists to read it.
+    ///
+    /// The seam lives here rather than at the call sites because two of them
+    /// reach the app group on a capture run — the Aujourd'hui refresh and the
+    /// hydration refresh — and a fabricated snapshot must not land in the real
+    /// group under any of them. It would land there stamped with the *real*
+    /// day, too: `write` reads the wall clock, not the injected `date`
+    /// dependency, so the widgets would take seeded numbers for today's
+    /// genuine ones.
+    ///
+    /// `nonisolated(unsafe)`: assigned once, from `FouleeApp.init()`, before
+    /// anything has read it. Debug-only, so a Release build has no way to point
+    /// this anywhere but the app group.
+    nonisolated(unsafe) static var activeSuiteName = suiteName
+    #else
+    static let activeSuiteName = suiteName
+    #endif
+
     private static let key = "widget.snapshot"
-    private static var defaults: UserDefaults? { UserDefaults(suiteName: suiteName) }
+    private static var defaults: UserDefaults? { UserDefaults(suiteName: activeSuiteName) }
 
     static func write(_ snapshot: WidgetSnapshot) {
         // Stamp the write day so readers can tell today's totals from

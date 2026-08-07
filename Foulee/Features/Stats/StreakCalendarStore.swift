@@ -53,6 +53,12 @@ final class StreakCalendarStore {
     @ObservationIgnored
     @Dependency(\.healthKit) private var healthKit
 
+    /// Same clock `TodayStore` reads, for the same reason: the months the sheet
+    /// browses and the streak it recomputes must be measured against one
+    /// instant, and one a caller can pin (issue #235).
+    @ObservationIgnored
+    @Dependency(\.date) private var date
+
     init(goalMinutes: Int, goalSteps: Int, activeDays: Set<Weekday>) {
         self.goalMinutes = goalMinutes
         self.goalSteps = goalSteps
@@ -71,14 +77,14 @@ final class StreakCalendarStore {
             steps: steps,
             goalMinutes: goalMinutes,
             activeDays: activeDays,
-            today: .now,
+            today: date.now,
             count: Self.monthsBack
         )
         currentStreak = StreakCalculator.current(
             history: history,
             goalMinutes: goalMinutes,
             activeWeekdays: activeDays.calendarWeekdays,
-            today: .now
+            today: date.now
         )
         bestStreak = StreakCalculator.best(
             history: history,

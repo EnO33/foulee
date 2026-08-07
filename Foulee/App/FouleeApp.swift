@@ -11,6 +11,13 @@ struct FouleeApp: App {
     static let refreshTaskID = "com.eno33.foulee.refresh"
 
     init() {
+        #if DEBUG
+        // First statement on purpose, and DEBUG-only: `prepareDependencies`
+        // must run before anything resolves a dependency, and a Release build
+        // does not compile `ScreenshotMode` at all (issue #235). Without the
+        // `-FouleeScreenshotMode` launch argument this is a no-op.
+        ScreenshotMode.activateIfRequested()
+        #endif
         // Handle hydration reminder action taps ("J'ai bu" / "Rappelle-moi"),
         // including when iOS launches the app in the background to do so.
         HydrationNotificationCenter.shared.configure()
@@ -24,8 +31,19 @@ struct FouleeApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(defaults: Self.preferencesDefaults)
         }
+    }
+
+    /// Where the app reads the user's preferences from — always `.standard`,
+    /// except during a screenshot capture, which gets a throwaway suite so it
+    /// can seed goals and a theme without touching the real install.
+    private static var preferencesDefaults: UserDefaults {
+        #if DEBUG
+        ScreenshotMode.preferencesDefaults ?? .standard
+        #else
+        .standard
+        #endif
     }
 
     private static let registerAppRefreshOnce: Void = {

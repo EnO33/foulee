@@ -13,6 +13,8 @@ struct StreakCalendarStoreTests {
         }
         let failing = LockedRef(true)
         await withDependencies {
+            // The store reads the clock to decide which months it browses.
+            $0.date = .constant(.now)
             $0.healthKit.dailyMinutes = { _ in
                 if failing.value { throw Boom() }
                 return []

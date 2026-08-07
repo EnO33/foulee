@@ -354,6 +354,23 @@ let project = Project(
                 .target(name: "Foulee")
             ]
         ),
+        // App Store capture target (issue #235). A UI test bundle, not a unit
+        // one: it drives the shipped app from another process, launches it with
+        // `-FouleeScreenshotMode` and photographs each screen. Deliberately
+        // absent from the `Foulee` scheme's test action — CI's "Test (iOS)"
+        // step must keep running the unit suite only, not boot a simulator to
+        // take pictures on every pull request.
+        .target(
+            name: "FouleeScreenshots",
+            destinations: [.iPhone],
+            product: .uiTests,
+            bundleId: "\(bundleIdBase).screenshots",
+            deploymentTargets: deploymentTargets,
+            sources: ["FouleeScreenshots/**"],
+            dependencies: [
+                .target(name: "Foulee")
+            ]
+        ),
         .target(
             name: "FouleeWatchTests",
             destinations: [.appleWatch],
@@ -379,6 +396,13 @@ let project = Project(
             shared: true,
             buildAction: .buildAction(targets: ["Foulee"]),
             testAction: .targets(["FouleeTests"]),
+            runAction: .runAction(executable: "Foulee")
+        ),
+        .scheme(
+            name: "FouleeScreenshots",
+            shared: true,
+            buildAction: .buildAction(targets: ["Foulee", "FouleeScreenshots"]),
+            testAction: .targets(["FouleeScreenshots"]),
             runAction: .runAction(executable: "Foulee")
         ),
         .scheme(
