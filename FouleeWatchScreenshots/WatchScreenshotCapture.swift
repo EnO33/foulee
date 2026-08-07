@@ -10,6 +10,11 @@ import XCTest
 /// spelling so a rename can't silently detach the two halves — the failure mode
 /// being a run that photographs an empty simulator's zeros and calls them a
 /// store screenshot.
+///
+/// That pin reads **this file's text**, not just the constant: nothing else in
+/// CI does. This target is absent from the `FouleeWatch` scheme's test action
+/// and from `.swiftlint.yml`'s `included:`, so a rename here would otherwise
+/// compile and lint clean and only surface on release day.
 enum WatchScreenshotCapture {
     /// Must equal `WatchScreenshotMode.launchArgument`.
     static let launchArgument = "-FouleeScreenshotMode"

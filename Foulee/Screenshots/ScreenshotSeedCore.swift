@@ -94,8 +94,15 @@ enum ScreenshotSeed {
         Double(steps) * metresPerStep / 1_000
     }
 
+    /// The seeded day's energy, split so the two halves can be named. The base
+    /// is the resting share a day carries whatever it does; only the marginal
+    /// rate belongs to the minutes actually moved — which is why a *session*
+    /// costs `kcalPerActiveMinute` per minute and not the day's average.
+    private static let baseCalories = 140.0
+    private static let kcalPerActiveMinute = 5.85
+
     static func calories(minutes: Int) -> Int {
-        Int((140 + Double(minutes) * 5.85).rounded())
+        Int((baseCalories + Double(minutes) * kcalPerActiveMinute).rounded())
     }
 
     // MARK: - Session in progress
@@ -115,10 +122,24 @@ enum ScreenshotSeed {
 
     /// Watch-only: the live session screen shows a calorie count and a heart
     /// rate the phone's has no sensor for. Kept beside the rest of the session
-    /// numbers rather than in the watch folder — one place holds a session, and
-    /// 136 kcal is what the seeded history's own rate (7,4 kcal per active
-    /// minute) gives for 18,4 minutes.
-    static let sessionCalories = 136
+    /// numbers rather than in the watch folder — one place holds a session.
+    ///
+    /// It does **not** match the phone board's `99 kcal` for the same walk, and
+    /// that is the honest answer rather than an oversight: the phone has no
+    /// energy sensor, so `WalkSession.estimatedCalories` multiplies steps by
+    /// `SessionActivity.kcalPerStep`, while a watch-recorded session carries
+    /// measured energy — which is exactly why `WorkoutSummary` prefers the
+    /// watch's number over the phone's estimate when both exist.
+    ///
+    /// What it must be is *derivable*, and this is where the previous value of
+    /// 136 was wrong: it was defended by "7,4 kcal per active minute", a rate
+    /// that appears nowhere in this file. The seeded day's marginal rate is
+    /// `kcalPerActiveMinute`, so 18,4 minutes of it is 108 kcal.
+    /// `ScreenshotSeedTests` pins both this and the phone's estimate.
+    static var sessionCalories: Int {
+        Int((sessionElapsed / 60 * kcalPerActiveMinute).rounded())
+    }
+
     static let sessionHeartRate = 118
 }
 #endif

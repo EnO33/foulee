@@ -215,13 +215,23 @@ Four things worth knowing:
 #### Apple Watch — one command
 
 ```bash
-tools/capture_screenshots.sh --watch                            # 46 mm
-tools/capture_screenshots.sh --watch "Apple Watch Ultra 3 (49mm)"
+tools/capture_screenshots.sh --watch                                    # 46 mm
+tools/capture_screenshots.sh --watch "Apple Watch SE 3 (40mm)" probe-40  # a probe
 ```
 
 Same script, same result bundle, same export; another platform, another scheme
 (`FouleeWatchScreenshots`) and another folder — the three PNGs land in
 `appstore-screenshots/raw/watch/`. About a minute.
+
+**Only the 46 mm run may omit the set name.** The `watch` folder is the one the
+composer reads, and it accepts 416 × 496 and nothing else; another watch grabs
+another size (`Apple Watch Ultra 3 (49mm)` grabs 422 × 514), so a run that
+defaulted into `watch/` would overwrite a good set with files the composer then
+rejects one by one. The script now takes one throwaway grab after boot and
+refuses that case before writing anything. A named set is never checked — it is
+a probe, it is not composed, and it cannot clobber the real one. Probes are
+worth running: the 40 mm is the smallest wrist the app ships on and the first
+place a layout runs out of room.
 
 The watch has its **own** capture mode (issue #239), because the phone's is a
 set of `@Dependency` doubles and the watch target has no dependency container:
@@ -232,7 +242,7 @@ return on it — the home serves `ScreenshotSeed`, « Démarrer » shows a seede
 session with no `HKWorkoutSession` behind it, and the observers, the background
 delivery and the crash-recovery write are all skipped.
 
-Three things worth knowing, beyond the four listed for the iPhone (which all
+Five things worth knowing, beyond the four listed for the iPhone (which all
 hold here too — compiled out of Release, explicit argument, runtime is part of
 the output, nothing tracked by git):
 
@@ -250,6 +260,34 @@ the output, nothing tracked by git):
   identical files and two runs across a minute boundary differ in those few
   hundred pixels alone. Nothing else varies — and never crop it out (see the
   rules below).
+
+  Two consequences, both of them the operator's to carry:
+
+  - **Issue #239's « deux exécutions produisent des fichiers identiques » is not
+    literally true on the watch, and must not be ticked as if it were.** Two
+    consecutive runs give six different md5s. A pixel diff says why, and says it
+    narrowly: every differing pixel on all three boards falls in
+    **x 306…383, y 39…63 counted from the bottom** — the clock glyphs, 1 098 of
+    206 336 pixels — and nowhere else. (The count moves with which digits
+    changed; the box does not.) Restate the criterion when closing: *identical
+    except the watchOS clock overlay, bounded to the top-right corner*. A ticked
+    box would otherwise read as a byte-for-byte guarantee the tooling cannot
+    give.
+  - **The overlay is the host's wall clock, so run the watch capture at a time
+    that reads plausibly beside the iPhone boards**, which `simctl status_bar`
+    pins to Apple's 09:41. A listing carrying 09:41 on the phone and 17:52 on
+    the wrist is the kind of detail a reviewer notices. No app content sits
+    under the corner any more (see below), so the only thing left to get right
+    is the hour on the clock.
+- **No board may put content under that corner.** The live session screen used
+  to: a bare `VStack` with a 38 pt elapsed clock at the top overflowed its
+  container at both ends, which pushed the clock up into the overlay — the two
+  overprinted into unreadable glyphs on the finished board — and pushed
+  « Arrêter » off the bottom. On a 40 mm SE the stop button was off screen
+  entirely, with nothing to scroll: **a session could not be stopped**.
+  `WatchActiveWalkView` is a scroll view now, so its content starts below the
+  system time like the home's does. If a future watch screen draws large text
+  across the top, check it on the 40 mm probe before capturing.
 - **The watch is uninstalled first**, which clears its app-group container, so
   « Démarrer » starts a session outright instead of asking which activity. That
   question depends on what the phone last synced; the uninstall is what keeps
@@ -295,6 +333,16 @@ watch capture scrolls to the bottom, which clamps, rather than to a card):
   not a button cut in half — meets the bottom of the display. Screens flagged
   `scrolls: true` also get a short fade into the background, so what remains
   reads as "there's more below" instead of a bad crop.
+
+  One board knowingly breaks the *top* half of that rule, and it is a choice
+  rather than an oversight: `watch-02-hydration` scrolls to the clamped bottom
+  of the watch home, and the window that lands there begins mid-tile — the
+  bottom sliver of the stats grid, two orphan « km » and « kcal » labels above
+  the hydration card. The fade only softens the bottom of a board, so nothing
+  hides it. The alternative is parking the scroll partway up, and a partial
+  scroll is exactly what is not reproducible: only the clamped end gives the
+  same pixels whatever the swipe momentum did. Reproducibility wins; if that
+  ever stops being true, reframe the shot rather than leaving both broken.
 
 ### 9.2 Compose
 

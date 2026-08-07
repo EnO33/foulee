@@ -76,9 +76,23 @@ struct WatchScreenshotModeTests {
     /// `FouleeWatchScreenshots` spells the argument as a literal. Pinning the
     /// exact string here is what keeps a rename from silently turning every
     /// watch capture into a photograph of an empty simulator's zeros.
+    ///
+    /// Both sides, not just this one — pinning only the constant pins the copy
+    /// that cannot drift. `FouleeWatchScreenshots` is a separate target, absent
+    /// from the `FouleeWatch` scheme's test action *and* from `.swiftlint.yml`'s
+    /// `included:`, so a rename over there compiles and lints clean: verified by
+    /// changing its literal to `-FouleeScreenshotModeXX`, after which this whole
+    /// suite still passed 63/63. The capture run itself does fail loudly rather
+    /// than shipping zeros (it exits 65 on the hydration card that never
+    /// appears, and never reaches the export), but that is a manual release-day
+    /// run, and the point of a pin is not to wait for one.
     @Test("The launch argument keeps the spelling the capture target passes")
-    func launchArgumentSpelling() {
+    func launchArgumentSpelling() throws {
         #expect(WatchScreenshotMode.launchArgument == "-FouleeScreenshotMode")
+        let uiTestSource = try Self.strippedSource(
+            at: "FouleeWatchScreenshots/WatchScreenshotCapture.swift"
+        )
+        #expect(uiTestSource.contains("\"\(WatchScreenshotMode.launchArgument)\""))
     }
 
     // MARK: - The same day as the phone
@@ -193,10 +207,7 @@ struct WatchScreenshotModeTests {
         // A scan that found nothing would pass every assertion below.
         #expect(files.count >= 2)
         for file in files {
-            let code = try String(contentsOf: file, encoding: .utf8)
-                .split(separator: "\n", omittingEmptySubsequences: false)
-                .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
-                .joined(separator: "\n")
+            let code = try Self.strippedSource(at: file)
             for symbol in forbidden {
                 // Through a `Bool` rather than inline, so a failure reports the
                 // file and the symbol instead of dumping the whole source.
@@ -206,11 +217,71 @@ struct WatchScreenshotModeTests {
         }
     }
 
-    /// `FouleeWatch/Screenshots/`, resolved from this file rather than from a
-    /// bundle: the sources are not shipped into the test bundle, and the only
-    /// path that survives is the one the compiler recorded.
-    private static let captureSourceDirectory = URL(filePath: #filePath)
+    // MARK: - Wired in, not merely present
+
+    /// The other side of the scan above: that the guards *exist*, in every one
+    /// of the six places `WatchScreenshotMode`'s doc comment claims, and that
+    /// the flag they read is actually set at launch.
+    ///
+    /// This is not belt-and-braces. Deleting all six guards and the
+    /// `activateIfRequested()` call — the whole feature disconnected,
+    /// `WatchScreenshotMode` still compiling but read by nobody — left this
+    /// suite passing 63/63. The reason is structural rather than sloppy: the
+    /// seeded paths are deliberately driven through `applyScreenshotSeed()` and
+    /// `startScreenshotSession()` directly, because activating a process-global
+    /// from a test would make every assertion here depend on test ordering. The
+    /// cost of that choice is that the *callers* go unasserted, and a source
+    /// scan — the same cheap, decidable technique this file already uses — is
+    /// what buys them back.
+    ///
+    /// The counts matter as much as the presence: three guards in
+    /// `WatchTodayStore` and not one, or the whole file would still pass with
+    /// « J'ai bu » writing to Santé on camera.
+    @Test("Capture mode is wired into every entry point it claims to guard")
+    func captureModeIsWiredIn() throws {
+        let sites: [(path: String, symbol: String, expected: Int)] = [
+            // load(), startObserving(), logGlass()
+            ("FouleeWatch/Today/WatchTodayStore.swift", "WatchScreenshotMode.isActive", 3),
+            // start(activity:)
+            ("FouleeWatch/Walk/WatchWorkoutStore.swift", "WatchScreenshotMode.isActive", 1),
+            // run()
+            ("FouleeWatch/Walk/WatchWorkoutRecovery.swift", "WatchScreenshotMode.isActive", 1),
+            // start()
+            ("FouleeWatch/Health/WatchWaterBackgroundDelivery.swift", "WatchScreenshotMode.isActive", 1),
+            // …and the one call that can ever turn the flag on.
+            ("FouleeWatch/App/FouleeWatchApp.swift", "WatchScreenshotMode.activateIfRequested()", 1)
+        ]
+        for site in sites {
+            // Throws if the file moved: a rename must fail here rather than
+            // quietly scan nothing.
+            let code = try Self.strippedSource(at: site.path)
+            let found = code.components(separatedBy: site.symbol).count - 1
+            #expect(found == site.expected, "\(site.path): \(found) × \(site.symbol), expected \(site.expected)")
+        }
+    }
+
+    // MARK: - Reading the checkout
+
+    /// The repository root, resolved from this file rather than from a bundle:
+    /// the sources are not shipped into the test bundle, and the only path that
+    /// survives is the one the compiler recorded.
+    private static let repositoryRoot = URL(filePath: #filePath)
         .deletingLastPathComponent()   // FouleeWatchTests/
         .deletingLastPathComponent()   // repository root
-        .appending(path: "FouleeWatch/Screenshots")
+
+    private static let captureSourceDirectory = repositoryRoot.appending(path: "FouleeWatch/Screenshots")
+
+    /// A source file with its comment lines dropped, so a scan matches code and
+    /// not prose — which is what lets the prose in those files name freely what
+    /// the code may not.
+    private static func strippedSource(at path: String) throws -> String {
+        try strippedSource(at: repositoryRoot.appending(path: path))
+    }
+
+    private static func strippedSource(at url: URL) throws -> String {
+        try String(contentsOf: url, encoding: .utf8)
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
+            .joined(separator: "\n")
+    }
 }

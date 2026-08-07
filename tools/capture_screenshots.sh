@@ -11,7 +11,7 @@
 #   tools/capture_screenshots.sh 02175924-56FF-…-0216   # a UDID, when a name is
 #                                                       # ambiguous
 #   tools/capture_screenshots.sh --watch                # Apple Watch 46 mm
-#   tools/capture_screenshots.sh --watch "Apple Watch Ultra 3 (49mm)"
+#   tools/capture_screenshots.sh --watch "Apple Watch SE 3 (40mm)" probe-40mm
 #
 # The first argument is a simulator NAME or a UDID. A name shared by two
 # available simulators is refused rather than resolved: the runtime a same-named
@@ -19,6 +19,16 @@
 # between iOS 26.0 and 26.5 on the same device model — so picking one silently
 # would make "the same numbers whatever day it is run" quietly depend on which
 # runtimes happen to be installed.
+#
+# The SECOND argument is the output set, and it is only optional when the device
+# is the one the default set is sized for. Run another device without naming a
+# set and the script refuses instead of writing: the default folders feed
+# `compose_appstore_screenshots.swift`, which accepts exactly one resolution per
+# family, so an off-size run into `watch/` would overwrite a good set with grabs
+# the composer then rejects one by one. Verified: `Apple Watch Ultra 3 (49mm)`
+# grabs 422 × 514, and three of those in `watch/` compose 0 boards. A set name
+# other than the default is never checked — it is a probe (a smaller wrist, a
+# second runtime), it is not composed, and it cannot clobber the real one.
 #
 # `--watch` runs the wrist half: another platform, another scheme, another
 # output folder, and no status-bar pinning (watchOS refuses it — see below).
@@ -36,7 +46,8 @@ fi
 
 if [ "$PLATFORM" = "watchOS" ]; then
   DEVICE="${1:-Apple Watch Series 11 (46mm)}"   # 416 × 496, the App Store size
-  SET_NAME="${2:-watch}"
+  DEFAULT_SET="watch"
+  DEFAULT_SET_SIZE="416x496"
   SCHEME="FouleeWatchScreenshots"
   SIMULATOR_PLATFORM="watchOS Simulator"
   BUNDLE_ID="com.eno33.foulee.watchkitapp"
@@ -45,7 +56,8 @@ if [ "$PLATFORM" = "watchOS" ]; then
   NAME_PATTERN='^(watch-\d\d-[a-z]+)'
 else
   DEVICE="${1:-iPhone 17 Pro Max}"   # 6.9" — 1320 × 2868, the App Store size
-  SET_NAME="${2:-iphone-6.9}"
+  DEFAULT_SET="iphone-6.9"
+  DEFAULT_SET_SIZE="1320x2868"
   SCHEME="FouleeScreenshots"
   SIMULATOR_PLATFORM="iOS Simulator"
   BUNDLE_ID="com.eno33.foulee"
@@ -54,6 +66,7 @@ else
   # screenshots, activity logs, the screen recording) is not ours.
   NAME_PATTERN='^(\d\d_[a-z]+)'
 fi
+SET_NAME="${2:-$DEFAULT_SET}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_DIR="$REPO_ROOT/appstore-screenshots/raw/$SET_NAME"
@@ -107,6 +120,35 @@ fi
 echo "==> Booting $UDID"
 xcrun simctl boot "$UDID" >/dev/null 2>&1 || true
 xcrun simctl bootstatus "$UDID" -b >/dev/null
+
+# Guard the default set against a device it isn't sized for, before the run
+# writes anything. `$OUTPUT_DIR` may already hold the set that is about to be
+# uploaded, and this script's own export overwrites file by file — so a wrong
+# device pointed at the default folder destroys a good capture and leaves
+# behind grabs the composer refuses. One throwaway grab is enough to know.
+if [ "$SET_NAME" = "$DEFAULT_SET" ]; then
+  PROBE="$WORK_DIR/probe.png"
+  xcrun simctl io "$UDID" screenshot "$PROBE" >/dev/null 2>&1
+  PROBE_SIZE="$(sips -g pixelWidth -g pixelHeight "$PROBE" \
+    | awk '/pixelWidth/ { w = $2 } /pixelHeight/ { h = $2 } END { print w "x" h }')"
+  if [ "$PROBE_SIZE" != "$DEFAULT_SET_SIZE" ]; then
+    if [ "$PLATFORM" = "watchOS" ]; then WATCH_FLAG="--watch "; else WATCH_FLAG=""; fi
+    cat >&2 <<EOF
+Refusing to write appstore-screenshots/raw/$DEFAULT_SET/.
+
+  "$DEVICE" grabs $PROBE_SIZE, and that set is $DEFAULT_SET_SIZE — the only size
+  compose_appstore_screenshots.swift accepts for it. Running it here would
+  overwrite the set with grabs the composer then rejects one by one.
+
+Name the run's own set if it is a probe (a smaller wrist, a second runtime):
+
+  tools/capture_screenshots.sh $WATCH_FLAG"$DEVICE" my-probe
+
+or pass a device that grabs $DEFAULT_SET_SIZE.
+EOF
+    exit 1
+  fi
+fi
 
 if [ "$PLATFORM" = "watchOS" ]; then
   # No status bar to pin: watchOS answers `status_bar override` with "Status

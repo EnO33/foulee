@@ -113,7 +113,10 @@ let shots: [Shot] = [
     // Apple Watch
     Shot(family: .watch, file: "watch-01-today", lines: ["Ta série", "au poignet"], scrolls: true),
     Shot(family: .watch, file: "watch-02-hydration", lines: ["Bois,", "d'un tap"], scrolls: true),
-    Shot(family: .watch, file: "watch-03-session", lines: ["Ta sortie", "en direct"])
+    // `scrolls` like the other two: the live session screen is a scroll view
+    // (« Arrêter » has to stay reachable on a 40 mm wrist), so the board cuts
+    // below the metric tiles and the fade is what says so.
+    Shot(family: .watch, file: "watch-03-session", lines: ["Ta sortie", "en direct"], scrolls: true)
 ]
 
 // MARK: - Layout

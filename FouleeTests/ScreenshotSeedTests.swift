@@ -177,4 +177,38 @@ struct ScreenshotSeedTests {
             #expect(workout.endedAt <= ScreenshotSeed.instant)
         }
     }
+
+    /// The session-in-progress boards show one walk on two devices, and the two
+    /// numbers under the flame differ — 99 kcal on the phone, 108 on the wrist.
+    /// That is deliberate (the phone estimates from steps, the watch measures),
+    /// but it is the kind of deliberate that rots into a typo nobody can date.
+    /// So both are pinned here, each against the rule it comes from, and the
+    /// wrist's is asserted to be the *larger* of the two — the direction the
+    /// product claims.
+    @Test("Both session boards' calories come from a rule, not from a guess")
+    func sessionCaloriesAreDerivedOnBothDevices() {
+        // Phone: steps × the activity's per-step estimate (no energy sensor).
+        let phone = WalkSession(
+            startedAt: ScreenshotSeed.instant,
+            steps: ScreenshotSeed.sessionSteps,
+            distanceMeters: ScreenshotSeed.sessionDistanceMeters,
+            activity: .walking
+        )
+        #expect(phone.estimatedCalories == 99)
+
+        // Watch: the seeded day's own marginal rate over the session's minutes.
+        // The rate is recovered from `calories(minutes:)` itself rather than
+        // restated, so this fails if the two ever stop being the same rule.
+        // Over 100 minutes so the function's rounding can't blur it.
+        let marginalPerMinute = Double(
+            ScreenshotSeed.calories(minutes: 100) - ScreenshotSeed.calories(minutes: 0)
+        ) / 100
+        #expect(marginalPerMinute == 5.85)
+        #expect(
+            ScreenshotSeed.sessionCalories
+                == Int((ScreenshotSeed.sessionElapsed / 60 * marginalPerMinute).rounded())
+        )
+        #expect(ScreenshotSeed.sessionCalories == 108)
+        #expect(ScreenshotSeed.sessionCalories > phone.estimatedCalories)
+    }
 }

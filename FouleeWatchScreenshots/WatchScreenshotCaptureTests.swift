@@ -40,6 +40,13 @@ final class WatchScreenshotCaptureTests: XCTestCase {
 
     /// The hydration card sits below the stats grid, so this one is the home
     /// scrolled down — the same framing the iPhone's `07_hydration` uses.
+    ///
+    /// It lands mid-tile at the top: the clamped bottom of this home puts the
+    /// last sliver of the stats grid on screen, so the board opens on two
+    /// orphan « km » and « kcal » labels. Stated rather than stumbled into —
+    /// the only alternative is parking the scroll partway up, and a partial
+    /// scroll is the one thing here that would not be reproducible. See the
+    /// scrolling rule in docs/RELEASE.md § 9.1.
     private func captureHydration(_ app: XCUIApplication) {
         for _ in 0..<Self.scrollSwipes { app.swipeUp() }
         waitForWatchScreen(app.buttons["J'ai bu"], "Hydration card")
