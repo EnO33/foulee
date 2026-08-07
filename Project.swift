@@ -224,11 +224,19 @@ let project = Project(
                 "Foulee/Walk/WalkActivityAttributes.swift",
                 "Foulee/Shared/WalkFormatting.swift",
                 "Foulee/Shared/NumberFormatting.swift",
-                // Only the glyph names, not `ActivityMode`: this extension has
-                // no app-group entitlement and no channel to the preference
-                // (issue #225). What it needs is the neutral figure, spelled
-                // once (issue #222).
-                "Foulee/Shared/ActivityGlyph.swift"
+                // The glyph names plus the activity vocabulary the attributes
+                // now carry (issue #225): this extension still has no
+                // app-group entitlement and no channel to the *preference*,
+                // but `WalkActivityAttributes.activity` hands it what the
+                // session in flight is, so it must be able to decode a
+                // `SessionActivity`. `ActivityMode` rides along only because
+                // `SessionActivity.init(mode:)` names it — same transitive
+                // reason the watch target lists it. All three Foundation-only;
+                // `SessionActivity+HealthKit` deliberately stays out, so no
+                // HealthKit is pulled into an extension that writes nothing.
+                "Foulee/Shared/ActivityGlyph.swift",
+                "Foulee/Shared/SessionActivity.swift",
+                "Foulee/Preferences/ActivityMode.swift"
             ],
             resources: [
                 .glob(
@@ -346,6 +354,23 @@ let project = Project(
                 .target(name: "Foulee")
             ]
         ),
+        // App Store capture target (issue #235). A UI test bundle, not a unit
+        // one: it drives the shipped app from another process, launches it with
+        // `-FouleeScreenshotMode` and photographs each screen. Deliberately
+        // absent from the `Foulee` scheme's test action — CI's "Test (iOS)"
+        // step must keep running the unit suite only, not boot a simulator to
+        // take pictures on every pull request.
+        .target(
+            name: "FouleeScreenshots",
+            destinations: [.iPhone],
+            product: .uiTests,
+            bundleId: "\(bundleIdBase).screenshots",
+            deploymentTargets: deploymentTargets,
+            sources: ["FouleeScreenshots/**"],
+            dependencies: [
+                .target(name: "Foulee")
+            ]
+        ),
         .target(
             name: "FouleeWatchTests",
             destinations: [.appleWatch],
@@ -371,6 +396,13 @@ let project = Project(
             shared: true,
             buildAction: .buildAction(targets: ["Foulee"]),
             testAction: .targets(["FouleeTests"]),
+            runAction: .runAction(executable: "Foulee")
+        ),
+        .scheme(
+            name: "FouleeScreenshots",
+            shared: true,
+            buildAction: .buildAction(targets: ["Foulee", "FouleeScreenshots"]),
+            testAction: .targets(["FouleeScreenshots"]),
             runAction: .runAction(executable: "Foulee")
         ),
         .scheme(

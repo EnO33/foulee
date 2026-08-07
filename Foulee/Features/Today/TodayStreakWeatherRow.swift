@@ -13,9 +13,14 @@ struct TodayStreakWeatherRow: View {
             Button(action: onStreakTap) { streakCard }
                 .buttonStyle(.pressable)
                 .accessibilityHint("Voir les statistiques de minutes")
+                // Identifiers, not labels: the two cards are read out by their
+                // contents, which change with the data, so the screenshot
+                // target (issue #235) needs a stable handle to tap.
+                .accessibilityIdentifier(TodayAccessibility.streakCard)
             Button(action: onWeatherTap) { weatherCard }
                 .buttonStyle(.pressable)
                 .accessibilityHint("Voir le détail météo")
+                .accessibilityIdentifier(TodayAccessibility.weatherCard)
         }
     }
 

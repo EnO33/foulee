@@ -11,6 +11,13 @@ struct FouleeApp: App {
     static let refreshTaskID = "com.eno33.foulee.refresh"
 
     init() {
+        #if DEBUG
+        // First statement on purpose, and DEBUG-only: `prepareDependencies`
+        // must run before anything resolves a dependency, and a Release build
+        // does not compile `ScreenshotMode` at all (issue #235). Without the
+        // `-FouleeScreenshotMode` launch argument this is a no-op.
+        ScreenshotMode.activateIfRequested()
+        #endif
         // Handle hydration reminder action taps ("J'ai bu" / "Rappelle-moi"),
         // including when iOS launches the app in the background to do so.
         HydrationNotificationCenter.shared.configure()
@@ -24,8 +31,19 @@ struct FouleeApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(defaults: Self.preferencesDefaults)
         }
+    }
+
+    /// Where the app reads the user's preferences from — always `.standard`,
+    /// except during a screenshot capture, which gets a throwaway suite so it
+    /// can seed goals and a theme without touching the real install.
+    private static var preferencesDefaults: UserDefaults {
+        #if DEBUG
+        ScreenshotMode.preferencesDefaults ?? .standard
+        #else
+        .standard
+        #endif
     }
 
     private static let registerAppRefreshOnce: Void = {
@@ -52,6 +70,15 @@ struct FouleeApp: App {
     // without this it sits on the Lock Screen as "en cours" for hours.
     // Once-gated: SwiftUI can re-construct FouleeApp mid-walk, and a second
     // sweep would kill the legitimate live activity.
+    //
+    // An app *update* lands on the same path — this is what bounds how long an
+    // activity started by a previous build can survive the change of attributes
+    // shape (#225): the first launch of the new binary, foreground or
+    // background, ends it. It runs after the extension has had the chance to
+    // re-render that activity, so the sweep is the cleanup and the tolerant
+    // decode is what has to hold in the window — see
+    // WalkActivityAttributes.init(from:), which is also explicit about which
+    // half of that story is verified and which is reasoned.
     private static let endOrphanedWalkActivitiesOnce: Void = {
         Task {
             for activity in Activity<WalkActivityAttributes>.activities {

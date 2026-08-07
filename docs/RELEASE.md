@@ -165,48 +165,86 @@ resolution — App Store Connect accepts exactly these, and the composer refuses
 any raw that doesn't measure them (it lists the offenders and exits non-zero,
 just like a missing capture):
 
-| Folder | Simulator | Native resolution |
-|--------|-----------|-------------------|
-| `iphone-6.9` | iPhone 17 Pro Max (any 6.9" iPhone) | 1320 × 2868 |
-| `ipad-13` | iPad Pro 13-inch (M4 or M5) | 2064 × 2752 |
-| `watch` | Apple Watch Series 10 / 11 (46 mm) | 416 × 496 |
+| Folder | Simulator | Native resolution | Automated? |
+|--------|-----------|-------------------|------------|
+| `iphone-6.9` | iPhone 17 Pro Max (any 6.9" iPhone) | 1320 × 2868 | yes |
+| `ipad-13` | iPad Pro 13-inch (M4 or M5) | 2064 × 2752 | no — by hand |
+| `watch` | Apple Watch Series 10 / 11 (46 mm) | 416 × 496 | no — by hand |
 
-`xcrun simctl io <device> screenshot` on any of those writes exactly that
-resolution, which is why the raws need no resizing at all.
+#### iPhone — one command
 
-`appstore-screenshots/` is gitignored, so a fresh clone has no folders to write
-into and `simctl io` fails with `No such file or directory`. Create the raw
-tree once:
-
-```sh
-mkdir -p appstore-screenshots/raw/{iphone-6.9,ipad-13,watch}
+```bash
+tools/capture_screenshots.sh                       # iPhone 6.9"
+tools/capture_screenshots.sh 02175924-56FF-…-0216  # by UDID
 ```
 
-Then launch the app in **screenshot mode** so the numbers, the date and the
-streak are the same every run, and grab each screen:
+It boots the simulator, pins the status bar to 09:41 / full bars / charged,
+runs the `FouleeScreenshots` UI-test target and exports the ten PNGs into
+`appstore-screenshots/raw/iphone-6.9/`. About two minutes, unsupervised, no
+Health data to enter by hand.
+
+What makes it repeatable is the **capture mode** (issue #235): the target
+launches the app with `-FouleeScreenshotMode`, which swaps every `@Dependency`
+client for a deterministic double and freezes the clock at Thursday 14 May
+2026, 14:35. Two runs on two different days, **on the same simulator**, produce
+byte-identical files. The numbers live in `Foulee/Screenshots/ScreenshotSeed.swift`;
+`FouleeTests/ScreenshotSeedTests` holds them consistent — the 34-day streak on
+the card really is what the seeded history computes.
+
+Four things worth knowing:
+
+- The mode is **compiled out of Release builds** — everything under
+  `Foulee/Screenshots/` and its single call site in `FouleeApp.init()` sit
+  inside `#if DEBUG` — and inside a Debug build it still needs the explicit
+  launch argument. `FouleeTests/ScreenshotModeTests` asserts a normal launch
+  doesn't activate it.
+- A capture run **leaves nothing behind**. The doubles write no `HKWorkout`, no
+  `dietaryWater` and no Connect IQ session; the preferences and the widget app
+  group are diverted into throwaway suites, so the fabricated counters never
+  reach your real widgets; the Watch push is muted.
+- The **runtime is part of the output**: the same device model on iOS 26.0 and
+  on 26.5 renders all ten PNGs differently. That is why the script refuses a
+  simulator name shared by two available devices and asks for a UDID instead —
+  reproducibility that depends on which runtimes happen to be installed is not
+  reproducibility.
+- `appstore-screenshots/` is **not tracked by git** (issue #72) and must stay
+  that way. `raw/` is the capture output; the boards are composed from it.
+
+#### iPad and Watch — still by hand
+
+Neither is automated: the Watch app has no capture mode of its own, and the
+iPad set is the iPhone app running on an iPad. Create the tree once —
+`appstore-screenshots/` is gitignored, so a fresh clone has nowhere to write
+and `simctl io` fails with `No such file or directory`:
 
 ```sh
-xcrun simctl boot "iPhone 17 Pro Max"
-xcrun simctl status_bar "iPhone 17 Pro Max" override --time 09:41 \
+mkdir -p appstore-screenshots/raw/{ipad-13,watch}
+```
+
+Then, per device:
+
+```sh
+xcrun simctl boot "iPad Pro 13-inch (M4)"
+xcrun simctl status_bar "iPad Pro 13-inch (M4)" override --time 09:41 \
   --cellularBars 4 --wifiBars 3 --batteryState charging --batteryLevel 100
-xcrun simctl io "iPhone 17 Pro Max" screenshot appstore-screenshots/raw/iphone-6.9/02_home.png
+xcrun simctl io "iPad Pro 13-inch (M4)" screenshot appstore-screenshots/raw/ipad-13/02_home-ipad.png
 ```
 
 The file names the composer expects are the `file:` values in its `shots`
-table — `02_home`, `04_streak`, `watch-01-today`, and so on.
+table — `02_home-ipad`, `04_streak-ipad`, `watch-01-today`, and so on.
 
-Three rules, each of them a defect the previous set actually shipped:
+Three rules for a hand-taken capture, each of them a defect the previous set
+actually shipped:
 
 - **Never crop, never resize a raw capture.** The composer scales the whole
   thing to fit; anything you shave off by hand shows up as a wrong aspect ratio.
-- **Capture a sheet full-screen.** A modal presented over a dimmed parent leaks
-  a grey band above the sheet into the grab (that band is visible on the old
-  `04_streak`). Push the screen, or present it as its own root, so the capture
-  is the sheet and nothing else. If a leak is unavoidable, shave it explicitly
-  with `trimTop:` on that shot rather than cropping the PNG.
-  **`04_streak` has to be recaptured**, not just recomposed: no shot in the
-  committed `shots` table sets `trimTop`, so re-running the composer over the
-  old raws reproduces the band verbatim.
+- **A sheet drags its dimmed parent in with it.** A modal presented over a
+  dimmed screen leaks a grey band above itself into the grab. Capture the sheet
+  full-screen if you can; otherwise shave the band explicitly with `trimTop:`
+  on that shot rather than cropping the PNG. The iPhone sheets already do this
+  — see `sheetDimBand`, whose value was measured rather than guessed. **That
+  number is 6.9"-specific**: re-measure against an iPad capture instead of
+  reusing it.
 - **Park scrolling screens on a boundary.** Leave the scroll where a card edge —
   not a button cut in half — meets the bottom of the display. Screens flagged
   `scrolls: true` also get a short fade into the background, so what remains

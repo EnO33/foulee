@@ -12,6 +12,17 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
     /// session activates (or the watch app gets installed).
     private let pendingPayload = OSAllocatedUnfairLock<WatchSyncPayload?>(initialState: nil)
 
+    #if DEBUG
+    /// Set by the screenshot capture mode, whose streak is fabricated and has
+    /// no business reaching a paired Watch. Muted here rather than at the call
+    /// site so nothing is kept pending either: activation and a watch-app
+    /// install both resend, and a payload never stored can't be resent.
+    ///
+    /// `nonisolated(unsafe)`: assigned once, from `FouleeApp.init()`, before
+    /// any send. Debug-only — a Release build cannot mute this.
+    nonisolated(unsafe) static var isMuted = false
+    #endif
+
     override private init() {
         super.init()
         guard WCSession.isSupported() else { return }
@@ -20,6 +31,9 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
     }
 
     func send(_ payload: WatchSyncPayload) {
+        #if DEBUG
+        guard !Self.isMuted else { return }
+        #endif
         pendingPayload.withLock { $0 = payload }
         pushPendingPayloadIfPossible()
     }

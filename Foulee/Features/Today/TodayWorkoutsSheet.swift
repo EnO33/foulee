@@ -15,6 +15,13 @@ struct TodayWorkoutsSheet: View {
 
     @Dependency(\.healthKit) private var healthKit
 
+    /// The sheet's clock. It decides which seven days the résumé lists and
+    /// which of them is labelled "Aujourd'hui", so it has to be the same
+    /// injected clock `TodayStore` reads rather than the wall clock — otherwise
+    /// a pinned day (a test, the screenshot mode of issue #235) would list one
+    /// window and label another.
+    @Dependency(\.date) private var date
+
     @State private var sections: [DaySection] = []
     @State private var isLoading = true
     @State private var lastError: String?
@@ -209,7 +216,7 @@ struct TodayWorkoutsSheet: View {
         do {
             let workouts = try await healthKit.recentWorkouts(Self.daysBack)
             // Group once, here — not in a `body`-evaluated computed property.
-            sections = Self.sections(from: workouts)
+            sections = Self.sections(from: workouts, now: date.now)
         } catch {
             lastError = error.localizedDescription
             sections = []
@@ -264,11 +271,13 @@ struct TodayWorkoutsSheet: View {
         return formatter
     }()
 
-    private func dayLabel(_ date: Date) -> String {
+    private func dayLabel(_ day: Date) -> String {
         let calendar = Calendar.current
-        if calendar.isDateInToday(date) { return "Aujourd'hui" }
-        if calendar.isDateInYesterday(date) { return "Hier" }
-        return Self.dayFormatter.string(from: date)
+        let today = calendar.startOfDay(for: date.now)
+        if calendar.isDate(day, inSameDayAs: today) { return "Aujourd'hui" }
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today) ?? today
+        if calendar.isDate(day, inSameDayAs: yesterday) { return "Hier" }
+        return Self.dayFormatter.string(from: day)
     }
 
     private func timeRange(_ workout: WorkoutSummary) -> String {

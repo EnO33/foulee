@@ -8,21 +8,16 @@ import WidgetKit
 /// - Dynamic Island expanded: timer + steps + km + kcal
 /// - Dynamic Island minimal: activity icon
 ///
-/// The copy and the glyph are activity-neutral (issue #222): nothing in
-/// `WalkActivityAttributes` says whether the session in flight is a walk or a
-/// run, and this extension cannot read the preference either — it has no
-/// app-group entitlement, so the snapshot the widgets read is out of reach.
-/// Making the surface follow the *session's* activity is issue #225; until
-/// then « ta sortie » and `ActivityGlyph.mixedCardio` are true for both, which
-/// « Marche du midi » and `figure.walk` were not.
+/// The copy and the glyph follow the session's own activity (issue #225):
+/// a run announces itself as a run. This extension has no app-group
+/// entitlement, so the snapshot the widgets read is out of reach and
+/// `WalkActivityAttributes.activity` is the only channel that carries the
+/// information — the title and the glyph are derived there, once, so the four
+/// places below that draw the figure cannot disagree. The neutral « Ta sortie »
+/// and `ActivityGlyph.mixedCardio` that #222 put here stay for one payload
+/// only: an activity started by a build older than #225, which never recorded
+/// what it was.
 struct WalkLiveActivity: Widget {
-    /// Neutral stand-in for the running/walking figure, and the one surface
-    /// where it stays neutral: this extension has no app-group entitlement
-    /// (`FouleeLiveActivity.entitlements` is empty), so unlike the widgets it
-    /// cannot read the snapshot that carries the mode. `WalkActivityAttributes`
-    /// is the only channel into it — that is issue #225.
-    fileprivate static let activityIcon = ActivityGlyph.mixedCardio
-
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: WalkActivityAttributes.self) { context in
             LockScreenView(
@@ -43,7 +38,7 @@ struct WalkLiveActivity: Widget {
                         .font(.system(.title2, design: .rounded, weight: .semibold))
                         .monospacedDigit()
                     } icon: {
-                        Image(systemName: context.state.isPaused ? "pause.fill" : WalkLiveActivity.activityIcon)
+                        Image(systemName: context.state.isPaused ? "pause.fill" : context.attributes.glyph)
                             .foregroundStyle(.tint)
                     }
                 }
@@ -72,7 +67,7 @@ struct WalkLiveActivity: Widget {
                     }
                 }
             } compactLeading: {
-                Image(systemName: context.state.isPaused ? "pause.fill" : WalkLiveActivity.activityIcon)
+                Image(systemName: context.state.isPaused ? "pause.fill" : context.attributes.glyph)
                     .foregroundStyle(.tint)
             } compactTrailing: {
                 Text(
@@ -86,7 +81,7 @@ struct WalkLiveActivity: Widget {
                 .foregroundStyle(context.state.isPaused ? .secondary : .primary)
                 .frame(maxWidth: 60)
             } minimal: {
-                Image(systemName: context.state.isPaused ? "pause.fill" : WalkLiveActivity.activityIcon)
+                Image(systemName: context.state.isPaused ? "pause.fill" : context.attributes.glyph)
                     .foregroundStyle(.tint)
             }
         }
@@ -123,11 +118,12 @@ struct LockScreenView: View {
             ring
             VStack(alignment: .leading, spacing: 4) {
                 Label(
-                    // "Ta sortie" is the phone's own title for the same
-                    // session (ActiveWalkScreen, #222) — one voice across the
-                    // two surfaces the user sees while a session runs.
-                    state.isPaused ? "Ta sortie · En pause" : "Ta sortie",
-                    systemImage: state.isPaused ? "pause.fill" : WalkLiveActivity.activityIcon
+                    // « Ta marche » / « Ta course », and « Ta sortie » only
+                    // when the payload predates #225 — spelled in
+                    // `WalkActivityAttributes` so the Dynamic Island above
+                    // draws the same figure this row does.
+                    attributes.title(isPaused: state.isPaused),
+                    systemImage: state.isPaused ? "pause.fill" : attributes.glyph
                 )
                 .font(.system(.callout, weight: .semibold))
                 .foregroundStyle(.primary)

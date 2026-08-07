@@ -273,15 +273,44 @@ final class ActiveWalkStore {
 
 // MARK: - Live Activity
 
+extension ActiveWalkStore {
+    /// The attributes ActivityKit is handed for the session in flight — what
+    /// the Lock Screen and the Dynamic Island then draw (issue #225).
+    ///
+    /// Read off the *session*, so the Lock Screen cannot name the activity
+    /// differently from what Santé will be stamped with. A member rather than
+    /// three lines inside `startLiveActivity`, for the reason #234 pulled
+    /// `ActiveWalkScreen.startIfKnown()` out of its call site: inlined, the step
+    /// that reads `session.activity` could be dropped — back to the hardcoded
+    /// `.walking` this issue removes — with the whole suite green, because
+    /// `Activity.request` needs a live ActivityKit and never runs in a test
+    /// process. As a plain value it is assertable, and `ActiveWalkStoreTests`
+    /// asserts it.
+    ///
+    /// `nil` activity only when nothing is in flight; the sole production
+    /// caller runs immediately after `state` becomes `.active`.
+    func liveActivityAttributes(minutesGoal: Int) -> WalkActivityAttributes {
+        let activity: SessionActivity? = switch state {
+        case .idle: nil
+        case .active(let session), .paused(let session), .finished(let session): session.activity
+        }
+        return WalkActivityAttributes(goalMinutes: minutesGoal, activity: activity)
+    }
+}
+
 private extension ActiveWalkStore {
     func startLiveActivity(minutesGoal: Int) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         // A crash/force-quit mid-walk can leave a stray activity behind; end
-        // it before requesting so the Lock Screen never shows two walks.
+        // it before requesting so the Lock Screen never shows two walks. Also
+        // the second of the two places that clear an activity left in flight
+        // by a previous *build* — see `WalkActivityAttributes.init(from:)` for
+        // why that enumeration is only reachable while the attributes still
+        // decode last version's payload.
         for stray in Activity<WalkActivityAttributes>.activities {
             Task { await stray.end(nil, dismissalPolicy: .immediate) }
         }
-        let attributes = WalkActivityAttributes(goalMinutes: minutesGoal)
+        let attributes = liveActivityAttributes(minutesGoal: minutesGoal)
         let state = WalkActivityAttributes.WalkActivityState(
             timerBasis: date.now,
             pausedAt: nil,
