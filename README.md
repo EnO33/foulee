@@ -95,6 +95,20 @@ overlays `figure.walk.motion` in bold white. Outputs to both the iOS
 and watchOS targets' `AppIcon.appiconset/AppIcon.png`. The PNG is
 committed so contributors don't have to run the script every time.
 
+## App Store screenshots
+
+Same idea, one step further out: raw simulator captures go in
+`appstore-screenshots/raw/`, and
+
+```sh
+swift tools/compose_appstore_screenshots.swift
+```
+
+turns them into the final boards at the exact sizes App Store Connect
+demands. Captions live in the script's `shots` table. Neither the raws nor
+the boards are versioned — the capture and upload procedure is, in
+[`docs/RELEASE.md`](docs/RELEASE.md#9-screenshots).
+
 ## Localization
 
 Strings are localized via **String Catalogs** (`.xcstrings`) — one per target:

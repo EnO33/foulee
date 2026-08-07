@@ -59,7 +59,7 @@ This record must exist before the first TestFlight upload.
 Under the app's **App Privacy** section, declare:
 
 - **Health & Fitness** — read access (steps, distance, exercise minutes, heart rate, workouts).
-- **Location** — used while in use (midday weather + walk route).
+- **Location** — used while in use (local weather + the route of an outing).
 
 A **privacy policy URL** is mandatory because the app touches Health and
 Location data. Host a short policy somewhere stable (GitHub Pages works) and
@@ -140,7 +140,152 @@ Watch **Actions → Release**. After it's green, the build shows up in
 **App Store Connect → TestFlight** within a few minutes (processing time).
 Add it to an internal testing group to install via the TestFlight app.
 
-## 9. Promote to the public App Store (manual, when you're ready)
+## 9. Screenshots
+
+The store boards live in `appstore-screenshots/` and are **not** versioned
+(they're in `.gitignore` — binary churn, regenerated on demand). What *is*
+versioned is the way to rebuild them:
+[`tools/compose_appstore_screenshots.swift`](../tools/compose_appstore_screenshots.swift).
+
+```
+appstore-screenshots/
+├── raw/                 ← what you capture (untouched simulator grabs)
+│   ├── iphone-6.9/
+│   ├── ipad-13/
+│   └── watch/
+├── iphone-6.9/          ← what the composer writes (what you upload)
+├── ipad-13/
+└── watch/
+```
+
+### 9.1 Capture
+
+One simulator per size class. The names matter only through their native
+resolution — App Store Connect accepts exactly these, and the composer refuses
+any raw that doesn't measure them (it lists the offenders and exits non-zero,
+just like a missing capture):
+
+| Folder | Simulator | Native resolution | Automated? |
+|--------|-----------|-------------------|------------|
+| `iphone-6.9` | iPhone 17 Pro Max (any 6.9" iPhone) | 1320 × 2868 | yes |
+| `ipad-13` | iPad Pro 13-inch (M4 or M5) | 2064 × 2752 | no — by hand |
+| `watch` | Apple Watch Series 10 / 11 (46 mm) | 416 × 496 | no — by hand |
+
+#### iPhone — one command
+
+```bash
+tools/capture_screenshots.sh                       # iPhone 6.9"
+tools/capture_screenshots.sh 02175924-56FF-…-0216  # by UDID
+```
+
+It boots the simulator, pins the status bar to 09:41 / full bars / charged,
+runs the `FouleeScreenshots` UI-test target and exports the ten PNGs into
+`appstore-screenshots/raw/iphone-6.9/`. About two minutes, unsupervised, no
+Health data to enter by hand.
+
+What makes it repeatable is the **capture mode** (issue #235): the target
+launches the app with `-FouleeScreenshotMode`, which swaps every `@Dependency`
+client for a deterministic double and freezes the clock at Thursday 14 May
+2026, 14:35. Two runs on two different days, **on the same simulator**, produce
+byte-identical files. The numbers live in `Foulee/Screenshots/ScreenshotSeed.swift`;
+`FouleeTests/ScreenshotSeedTests` holds them consistent — the 34-day streak on
+the card really is what the seeded history computes.
+
+Four things worth knowing:
+
+- The mode is **compiled out of Release builds** — everything under
+  `Foulee/Screenshots/` and its single call site in `FouleeApp.init()` sit
+  inside `#if DEBUG` — and inside a Debug build it still needs the explicit
+  launch argument. `FouleeTests/ScreenshotModeTests` asserts a normal launch
+  doesn't activate it.
+- A capture run **leaves nothing behind**. The doubles write no `HKWorkout`, no
+  `dietaryWater` and no Connect IQ session; the preferences and the widget app
+  group are diverted into throwaway suites, so the fabricated counters never
+  reach your real widgets; the Watch push is muted.
+- The **runtime is part of the output**: the same device model on iOS 26.0 and
+  on 26.5 renders all ten PNGs differently. That is why the script refuses a
+  simulator name shared by two available devices and asks for a UDID instead —
+  reproducibility that depends on which runtimes happen to be installed is not
+  reproducibility.
+- `appstore-screenshots/` is **not tracked by git** (issue #72) and must stay
+  that way. `raw/` is the capture output; the boards are composed from it.
+
+#### iPad and Watch — still by hand
+
+Neither is automated: the Watch app has no capture mode of its own, and the
+iPad set is the iPhone app running on an iPad. Create the tree once —
+`appstore-screenshots/` is gitignored, so a fresh clone has nowhere to write
+and `simctl io` fails with `No such file or directory`:
+
+```sh
+mkdir -p appstore-screenshots/raw/{ipad-13,watch}
+```
+
+Then, per device:
+
+```sh
+xcrun simctl boot "iPad Pro 13-inch (M4)"
+xcrun simctl status_bar "iPad Pro 13-inch (M4)" override --time 09:41 \
+  --cellularBars 4 --wifiBars 3 --batteryState charging --batteryLevel 100
+xcrun simctl io "iPad Pro 13-inch (M4)" screenshot appstore-screenshots/raw/ipad-13/02_home-ipad.png
+```
+
+The file names the composer expects are the `file:` values in its `shots`
+table — `02_home-ipad`, `04_streak-ipad`, `watch-01-today`, and so on.
+
+Three rules for a hand-taken capture, each of them a defect the previous set
+actually shipped:
+
+- **Never crop, never resize a raw capture.** The composer scales the whole
+  thing to fit; anything you shave off by hand shows up as a wrong aspect ratio.
+- **A sheet drags its dimmed parent in with it.** A modal presented over a
+  dimmed screen leaks a grey band above itself into the grab. Capture the sheet
+  full-screen if you can; otherwise shave the band explicitly with `trimTop:`
+  on that shot rather than cropping the PNG. The iPhone sheets already do this
+  — see `sheetDimBand`, whose value was measured rather than guessed. **That
+  number is 6.9"-specific**: re-measure against an iPad capture instead of
+  reusing it.
+- **Park scrolling screens on a boundary.** Leave the scroll where a card edge —
+  not a button cut in half — meets the bottom of the display. Screens flagged
+  `scrolls: true` also get a short fade into the background, so what remains
+  reads as "there's more below" instead of a bad crop.
+
+### 9.2 Compose
+
+```sh
+swift tools/compose_appstore_screenshots.swift
+```
+
+It reads `appstore-screenshots/raw/`, writes `appstore-screenshots/<family>/`,
+prints one line per board and exits non-zero listing any raw capture it
+couldn't find or that isn't at its family's native resolution. `--input` and
+`--output` override both roots if you want to try a set somewhere else — either
+spelling (`--input /tmp/raw` or `--input=/tmp/raw`); anything else it doesn't
+recognise stops the run instead of quietly falling back to the defaults.
+
+Each board is the brand gradient, the two caption lines in white, and the
+capture below with rounded corners and a shadow. **Captions are data**: the
+`shots` table at the top of the script is the one place to edit them. Keep them
+short (they auto-shrink to fit, which is a safety net, not a licence), keep the
+tutoiement, and keep the vocabulary the app uses — « sortie » is the noun for
+what the user does, « séance » is reserved for a HealthKit workout record.
+
+### 9.3 Upload
+
+App Store Connect → your app → the version → **Media Manager**, one tab per
+size class:
+
+| Tab | Folder | Required |
+|-----|--------|----------|
+| iPhone 6.9" Display | `appstore-screenshots/iphone-6.9/` | yes |
+| iPad 13" Display | `appstore-screenshots/ipad-13/` | yes — the app runs on iPad |
+| Apple Watch | `appstore-screenshots/watch/` | yes — the app ships a Watch app |
+
+Order matters: the first three are what shows on the product page without
+scrolling. Screenshots are only needed at promotion (step 10), never for
+TestFlight.
+
+## 10. Promote to the public App Store (manual, when you're ready)
 
 TestFlight is the CI's final step on purpose — promotion to the store stays a
 deliberate, manual action:
@@ -148,64 +293,15 @@ deliberate, manual action:
 1. App Store Connect → your app → **+ Version**, set the version string.
 2. Attach the processed build.
 3. Fill the listing: description, keywords, support URL, **screenshots**
-   (6.9" iPhone + Apple Watch are the required sizes), age rating, category.
+   (step 9), age rating, category.
 4. **Submit for Review**.
 
-> Screenshots and the full listing are only needed at this promotion step, not
-> for TestFlight. If you later want CI to submit for review too (via
-> `fastlane deliver` with versioned metadata/screenshots), that's a small
-> follow-up to the `release` lane.
+> The full listing is only needed at this promotion step, not for TestFlight.
+> If you later want CI to submit for review too (via `fastlane deliver` with
+> versioned metadata/screenshots), that's a small follow-up to the `release`
+> lane.
 
-### Regenerating the screenshots
-
-```bash
-tools/capture_screenshots.sh                       # iPhone 6.9" (1320 × 2868)
-tools/capture_screenshots.sh "iPhone 17 Pro" iphone-6.3
-tools/capture_screenshots.sh 02175924-56FF-…-0216  # by UDID
-```
-
-The script boots the simulator, pins its status bar to 09:41 / full bars /
-charged, runs the `FouleeScreenshots` UI-test target and exports the ten PNGs
-into `appstore-screenshots/raw/<set>/`. It takes about two minutes and needs no
-supervision — there is no Health data to enter by hand any more.
-
-What makes it repeatable is the **capture mode** (issue #235): the target
-launches the app with `-FouleeScreenshotMode`, which swaps every `@Dependency`
-client for a deterministic double and freezes the clock at Thursday 14 May
-2026, 14:35. Two runs on two different days, **on the same simulator**, produce
-byte-identical files — that is checked by running it twice and comparing
-checksums. The numbers live in `Foulee/Screenshots/ScreenshotSeed.swift`;
-`FouleeTests/ScreenshotSeedTests` holds them consistent (the 34-day streak on
-the card really is what the seeded history computes).
-
-Four things worth knowing:
-
-- The mode is **compiled out of Release builds** — everything under
-  `Foulee/Screenshots/` and its single call site in `FouleeApp.init()` are
-  inside `#if DEBUG` — and inside a Debug build it still needs the explicit
-  launch argument. `FouleeTests/ScreenshotModeTests` asserts a normal launch
-  doesn't activate it.
-- A capture run **leaves nothing behind**. The doubles write no `HKWorkout`, no
-  `dietaryWater` and no Connect IQ session, so capturing a session records
-  nothing in Santé; the preferences and the widget app group are both diverted
-  into throwaway suites, so the fabricated counters never reach the widgets;
-  and the Watch push is muted. `ScreenshotModeTests` checks each of those, the
-  HealthKit one at the source — no file under `Foulee/Screenshots/` may name an
-  `HKHealthStore`.
-- The **runtime is part of the output**: the same device model on iOS 26.0 and
-  on 26.5 renders all ten PNGs differently. That is why the script refuses a
-  simulator name shared by two available devices and asks for a UDID instead —
-  reproducibility that depends on which runtimes happen to be installed is not
-  reproducibility.
-- `appstore-screenshots/` is **not tracked by git** (issue #72) and must stay
-  that way. `raw/` is the capture output; the finished marketing boards are
-  composed from it separately.
-
-Not automated: the three Apple Watch captures and the five iPad ones. The watch
-app has no capture mode of its own, and the iPad set was taken with the iPhone
-app running on an iPad — both are still done by hand.
-
-## 10. The Garmin watch app (separate store, separate cadence)
+## 11. The Garmin watch app (separate store, separate cadence)
 
 The Connect IQ app in [`FouleeConnectIQ/`](../FouleeConnectIQ/README.md) is not
 part of this pipeline. It goes to the **Connect IQ Store**, not App Store
