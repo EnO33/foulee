@@ -293,56 +293,24 @@ the output, nothing tracked by git):
   question depends on what the phone last synced; the uninstall is what keeps
   the third capture from depending on the developer's own wrist.
 
-#### iPad — still by hand
+#### iPad — nothing to capture
 
-Not automated: the iPad set is the iPhone app running on an iPad, so it belongs
-to the iOS target rather than to a size class of its own. Create the tree once
-— `appstore-screenshots/` is gitignored, so a fresh clone has nowhere to write
-and `simctl io` fails with `No such file or directory`:
+The iPad boards are composed from the **iPhone** captures. There is nothing to
+grab on an iPad, and trying is a dead end worth documenting so nobody repeats
+it (issue #240).
 
-```sh
-mkdir -p appstore-screenshots/raw/ipad-13
-```
+Foulée is an iPhone app — `destinations: [.iPhone]` in Project.swift — that
+runs on iPad in compatibility mode. Capturing it on an iPad simulator gives a
+narrow phone window sitting on the iPad wallpaper, with the iPad's own status
+bar and its **real** date outside the window. Verified: unusable as a store
+screenshot. The June boards were never iPad captures either — they are the
+iPhone grabs recomposed onto a 2064 × 2752 canvas, which is exactly what App
+Store Connect's iPad tab wants.
 
-Then, per device:
-
-```sh
-xcrun simctl boot "iPad Pro 13-inch (M4)"
-xcrun simctl status_bar "iPad Pro 13-inch (M4)" override --time 09:41 \
-  --cellularBars 4 --wifiBars 3 --batteryState charging --batteryLevel 100
-xcrun simctl io "iPad Pro 13-inch (M4)" screenshot appstore-screenshots/raw/ipad-13/02_home-ipad.png
-```
-
-The file names the composer expects are the `file:` values in its `shots`
-table — `02_home-ipad`, `04_streak-ipad`, and so on.
-
-Three rules for a hand-taken capture, each of them a defect the previous set
-actually shipped (the third one binds the automated sets too — it is why the
-watch capture scrolls to the bottom, which clamps, rather than to a card):
-
-- **Never crop, never resize a raw capture.** The composer scales the whole
-  thing to fit; anything you shave off by hand shows up as a wrong aspect ratio.
-- **A sheet drags its dimmed parent in with it.** A modal presented over a
-  dimmed screen leaks a grey band above itself into the grab. Capture the sheet
-  full-screen if you can; otherwise shave the band explicitly with `trimTop:`
-  on that shot rather than cropping the PNG. The iPhone sheets already do this
-  — see `sheetDimBand`, whose value was measured rather than guessed. **That
-  number is 6.9"-specific**: re-measure against an iPad capture instead of
-  reusing it.
-- **Park scrolling screens on a boundary.** Leave the scroll where a card edge —
-  not a button cut in half — meets the bottom of the display. Screens flagged
-  `scrolls: true` also get a short fade into the background, so what remains
-  reads as "there's more below" instead of a bad crop.
-
-  One board knowingly breaks the *top* half of that rule, and it is a choice
-  rather than an oversight: `watch-02-hydration` scrolls to the clamped bottom
-  of the watch home, and the window that lands there begins mid-tile — the
-  bottom sliver of the stats grid, two orphan « km » and « kcal » labels above
-  the hydration card. The fade only softens the bottom of a board, so nothing
-  hides it. The alternative is parking the scroll partway up, and a partial
-  scroll is exactly what is not reproducible: only the clamped end gives the
-  same pixels whatever the swipe momentum did. Reproducibility wins; if that
-  ever stops being true, reframe the shot rather than leaving both broken.
+The composer expresses that with `sourceFamily` on `Shot`: the iPad boards read
+`raw/iphone-6.9/` and draw onto the iPad canvas. So once the iPhone captures
+exist, the iPad set needs no extra step — `swift tools/compose_appstore_screenshots.swift`
+writes both.
 
 ### 9.2 Compose
 
