@@ -239,17 +239,21 @@ struct WatchScreenshotModeTests {
     /// « J'ai bu » writing to Santé on camera.
     @Test("Capture mode is wired into every entry point it claims to guard")
     func captureModeIsWiredIn() throws {
-        let sites: [(path: String, symbol: String, expected: Int)] = [
+        let sites = [
             // load(), startObserving(), logGlass()
-            ("FouleeWatch/Today/WatchTodayStore.swift", "WatchScreenshotMode.isActive", 3),
+            GuardSite(path: "FouleeWatch/Today/WatchTodayStore.swift", expected: 3),
             // start(activity:)
-            ("FouleeWatch/Walk/WatchWorkoutStore.swift", "WatchScreenshotMode.isActive", 1),
+            GuardSite(path: "FouleeWatch/Walk/WatchWorkoutStore.swift", expected: 1),
             // run()
-            ("FouleeWatch/Walk/WatchWorkoutRecovery.swift", "WatchScreenshotMode.isActive", 1),
+            GuardSite(path: "FouleeWatch/Walk/WatchWorkoutRecovery.swift", expected: 1),
             // start()
-            ("FouleeWatch/Health/WatchWaterBackgroundDelivery.swift", "WatchScreenshotMode.isActive", 1),
+            GuardSite(path: "FouleeWatch/Health/WatchWaterBackgroundDelivery.swift", expected: 1),
             // …and the one call that can ever turn the flag on.
-            ("FouleeWatch/App/FouleeWatchApp.swift", "WatchScreenshotMode.activateIfRequested()", 1)
+            GuardSite(
+                path: "FouleeWatch/App/FouleeWatchApp.swift",
+                symbol: "WatchScreenshotMode.activateIfRequested()",
+                expected: 1
+            )
         ]
         for site in sites {
             // Throws if the file moved: a rename must fail here rather than
@@ -258,6 +262,13 @@ struct WatchScreenshotModeTests {
             let found = code.components(separatedBy: site.symbol).count - 1
             #expect(found == site.expected, "\(site.path): \(found) × \(site.symbol), expected \(site.expected)")
         }
+    }
+
+    /// One place capture mode has to be read, and how many times.
+    private struct GuardSite {
+        let path: String
+        var symbol = "WatchScreenshotMode.isActive"
+        let expected: Int
     }
 
     // MARK: - Reading the checkout
