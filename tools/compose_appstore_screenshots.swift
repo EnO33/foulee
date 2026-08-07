@@ -66,6 +66,20 @@ let nativeSize: [Family: (width: Int, height: Int)] = [
 /// mis-cropped screenshot. Leave it off for screens that end on their own.
 struct Shot {
     let family: Family
+    /// Which family's raw capture feeds this board. Defaults to `family`, and
+    /// only differs for iPad.
+    ///
+    /// Foulée is an iPhone app (`destinations: [.iPhone]` in Project.swift) that
+    /// runs on iPad in compatibility mode. Capturing it on an iPad simulator
+    /// gives a narrow phone window on the iPad wallpaper, with the iPad's own
+    /// status bar and its real date outside it — verified, unusable. The iPad
+    /// boards have therefore always been the iPhone captures recomposed onto a
+    /// 2064 × 2752 canvas, which is what App Store Connect's iPad tab wants.
+    ///
+    /// The composer used to validate every raw against `nativeSize[family]`,
+    /// which refused an iPhone capture in the iPad set and left that set
+    /// impossible to regenerate at all (issue #240).
+    var sourceFamily: Family?
     let file: String
     let lines: [String]
     var scrolls: Bool = false
@@ -103,12 +117,14 @@ let shots: [Shot] = [
     Shot(family: .iphone, file: "09_settings", lines: ["Tes objectifs,", "ton rythme"], scrolls: true),
     Shot(family: .iphone, file: "10_weather", lines: ["La météo,", "avant de sortir"], trimTop: sheetDimBand),
 
-    // iPad 13"
-    Shot(family: .ipad, file: "01_onboarding-ipad", lines: ["Bouge un peu,", "chaque jour"]),
-    Shot(family: .ipad, file: "02_home-ipad", lines: ["Ta journée,", "en un coup d'œil"], scrolls: true),
-    Shot(family: .ipad, file: "04_streak-ipad", lines: ["Garde ta", "série vivante"], scrolls: true),
-    Shot(family: .ipad, file: "05_stats-ipad", lines: ["Visualise", "tes progrès"], scrolls: true),
-    Shot(family: .ipad, file: "07_hydration-ipad", lines: ["N'oublie plus", "de boire"], scrolls: true),
+    // iPad 13" — same captures as the iPhone, on a wider canvas. See
+    // `Shot.sourceFamily` for why these are not captured on an iPad.
+    Shot(family: .ipad, sourceFamily: .iphone, file: "01_onboarding", lines: ["Bouge un peu,", "chaque jour"]),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "02_home", lines: ["Ta journée,", "en un coup d'œil"], scrolls: true),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "03_session", lines: ["Suis ta sortie", "en direct"]),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "04_streak", lines: ["Garde ta", "série vivante"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "05_stats", lines: ["Visualise", "tes progrès"], scrolls: true),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "07_hydration", lines: ["N'oublie plus", "de boire"], scrolls: true),
 
     // Apple Watch
     Shot(family: .watch, file: "watch-01-today", lines: ["Ta série", "au poignet"], scrolls: true),
@@ -441,8 +457,9 @@ var wrongSize: [String] = []
 var written = 0
 
 for shot in shots {
-    guard let geometry = geometries[shot.family], let native = nativeSize[shot.family] else { continue }
-    let source = inputRoot.appendingPathComponent(shot.family.rawValue).appendingPathComponent("\(shot.file).png")
+    let sourceFamily = shot.sourceFamily ?? shot.family
+    guard let geometry = geometries[shot.family], let native = nativeSize[sourceFamily] else { continue }
+    let source = inputRoot.appendingPathComponent(sourceFamily.rawValue).appendingPathComponent("\(shot.file).png")
     guard let raw = loadCapture(source) else {
         missing.append(source.path)
         continue
@@ -451,7 +468,7 @@ for shot in shots {
     // but shows a card at the wrong aspect ratio — silent until someone looks.
     guard raw.width == native.width, raw.height == native.height else {
         wrongSize.append("\(source.path) is \(raw.width)×\(raw.height), "
-            + "\(shot.family.rawValue) wants \(native.width)×\(native.height)")
+            + "\(sourceFamily.rawValue) wants \(native.width)×\(native.height)")
         continue
     }
     let data = compose(shot, capture: trimmed(raw, shot: shot), geometry: geometry)
