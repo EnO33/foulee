@@ -82,6 +82,12 @@ final class WatchTodayStore {
     /// synced in from the iPhone — so the watch card reflects it without the
     /// user reopening the app. Idempotent; safe to call on appear.
     func startObserving() {
+        #if DEBUG
+        // Capture mode (issue #239): the numbers are seeded and never change,
+        // so there is nothing to observe — and an observer is a HealthKit
+        // registration a capture run has no business making.
+        guard !WatchScreenshotMode.isActive else { return }
+        #endif
         guard waterObserver == nil, HKHealthStore.isHealthDataAvailable() else { return }
         let query = HKObserverQuery(sampleType: Self.waterType, predicate: nil) { [weak self] _, completion, _ in
             Task { @MainActor in await self?.load() }
@@ -92,6 +98,17 @@ final class WatchTodayStore {
     }
 
     func load() async {
+        #if DEBUG
+        // Capture mode (issue #239) — the one branch in this file's production
+        // path. It returns before the phone payload is read and before
+        // `HKHealthStore` is touched at all: no authorization request, no
+        // query, nothing written. Split into `applyScreenshotSeed()` so a test
+        // can drive it without activating the mode process-wide.
+        if WatchScreenshotMode.isActive {
+            applyScreenshotSeed()
+            return
+        }
+        #endif
         loadGeneration += 1
         let generation = loadGeneration
         isLoading = true
@@ -139,6 +156,13 @@ final class WatchTodayStore {
     /// even when `load()` hasn't run yet, and surfaces denial / a failed save
     /// instead of silently dropping the glass.
     func logGlass() async {
+        #if DEBUG
+        // Capture mode (issue #239): « J'ai bu » is on screen in the hydration
+        // capture. Tapping it must save no `dietaryWater` sample — and the card
+        // keeps showing the seeded intake, which is what makes the capture
+        // reproducible anyway.
+        guard !WatchScreenshotMode.isActive else { return }
+        #endif
         guard HKHealthStore.isHealthDataAvailable() else { return }
         _ = try? await store.requestAuthorization(toShare: [Self.waterType], read: Self.readTypes)
         waterDenied = store.authorizationStatus(for: Self.waterType) == .sharingDenied
@@ -159,6 +183,39 @@ final class WatchTodayStore {
         WidgetCenter.shared.reloadTimelines(ofKind: WatchComplicationKind.hydration)
         await load()
     }
+
+    #if DEBUG
+    /// Serve the seeded day (issue #239). Pure assignment — it reads no store
+    /// and no clock, so two capture runs put the same numbers on screen
+    /// whatever day they run on.
+    ///
+    /// `hasPhoneSync` is true because the seeded install *is* a paired one:
+    /// left false, the home would draw « Ouvre Foulée sur ton iPhone » across
+    /// the board. `waterDenied` / `hydrationError` stay at their defaults, so
+    /// the hydration card shows its button rather than a warning.
+    ///
+    /// Internal rather than private: `WatchScreenshotModeTests` calls it
+    /// directly, which is how the seeded values are asserted without switching
+    /// the mode on for the whole test process.
+    func applyScreenshotSeed() {
+        let seed = ScreenshotSeed.watchToday
+        steps = seed.steps
+        minutes = seed.minutes
+        distanceKm = seed.distanceKm
+        calories = seed.calories
+        streak = seed.streak
+        stepsGoal = seed.stepsGoal
+        minutesGoal = seed.minutesGoal
+        waterML = seed.waterML
+        hydrationEnabled = true
+        hydrationGoalML = seed.hydrationGoalML
+        hydrationGlassML = seed.hydrationGlassML
+        hasPhoneSync = true
+        waterDenied = false
+        hydrationError = nil
+        isLoading = false
+    }
+    #endif
 
     /// Today's cumulative sum for a quantity. Missing data resolves to 0 (no
     /// error path), so an empty metric never blocks the others.

@@ -1,15 +1,17 @@
 #!/bin/bash
-# Regenerate the raw App Store screenshots (issue #235).
+# Regenerate the raw App Store screenshots (issues #235, #239).
 #
-# Runs the FouleeScreenshots UI test target against a booted simulator with the
-# app in capture mode, then pulls the PNGs out of the result bundle into
+# Runs a UI test target against a booted simulator with the app in capture mode,
+# then pulls the PNGs out of the result bundle into
 # appstore-screenshots/raw/<set>/. Unattended: no Health data to enter by hand,
 # no manual navigation, and the same numbers whatever day it is run.
 #
-#   tools/capture_screenshots.sh                       # iPhone 6.9"
+#   tools/capture_screenshots.sh                        # iPhone 6.9"
 #   tools/capture_screenshots.sh "iPhone 17 Pro" iphone-6.3
-#   tools/capture_screenshots.sh 02175924-56FF-…-0216  # a UDID, when a name is
-#                                                      # ambiguous
+#   tools/capture_screenshots.sh 02175924-56FF-…-0216   # a UDID, when a name is
+#                                                       # ambiguous
+#   tools/capture_screenshots.sh --watch                # Apple Watch 46 mm
+#   tools/capture_screenshots.sh --watch "Apple Watch SE 3 (40mm)" probe-40mm
 #
 # The first argument is a simulator NAME or a UDID. A name shared by two
 # available simulators is refused rather than resolved: the runtime a same-named
@@ -18,12 +20,53 @@
 # would make "the same numbers whatever day it is run" quietly depend on which
 # runtimes happen to be installed.
 #
+# The SECOND argument is the output set, and it is only optional when the device
+# is the one the default set is sized for. Run another device without naming a
+# set and the script refuses instead of writing: the default folders feed
+# `compose_appstore_screenshots.swift`, which accepts exactly one resolution per
+# family, so an off-size run into `watch/` would overwrite a good set with grabs
+# the composer then rejects one by one. Verified: `Apple Watch Ultra 3 (49mm)`
+# grabs 422 × 514, and three of those in `watch/` compose 0 boards. A set name
+# other than the default is never checked — it is a probe (a smaller wrist, a
+# second runtime), it is not composed, and it cannot clobber the real one.
+#
+# `--watch` runs the wrist half: another platform, another scheme, another
+# output folder, and no status-bar pinning (watchOS refuses it — see below).
+# Everything downstream, from the result bundle to the export, is the same.
+#
 # Output is NOT tracked by git: appstore-screenshots/ is ignored on purpose
 # (#72), and generated PNGs must stay that way.
 set -euo pipefail
 
-DEVICE="${1:-iPhone 17 Pro Max}"   # 6.9" — 1320 × 2868, the App Store size
-SET_NAME="${2:-iphone-6.9}"
+PLATFORM="iOS"
+if [ "${1:-}" = "--watch" ]; then
+  PLATFORM="watchOS"
+  shift
+fi
+
+if [ "$PLATFORM" = "watchOS" ]; then
+  DEVICE="${1:-Apple Watch Series 11 (46mm)}"   # 416 × 496, the App Store size
+  DEFAULT_SET="watch"
+  DEFAULT_SET_SIZE="416x496"
+  SCHEME="FouleeWatchScreenshots"
+  SIMULATOR_PLATFORM="watchOS Simulator"
+  BUNDLE_ID="com.eno33.foulee.watchkitapp"
+  # The test attaches "watch-01-today"; xcresulttool exports it as
+  # "watch-01-today_0_<uuid>.png".
+  NAME_PATTERN='^(watch-\d\d-[a-z]+)'
+else
+  DEVICE="${1:-iPhone 17 Pro Max}"   # 6.9" — 1320 × 2868, the App Store size
+  DEFAULT_SET="iphone-6.9"
+  DEFAULT_SET_SIZE="1320x2868"
+  SCHEME="FouleeScreenshots"
+  SIMULATOR_PLATFORM="iOS Simulator"
+  BUNDLE_ID="com.eno33.foulee"
+  # The test attaches "02_home"; xcresulttool exports it as
+  # "02_home_0_<uuid>.png". Anything else in the bundle (automatic failure
+  # screenshots, activity logs, the screen recording) is not ours.
+  NAME_PATTERN='^(\d\d_[a-z]+)'
+fi
+SET_NAME="${2:-$DEFAULT_SET}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_DIR="$REPO_ROOT/appstore-screenshots/raw/$SET_NAME"
@@ -55,7 +98,8 @@ if not matches:
     sys.stderr.write(
         'No available simulator named (or with UDID) %r.\n'
         'Create one in Xcode, or pass another name.\n'
-        'Note: the App Store 6.9\" slot needs a 1320 x 2868 device.\n' % wanted
+        'Note: the App Store 6.9\" slot needs a 1320 x 2868 device,\n'
+        'and the Apple Watch slot a 416 x 496 one.\n' % wanted
     )
     sys.exit(1)
 if len(matches) > 1:
@@ -77,27 +121,69 @@ echo "==> Booting $UDID"
 xcrun simctl boot "$UDID" >/dev/null 2>&1 || true
 xcrun simctl bootstatus "$UDID" -b >/dev/null
 
-# The status bar is part of the screenshot, so it has to be as fixed as the
-# data behind it. Apple's own marketing time, full bars, charged.
-echo "==> Pinning the status bar"
-xcrun simctl status_bar "$UDID" override \
-  --time "09:41" \
-  --dataNetwork wifi --wifiMode active --wifiBars 3 \
-  --cellularMode active --cellularBars 4 \
-  --batteryState charged --batteryLevel 100
+# Guard the default set against a device it isn't sized for, before the run
+# writes anything. `$OUTPUT_DIR` may already hold the set that is about to be
+# uploaded, and this script's own export overwrites file by file — so a wrong
+# device pointed at the default folder destroys a good capture and leaves
+# behind grabs the composer refuses. One throwaway grab is enough to know.
+if [ "$SET_NAME" = "$DEFAULT_SET" ]; then
+  PROBE="$WORK_DIR/probe.png"
+  xcrun simctl io "$UDID" screenshot "$PROBE" >/dev/null 2>&1
+  PROBE_SIZE="$(sips -g pixelWidth -g pixelHeight "$PROBE" \
+    | awk '/pixelWidth/ { w = $2 } /pixelHeight/ { h = $2 } END { print w "x" h }')"
+  if [ "$PROBE_SIZE" != "$DEFAULT_SET_SIZE" ]; then
+    if [ "$PLATFORM" = "watchOS" ]; then WATCH_FLAG="--watch "; else WATCH_FLAG=""; fi
+    cat >&2 <<EOF
+Refusing to write appstore-screenshots/raw/$DEFAULT_SET/.
+
+  "$DEVICE" grabs $PROBE_SIZE, and that set is $DEFAULT_SET_SIZE — the only size
+  compose_appstore_screenshots.swift accepts for it. Running it here would
+  overwrite the set with grabs the composer then rejects one by one.
+
+Name the run's own set if it is a probe (a smaller wrist, a second runtime):
+
+  tools/capture_screenshots.sh $WATCH_FLAG"$DEVICE" my-probe
+
+or pass a device that grabs $DEFAULT_SET_SIZE.
+EOF
+    exit 1
+  fi
+fi
+
+if [ "$PLATFORM" = "watchOS" ]; then
+  # No status bar to pin: watchOS answers `status_bar override` with "Status
+  # bar overrides not supported on this platform", and the time it draws over
+  # every app is the host's. That single overlay is the one part of a watch
+  # capture this script cannot make reproducible — see docs/RELEASE.md § 9.1.
+  echo "==> No status-bar pinning on watchOS (unsupported by simctl)"
+else
+  # The status bar is part of the screenshot, so it has to be as fixed as the
+  # data behind it. Apple's own marketing time, full bars, charged.
+  echo "==> Pinning the status bar"
+  xcrun simctl status_bar "$UDID" override \
+    --time "09:41" \
+    --dataNetwork wifi --wifiMode active --wifiBars 3 \
+    --cellularMode active --cellularBars 4 \
+    --batteryState charged --batteryLevel 100
+fi
 
 # A leftover install carries the previous run's granted permissions and its
 # own UserDefaults. Capture mode reads neither, but a stale system alert left
 # on screen (Santé, notifications) from an ordinary run of the app would sit in
 # front of the first tap. Start from nothing.
+#
+# On the watch it does one thing more: it clears the app-group container, so
+# `WatchSyncStore` finds no payload and « Démarrer » starts a session outright
+# instead of asking which activity — the one screen of the watch capture that
+# would otherwise depend on what the developer's own phone had synced.
 echo "==> Removing any previous install"
-xcrun simctl uninstall "$UDID" com.eno33.foulee >/dev/null 2>&1 || true
+xcrun simctl uninstall "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
 
 echo "==> Running the capture"
 xcodebuild test \
   -workspace Foulee.xcworkspace \
-  -scheme FouleeScreenshots \
-  -destination "platform=iOS Simulator,id=$UDID" \
+  -scheme "$SCHEME" \
+  -destination "platform=$SIMULATOR_PLATFORM,id=$UDID" \
   -configuration Debug \
   -resultBundlePath "$RESULT_BUNDLE" \
   | (xcbeautify 2>/dev/null || cat)
@@ -108,17 +194,14 @@ xcrun xcresulttool export attachments \
   --output-path "$WORK_DIR/attachments" >/dev/null
 
 mkdir -p "$OUTPUT_DIR"
-python3 - "$WORK_DIR/attachments" "$OUTPUT_DIR" <<'PY'
+python3 - "$WORK_DIR/attachments" "$OUTPUT_DIR" "$NAME_PATTERN" <<'PY'
 import json, os, re, shutil, sys
 
-source, destination = sys.argv[1], sys.argv[2]
+source, destination, pattern = sys.argv[1], sys.argv[2], sys.argv[3]
 with open(os.path.join(source, "manifest.json")) as handle:
     manifest = json.load(handle)
 
-# The test attaches "02_home"; xcresulttool exports it as
-# "02_home_0_<uuid>.png". Anything else in the bundle (automatic failure
-# screenshots, activity logs, the screen recording) is not ours.
-OURS = re.compile(r"^(\d\d_[a-z]+)")
+OURS = re.compile(pattern)
 copied = []
 
 

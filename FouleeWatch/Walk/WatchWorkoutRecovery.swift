@@ -21,6 +21,14 @@ enum WatchWorkoutRecovery {
     private static let started = OSAllocatedUnfairLock(initialState: false)
 
     static func run() {
+        #if DEBUG
+        // Capture mode (issue #239) writes nothing to Santé, and recovery's
+        // whole job is a write: it finishes a stranded session into an
+        // `HKWorkout`. Guarded here rather than at the two call sites so both
+        // the app's init and the system's crash-recovery entry point are
+        // covered by one line.
+        guard !WatchScreenshotMode.isActive else { return }
+        #endif
         guard HKHealthStore.isHealthDataAvailable() else { return }
         let shouldRun = started.withLock { started -> Bool in
             guard !started else { return false }

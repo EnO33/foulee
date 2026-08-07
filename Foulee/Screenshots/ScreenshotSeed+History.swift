@@ -14,28 +14,18 @@ extension ScreenshotSeed {
     /// months the calendar sheet browses.
     static var historyDays: Int { StreakCalculator.historyWindowDays }
 
-    /// What the seeded history is *built* to produce. These two are not
-    /// injected anywhere: `StreakCalculator` derives them from the days below,
-    /// and `ScreenshotSeedTests` asserts it does.
-    static let currentStreak = 34
-    static let bestStreak = 41
-
     /// Length of the ordinary runs further back, so the record stands out.
     private static let olderRunLength = 15
-
-    /// Metres per step — the one conversion tying the steps series to the
-    /// distance series, so 8 240 pas really is 6,1 km.
-    private static let metresPerStep = 0.74
-
-    /// Today's step count. Below the goal on purpose: the day is still running
-    /// at 14:35, and a ring already full on every count reads as a mock-up.
-    static let todaySteps = 8_240
 
     /// The last week, spelled out: these are the durations the résumé shows,
     /// the bars of the current week, and the last points of the Minutes chart.
     /// Keyed by day offset — 0 = Thursday (today), 3 = Monday, 6 = last Friday;
     /// offsets 4 and 5 are the weekend and fall through to `restDayMinutes`.
-    private static let pinnedMinutes: [Int: Int] = [0: 42, 1: 36, 2: 33, 3: 38, 6: 31]
+    ///
+    /// Today's entry is `todayMinutes` rather than a literal: the watch shows
+    /// that number without any history behind it, so it is a shared constant
+    /// (`ScreenshotSeedCore`) and this table reads it back.
+    private static let pinnedMinutes: [Int: Int] = [0: todayMinutes, 1: 36, 2: 33, 3: 38, 6: 31]
 
     // MARK: - The history itself
 
@@ -99,11 +89,11 @@ extension ScreenshotSeed {
     }
 
     static func distanceKm(offset: Int) -> Double {
-        Double(steps(offset: offset)) * metresPerStep / 1_000
+        distanceKm(steps: steps(offset: offset))
     }
 
     static func calories(offset: Int) -> Int {
-        Int((140 + Double(minutes(offset: offset)) * 5.85).rounded())
+        calories(minutes: minutes(offset: offset))
     }
 
     // MARK: - Series

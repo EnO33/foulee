@@ -1,14 +1,16 @@
 #if DEBUG
 import Foundation
 
-/// The one set of numbers every App Store capture is made of (issue #235).
+/// The phone half of the one set of numbers every App Store capture is made of
+/// (issue #235) — everything that names a model type, and therefore everything
+/// the watch target cannot compile. The constants themselves live in
+/// `ScreenshotSeedCore.swift`, which both apps build; the history that derives
+/// from them lives in `ScreenshotSeed+History.swift`.
 ///
-/// Everything here is a constant or a pure function of a day offset counted
-/// from `instant`, so two runs on two different days produce byte-identical
-/// screens. Nothing reads `Date()`: the app's clock is
-/// `@Dependency(\.date)`, the capture mode points it at `ScreenshotClock`, and
-/// that clock reads `instant` — this constant is where the whole app's notion
-/// of "now" comes from during a capture.
+/// Everything is a constant or a pure function of a day offset counted from
+/// `instant`, so two runs on two different days produce byte-identical screens.
+/// Nothing reads `Date()`: the app's clock is `@Dependency(\.date)`, the capture
+/// mode points it at `ScreenshotClock`, and that clock reads `instant`.
 ///
 /// The values are also meant to hold together, because a store screenshot is
 /// read closely: today's 42 minutes are the duration of today's session in the
@@ -16,37 +18,8 @@ import Foundation
 /// ring; the 34-day streak and the 41-day record are not written down anywhere,
 /// they are what `StreakCalculator` derives from the seeded history
 /// (`ScreenshotSeedTests` pins that).
-enum ScreenshotSeed {
-    /// Thursday 14 May 2026, 14:35 — an ordinary active weekday, mid-afternoon,
-    /// after the walk window has closed, so the hero card shows the finished
-    /// state ("Sortie terminée") rather than a countdown.
-    ///
-    /// Built from wall-clock components in `Calendar.current` rather than from
-    /// an absolute timestamp: what has to be reproducible is the *displayed*
-    /// date, and a fixed timestamp would render as a different day and hour on
-    /// a machine in another time zone.
-    static let instant: Date = {
-        let components = DateComponents(year: 2026, month: 5, day: 14, hour: 14, minute: 35)
-        return Calendar.current.date(from: components) ?? Date(timeIntervalSince1970: 1_778_855_700)
-    }()
-
-    static var calendar: Calendar { .current }
-
-    /// Start of the seeded day — the anchor every generated series counts back
-    /// from.
-    static var today: Date { calendar.startOfDay(for: instant) }
-
-    /// `offset` days before the seeded today (0 = today).
-    static func day(offset: Int) -> Date {
-        calendar.date(byAdding: .day, value: -offset, to: today) ?? today
-    }
-
+extension ScreenshotSeed {
     // MARK: - Preferences
-
-    static let stepsGoal = 10_000
-    static let minutesGoal = 30
-    static let hydrationGoalML = 2_000
-    static let hydrationGlassML = 250
 
     /// The install the captures show: goals met by a regular user, hydration
     /// on, reminders on, light theme, « les deux » as the activity mode.
@@ -93,10 +66,6 @@ enum ScreenshotSeed {
         )
     }
 
-    /// 1,5 L of a 2 L goal — six glasses, a visibly unfinished ring, and a
-    /// reason for the "J'ai bu" button to still be worth tapping.
-    static let waterML = 1_500
-
     static let weather = WeatherSnapshot(
         temperatureCelsius: 21,
         condition: "Ensoleillé",
@@ -127,17 +96,6 @@ enum ScreenshotSeed {
     ]
 
     // MARK: - Running session
-
-    /// What the session-in-progress capture shows: 18 min 24 s of a 30 min
-    /// goal (a 61 % ring), 2 480 steps, 1,83 km, 24 m of climb.
-    ///
-    /// `sessionElapsed` is not a number the session screen is told — it is the
-    /// offset `ScreenshotClock` is advanced to when the pedometer double emits,
-    /// so `ActiveWalkStore` computes it exactly as it does in production.
-    static let sessionElapsed: TimeInterval = 18 * 60 + 24
-    static let sessionSteps = 2_480
-    static let sessionDistanceMeters = 1_830.0
-    static let sessionElevationMeters = 24.0
 
     /// A short stroll along the Seine, for the session's route map. Fixed
     /// points, emitted once — nothing here follows real movement.

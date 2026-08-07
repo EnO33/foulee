@@ -20,6 +20,12 @@ enum WatchWaterBackgroundDelivery {
 
     @MainActor
     static func start() async {
+        #if DEBUG
+        // Capture mode (issue #239): no background delivery, no persistent
+        // observer. The seeded intake never changes, and a capture run must
+        // leave no registration behind on the simulator it ran on.
+        guard !WatchScreenshotMode.isActive else { return }
+        #endif
         guard HKHealthStore.isHealthDataAvailable() else { return }
         let shouldStart = waterDeliveryStarted.withLock { started -> Bool in
             guard !started else { return false }
