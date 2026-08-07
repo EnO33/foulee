@@ -294,7 +294,14 @@ let project = Project(
                 // no DesignSystem, so `SessionActivity.icon` reads these.
                 "Foulee/Shared/ActivityStartIntent.swift",
                 "Foulee/Shared/ActivityGlyph.swift",
-                "Foulee/Notifications/HydrationNotification.swift"
+                "Foulee/Notifications/HydrationNotification.swift",
+                // The App Store capture seed (issue #239). Only the
+                // Foundation-only half: the watch board and the phone board
+                // must show the same day, and the way to guarantee that is to
+                // compile the same constants, not to copy them. The rest of
+                // Foulee/Screenshots/ names phone types and stays out.
+                // Everything in this file is `#if DEBUG`.
+                "Foulee/Screenshots/ScreenshotSeedCore.swift"
             ],
             resources: [
                 .glob(
@@ -371,6 +378,22 @@ let project = Project(
                 .target(name: "Foulee")
             ]
         ),
+        // The watch half of the capture set (issue #239). Same shape as
+        // `FouleeScreenshots`, and absent from the `FouleeWatch` scheme's test
+        // action for the same reason: CI's "Test (watchOS)" step runs the unit
+        // suite, it does not boot a watch to take pictures on every pull
+        // request.
+        .target(
+            name: "FouleeWatchScreenshots",
+            destinations: [.appleWatch],
+            product: .uiTests,
+            bundleId: "\(bundleIdBase).watchkitapp.screenshots",
+            deploymentTargets: .watchOS("26.0"),
+            sources: ["FouleeWatchScreenshots/**"],
+            dependencies: [
+                .target(name: "FouleeWatch")
+            ]
+        ),
         .target(
             name: "FouleeWatchTests",
             destinations: [.appleWatch],
@@ -410,6 +433,13 @@ let project = Project(
             shared: true,
             buildAction: .buildAction(targets: ["FouleeWatch"]),
             testAction: .targets(["FouleeWatchTests"]),
+            runAction: .runAction(executable: "FouleeWatch")
+        ),
+        .scheme(
+            name: "FouleeWatchScreenshots",
+            shared: true,
+            buildAction: .buildAction(targets: ["FouleeWatch", "FouleeWatchScreenshots"]),
+            testAction: .targets(["FouleeWatchScreenshots"]),
             runAction: .runAction(executable: "FouleeWatch")
         )
     ]

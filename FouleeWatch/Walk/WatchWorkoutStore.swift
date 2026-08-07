@@ -59,6 +59,17 @@ final class WatchWorkoutStore: NSObject {
     /// either way.
     func start(activity: SessionActivity) async {
         guard case .idle = state else { return }
+        #if DEBUG
+        // Capture mode (issue #239): show the seeded session and open nothing.
+        // It returns before `healthKit` is read, so there is no authorization
+        // prompt, no `HKWorkoutSession`, no builder — and `sessionHandle` stays
+        // nil, which makes `stop()` and `retrySave()` no-ops too. Nothing this
+        // path can reach writes to Santé.
+        if WatchScreenshotMode.isActive {
+            startScreenshotSession()
+            return
+        }
+        #endif
         guard healthKit.isAvailable() else {
             lastError = "HealthKit n'est pas disponible sur ce device."
             return
@@ -119,6 +130,20 @@ final class WatchWorkoutStore: NSObject {
         lastError = nil
         state = .idle
     }
+
+    #if DEBUG
+    /// The seeded live session (issue #239): the state a real session would be
+    /// in halfway through, with no session behind it.
+    ///
+    /// Internal rather than folded into the branch above so
+    /// `WatchScreenshotModeTests` can call it on a store built with a
+    /// **trap** `WatchWorkoutHealthKit` — every closure of which fails the test
+    /// if it is called. That is the runtime proof that this path reaches
+    /// HealthKit not at all.
+    func startScreenshotSession() {
+        state = .active(ScreenshotSeed.watchSessionMetrics)
+    }
+    #endif
 
     private func beginSession(activity: SessionActivity) async {
         let configuration = HKWorkoutConfiguration()

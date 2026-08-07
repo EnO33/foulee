@@ -8,6 +8,12 @@ struct FouleeWatchApp: App {
     @WKApplicationDelegateAdaptor(WatchAppDelegate.self) private var appDelegate
 
     init() {
+        #if DEBUG
+        // First, before anything can reach HealthKit: the App Store capture
+        // mode (issue #239). Compiled out of Release entirely, and inert
+        // without `-FouleeScreenshotMode` on the command line.
+        WatchScreenshotMode.activateIfRequested()
+        #endif
         // Start listening for the phone's streak prefs (goal + active days).
         WatchSyncReceiver.shared.activate()
         // Handle "J'ai bu" / "Rappelle-moi" taps on the hydration banner when

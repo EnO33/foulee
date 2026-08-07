@@ -169,7 +169,7 @@ just like a missing capture):
 |--------|-----------|-------------------|------------|
 | `iphone-6.9` | iPhone 17 Pro Max (any 6.9" iPhone) | 1320 × 2868 | yes |
 | `ipad-13` | iPad Pro 13-inch (M4 or M5) | 2064 × 2752 | no — by hand |
-| `watch` | Apple Watch Series 10 / 11 (46 mm) | 416 × 496 | no — by hand |
+| `watch` | Apple Watch Series 11 (46 mm) | 416 × 496 | yes |
 
 #### iPhone — one command
 
@@ -187,7 +187,9 @@ What makes it repeatable is the **capture mode** (issue #235): the target
 launches the app with `-FouleeScreenshotMode`, which swaps every `@Dependency`
 client for a deterministic double and freezes the clock at Thursday 14 May
 2026, 14:35. Two runs on two different days, **on the same simulator**, produce
-byte-identical files. The numbers live in `Foulee/Screenshots/ScreenshotSeed.swift`;
+byte-identical files. The numbers live in `Foulee/Screenshots/` —
+`ScreenshotSeedCore.swift` for the constants (the half the watch compiles too)
+and `ScreenshotSeed*.swift` for everything derived from them;
 `FouleeTests/ScreenshotSeedTests` holds them consistent — the 34-day streak on
 the card really is what the seeded history computes.
 
@@ -210,15 +212,58 @@ Four things worth knowing:
 - `appstore-screenshots/` is **not tracked by git** (issue #72) and must stay
   that way. `raw/` is the capture output; the boards are composed from it.
 
-#### iPad and Watch — still by hand
+#### Apple Watch — one command
 
-Neither is automated: the Watch app has no capture mode of its own, and the
-iPad set is the iPhone app running on an iPad. Create the tree once —
-`appstore-screenshots/` is gitignored, so a fresh clone has nowhere to write
+```bash
+tools/capture_screenshots.sh --watch                            # 46 mm
+tools/capture_screenshots.sh --watch "Apple Watch Ultra 3 (49mm)"
+```
+
+Same script, same result bundle, same export; another platform, another scheme
+(`FouleeWatchScreenshots`) and another folder — the three PNGs land in
+`appstore-screenshots/raw/watch/`. About a minute.
+
+The watch has its **own** capture mode (issue #239), because the phone's is a
+set of `@Dependency` doubles and the watch target has no dependency container:
+`WatchTodayStore` builds an `HKHealthStore` itself. So the same launch argument
+(`-FouleeScreenshotMode`) instead flips one flag, `WatchScreenshotMode`, and
+each of the watch's HealthKit entry points takes a one-line `#if DEBUG` early
+return on it — the home serves `ScreenshotSeed`, « Démarrer » shows a seeded
+session with no `HKWorkoutSession` behind it, and the observers, the background
+delivery and the crash-recovery write are all skipped.
+
+Three things worth knowing, beyond the four listed for the iPhone (which all
+hold here too — compiled out of Release, explicit argument, runtime is part of
+the output, nothing tracked by git):
+
+- **The numbers are the phone's numbers.** Both apps compile
+  `Foulee/Screenshots/ScreenshotSeedCore.swift` — the Foundation-only half of
+  the seed — so the 34-day streak on the wrist board is the same constant as
+  the one on the phone board, not a second number that happens to match.
+  `FouleeWatchTests/WatchScreenshotModeTests` asserts it field by field, and
+  proves the seeded session reaches HealthKit not at all (a trap double counts
+  every call; the count is zero).
+- **The clock in the corner is not ours.** watchOS draws the time over every
+  app and `simctl status_bar` refuses on this platform ("Status bar overrides
+  not supported"). Everything Foulée draws is byte-identical between runs; that
+  one overlay follows the host clock, so two runs in the same minute produce
+  identical files and two runs across a minute boundary differ in those few
+  hundred pixels alone. Nothing else varies — and never crop it out (see the
+  rules below).
+- **The watch is uninstalled first**, which clears its app-group container, so
+  « Démarrer » starts a session outright instead of asking which activity. That
+  question depends on what the phone last synced; the uninstall is what keeps
+  the third capture from depending on the developer's own wrist.
+
+#### iPad — still by hand
+
+Not automated: the iPad set is the iPhone app running on an iPad, so it belongs
+to the iOS target rather than to a size class of its own. Create the tree once
+— `appstore-screenshots/` is gitignored, so a fresh clone has nowhere to write
 and `simctl io` fails with `No such file or directory`:
 
 ```sh
-mkdir -p appstore-screenshots/raw/{ipad-13,watch}
+mkdir -p appstore-screenshots/raw/ipad-13
 ```
 
 Then, per device:
@@ -231,10 +276,11 @@ xcrun simctl io "iPad Pro 13-inch (M4)" screenshot appstore-screenshots/raw/ipad
 ```
 
 The file names the composer expects are the `file:` values in its `shots`
-table — `02_home-ipad`, `04_streak-ipad`, `watch-01-today`, and so on.
+table — `02_home-ipad`, `04_streak-ipad`, and so on.
 
 Three rules for a hand-taken capture, each of them a defect the previous set
-actually shipped:
+actually shipped (the third one binds the automated sets too — it is why the
+watch capture scrolls to the bottom, which clamps, rather than to a card):
 
 - **Never crop, never resize a raw capture.** The composer scales the whole
   thing to fit; anything you shave off by hand shows up as a wrong aspect ratio.
