@@ -7,13 +7,14 @@ import Testing
 /// (issue #249): the last link, from a confirmed switch to
 /// `beginNewActivity` / `endCurrentActivity`.
 ///
-/// The rule being pinned is HealthKit's own asymmetry, and it is the one thing
-/// here that is easy to get backwards. A session has **one main activity, which
-/// cannot be ended**, and at most one nested activity at a time; the header's
-/// word for `endCurrentActivity` is « reverting to the main session activity ».
-/// So going back to what the session started as is an *end*, never a second
-/// begin — and a walk detected during a walk-started session must produce no
-/// call at all.
+/// The rule being pinned is **one nested `HKWorkoutActivity` per stretch, from
+/// the first second of the session**, and it is the one thing here that is easy
+/// to get wrong in a way nothing complains about. HealthKit's main activity
+/// spans the whole session, so a walk→run→walk outing recorded against it would
+/// save « marche, 42 min » covering everything plus « course, 12 min » inside —
+/// and the half hour actually walked would exist in no object at all. Every
+/// switch therefore ends the running segment and opens the next, symmetrically,
+/// even when the next one is what the session started as.
 @MainActor
 @Suite("Watch session activity switching")
 struct WatchWorkoutActivitySwitchingTests {
@@ -56,22 +57,37 @@ struct WatchWorkoutActivitySwitchingTests {
         motion.deliver(estimate(activity, at: offset + 30))
     }
 
-    @Test("A walk that turns into a run opens a running activity inside the session")
-    func aDetectedRunOpensANestedActivity() async {
+    @Test("The opening stretch is a segment of its own, from the first second")
+    func theSessionOpensItsFirstSegmentImmediately() async {
+        let stub = WorkoutHealthKitStub()
+        let (store, _) = await startedSession(as: .walking, stub: stub)
+
+        // Without this the opening stretch would be recorded only by the main
+        // activity, which covers the entire session and therefore describes no
+        // stretch in particular.
+        #expect(stub.beganActivities.count == 1)
+        #expect(stub.beganActivities.first?.configuration.activityType == .walking)
+        #expect(stub.beganActivities.first?.configuration.locationType == .outdoor)
+        #expect(stub.endedActivityDates.isEmpty)
+        #expect(store.state == .active(.zero))
+    }
+
+    @Test("A walk that turns into a run closes the walk and opens the run")
+    func aDetectedRunOpensItsOwnSegment() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .walking, stub: stub)
 
         detect(.running, from: motion, at: 60)
-        await waitUntil { stub.beganActivities.count == 1 }
+        await waitUntil { stub.beganActivities.count == 2 }
 
         // Not a relabelling: Apple's header says the sensor algorithms are
         // updated to match, so the watch measures differently from here on.
-        #expect(stub.beganActivities.first?.configuration.activityType == .running)
-        #expect(stub.beganActivities.first?.configuration.locationType == .outdoor)
-        // Dated from CoreMotion's own stamp for when the run began, not from
-        // when the second estimate landed.
-        #expect(stub.beganActivities.first?.date == base.addingTimeInterval(60))
-        #expect(stub.endedActivityDates.isEmpty)
+        #expect(stub.beganActivities.last?.configuration.activityType == .running)
+        // Both calls carry the same instant — CoreMotion's own stamp for when
+        // the run began, not the moment the second estimate landed. A gap
+        // between the two would be time belonging to neither segment.
+        #expect(stub.beganActivities.last?.date == base.addingTimeInterval(60))
+        #expect(stub.endedActivityDates == [base.addingTimeInterval(60)])
         // The session itself is untouched: the `HKWorkout` stays a walk, which
         // keeps it inside {walking, running} and therefore inside the 7-day
         // résumé (`WorkoutActivityFilter`).
@@ -82,36 +98,37 @@ struct WatchWorkoutActivitySwitchingTests {
         #expect(store.state == .active(.zero))
     }
 
-    @Test("Coming back to the activity the session started as ends the nested one")
-    func returningToTheMainActivityEndsTheNestedOne() async {
+    @Test("Coming back to the starting activity opens a third segment, not a gap")
+    func returningToTheStartingActivityOpensItsOwnSegment() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .walking, stub: stub)
 
         detect(.running, from: motion, at: 60)
-        await waitUntil { stub.beganActivities.count == 1 }
+        await waitUntil { stub.beganActivities.count == 2 }
         detect(.walking, from: motion, at: 300)
-        await waitUntil { stub.endedActivityDates.count == 1 }
+        await waitUntil { stub.beganActivities.count == 3 }
 
-        // The failure this guards is `beginNewActivity(.walking)` on a session
-        // whose main activity is already walking: a second nested activity
-        // stacked on the first, for an activity that did not need one.
-        #expect(stub.beganActivities.count == 1)
-        #expect(stub.endedActivityDates.first == base.addingTimeInterval(300))
+        // The failure this guards is the cheaper-looking shape: end the run and
+        // stop there, letting the main activity « absorb » the walk that
+        // follows. It costs one call less and loses the returning stretch — the
+        // main activity already covers the whole session, so folding into it
+        // says nothing about the twelve minutes just walked.
+        #expect(stub.beganActivities.map(\.configuration.activityType) == [.walking, .running, .walking])
+        #expect(stub.endedActivityDates == [base.addingTimeInterval(60), base.addingTimeInterval(300)])
         #expect(store.state == .active(.zero))
     }
 
-    @Test("A run-mode session nests the walk, not the run")
-    func aRunSessionNestsTheWalk() async {
+    @Test("A run-mode session segments the same way, starting from the run")
+    func aRunSessionSegmentsFromTheRun() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .running, stub: stub)
 
         detect(.walking, from: motion, at: 60)
-        await waitUntil { stub.beganActivities.count == 1 }
-        #expect(stub.beganActivities.first?.configuration.activityType == .walking)
-
+        await waitUntil { stub.beganActivities.count == 2 }
         detect(.running, from: motion, at: 300)
-        await waitUntil { stub.endedActivityDates.count == 1 }
-        #expect(stub.beganActivities.count == 1)
+        await waitUntil { stub.beganActivities.count == 3 }
+
+        #expect(stub.beganActivities.map(\.configuration.activityType) == [.running, .walking, .running])
         #expect(store.state == .active(.zero))
     }
 
@@ -126,7 +143,8 @@ struct WatchWorkoutActivitySwitchingTests {
         // to land before concluding they did nothing.
         try? await Task.sleep(for: .milliseconds(120))
 
-        #expect(stub.beganActivities.isEmpty)
+        // One segment — the opening one — and nothing since.
+        #expect(stub.beganActivities.count == 1)
         #expect(stub.endedActivityDates.isEmpty)
         #expect(store.state == .active(.zero))
     }

@@ -29,12 +29,6 @@ final class WatchWorkoutStore: NSObject {
     @ObservationIgnored private let healthKit: WatchWorkoutHealthKit
     @ObservationIgnored private var sessionHandle: WatchWorkoutSessionHandle?
     @ObservationIgnored private let detection: WatchActivityDetection
-    /// What the session was *started* as, which HealthKit calls the main
-    /// activity and stamps on the `HKWorkout` itself. It never changes for the
-    /// life of a session: detection opens and closes nested activities around
-    /// it, and the parent type stays inside {walking, running} so the session
-    /// keeps counting in the 7-day résumé (`WorkoutActivityFilter`).
-    @ObservationIgnored private var mainActivity: SessionActivity?
 
     init(
         healthKit: WatchWorkoutHealthKit = .live,
@@ -140,7 +134,6 @@ final class WatchWorkoutStore: NSObject {
     func reset() {
         detection.stop()
         sessionHandle = nil
-        mainActivity = nil
         lastError = nil
         state = .idle
     }
@@ -165,7 +158,6 @@ final class WatchWorkoutStore: NSObject {
         }
         guard let handle else { return }
         sessionHandle = handle
-        mainActivity = activity
         state = .active(.zero)
         beginActivityDetection(from: activity)
     }
@@ -281,28 +273,39 @@ extension WatchWorkoutStore {
         return configuration
     }
 
+    /// Open the first segment and start classifying.
+    ///
+    /// The session's *main* activity is not enough to record the opening
+    /// stretch, and that is the whole reason a nested activity is opened here
+    /// rather than only at the first switch. HealthKit's main activity spans
+    /// the entire session: on a walk with a run in the middle it would save
+    /// « marche, 42 min » covering everything plus « course, 12 min » inside it,
+    /// and the 30 minutes actually spent walking would exist nowhere — not in
+    /// Santé, and not as anything the watch could show while it happens.
+    ///
+    /// One nested activity per stretch makes each one a measured object with
+    /// its own `startDate`, `endDate` and `allStatistics`. HealthKit does the
+    /// segmenting; nothing here recomputes it.
     private func beginActivityDetection(from activity: SessionActivity) {
-        detection.start(from: activity, at: .now) { [weak self] confirmed in
+        let now = Date.now
+        sessionHandle?.beginActivity(Self.configuration(for: activity), now)
+        detection.start(from: activity, at: now) { [weak self] confirmed in
             self?.applySwitch(confirmed)
         }
     }
 
-    /// Move the running session onto `confirmed.activity`, as of the moment the
-    /// device says it began.
+    /// Close the running segment and open the next one, both dated from the
+    /// moment the device says the activity changed.
     ///
-    /// The asymmetry is HealthKit's, not ours: a session has one *main*
-    /// activity that cannot be ended, and at most one nested activity at a
-    /// time. So coming back to what the session started as is an *end*, never a
-    /// new begin — and since detection only ever moves between two values, a
-    /// nested activity is running exactly when the current one differs from the
-    /// main one. That invariant is what keeps `beginNewActivity` from being
-    /// called twice in a row.
+    /// Symmetric on purpose. HealthKit's own model is not — `endCurrentActivity`
+    /// « reverts to the main session activity », so coming back to what the
+    /// session started as could have been an end with no matching begin. That
+    /// shape is one call cheaper and loses the returning stretch entirely: it
+    /// would fold back into the main activity, which already covers the whole
+    /// session and therefore says nothing about it.
     private func applySwitch(_ confirmed: ActivitySwitchDetector.Switch) {
-        guard case .active = state, let handle = sessionHandle, let mainActivity else { return }
-        if confirmed.activity == mainActivity {
-            handle.endCurrentActivity(confirmed.date)
-        } else {
-            handle.beginActivity(Self.configuration(for: confirmed.activity), confirmed.date)
-        }
+        guard case .active = state, let handle = sessionHandle else { return }
+        handle.endCurrentActivity(confirmed.date)
+        handle.beginActivity(Self.configuration(for: confirmed.activity), confirmed.date)
     }
 }
