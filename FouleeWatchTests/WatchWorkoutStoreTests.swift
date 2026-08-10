@@ -38,6 +38,10 @@ final class WorkoutHealthKitStub {
     /// it is asserting on what Santé will show.
     private(set) var beganActivities: [(configuration: HKWorkoutConfiguration, date: Date)] = []
     private(set) var endedActivityDates: [Date] = []
+    /// What HealthKit would report for this session's segments. Set by the
+    /// tests of issue #250; empty everywhere else, which is what a session with
+    /// nothing measured yet looks like.
+    var segments: [WatchWorkoutSegment] = []
     /// Weak by design: the only strong reference lives in the handle's
     /// closures, so `nil` here means the store let go of the handle.
     private(set) weak var handleToken: AnyObject?
@@ -80,7 +84,8 @@ final class WorkoutHealthKitStub {
             beginActivity: { configuration, date in
                 self.beganActivities.append((configuration, date))
             },
-            endCurrentActivity: { self.endedActivityDates.append($0) }
+            endCurrentActivity: { self.endedActivityDates.append($0) },
+            segments: { self.segments }
         )
     }
 }

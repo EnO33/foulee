@@ -56,6 +56,8 @@ struct WatchActiveWalkView: View {
                     .font(.system(size: 38, weight: .semibold, design: .rounded))
                     .monospacedDigit()
 
+                currentActivity
+
                 HStack(spacing: 10) {
                     metric(value: "\(metrics.steps)", label: "pas", icon: "shoe")
                     metric(value: metrics.distanceKm.kmValue(), label: "km", icon: "location.fill")
@@ -83,10 +85,48 @@ struct WatchActiveWalkView: View {
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                 }
-                .padding(.top, 4)
+                .padding(.top, 10)
             }
             .padding(.horizontal, 6)
         }
+    }
+
+    /// What the watch is recording right now, and how much of it there has been
+    /// (issue #250).
+    ///
+    /// Below the global block, never above it, and visibly secondary. The
+    /// hierarchy is the design: this screen is read in a fraction of a second
+    /// while moving, and two symmetric sets of numbers would leave the reader
+    /// working out which is which. The big clock stays the session; this reads
+    /// as a detail of it.
+    ///
+    /// **Two flowing lines of text, not tiles, and not a row of columns.** The
+    /// first attempt gave each counter an equal share of the width, which on a
+    /// 40 mm cut « pas » into « pa / s » and « kcal » into « kc / al » — at the
+    /// *default* text size, before Dynamic Type entered into it. A paragraph
+    /// wraps at its separators instead, so the largest sizes cost extra lines
+    /// rather than legibility, and the scroll view of issue #241 is what makes
+    /// extra lines affordable: « Arrêter » stays reachable however tall this
+    /// grows.
+    private var currentActivity: some View {
+        VStack(spacing: 3) {
+            Divider()
+            // The figure and the word together: « figure.walk » and
+            // « figure.run » are two thin silhouettes at this size, and this is
+            // the line that answers « est-ce que la montre a compris que je
+            // cours ? ». Interpolated into the text rather than placed beside
+            // it so the whole line wraps as one.
+            Text("\(Image(systemName: metrics.activity.icon)) \(metrics.activityHeadlineText)")
+                .font(.footnote.weight(.semibold))
+                .monospacedDigit()
+            Text(metrics.activityTotals.countersText)
+                .font(.caption2)
+                .monospacedDigit()
+        }
+        .multilineTextAlignment(.center)
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(metrics.activitySummaryText)
     }
 
     private func metric(value: String, label: String, icon: String) -> some View {

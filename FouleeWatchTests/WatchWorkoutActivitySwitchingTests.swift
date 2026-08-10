@@ -129,7 +129,8 @@ struct WatchWorkoutActivitySwitchingTests {
         await waitUntil { stub.beganActivities.count == 3 }
 
         #expect(stub.beganActivities.map(\.configuration.activityType) == [.running, .walking, .running])
-        #expect(store.state == .active(.zero))
+        // Back on the run, and the screen says so — `.zero` names a walk.
+        #expect(store.state == .active(.empty(for: .running)))
     }
 
     @Test("A single aberrant estimate touches the session not at all")
@@ -182,6 +183,53 @@ struct WatchWorkoutActivitySwitchingTests {
         // to switch: the session is over.
         #expect(!motion.isStreaming)
         #expect(stub.handleToken != nil)
+    }
+
+    // MARK: - What the screen is handed (issue #250)
+
+    @Test("The live metrics name the sport being done and total only that sport")
+    func metricsCarryTheCurrentSportAndItsTotals() async {
+        let stub = WorkoutHealthKitStub()
+        let (store, motion) = await startedSession(as: .walking, stub: stub)
+
+        // What HealthKit would report once the run is under way: a closed walk
+        // and a run in flight.
+        stub.segments = [
+            WatchWorkoutSegment(
+                id: UUID(),
+                activity: .walking,
+                start: base,
+                end: base.addingTimeInterval(60),
+                steps: 90,
+                distanceMeters: 70,
+                activeCalories: 4
+            ),
+            WatchWorkoutSegment(
+                id: UUID(),
+                activity: .running,
+                start: base.addingTimeInterval(60),
+                end: nil,
+                steps: 420,
+                distanceMeters: 530,
+                activeCalories: 31
+            )
+        ]
+        detect(.running, from: motion, at: 60)
+        await waitUntil { stub.beganActivities.count == 2 }
+        // `ingest` is what refreshes the block, and it is driven by HealthKit
+        // handing over samples — which the stub never does. Drive it the way
+        // the builder would.
+        store.refreshActivityTotals()
+
+        guard case .active(let metrics) = store.state else {
+            Issue.record("la séance devrait être en cours")
+            return
+        }
+        #expect(metrics.activity == .running)
+        // The run's figures, not the session's: 90 walking steps must not be
+        // in there.
+        #expect(metrics.activityTotals.steps == 420)
+        #expect(metrics.activityTotals.activeCalories == 31)
     }
 
     @Test("Detection never starts without a session")

@@ -23,7 +23,8 @@ private final class ConfigurationRecorder {
                     finishWorkout: {},
                     collectionEndDate: { nil },
                     beginActivity: { _, _ in },
-                    endCurrentActivity: { _ in }
+                    endCurrentActivity: { _ in },
+                    segments: { [] }
                 )
             }
         ), detection: WatchActivityDetection(source: .inert))

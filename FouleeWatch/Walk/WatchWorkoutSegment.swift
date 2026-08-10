@@ -1,0 +1,103 @@
+import Foundation
+
+/// One recorded stretch of a session — an `HKWorkoutActivity`, reduced to the
+/// values the screen needs (issue #250).
+///
+/// HealthKit is what segments a session and what totals each segment: every
+/// number here is read from `HKWorkoutActivity.statisticsForType:`, never
+/// recomputed from the samples. Flattened into a value type for the usual
+/// reason — the aggregation below is then a pure function, exercisable without
+/// a workout, and `HKWorkoutActivity` cannot be built with statistics in a test.
+struct WatchWorkoutSegment: Equatable, Sendable, Identifiable {
+    /// `HKWorkoutActivity.UUID`. Carried because the same segment is read from
+    /// two places that may both know it — see `merged(_:)`.
+    var id: UUID
+    var activity: SessionActivity
+    var start: Date
+    /// Nil for the segment in flight.
+    var end: Date?
+    var steps: Int
+    var distanceMeters: Double
+    var activeCalories: Int
+
+    /// How long this segment has been recording.
+    ///
+    /// Derived from the two HealthKit dates rather than read from
+    /// `HKWorkoutActivity.duration`, which is nothing to read at all while a
+    /// segment is still running — and a clock that came from one formula during
+    /// a segment and another the instant it ended would jump on screen. The two
+    /// agree here anyway: `duration` differs from wall time only across paused
+    /// stretches, and a Foulée session has no pause control.
+    func elapsed(at now: Date) -> TimeInterval {
+        max(0, (end ?? now).timeIntervalSince(start))
+    }
+
+    /// Fold several readings of the same session into one list.
+    ///
+    /// Later lists win per `id`. That is the whole point: the segments are read
+    /// from `HKLiveWorkoutBuilder.workoutActivities`, from
+    /// `currentWorkoutActivity`, and from what the builder's delegate handed
+    /// over as each segment ended — three views of one truth, each of which can
+    /// be incomplete on its own. Nothing here bets on which: a fresher copy of
+    /// a segment simply replaces an older one, and a segment only one source
+    /// knows about survives.
+    static func merged(_ lists: [[WatchWorkoutSegment]]) -> [WatchWorkoutSegment] {
+        var byID: [UUID: WatchWorkoutSegment] = [:]
+        for list in lists {
+            for segment in list { byID[segment.id] = segment }
+        }
+        return byID.values.sorted { $0.start < $1.start }
+    }
+}
+
+/// Everything measured while doing one activity, across a whole session
+/// (issue #250).
+///
+/// Cumulative, not "since the last switch". On an outing that alternates —
+/// which is the one this feature exists for — a per-segment figure would read
+/// « Course : 2 min » permanently, resetting every time it got interesting.
+/// « Course : 12 min depuis le départ » is the number someone actually wants
+/// mid-outing.
+struct WatchActivityTotals: Equatable, Sendable {
+    var elapsed: TimeInterval = 0
+    var steps: Int = 0
+    var distanceMeters: Double = 0
+    var activeCalories: Int = 0
+
+    var distanceKm: Double { distanceMeters / 1_000 }
+
+    static let zero = WatchActivityTotals()
+
+    /// « 1480 pas  1,8 km  136 kcal ».
+    ///
+    /// One string rather than three views: laid out as equal-width columns the
+    /// three counters split their own labels mid-word on a 40 mm wrist — « pa /
+    /// s », « kc / al » — at the default text size, before Dynamic Type entered
+    /// into it. A paragraph wraps between words instead.
+    ///
+    /// Separated by spaces and not by « · », because on that same wrist the
+    /// line wraps as a matter of course and a middle dot left dangling at the
+    /// end of a line reads as a missing value. Each number carries its unit, so
+    /// the grouping survives without a mark.
+    ///
+    /// One decimal for the distance, not two: this line refreshes with the
+    /// session and a second decimal would flicker without saying anything.
+    var countersText: String {
+        "\(steps) pas  \(distanceKm.kmText(fractionDigits: 1))  \(activeCalories) kcal"
+    }
+
+    /// Sum every segment of `activity`. Segments of the other one are skipped,
+    /// so the two totals never overlap and never double-count.
+    static func of(
+        _ activity: SessionActivity,
+        in segments: [WatchWorkoutSegment],
+        at now: Date
+    ) -> WatchActivityTotals {
+        segments.lazy.filter { $0.activity == activity }.reduce(into: .zero) { totals, segment in
+            totals.elapsed += segment.elapsed(at: now)
+            totals.steps += segment.steps
+            totals.distanceMeters += segment.distanceMeters
+            totals.activeCalories += segment.activeCalories
+        }
+    }
+}

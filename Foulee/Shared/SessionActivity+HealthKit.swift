@@ -18,4 +18,18 @@ extension SessionActivity {
         case .running: .running
         }
     }
+
+    /// The way back, for reading a segment HealthKit recorded (issue #250).
+    ///
+    /// Optional, and no `default` case folded into `.walking`: a session can
+    /// carry activities this app did not open — watchOS adds some of its own —
+    /// and naming one of them « marche » would put time nobody spent walking
+    /// into a total on screen. Unnameable means unread.
+    init?(_ hkActivityType: HKWorkoutActivityType) {
+        switch hkActivityType {
+        case .walking: self = .walking
+        case .running: self = .running
+        default: return nil
+        }
+    }
 }

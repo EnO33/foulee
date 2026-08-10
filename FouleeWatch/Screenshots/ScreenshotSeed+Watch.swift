@@ -50,13 +50,27 @@ extension ScreenshotSeed {
     /// The live session the third capture shows: 18:24 écoulées, 2 480 pas,
     /// 1,83 km, 136 kcal, 118 bpm. The same session the phone's `03_session`
     /// board shows, plus the two counters only the wrist can measure.
+    ///
+    /// Since issue #250 the board also shows what is being done right now and
+    /// its running total. A **run inside a walk**, deliberately: a board where
+    /// the two blocks carry the same numbers would show the feature and prove
+    /// nothing about it. The running share is a third of each figure, rounded
+    /// the way the wrist would round it, so the second block is legible as a
+    /// part of the first.
     static var watchSessionMetrics: WatchWorkoutMetrics {
         WatchWorkoutMetrics(
             elapsed: sessionElapsed,
             steps: sessionSteps,
             distanceMeters: sessionDistanceMeters,
             activeCalories: sessionCalories,
-            heartRate: sessionHeartRate
+            heartRate: sessionHeartRate,
+            activity: .running,
+            activityTotals: WatchActivityTotals(
+                elapsed: sessionElapsed / 3,
+                steps: sessionSteps / 3,
+                distanceMeters: sessionDistanceMeters / 3,
+                activeCalories: sessionCalories / 3
+            )
         )
     }
 }
