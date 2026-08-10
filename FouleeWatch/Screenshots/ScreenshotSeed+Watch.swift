@@ -51,12 +51,18 @@ extension ScreenshotSeed {
     /// 1,83 km, 136 kcal, 118 bpm. The same session the phone's `03_session`
     /// board shows, plus the two counters only the wrist can measure.
     ///
-    /// Since issue #250 the board also shows what is being done right now and
-    /// its running total. A **run inside a walk**, deliberately: a board where
-    /// the two blocks carry the same numbers would show the feature and prove
-    /// nothing about it. The running share is a third of each figure, rounded
-    /// the way the wrist would round it, so the second block is legible as a
-    /// part of the first.
+    /// Since issue #250 the board also names what is being done right now: a
+    /// **run**, detected inside a session started as a walk, which is the
+    /// feature the wrist screen exists to show.
+    ///
+    /// `activityTotals` stays **empty**, and that is the point. It briefly
+    /// carried a third of each figure, and the composed board advertised a
+    /// per-sport breakdown — « Course · 06:08 · 826 pas · 0,6 km · 36 kcal ».
+    /// The shipped app cannot produce that any more: HealthKit refuses a
+    /// subactivity of another sport (issue #256), so nothing segments a session
+    /// and there is nothing to total. A store screenshot promising a screen the
+    /// app never draws is worse than a plain one — it is a picture of a feature
+    /// that does not exist.
     static var watchSessionMetrics: WatchWorkoutMetrics {
         WatchWorkoutMetrics(
             elapsed: sessionElapsed,
@@ -64,13 +70,7 @@ extension ScreenshotSeed {
             distanceMeters: sessionDistanceMeters,
             activeCalories: sessionCalories,
             heartRate: sessionHeartRate,
-            activity: .running,
-            activityTotals: WatchActivityTotals(
-                elapsed: sessionElapsed / 3,
-                steps: sessionSteps / 3,
-                distanceMeters: sessionDistanceMeters / 3,
-                activeCalories: sessionCalories / 3
-            )
+            activity: .running
         )
     }
 }
