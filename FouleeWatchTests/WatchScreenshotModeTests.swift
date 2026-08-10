@@ -186,6 +186,12 @@ struct WatchScreenshotModeTests {
         #expect(metrics.distanceMeters == ScreenshotSeed.sessionDistanceMeters)
         #expect(metrics.activeCalories == ScreenshotSeed.sessionCalories)
         #expect(metrics.heartRate == ScreenshotSeed.sessionHeartRate)
+        // The detected sport is shown; its breakdown is not, because the app
+        // cannot compute one since issue #256. A board that showed figures here
+        // would photograph a screen the shipped app never draws.
+        #expect(metrics.activity == .running)
+        #expect(metrics.activityTotals == .zero)
+        #expect(metrics.activityHeadlineText == "Course")
     }
 
     /// Checked where it is decidable, the way the phone suite does it: writing
