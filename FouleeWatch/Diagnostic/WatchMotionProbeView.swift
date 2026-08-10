@@ -44,10 +44,11 @@ struct WatchMotionProbeView: View {
                 .padding(.top, 4)
         }
         .task {
-            probe.start()
-            // Cancelled when the screen goes away, which is also what stops
-            // the polling below.
-            await probe.observeCapabilities()
+            // Opens the stream and keeps re-attempting it every second, so a
+            // capability that only resolves after the screen appears is still
+            // used. Cancelled when the screen goes away, which is what stops
+            // the polling.
+            await probe.keepListening()
         }
         .onDisappear { probe.stop() }
     }

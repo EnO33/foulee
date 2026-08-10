@@ -118,14 +118,39 @@ struct MotionProbeEstimate: Equatable, Sendable {
 }
 
 /// Everything the probe knows right now.
+///
+/// Everything below the two capability answers describes **one listening
+/// window** — the stretch since `startedAt`, and nothing before it. That is not
+/// bookkeeping tidiness: « Écoute depuis » and « Estimations reçues » are read
+/// as a *pair*, and that pair is the whole way of telling « rien ne bouge »
+/// apart from « le flux est mort ». Let a count from an earlier visit to the
+/// screen sit next to a clock that restarted seconds ago and a dead stream
+/// reads as a healthy one.
 struct MotionProbeState: Equatable, Sendable {
     var isAvailable = false
     var authorization = MotionProbeAuthorization.notDetermined
-    /// When the stream was opened. Nil means it never was — which is why
+    /// When the stream was opened. Nil means it is not open — which is why
     /// "zero estimates" is not on its own evidence of a dead stream.
     var startedAt: Date?
     var estimateCount = 0
     var latest: MotionProbeEstimate?
+
+    /// Open a window. Called when the stream opens, including on a reopen of
+    /// the screen mid-outing.
+    mutating func openWindow(at date: Date) {
+        startedAt = date
+        estimateCount = 0
+        latest = nil
+    }
+
+    /// Close it, when the stream closes. `startedAt` must not outlive the
+    /// stream it describes: left behind, it puts « Écoute depuis : il y a
+    /// 12 min » on a screen that is listening to nothing.
+    mutating func closeWindow() {
+        startedAt = nil
+        estimateCount = 0
+        latest = nil
+    }
 }
 
 /// One displayed line. `tone` only colours it; the text says everything.

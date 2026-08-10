@@ -12,9 +12,12 @@ struct WatchRootView: View {
     /// The device probe (issue #248). Covers whatever is underneath, session
     /// included, and gives it back untouched — see `WatchRoute`.
     @State private var isShowingDiagnostic = false
-    /// Held here rather than inside the screen so its count and its stream
-    /// survive closing and reopening the diagnostic mid-outing. Constructing
-    /// it prompts nothing: `WatchMotionProbe.start()` opens the stream.
+    /// Held here rather than inside the screen so one `CMMotionActivityManager`
+    /// serves the whole outing instead of being rebuilt on every visit.
+    /// Constructing it prompts nothing: `WatchMotionProbe.start()` opens the
+    /// stream. The *readings* deliberately do not survive a close — closing the
+    /// screen closes the stream, and a count from the previous visit next to a
+    /// listening clock that just restarted is a false pair (`MotionProbeState`).
     @State private var probe = WatchMotionProbe()
 
     var body: some View {
