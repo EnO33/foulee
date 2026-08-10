@@ -3,7 +3,7 @@ import HealthKit
 import Testing
 @testable import FouleeWatch
 
-private struct StubError: LocalizedError {
+struct StubError: LocalizedError {
     var errorDescription: String? { "boom" }
 }
 
@@ -11,7 +11,7 @@ private struct StubError: LocalizedError {
 /// throws on demand, and tracks the handle's lifetime so tests can assert
 /// that the store releases (or deliberately retains) the builder.
 @MainActor
-private final class WorkoutHealthKitStub {
+final class WorkoutHealthKitStub {
     var isAvailable = true
     var authError: Error?
     var startError: Error?
@@ -33,11 +33,16 @@ private final class WorkoutHealthKitStub {
     private(set) var endCollectionCalls = 0
     private(set) var finishCalls = 0
     private(set) var collectionEndDate: Date?
+    /// Nested activities opened inside the running session (issue #249). The
+    /// configuration is what HealthKit stamps on the segment, so asserting on
+    /// it is asserting on what Santé will show.
+    private(set) var beganActivities: [(configuration: HKWorkoutConfiguration, date: Date)] = []
+    private(set) var endedActivityDates: [Date] = []
     /// Weak by design: the only strong reference lives in the handle's
     /// closures, so `nil` here means the store let go of the handle.
     private(set) weak var handleToken: AnyObject?
 
-    func makeStore() -> WatchWorkoutStore {
+    func makeStore(detection: WatchActivityDetection = WatchActivityDetection(source: .inert)) -> WatchWorkoutStore {
         WatchWorkoutStore(healthKit: WatchWorkoutHealthKit(
             isAvailable: { self.isAvailable },
             requestAuthorization: { toShare, read in
@@ -51,7 +56,7 @@ private final class WorkoutHealthKitStub {
                 if let error = self.startError { throw error }
                 return self.makeHandle()
             }
-        ))
+        ), detection: detection)
     }
 
     private func makeHandle() -> WatchWorkoutSessionHandle {
@@ -71,7 +76,11 @@ private final class WorkoutHealthKitStub {
                 self.finishCalls += 1
                 if let error = self.finishError { throw error }
             },
-            collectionEndDate: { self.collectionEndDate }
+            collectionEndDate: { self.collectionEndDate },
+            beginActivity: { configuration, date in
+                self.beganActivities.append((configuration, date))
+            },
+            endCurrentActivity: { self.endedActivityDates.append($0) }
         )
     }
 }

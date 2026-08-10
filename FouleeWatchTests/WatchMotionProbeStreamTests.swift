@@ -9,54 +9,15 @@ import Testing
 /// covers the half that is *not* pure and that no simulator can exercise
 /// through CoreMotion — `CMMotionActivityManager.isActivityAvailable()` is
 /// `false` on every simulator, so the real engine can never reach the code that
-/// matters. `MotionProbeEngine` is the seam that makes it reachable, and both
+/// matters. `MotionActivitySource` is the seam that makes it reachable, and both
 /// failures pinned here were real readings on the screen before it existed.
 @Suite("Watch motion probe stream")
 @MainActor
 struct WatchMotionProbeStreamTests {
-    /// A CoreMotion that does what the test says, including changing its mind.
-    @MainActor
-    final class FakeMotion {
-        var isAvailable = false
-        var authorization = MotionProbeAuthorization.notDetermined
-        /// Flips availability on once this many reads have happened — a device
-        /// whose capability only resolves after the screen is already up.
-        var becomesAvailableOnRead: Int?
-
-        private(set) var reads = 0
-        private(set) var opens = 0
-        private(set) var closes = 0
-        private var handler: (@Sendable (MotionProbeEstimate) -> Void)?
-
-        var engine: MotionProbeEngine {
-            MotionProbeEngine(
-                isAvailable: { [self] in
-                    reads += 1
-                    if let threshold = becomesAvailableOnRead, reads >= threshold { isAvailable = true }
-                    return isAvailable
-                },
-                authorization: { [self] in authorization },
-                openStream: { [self] handler in
-                    opens += 1
-                    self.handler = handler
-                },
-                closeStream: { [self] in
-                    closes += 1
-                    handler = nil
-                }
-            )
-        }
-
-        /// Deliver one estimate the way CoreMotion would.
-        func deliver(_ estimate: MotionProbeEstimate) {
-            handler?(estimate)
-        }
-    }
-
     private let base = Date(timeIntervalSince1970: 1_754_000_000)
 
-    private func estimate(at date: Date, walking: Bool = true) -> MotionProbeEstimate {
-        MotionProbeEstimate(
+    private func estimate(at date: Date, walking: Bool = true) -> MotionActivityEstimate {
+        MotionActivityEstimate(
             startDate: date,
             receivedAt: date,
             confidence: .high,
@@ -77,10 +38,10 @@ struct WatchMotionProbeStreamTests {
 
     @Test("A capability that only resolves after the screen is up still opens the stream")
     func availabilityArrivingLateStillOpensTheStream() async {
-        let motion = FakeMotion()
+        let motion = FakeMotionSource()
         // Unavailable on the first two reads, available afterwards.
         motion.becomesAvailableOnRead = 3
-        let probe = WatchMotionProbe(engine: motion.engine)
+        let probe = WatchMotionProbe(engine: motion.source)
 
         // Exactly what `WatchMotionProbeView.task` runs.
         let listening = Task { await probe.keepListening(interval: .milliseconds(20)) }
@@ -98,9 +59,9 @@ struct WatchMotionProbeStreamTests {
 
     @Test("Retrying every tick opens the stream once, not once a second")
     func theRetryIsIdempotent() async {
-        let motion = FakeMotion()
+        let motion = FakeMotionSource()
         motion.isAvailable = true
-        let probe = WatchMotionProbe(engine: motion.engine)
+        let probe = WatchMotionProbe(engine: motion.source)
 
         let listening = Task { await probe.keepListening(interval: .milliseconds(10)) }
         // Long enough for many ticks; the assertion is on the count, not the
@@ -114,8 +75,8 @@ struct WatchMotionProbeStreamTests {
 
     @Test("An unavailable device is never asked for a stream")
     func anUnavailableDeviceIsLeftAlone() async {
-        let motion = FakeMotion()
-        let probe = WatchMotionProbe(engine: motion.engine)
+        let motion = FakeMotionSource()
+        let probe = WatchMotionProbe(engine: motion.source)
 
         let listening = Task { await probe.keepListening(interval: .milliseconds(10)) }
         await waitUntil { motion.reads >= 5 }
@@ -133,9 +94,9 @@ struct WatchMotionProbeStreamTests {
 
     @Test("Reopening the screen counts the new window, not the old one")
     func aReopenedWindowStartsFromZero() async {
-        let motion = FakeMotion()
+        let motion = FakeMotionSource()
         motion.isAvailable = true
-        let probe = WatchMotionProbe(engine: motion.engine)
+        let probe = WatchMotionProbe(engine: motion.source)
 
         probe.start(now: base)
         motion.deliver(estimate(at: base))
@@ -159,9 +120,9 @@ struct WatchMotionProbeStreamTests {
 
     @Test("What the new window receives is what it counts")
     func theNewWindowCountsItsOwnEstimates() async {
-        let motion = FakeMotion()
+        let motion = FakeMotionSource()
         motion.isAvailable = true
-        let probe = WatchMotionProbe(engine: motion.engine)
+        let probe = WatchMotionProbe(engine: motion.source)
 
         probe.start(now: base)
         motion.deliver(estimate(at: base))
@@ -179,9 +140,9 @@ struct WatchMotionProbeStreamTests {
 
     @Test("Closing the screen takes the listening clock with it")
     func closingClearsTheWindow() async {
-        let motion = FakeMotion()
+        let motion = FakeMotionSource()
         motion.isAvailable = true
-        let probe = WatchMotionProbe(engine: motion.engine)
+        let probe = WatchMotionProbe(engine: motion.source)
 
         probe.start(now: base)
         motion.deliver(estimate(at: base))

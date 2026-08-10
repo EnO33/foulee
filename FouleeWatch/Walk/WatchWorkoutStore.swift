@@ -28,9 +28,14 @@ final class WatchWorkoutStore: NSObject {
 
     @ObservationIgnored private let healthKit: WatchWorkoutHealthKit
     @ObservationIgnored private var sessionHandle: WatchWorkoutSessionHandle?
+    @ObservationIgnored private let detection: WatchActivityDetection
 
-    init(healthKit: WatchWorkoutHealthKit = .live) {
+    init(
+        healthKit: WatchWorkoutHealthKit = .live,
+        detection: WatchActivityDetection = WatchActivityDetection()
+    ) {
         self.healthKit = healthKit
+        self.detection = detection
         super.init()
     }
 
@@ -96,6 +101,7 @@ final class WatchWorkoutStore: NSObject {
     /// failure the builder is kept alive so "Réessayer" can finish it.
     func stop() async {
         guard case .active(let metrics) = state, let handle = sessionHandle else { return }
+        detection.stop()
         handle.end()
         let saved = await runOrTrap {
             try await handle.endCollection(.now)
@@ -126,6 +132,7 @@ final class WatchWorkoutStore: NSObject {
 
     /// Return to idle so a new session can start.
     func reset() {
+        detection.stop()
         sessionHandle = nil
         lastError = nil
         state = .idle
@@ -146,16 +153,13 @@ final class WatchWorkoutStore: NSObject {
     #endif
 
     private func beginSession(activity: SessionActivity) async {
-        let configuration = HKWorkoutConfiguration()
-        configuration.activityType = activity.hkActivityType
-        configuration.locationType = .outdoor
-
         let handle = await runOrTrap {
-            try await healthKit.startSession(configuration, self)
+            try await healthKit.startSession(Self.configuration(for: activity), self)
         }
         guard let handle else { return }
         sessionHandle = handle
         state = .active(.zero)
+        beginActivityDetection(from: activity)
     }
 
     fileprivate func ingest(builder: HKLiveWorkoutBuilder) {
@@ -225,6 +229,9 @@ extension WatchWorkoutStore: HKWorkoutSessionDelegate {
     /// finish the builder.
     func handleSessionFailure(_ message: String) {
         lastError = message
+        // Whatever the session's fate, there is nothing left to switch: keep
+        // the builder alive for "Réessayer", but let the motion stream go.
+        detection.stop()
         guard case .active(let metrics) = state else { return }
         state = .ended(metrics, saveFailed: true)
     }
@@ -242,5 +249,63 @@ extension WatchWorkoutStore: HKLiveWorkoutBuilderDelegate {
 
     nonisolated func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {
         // No event-specific UI; ignore.
+    }
+}
+
+/// Automatic walk/run detection during a live session (issue #249).
+///
+/// In an extension rather than the class body so the state machine above stays
+/// the thing you read first, and because none of this is state — the decision
+/// is `ActivitySwitchDetector`'s, the stream is `WatchActivityDetection`'s, and
+/// what is left here is only the translation into HealthKit's two calls.
+extension WatchWorkoutStore {
+    /// The configuration HealthKit stamps a session — or one of its nested
+    /// activities — with.
+    ///
+    /// One builder for both, because a nested activity of the same kind must be
+    /// configured exactly like the session that would have started as it:
+    /// `locationType` drifting between the two would make the same walk measure
+    /// differently depending on whether it was chosen or detected.
+    static func configuration(for activity: SessionActivity) -> HKWorkoutConfiguration {
+        let configuration = HKWorkoutConfiguration()
+        configuration.activityType = activity.hkActivityType
+        configuration.locationType = .outdoor
+        return configuration
+    }
+
+    /// Open the first segment and start classifying.
+    ///
+    /// The session's *main* activity is not enough to record the opening
+    /// stretch, and that is the whole reason a nested activity is opened here
+    /// rather than only at the first switch. HealthKit's main activity spans
+    /// the entire session: on a walk with a run in the middle it would save
+    /// « marche, 42 min » covering everything plus « course, 12 min » inside it,
+    /// and the 30 minutes actually spent walking would exist nowhere — not in
+    /// Santé, and not as anything the watch could show while it happens.
+    ///
+    /// One nested activity per stretch makes each one a measured object with
+    /// its own `startDate`, `endDate` and `allStatistics`. HealthKit does the
+    /// segmenting; nothing here recomputes it.
+    private func beginActivityDetection(from activity: SessionActivity) {
+        let now = Date.now
+        sessionHandle?.beginActivity(Self.configuration(for: activity), now)
+        detection.start(from: activity, at: now) { [weak self] confirmed in
+            self?.applySwitch(confirmed)
+        }
+    }
+
+    /// Close the running segment and open the next one, both dated from the
+    /// moment the device says the activity changed.
+    ///
+    /// Symmetric on purpose. HealthKit's own model is not — `endCurrentActivity`
+    /// « reverts to the main session activity », so coming back to what the
+    /// session started as could have been an end with no matching begin. That
+    /// shape is one call cheaper and loses the returning stretch entirely: it
+    /// would fold back into the main activity, which already covers the whole
+    /// session and therefore says nothing about it.
+    private func applySwitch(_ confirmed: ActivitySwitchDetector.Switch) {
+        guard case .active = state, let handle = sessionHandle else { return }
+        handle.endCurrentActivity(confirmed.date)
+        handle.beginActivity(Self.configuration(for: confirmed.activity), confirmed.date)
     }
 }

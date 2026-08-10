@@ -1,13 +1,26 @@
 {
   "sourceLanguage" : "fr",
   "strings" : {
+    "%@ / %@ L" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ / %2$@ L"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
+    },
     "%lld pas · %@" : {
 
     },
-    "Allons-y dehors,\nmême 10 minutes." : {
+    "Arrêter" : {
 
     },
-    "Arrêter" : {
+    "Autorise l'eau dans Santé" : {
 
     },
     "Bravo" : {
@@ -16,7 +29,22 @@
     "Démarrer" : {
 
     },
-    "Marche du midi" : {
+    "j" : {
+
+    },
+    "J'ai bu" : {
+
+    },
+    "Marche non enregistrée dans Santé" : {
+
+    },
+    "Ouvre Foulée sur ton iPhone pour synchroniser" : {
+
+    },
+    "Réessayer" : {
+
+    },
+    "série" : {
 
     },
     "Terminer" : {
