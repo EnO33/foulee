@@ -41,10 +41,21 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     var distanceKm: Double { distanceMeters / 1_000 }
 
     /// « Course · 12:04 » — the sport being done and how long it has added up
-    /// to across the session.
+    /// to across the session. Just « Course » when nothing has been measured
+    /// for it yet.
+    ///
+    /// The clock is dropped rather than shown at zero, and the counters below
+    /// it disappear for the same reason: since issue #256 nothing segments the
+    /// session, so there is genuinely nothing to total. « Course · 00:00 » next
+    /// to three zeros reads as a broken counter; « Course » alone reads as what
+    /// it is — the sport, named, with no figures claimed.
     var activityHeadlineText: String {
-        "\(activity.label) · \(activityTotals.elapsed.walkClockText)"
+        guard hasMeasuredActivityTotals else { return activity.label }
+        return "\(activity.label) · \(activityTotals.elapsed.walkClockText)"
     }
+
+    /// Whether HealthKit has measured anything for the current sport.
+    var hasMeasuredActivityTotals: Bool { activityTotals != .zero }
 
     /// One sentence naming the current activity and its running totals, for
     /// VoiceOver (issue #250).
@@ -57,7 +68,8 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// Here rather than in the view so it is a pure function of the metrics,
     /// and so the wording is asserted rather than eyeballed.
     var activitySummaryText: String {
-        "\(activity.label) : \(activityTotals.elapsed.walkClockText), "
+        guard hasMeasuredActivityTotals else { return activity.label }
+        return "\(activity.label) : \(activityTotals.elapsed.walkClockText), "
             + "\(activityTotals.steps) pas, \(activityTotals.distanceKm.kmText(fractionDigits: 1)), "
             + "\(activityTotals.activeCalories) kcal"
     }

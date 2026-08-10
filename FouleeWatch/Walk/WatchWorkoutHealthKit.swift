@@ -32,19 +32,10 @@ struct WatchWorkoutSessionHandle: Sendable {
     /// `HKLiveWorkoutBuilder.endDate` — non-nil once collection has ended, so
     /// a retry knows not to end it twice.
     var collectionEndDate: @MainActor () -> Date?
-    /// Open a nested `HKWorkoutActivity` inside the running session (issue
-    /// #249), dated `at` — which may be in the past, and usually is: the
-    /// boundary comes from CoreMotion's own stamp for when the activity began,
-    /// not from when we noticed.
-    ///
-    /// This is not a relabelling. Apple's header is explicit that « sensor
-    /// algorithms to generate data would be updated to match the new
-    /// activity », so the watch *measures differently* afterwards.
-    var beginActivity: @MainActor (_ configuration: HKWorkoutConfiguration, _ at: Date) -> Void
-    /// Close the running nested activity. HealthKit's own word for it is
-    /// « reverting to the main session activity »; Foulée immediately opens the
-    /// next segment, so the main activity is never what is actually recording.
-    var endCurrentActivity: @MainActor (_ at: Date) -> Void
+    // No `beginActivity` / `endCurrentActivity` here any more. They existed to
+    // record each stretch as its own `HKWorkoutActivity`, and on a real wrist
+    // they killed the session outright (issue #256). Reading the segments back
+    // stays — it costs nothing and writes nothing.
     /// Every segment HealthKit has recorded for this session, oldest first,
     /// including the one in flight (issue #250).
     var segments: @MainActor () -> [WatchWorkoutSegment]
@@ -128,10 +119,6 @@ extension WatchWorkoutHealthKit {
                     endCollection: { try await builder.endCollection(at: $0) },
                     finishWorkout: { _ = try await builder.finishWorkout() },
                     collectionEndDate: { builder.endDate },
-                    beginActivity: { configuration, date in
-                        session.beginNewActivity(configuration: configuration, date: date, metadata: nil)
-                    },
-                    endCurrentActivity: { session.endCurrentActivity(on: $0) },
                     // Two readings of the same list, merged rather than chosen
                     // between. `workoutActivities` is documented in terms of
                     // the *manual* `addWorkoutActivity:` path, so whether it
