@@ -12,7 +12,6 @@ import Testing
 @MainActor
 final class FakeMotionSource {
     var isAvailable = false
-    var authorization = MotionAuthorization.notDetermined
     /// Flips availability on once this many reads have happened — a device
     /// whose capability only resolves after listening has already started.
     var becomesAvailableOnRead: Int?
@@ -29,7 +28,6 @@ final class FakeMotionSource {
                 if let threshold = becomesAvailableOnRead, reads >= threshold { isAvailable = true }
                 return isAvailable
             },
-            authorization: { [self] in authorization },
             openStream: { [self] handler in
                 opens += 1
                 self.handler = handler
@@ -59,22 +57,14 @@ func motionEstimate(
     receivedAt: Date? = nil,
     confidence: MotionActivityConfidence = .high,
     walking: Bool = false,
-    running: Bool = false,
-    stationary: Bool = false,
-    unknown: Bool = false,
-    cycling: Bool = false,
-    automotive: Bool = false
+    running: Bool = false
 ) -> MotionActivityEstimate {
     MotionActivityEstimate(
         startDate: startDate,
         receivedAt: receivedAt ?? startDate,
         confidence: confidence,
         walking: walking,
-        running: running,
-        stationary: stationary,
-        unknown: unknown,
-        cycling: cycling,
-        automotive: automotive
+        running: running
     )
 }
 
@@ -88,7 +78,6 @@ extension MotionActivitySource {
     /// woken up thirty times per test.
     static let inert = MotionActivitySource(
         isAvailable: { false },
-        authorization: { .denied },
         openStream: { _ in },
         closeStream: {}
     )

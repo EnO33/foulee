@@ -21,9 +21,9 @@ extension MotionActivityEstimate {
     /// prefers walking whenever the device asserts both — precisely the moment
     /// it is least sure.
     ///
-    /// Everything else — stationary, cycling, automotive, unknown, all-false —
-    /// leaves both of those two clear and therefore yields `noEvidence` without
-    /// needing a case of its own.
+    /// Everything else yields `noEvidence` without needing a case of its own:
+    /// both flags clear is what a stationary wearer, a bike ride, a car journey
+    /// and an estimate the device could not classify all look like from here.
     func reading(minimumConfidence: MotionActivityConfidence) -> MotionActivityReading {
         guard confidence >= minimumConfidence else { return .noEvidence }
         switch (walking, running) {

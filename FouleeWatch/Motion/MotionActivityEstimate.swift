@@ -8,9 +8,9 @@ import Foundation
 /// is exercisable on a simulator, where `CMMotionActivityManager` reports
 /// itself unavailable and would otherwise deliver nothing at all.
 ///
-/// Lives outside `Diagnostic/` on purpose: issue #252 deletes that folder
-/// wholesale once the probe has done its job, and the detection must not go
-/// with it.
+/// Lived outside `FouleeWatch/Diagnostic/` on purpose, and outlived it: issue
+/// #252 deleted the probe and its folder whole once the measurement was in,
+/// and the detection had to stay.
 
 /// How sure CoreMotion says it is. Mirrors `CMMotionActivityConfidence`; the
 /// raw values are pinned against the real enum in the test suite.
@@ -28,16 +28,6 @@ enum MotionActivityConfidence: Int, CaseIterable, Comparable, Sendable {
     static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
 }
 
-/// Mirrors `CMAuthorizationStatus`. Same reasoning as above for
-/// `unrecognised`, and the raw values are pinned against CoreMotion's.
-enum MotionAuthorization: Int, CaseIterable, Sendable {
-    case unrecognised = -1
-    case notDetermined = 0
-    case restricted = 1
-    case denied = 2
-    case authorized = 3
-}
-
 /// One estimate, with both of its clocks.
 ///
 /// `startDate` is the device's own stamp for when the activity began;
@@ -47,18 +37,24 @@ enum MotionAuthorization: Int, CaseIterable, Sendable {
 /// `receivedAt` is a stream that has gone quiet. The detection uses the first
 /// to date its segment boundaries and the second to reason about freshness.
 ///
-/// The six booleans are kept separate rather than reduced to a verdict here.
-/// They are **not mutually exclusive and can all be false**, so there is no
-/// "primary" one to pick; collapsing them is a decision, and it belongs to
-/// `ActivitySwitchDetector`, where it is stated once and tested.
+/// Two of `CMMotionActivity`'s six booleans, and only two.
+///
+/// `stationary`, `unknown`, `cycling` and `automotive` were carried here while
+/// the device probe of issue #248 displayed them; nothing reads them now, and a
+/// field nobody reads is a field that can be wrong without anyone noticing.
+/// Dropping them costs no guarantee: they are the flags Foulée does not record,
+/// so an estimate carrying one of them leaves `walking` and `running` clear and
+/// is no evidence either way — which is exactly what `reading(minimumConfidence:)`
+/// already answers.
+///
+/// The two that remain are kept **separate**, not reduced to a verdict here:
+/// they are not mutually exclusive and can both be false, so collapsing them is
+/// a decision, and it belongs to `ActivitySwitchDetector` where it is stated
+/// once and tested.
 struct MotionActivityEstimate: Equatable, Sendable {
     var startDate: Date
     var receivedAt: Date
     var confidence: MotionActivityConfidence
     var walking: Bool
     var running: Bool
-    var stationary: Bool
-    var unknown: Bool
-    var cycling: Bool
-    var automotive: Bool
 }

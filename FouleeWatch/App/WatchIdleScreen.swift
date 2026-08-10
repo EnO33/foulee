@@ -36,10 +36,6 @@ struct WatchIdleScreen: View {
     var onAsk: () -> Void
     /// Backed out of the question without starting anything.
     var onCancel: () -> Void
-    /// Opens the device probe (issue #248). Not defaulted: a diagnostic
-    /// wired to nothing is a button that lies, and the whole screen exists to
-    /// not lie.
-    var onDiagnostic: () -> Void
 
     var body: some View {
         if isChoosingActivity {
@@ -50,8 +46,7 @@ struct WatchIdleScreen: View {
             WatchTodayView(
                 store: today,
                 errorMessage: errorMessage,
-                onStart: start,
-                onDiagnostic: onDiagnostic
+                onStart: start
             )
         }
     }
