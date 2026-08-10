@@ -340,22 +340,14 @@ extension WatchWorkoutStore {
         endedSegments = WatchWorkoutSegment.merged([endedSegments, [segment]])
     }
 
-    /// Note what the wearer is now doing. **Nothing is written to the session.**
+    /// Note what the wearer is now doing, then — and only then — try to record
+    /// it as a segment.
     ///
-    /// It used to end the running `HKWorkoutActivity` and open the next one, so
-    /// that Santé recorded each stretch under its own sport — and that killed
-    /// sessions on the wrist (issue #256). Observed on `v1.38`, outdoors: the
-    /// walk ran normally, and the instant detection confirmed a run the session
-    /// failed outright. Not a save that failed — `workoutSession(_:didFailWithError:)`,
-    /// the session dead at eighteen seconds, « Réessayer » able to keep the
-    /// eighteen seconds and nothing else.
-    ///
-    /// The segmenting is therefore **off** until it can be reintroduced with
-    /// evidence rather than with a hypothesis. What stays is what cannot fail:
-    /// the classification, and the sport named on screen — read from the
-    /// detector, not from HealthKit. A wrong guess about a segment costs a
-    /// wrong label for a few seconds; a wrong guess about the session costs the
-    /// whole outing.
+    /// **The order is the design.** Renaming the screen cannot fail; opening a
+    /// segment can, and on `v1.38` it did, taking the whole session with it
+    /// (issue #256). Doing the safe half first means a session that dies still
+    /// died having shown the right sport, and the display never depends on
+    /// HealthKit accepting anything.
     private func applySwitch(_ confirmed: ActivitySwitchDetector.Switch) {
         guard case .active = state else { return }
         currentActivity = confirmed.activity
@@ -366,5 +358,32 @@ extension WatchWorkoutStore {
         // collection stalled, the screen would keep naming the wrong sport for
         // as long as it stayed stalled.
         refreshActivityTotals()
+        recordSegment(confirmed)
+    }
+
+    /// Record the change as an `HKWorkoutActivity`, if the session is in a
+    /// state where that is legal.
+    ///
+    /// Two guards, and each is a call that used to be made blind:
+    ///
+    /// * **The session must really be running.** `startActivity` is documented
+    ///   as asynchronous, so a session can be mid-start when the first switch
+    ///   lands. This is the leading suspicion for issue #256.
+    /// * **`endCurrentActivity` only when a nested activity is actually open.**
+    ///   HealthKit's answer, not ours: ending the *main* activity is documented
+    ///   as impossible, and the previous code asked for it whenever it believed
+    ///   it had opened something.
+    ///
+    /// No segment is opened at the start of a session any more, so the opening
+    /// stretch stays inside the main activity and its figures are not
+    /// attributed to a sport. That is a known gap, and the smaller half of the
+    /// trade: closing it means calling `beginNewActivity` at the exact moment
+    /// under suspicion.
+    private func recordSegment(_ confirmed: ActivitySwitchDetector.Switch) {
+        guard let handle = sessionHandle, handle.isRunning() else { return }
+        if handle.hasNestedActivity() {
+            handle.endCurrentActivity(confirmed.date)
+        }
+        handle.beginActivity(Self.configuration(for: confirmed.activity), confirmed.date)
     }
 }

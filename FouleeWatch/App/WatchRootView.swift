@@ -29,6 +29,10 @@ struct WatchRootView: View {
                 WatchFinishedView(
                     metrics: metrics,
                     saveFailed: saveFailed,
+                    // The one sentence that explains a failure, shown where the
+                    // failure is (issue #256). It used to reach only the home
+                    // screen, which `reset()` clears on the way there.
+                    errorMessage: store.lastError,
                     onRetry: { Task { await store.retrySave() } },
                     onDone: { store.reset() }
                 )

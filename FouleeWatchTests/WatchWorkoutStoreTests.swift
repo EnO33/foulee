@@ -37,6 +37,17 @@ final class WorkoutHealthKitStub {
     /// tests of issue #250; empty everywhere else, which is what a session with
     /// nothing measured yet looks like.
     var segments: [WatchWorkoutSegment] = []
+    /// Whether the session reports itself as running. `false` reproduces the
+    /// window issue #256 is suspected to die in: `startActivity` is
+    /// asynchronous, so a switch can land before the session has begun.
+    var isRunning = true
+    /// Whether HealthKit says a nested activity is open. Starts `false`, and
+    /// the stub flips it the way the real builder would.
+    private(set) var hasNestedActivity = false
+    /// Segments opened inside the running session, and the dates they were
+    /// ended on. What Santé would record.
+    private(set) var beganActivities: [(configuration: HKWorkoutConfiguration, date: Date)] = []
+    private(set) var endedActivityDates: [Date] = []
     /// Weak by design: the only strong reference lives in the handle's
     /// closures, so `nil` here means the store let go of the handle.
     private(set) weak var handleToken: AnyObject?
@@ -76,6 +87,16 @@ final class WorkoutHealthKitStub {
                 if let error = self.finishError { throw error }
             },
             collectionEndDate: { self.collectionEndDate },
+            beginActivity: { configuration, date in
+                self.beganActivities.append((configuration, date))
+                self.hasNestedActivity = true
+            },
+            endCurrentActivity: {
+                self.endedActivityDates.append($0)
+                self.hasNestedActivity = false
+            },
+            isRunning: { self.isRunning },
+            hasNestedActivity: { self.hasNestedActivity },
             segments: { self.segments }
         )
     }
