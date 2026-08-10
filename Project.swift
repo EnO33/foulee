@@ -306,6 +306,11 @@ let project = Project(
                 // preference it resolves from, which rides in the sync payload.
                 "Foulee/Shared/SessionActivity.swift",
                 "Foulee/Shared/SessionActivity+HealthKit.swift",
+                // What one CoreMotion estimate means. Shared because the phone
+                // reads the same history after a session (issue #246), and two
+                // platforms disagreeing about a single estimate would be a bug
+                // nobody could explain.
+                "Foulee/Motion/MotionActivityReading.swift",
                 "Foulee/Preferences/ActivityMode.swift",
                 // « Les deux » makes the watch ask which activity before it
                 // records one (issue #224): the intent is the shared decision,
