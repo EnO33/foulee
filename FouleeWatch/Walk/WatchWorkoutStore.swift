@@ -298,23 +298,11 @@ extension WatchWorkoutStore {
         return configuration
     }
 
-    /// Open the first segment and start classifying.
-    ///
-    /// The session's *main* activity is not enough to record the opening
-    /// stretch, and that is the whole reason a nested activity is opened here
-    /// rather than only at the first switch. HealthKit's main activity spans
-    /// the entire session: on a walk with a run in the middle it would save
-    /// « marche, 42 min » covering everything plus « course, 12 min » inside it,
-    /// and the 30 minutes actually spent walking would exist nowhere — not in
-    /// Santé, and not as anything the watch could show while it happens.
-    ///
-    /// One nested activity per stretch makes each one a measured object with
-    /// its own `startDate`, `endDate` and `allStatistics`. HealthKit does the
-    /// segmenting; nothing here recomputes it.
+    /// Start classifying. **Records nothing into the session** — see
+    /// `applySwitch`.
     private func beginActivityDetection(from activity: SessionActivity) {
         let now = Date.now
         currentActivity = activity
-        sessionHandle?.beginActivity(Self.configuration(for: activity), now)
         detection.start(from: activity, at: now) { [weak self] confirmed in
             self?.applySwitch(confirmed)
         }
@@ -352,19 +340,31 @@ extension WatchWorkoutStore {
         endedSegments = WatchWorkoutSegment.merged([endedSegments, [segment]])
     }
 
-    /// Close the running segment and open the next one, both dated from the
-    /// moment the device says the activity changed.
+    /// Note what the wearer is now doing. **Nothing is written to the session.**
     ///
-    /// Symmetric on purpose. HealthKit's own model is not — `endCurrentActivity`
-    /// « reverts to the main session activity », so coming back to what the
-    /// session started as could have been an end with no matching begin. That
-    /// shape is one call cheaper and loses the returning stretch entirely: it
-    /// would fold back into the main activity, which already covers the whole
-    /// session and therefore says nothing about it.
+    /// It used to end the running `HKWorkoutActivity` and open the next one, so
+    /// that Santé recorded each stretch under its own sport — and that killed
+    /// sessions on the wrist (issue #256). Observed on `v1.38`, outdoors: the
+    /// walk ran normally, and the instant detection confirmed a run the session
+    /// failed outright. Not a save that failed — `workoutSession(_:didFailWithError:)`,
+    /// the session dead at eighteen seconds, « Réessayer » able to keep the
+    /// eighteen seconds and nothing else.
+    ///
+    /// The segmenting is therefore **off** until it can be reintroduced with
+    /// evidence rather than with a hypothesis. What stays is what cannot fail:
+    /// the classification, and the sport named on screen — read from the
+    /// detector, not from HealthKit. A wrong guess about a segment costs a
+    /// wrong label for a few seconds; a wrong guess about the session costs the
+    /// whole outing.
     private func applySwitch(_ confirmed: ActivitySwitchDetector.Switch) {
-        guard case .active = state, let handle = sessionHandle else { return }
-        handle.endCurrentActivity(confirmed.date)
-        handle.beginActivity(Self.configuration(for: confirmed.activity), confirmed.date)
+        guard case .active = state else { return }
         currentActivity = confirmed.activity
+        // Push it to the screen now, rather than waiting for the next batch of
+        // HealthKit samples to call `ingest`. Detection is already the slow
+        // part of this feature; letting the *name* lag behind the decision by
+        // another collection interval would add a delay to a delay — and if
+        // collection stalled, the screen would keep naming the wrong sport for
+        // as long as it stayed stalled.
+        refreshActivityTotals()
     }
 }

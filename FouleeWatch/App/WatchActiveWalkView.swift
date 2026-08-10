@@ -98,9 +98,11 @@ struct WatchActiveWalkView: View {
             Text("\(Image(systemName: metrics.activity.icon)) \(metrics.activityHeadlineText)")
                 .font(.footnote.weight(.semibold))
                 .monospacedDigit()
-            Text(metrics.activityTotals.countersText)
-                .font(.caption2)
-                .monospacedDigit()
+            if metrics.hasMeasuredActivityTotals {
+                Text(metrics.activityTotals.countersText)
+                    .font(.caption2)
+                    .monospacedDigit()
+            }
         }
         .multilineTextAlignment(.center)
         .foregroundStyle(.secondary)

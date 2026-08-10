@@ -33,11 +33,6 @@ final class WorkoutHealthKitStub {
     private(set) var endCollectionCalls = 0
     private(set) var finishCalls = 0
     private(set) var collectionEndDate: Date?
-    /// Nested activities opened inside the running session (issue #249). The
-    /// configuration is what HealthKit stamps on the segment, so asserting on
-    /// it is asserting on what Santé will show.
-    private(set) var beganActivities: [(configuration: HKWorkoutConfiguration, date: Date)] = []
-    private(set) var endedActivityDates: [Date] = []
     /// What HealthKit would report for this session's segments. Set by the
     /// tests of issue #250; empty everywhere else, which is what a session with
     /// nothing measured yet looks like.
@@ -81,10 +76,6 @@ final class WorkoutHealthKitStub {
                 if let error = self.finishError { throw error }
             },
             collectionEndDate: { self.collectionEndDate },
-            beginActivity: { configuration, date in
-                self.beganActivities.append((configuration, date))
-            },
-            endCurrentActivity: { self.endedActivityDates.append($0) },
             segments: { self.segments }
         )
     }

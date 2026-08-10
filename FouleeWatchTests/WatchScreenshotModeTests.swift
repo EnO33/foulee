@@ -31,8 +31,6 @@ private final class TrapHealthKit {
                     endCollection: { _ in },
                     finishWorkout: {},
                     collectionEndDate: { nil },
-                    beginActivity: { _, _ in },
-                    endCurrentActivity: { _ in },
                     segments: { [] }
                 )
             }
