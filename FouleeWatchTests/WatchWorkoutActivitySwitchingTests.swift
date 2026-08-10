@@ -3,18 +3,17 @@ import HealthKit
 import Testing
 @testable import FouleeWatch
 
-/// What a detected change does to a live session, and — the part issue #256
-/// bought with a lost outing — **what it refuses to do**.
+/// What a detected change does to a live session — which, settled by two
+/// outings and one error message, is **rename the screen and nothing else**.
 ///
-/// On `v1.38` a walk→run switch killed the session outright:
-/// `workoutSession(_:didFailWithError:)`, the outing over at eighteen seconds.
-/// The segmenting is back, with two guards that were missing: nothing is asked
-/// of a session that has not really started, and `endCurrentActivity` is only
-/// called when HealthKit itself says a nested activity is open.
+/// `HKWorkoutActivity` subactivities cannot change sport inside a session:
 ///
-/// The ordering is pinned too. Renaming the screen cannot fail; opening a
-/// segment can. So the name lands first, always, and never depends on HealthKit
-/// accepting anything.
+///     Cannot add subactivity of type HKWorkoutActivityTypeRunning
+///
+/// — on a session whose own type is `.walking`. They exist for multisport, and
+/// the multisport parent would drop the session out of {walking, running} and
+/// therefore out of the 7-day résumé. Two versions tried to segment anyway and
+/// both killed sessions on the wrist.
 @MainActor
 @Suite("Watch session activity switching")
 struct WatchWorkoutActivitySwitchingTests {
@@ -56,64 +55,37 @@ struct WatchWorkoutActivitySwitchingTests {
         return metrics.activity
     }
 
-    @Test("The first switch opens a segment and ends nothing")
-    func theFirstSwitchOnlyBegins() async {
+    @Test("A detected run renames what is on screen and leaves the session alone")
+    func aDetectedRunOnlyRenames() async {
         let stub = WorkoutHealthKitStub()
-        let (store, motion) = await startedSession(as: .walking, stub: stub)
-
-        detect(.running, from: motion, at: 60)
-        await waitUntil { stub.beganActivities.count == 1 }
-
-        #expect(activity(of: store) == .running)
-        #expect(stub.beganActivities.first?.configuration.activityType == .running)
-        #expect(stub.beganActivities.first?.date == base.addingTimeInterval(60))
-        // Nothing is nested yet — the opening stretch belongs to the session's
-        // main activity. Ending it is what HealthKit forbids, and asking is the
-        // leading suspicion for the sessions that died.
-        #expect(stub.endedActivityDates.isEmpty)
-        // And the session itself is untouched: same workout, still running.
-        #expect(stub.startCalls == 1)
-        #expect(stub.startedConfiguration?.activityType == .walking)
-        #expect(stub.endCalls == 0)
-        #expect(store.lastError == nil)
-    }
-
-    @Test("The next switch ends the open segment before opening the following one")
-    func theSecondSwitchEndsFirst() async {
-        let stub = WorkoutHealthKitStub()
-        let (store, motion) = await startedSession(as: .walking, stub: stub)
-
-        detect(.running, from: motion, at: 60)
-        await waitUntil { stub.beganActivities.count == 1 }
-        detect(.walking, from: motion, at: 300)
-        await waitUntil { stub.beganActivities.count == 2 }
-
-        // Now there *is* something nested, so ending is both legal and needed —
-        // two segments open at once would overlap in Santé.
-        #expect(stub.endedActivityDates == [base.addingTimeInterval(300)])
-        #expect(stub.beganActivities.map(\.configuration.activityType) == [.running, .walking])
-        #expect(activity(of: store) == .walking)
-        #expect(store.lastError == nil)
-    }
-
-    @Test("A session that has not really started is asked for nothing")
-    func aSessionStillStartingIsLeftAlone() async {
-        let stub = WorkoutHealthKitStub()
-        // `startActivity` is asynchronous: a switch can land while the session
-        // is still coming up. This is the window issue #256 is suspected to die
-        // in, and the one case no simulator will ever produce by itself.
-        stub.isRunning = false
         let (store, motion) = await startedSession(as: .walking, stub: stub)
 
         detect(.running, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .running }
-        try? await Task.sleep(for: .milliseconds(60))
 
-        // The screen still follows — that half cannot fail and must not be
-        // held hostage to the other.
         #expect(activity(of: store) == .running)
-        #expect(stub.beganActivities.isEmpty)
-        #expect(stub.endedActivityDates.isEmpty)
+        // The session is exactly as it was: same workout, still running, never
+        // restarted and never failed. Two versions failed this on a wrist.
+        #expect(stub.startCalls == 1)
+        #expect(stub.startedConfiguration?.activityType == .walking)
+        #expect(stub.endCalls == 0)
+        #expect(stub.finishCalls == 0)
+        #expect(store.lastError == nil)
+    }
+
+    @Test("Back to walking renames again, still without touching the session")
+    func comingBackAlsoOnlyRenames() async {
+        let stub = WorkoutHealthKitStub()
+        let (store, motion) = await startedSession(as: .walking, stub: stub)
+
+        detect(.running, from: motion, at: 60)
+        await waitUntil { self.activity(of: store) == .running }
+        detect(.walking, from: motion, at: 300)
+        await waitUntil { self.activity(of: store) == .walking }
+
+        #expect(stub.startCalls == 1)
+        #expect(stub.endCalls == 0)
+        #expect(store.lastError == nil)
     }
 
     @Test("A run-mode session starts named as a run")
@@ -124,10 +96,9 @@ struct WatchWorkoutActivitySwitchingTests {
         #expect(activity(of: store) == .running)
         detect(.walking, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .walking }
-        // The `HKWorkout` keeps the type the wearer chose — a segment never
-        // changes what the session itself is recorded as.
+        // The `HKWorkout` keeps the type the wearer chose — detection never
+        // changes what Santé records.
         #expect(stub.startedConfiguration?.activityType == .running)
-        #expect(stub.beganActivities.first?.configuration.activityType == .walking)
     }
 
     @Test("A single aberrant estimate renames nothing")
@@ -142,9 +113,6 @@ struct WatchWorkoutActivitySwitchingTests {
         try? await Task.sleep(for: .milliseconds(120))
 
         #expect(activity(of: store) == .walking)
-        // No segment either: a lone aberrant estimate must not leave a stretch
-        // of « course » in Santé, where it stays for good.
-        #expect(stub.beganActivities.isEmpty)
     }
 
     @Test("Stopping the session stops detection")
