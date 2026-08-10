@@ -5,24 +5,19 @@ import Foundation
 ///
 /// The point of the probe is to be *trustworthy about what the hardware does*,
 /// and a screen whose reading can only be checked by going for a run is not
-/// checkable at all. So the shape of a `CMMotionActivity` is mirrored here as
-/// plain values — `WatchMotionProbe` does the one-line copy from the real
-/// object — and the whole formatting path is a pure function of those values
-/// plus a clock. `WatchMotionProbeReportTests` drives every state the wrist
-/// could produce, on a simulator, with no motion at all.
-
-/// How sure CoreMotion says it is. Mirrors `CMMotionActivityConfidence`; the
-/// raw values are pinned against the real enum in the test suite.
+/// checkable at all. So the shape of a `CMMotionActivity` is mirrored in
+/// `MotionActivityEstimate` as plain values, and the whole formatting path is a
+/// pure function of those values plus a clock. `WatchMotionProbeReportTests`
+/// drives every state the wrist could produce, on a simulator, with no motion
+/// at all.
 ///
-/// `unrecognised` exists because a future watchOS could add a level, and
-/// folding an unknown value into `low` would put a number on screen that the
-/// device never said.
-enum MotionProbeConfidence: Int, CaseIterable, Sendable {
-    case unrecognised = -1
-    case low = 0
-    case medium = 1
-    case high = 2
+/// Only what is *displayed* lives in this file. The values themselves moved to
+/// `FouleeWatch/Motion/` when the live detection started sharing them (issue
+/// #249): issue #252 deletes `Diagnostic/` whole, and nothing the shipped
+/// feature depends on may be inside it.
 
+/// How the probe names a confidence level.
+extension MotionActivityConfidence {
     var label: String {
         switch self {
         case .unrecognised: "inconnue"
@@ -33,15 +28,8 @@ enum MotionProbeConfidence: Int, CaseIterable, Sendable {
     }
 }
 
-/// Mirrors `CMAuthorizationStatus`. Same reasoning as above for
-/// `unrecognised`, and the raw values are pinned against CoreMotion's.
-enum MotionProbeAuthorization: Int, CaseIterable, Sendable {
-    case unrecognised = -1
-    case notDetermined = 0
-    case restricted = 1
-    case denied = 2
-    case authorized = 3
-
+/// How the probe names an authorization state.
+extension MotionAuthorization {
     var label: String {
         switch self {
         case .unrecognised: "inconnue"
@@ -81,24 +69,7 @@ enum MotionProbeFlag: String, CaseIterable, Sendable {
     }
 }
 
-/// One `CMMotionActivity`, flattened.
-///
-/// `startDate` is the device's own stamp for when the activity began;
-/// `receivedAt` is when this process was handed it. Both are shown, and they
-/// are not the same question: a stale `startDate` with a fresh `receivedAt` is
-/// a live stream reporting an activity that started a while ago, whereas a
-/// stale `receivedAt` is a stream that has gone quiet.
-struct MotionProbeEstimate: Equatable, Sendable {
-    var startDate: Date
-    var receivedAt: Date
-    var confidence: MotionProbeConfidence
-    var walking: Bool
-    var running: Bool
-    var stationary: Bool
-    var unknown: Bool
-    var cycling: Bool
-    var automotive: Bool
-
+extension MotionActivityEstimate {
     func isSet(_ flag: MotionProbeFlag) -> Bool {
         switch flag {
         case .walking: walking
@@ -128,12 +99,12 @@ struct MotionProbeEstimate: Equatable, Sendable {
 /// reads as a healthy one.
 struct MotionProbeState: Equatable, Sendable {
     var isAvailable = false
-    var authorization = MotionProbeAuthorization.notDetermined
+    var authorization = MotionAuthorization.notDetermined
     /// When the stream was opened. Nil means it is not open — which is why
     /// "zero estimates" is not on its own evidence of a dead stream.
     var startedAt: Date?
     var estimateCount = 0
-    var latest: MotionProbeEstimate?
+    var latest: MotionActivityEstimate?
 
     /// Open a window. Called when the stream opens, including on a reopen of
     /// the screen mid-outing.
@@ -245,7 +216,7 @@ enum MotionProbeReport {
     /// Every flag on its own line, always all six, whether or not an estimate
     /// has arrived — a flag that disappears from the screen when false is a
     /// flag nobody can report on.
-    private static func flagRows(for estimate: MotionProbeEstimate?) -> [MotionProbeRow] {
+    private static func flagRows(for estimate: MotionActivityEstimate?) -> [MotionProbeRow] {
         MotionProbeFlag.allCases.map { flag in
             guard let estimate else {
                 return MotionProbeRow(label: flag.label, value: noValue)

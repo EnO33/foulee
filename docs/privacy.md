@@ -84,6 +84,13 @@ enregistré durablement, ni partagé.
 Foulée utilise le **podomètre** (CoreMotion) pour compter tes pas en direct
 pendant ta sortie. Ces données sont traitées localement, en temps réel.
 
+Sur l'Apple Watch, et avec ton autorisation, Foulée lit aussi la **détection de
+mouvement** du système pendant une séance, pour reconnaître toute seule si tu
+marches ou si tu cours et enregistrer chaque portion sous le bon sport. Cette
+lecture ne dure que le temps de la séance : elle démarre avec elle et s'arrête
+avec elle. Rien n'est transmis, rien n'est conservé en dehors de la séance
+elle-même, telle qu'elle est enregistrée dans Santé.
+
 ## Ce que Foulée ne fait pas
 
 - ❌ Aucun compte, aucune inscription, aucune adresse e-mail collectée.

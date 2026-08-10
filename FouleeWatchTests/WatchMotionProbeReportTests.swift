@@ -25,7 +25,7 @@ struct WatchMotionProbeReportTests {
     }
 
     private func estimate(
-        confidence: MotionProbeConfidence = .medium,
+        confidence: MotionActivityConfidence = .medium,
         walking: Bool = false,
         running: Bool = false,
         stationary: Bool = false,
@@ -34,8 +34,8 @@ struct WatchMotionProbeReportTests {
         automotive: Bool = false,
         startedAgo: TimeInterval = 12,
         receivedAgo: TimeInterval = 3
-    ) -> MotionProbeEstimate {
-        MotionProbeEstimate(
+    ) -> MotionActivityEstimate {
+        MotionActivityEstimate(
             startDate: now.addingTimeInterval(-startedAgo),
             receivedAt: now.addingTimeInterval(-receivedAgo),
             confidence: confidence,
@@ -49,9 +49,9 @@ struct WatchMotionProbeReportTests {
     }
 
     private func state(
-        _ estimate: MotionProbeEstimate?,
+        _ estimate: MotionActivityEstimate?,
         isAvailable: Bool = true,
-        authorization: MotionProbeAuthorization = .authorized,
+        authorization: MotionAuthorization = .authorized,
         count: Int = 1,
         listeningFor: TimeInterval? = 30
     ) -> MotionProbeState {
@@ -143,7 +143,7 @@ struct WatchMotionProbeReportTests {
 
     @Test("Every confidence level reads distinctly")
     func confidenceLevels() throws {
-        let expected: [MotionProbeConfidence: String] = [
+        let expected: [MotionActivityConfidence: String] = [
             .low: "faible",
             .medium: "moyenne",
             .high: "élevée",
@@ -156,7 +156,7 @@ struct WatchMotionProbeReportTests {
         // Four levels, four readings — a table where two collapsed would make
         // « faible » and « élevée » indistinguishable on the wrist, and
         // confidence is half of how a transition is judged.
-        #expect(Set(expected.values).count == MotionProbeConfidence.allCases.count)
+        #expect(Set(expected.values).count == MotionActivityConfidence.allCases.count)
     }
 
     @Test("Confidence mirrors CoreMotion's own constants")
@@ -164,24 +164,24 @@ struct WatchMotionProbeReportTests {
         // The bridge out of `CMMotionActivity` maps by raw value, so this is
         // the one thing that could silently mislabel every reading taken on
         // the wrist. Pinned rather than trusted.
-        #expect(MotionProbeConfidence.low.rawValue == CMMotionActivityConfidence.low.rawValue)
-        #expect(MotionProbeConfidence.medium.rawValue == CMMotionActivityConfidence.medium.rawValue)
-        #expect(MotionProbeConfidence.high.rawValue == CMMotionActivityConfidence.high.rawValue)
+        #expect(MotionActivityConfidence.low.rawValue == CMMotionActivityConfidence.low.rawValue)
+        #expect(MotionActivityConfidence.medium.rawValue == CMMotionActivityConfidence.medium.rawValue)
+        #expect(MotionActivityConfidence.high.rawValue == CMMotionActivityConfidence.high.rawValue)
     }
 
     @Test("Authorization mirrors CoreMotion's constants, and each status reads distinctly")
     func authorizationRawValuesMatchCoreMotion() throws {
-        #expect(MotionProbeAuthorization.notDetermined.rawValue == CMAuthorizationStatus.notDetermined.rawValue)
-        #expect(MotionProbeAuthorization.restricted.rawValue == CMAuthorizationStatus.restricted.rawValue)
-        #expect(MotionProbeAuthorization.denied.rawValue == CMAuthorizationStatus.denied.rawValue)
-        #expect(MotionProbeAuthorization.authorized.rawValue == CMAuthorizationStatus.authorized.rawValue)
+        #expect(MotionAuthorization.notDetermined.rawValue == CMAuthorizationStatus.notDetermined.rawValue)
+        #expect(MotionAuthorization.restricted.rawValue == CMAuthorizationStatus.restricted.rawValue)
+        #expect(MotionAuthorization.denied.rawValue == CMAuthorizationStatus.denied.rawValue)
+        #expect(MotionAuthorization.authorized.rawValue == CMAuthorizationStatus.authorized.rawValue)
 
-        for status in MotionProbeAuthorization.allCases {
+        for status in MotionAuthorization.allCases {
             let shown = try value("Autorisation", rows(state(estimate(), authorization: status)))
             #expect(shown == status.label)
         }
-        let labels = Set(MotionProbeAuthorization.allCases.map(\.label))
-        #expect(labels.count == MotionProbeAuthorization.allCases.count)
+        let labels = Set(MotionAuthorization.allCases.map(\.label))
+        #expect(labels.count == MotionAuthorization.allCases.count)
     }
 
     // MARK: - « rien ne bouge » vs « le flux est mort »

@@ -32,6 +32,20 @@ struct WatchWorkoutSessionHandle: Sendable {
     /// `HKLiveWorkoutBuilder.endDate` — non-nil once collection has ended, so
     /// a retry knows not to end it twice.
     var collectionEndDate: @MainActor () -> Date?
+    /// Open a nested `HKWorkoutActivity` inside the running session (issue
+    /// #249), dated `at` — which may be in the past, and usually is: the
+    /// boundary comes from CoreMotion's own stamp for when the activity began,
+    /// not from when we noticed.
+    ///
+    /// This is not a relabelling. Apple's header is explicit that « sensor
+    /// algorithms to generate data would be updated to match the new
+    /// activity », so the watch *measures differently* afterwards.
+    var beginActivity: @MainActor (_ configuration: HKWorkoutConfiguration, _ at: Date) -> Void
+    /// Close the nested activity, reverting to the session's main one — the
+    /// header's own word. There is no way to end the main activity, and no
+    /// need: a session that comes back to what it started as simply has no
+    /// nested activity running.
+    var endCurrentActivity: @MainActor (_ at: Date) -> Void
 }
 
 /// The quantity types a live session collects, and the single list the whole
@@ -111,7 +125,11 @@ extension WatchWorkoutHealthKit {
                     end: { session.end() },
                     endCollection: { try await builder.endCollection(at: $0) },
                     finishWorkout: { _ = try await builder.finishWorkout() },
-                    collectionEndDate: { builder.endDate }
+                    collectionEndDate: { builder.endDate },
+                    beginActivity: { configuration, date in
+                        session.beginNewActivity(configuration: configuration, date: date, metadata: nil)
+                    },
+                    endCurrentActivity: { session.endCurrentActivity(on: $0) }
                 )
             }
         )

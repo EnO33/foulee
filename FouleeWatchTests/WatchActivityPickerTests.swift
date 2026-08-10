@@ -21,10 +21,12 @@ private final class ConfigurationRecorder {
                     end: {},
                     endCollection: { _ in },
                     finishWorkout: {},
-                    collectionEndDate: { nil }
+                    collectionEndDate: { nil },
+                    beginActivity: { _, _ in },
+                    endCurrentActivity: { _ in }
                 )
             }
-        ))
+        ), detection: WatchActivityDetection(source: .inert))
     }
 }
 
