@@ -22,6 +22,10 @@ private final class ConfigurationRecorder {
                     endCollection: { _ in },
                     finishWorkout: {},
                     collectionEndDate: { nil },
+                    beginActivity: { _, _ in },
+                    endCurrentActivity: { _ in },
+                    isRunning: { true },
+                    hasNestedActivity: { false },
                     segments: { [] }
                 )
             }

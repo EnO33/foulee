@@ -3,19 +3,18 @@ import HealthKit
 import Testing
 @testable import FouleeWatch
 
-/// What a detected change is allowed to do to a live session — which, since
-/// issue #256, is **nothing**.
+/// What a detected change does to a live session, and — the part issue #256
+/// bought with a lost outing — **what it refuses to do**.
 ///
-/// It used to end the running `HKWorkoutActivity` and open the next one so that
-/// Santé recorded each stretch under its own sport. On a real wrist that killed
-/// the session: the walk ran normally, and the instant detection confirmed a
-/// run, `workoutSession(_:didFailWithError:)` fired and the outing was over at
-/// eighteen seconds. Not a save that failed — the session itself.
+/// On `v1.38` a walk→run switch killed the session outright:
+/// `workoutSession(_:didFailWithError:)`, the outing over at eighteen seconds.
+/// The segmenting is back, with two guards that were missing: nothing is asked
+/// of a session that has not really started, and `endCurrentActivity` is only
+/// called when HealthKit itself says a nested activity is open.
 ///
-/// So the rule pinned here is the one that outing bought: detection **observes
-/// and names**, and the session is never touched. A wrong guess about a sport
-/// costs a wrong label for a few seconds; a wrong guess about the session costs
-/// the whole outing, and there is no getting it back.
+/// The ordering is pinned too. Renaming the screen cannot fail; opening a
+/// segment can. So the name lands first, always, and never depends on HealthKit
+/// accepting anything.
 @MainActor
 @Suite("Watch session activity switching")
 struct WatchWorkoutActivitySwitchingTests {
@@ -57,37 +56,64 @@ struct WatchWorkoutActivitySwitchingTests {
         return metrics.activity
     }
 
-    @Test("A detected run renames what is on screen and leaves the session alone")
-    func aDetectedRunOnlyRenames() async {
+    @Test("The first switch opens a segment and ends nothing")
+    func theFirstSwitchOnlyBegins() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .walking, stub: stub)
 
         detect(.running, from: motion, at: 60)
-        await waitUntil { self.activity(of: store) == .running }
+        await waitUntil { stub.beganActivities.count == 1 }
 
         #expect(activity(of: store) == .running)
-        // The session is exactly as it was: same workout, still running, never
-        // restarted and never failed. This is the assertion issue #256 is about.
+        #expect(stub.beganActivities.first?.configuration.activityType == .running)
+        #expect(stub.beganActivities.first?.date == base.addingTimeInterval(60))
+        // Nothing is nested yet — the opening stretch belongs to the session's
+        // main activity. Ending it is what HealthKit forbids, and asking is the
+        // leading suspicion for the sessions that died.
+        #expect(stub.endedActivityDates.isEmpty)
+        // And the session itself is untouched: same workout, still running.
         #expect(stub.startCalls == 1)
         #expect(stub.startedConfiguration?.activityType == .walking)
         #expect(stub.endCalls == 0)
-        #expect(stub.finishCalls == 0)
         #expect(store.lastError == nil)
     }
 
-    @Test("Back to walking renames again, still without touching the session")
-    func comingBackAlsoOnlyRenames() async {
+    @Test("The next switch ends the open segment before opening the following one")
+    func theSecondSwitchEndsFirst() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .walking, stub: stub)
 
         detect(.running, from: motion, at: 60)
-        await waitUntil { self.activity(of: store) == .running }
+        await waitUntil { stub.beganActivities.count == 1 }
         detect(.walking, from: motion, at: 300)
-        await waitUntil { self.activity(of: store) == .walking }
+        await waitUntil { stub.beganActivities.count == 2 }
 
-        #expect(stub.startCalls == 1)
-        #expect(stub.endCalls == 0)
+        // Now there *is* something nested, so ending is both legal and needed —
+        // two segments open at once would overlap in Santé.
+        #expect(stub.endedActivityDates == [base.addingTimeInterval(300)])
+        #expect(stub.beganActivities.map(\.configuration.activityType) == [.running, .walking])
+        #expect(activity(of: store) == .walking)
         #expect(store.lastError == nil)
+    }
+
+    @Test("A session that has not really started is asked for nothing")
+    func aSessionStillStartingIsLeftAlone() async {
+        let stub = WorkoutHealthKitStub()
+        // `startActivity` is asynchronous: a switch can land while the session
+        // is still coming up. This is the window issue #256 is suspected to die
+        // in, and the one case no simulator will ever produce by itself.
+        stub.isRunning = false
+        let (store, motion) = await startedSession(as: .walking, stub: stub)
+
+        detect(.running, from: motion, at: 60)
+        await waitUntil { self.activity(of: store) == .running }
+        try? await Task.sleep(for: .milliseconds(60))
+
+        // The screen still follows — that half cannot fail and must not be
+        // held hostage to the other.
+        #expect(activity(of: store) == .running)
+        #expect(stub.beganActivities.isEmpty)
+        #expect(stub.endedActivityDates.isEmpty)
     }
 
     @Test("A run-mode session starts named as a run")
@@ -98,9 +124,10 @@ struct WatchWorkoutActivitySwitchingTests {
         #expect(activity(of: store) == .running)
         detect(.walking, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .walking }
-        // The `HKWorkout` keeps the type the wearer chose — detection never
-        // changes what Santé records.
+        // The `HKWorkout` keeps the type the wearer chose — a segment never
+        // changes what the session itself is recorded as.
         #expect(stub.startedConfiguration?.activityType == .running)
+        #expect(stub.beganActivities.first?.configuration.activityType == .walking)
     }
 
     @Test("A single aberrant estimate renames nothing")
@@ -115,6 +142,9 @@ struct WatchWorkoutActivitySwitchingTests {
         try? await Task.sleep(for: .milliseconds(120))
 
         #expect(activity(of: store) == .walking)
+        // No segment either: a lone aberrant estimate must not leave a stretch
+        // of « course » in Santé, where it stays for good.
+        #expect(stub.beganActivities.isEmpty)
     }
 
     @Test("Stopping the session stops detection")
@@ -218,5 +248,43 @@ struct WatchWorkoutActivitySwitchingTests {
         }
         #expect(metrics.activityTotals.steps == 1_480)
         #expect(metrics.activityHeadlineText == "Marche · 12:04")
+    }
+}
+
+/// The summary screen of a failed session (issue #256).
+///
+/// A session died outdoors on `v1.38` and the one sentence HealthKit produced
+/// to explain it went to `lastError` — rendered only on the home screen, which
+/// `reset()` clears on the way there. The message existed and nobody could read
+/// it. These pin that it now appears where the failure does, and only there.
+@MainActor
+@Suite("Watch finished screen")
+struct WatchFinishedScreenTests {
+    private func screen(saveFailed: Bool, error: String?) -> WatchFinishedView {
+        WatchFinishedView(
+            metrics: .zero,
+            saveFailed: saveFailed,
+            errorMessage: error,
+            onRetry: {},
+            onDone: {}
+        )
+    }
+
+    @Test("A failed session shows what HealthKit said")
+    func aFailureShowsItsReason() {
+        #expect(screen(saveFailed: true, error: "boom").reasonText == "boom")
+    }
+
+    @Test("A session that saved shows no reason, even when one is lying around")
+    func aSuccessStaysQuiet() {
+        // `lastError` outlives the failure that set it: a retry that succeeds
+        // leaves the old message behind, and printing it under « Bravo » would
+        // report a failure that has just been fixed.
+        #expect(screen(saveFailed: false, error: "boom").reasonText == nil)
+    }
+
+    @Test("A failure HealthKit said nothing about prints nothing")
+    func aSilentFailurePrintsNothing() {
+        #expect(screen(saveFailed: true, error: nil).reasonText == nil)
     }
 }
