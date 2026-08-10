@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Hero card at the top of `WorkoutDetailSheet` — icon, date label,
-/// big duration, then a one-liner with time range + source name.
+/// Hero card at the top of `WorkoutDetailSheet` — the session's own figure,
+/// date label, big duration, then a one-liner naming the sport, the time range
+/// and the source (issue #245).
 struct WorkoutDetailHero: View {
     let detail: WorkoutDetail
 
@@ -11,9 +12,7 @@ struct WorkoutDetailHero: View {
                 .fill(FouleeColor.accentMid.opacity(0.18))
                 .frame(width: 64, height: 64)
                 .overlay {
-                    // Neutral glyph (#222), same reason as the résumé rows: the
-                    // session may be a run, and nothing here can tell yet.
-                    Image(systemName: FouleeIcon.mixedCardio)
+                    Image(systemName: detail.summary.activity.icon)
                         .font(.system(size: 32, weight: .bold))
                         .foregroundStyle(FouleeColor.accentMid)
                 }
@@ -23,7 +22,7 @@ struct WorkoutDetailHero: View {
                 .tracking(1.1)
             Text(durationText)
                 .scaledNumericFont(size: 44)
-            Text("\(timeRange) · \(detail.summary.sourceName)")
+            Text("\(detail.summary.activity.label) · \(timeRange) · \(detail.summary.sourceName)")
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

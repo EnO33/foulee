@@ -130,17 +130,22 @@ struct TodayWorkoutsSheet: View {
                     .fill(FouleeColor.accentMid.opacity(0.18))
                     .frame(width: 44, height: 44)
                     .overlay {
-                        // Neutral glyph (#222): this list mixes walks, runs and
-                        // hikes, and `WorkoutSummary` carries no activity type
-                        // yet — #223 is what will let the row show its own.
-                        Image(systemName: FouleeIcon.mixedCardio)
+                        // Its own glyph at last (#245). This list mixes walks,
+                        // runs and hikes — it drew one neutral figure for all
+                        // three until `WorkoutSummary` started carrying the
+                        // type.
+                        Image(systemName: workout.activity.icon)
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(FouleeColor.accentMid)
                     }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(timeRange(workout))
                         .font(FouleeFont.headline)
-                    Text(workout.sourceName)
+                    // The sport in words next to the source, not only as a
+                    // figure: « figure.walk » and « figure.run » are two thin
+                    // silhouettes, and the whole point of this line is that a
+                    // mis-stamped session should be *noticeable*.
+                    Text("\(workout.activity.label) · \(workout.sourceName)")
                         .font(FouleeFont.footnote)
                         .foregroundStyle(.secondary)
                 }
