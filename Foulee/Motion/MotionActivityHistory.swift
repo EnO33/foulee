@@ -14,9 +14,6 @@ import Foundation
 /// shared one, and a second `startUpdates` would replace the first's handler
 /// while `onTermination` killed both.
 struct MotionActivityHistory: Sendable {
-    /// Whether the device can classify activity at all. False on every
-    /// simulator, and on hardware without the motion coprocessor.
-    var isAvailable: @Sendable () -> Bool
     /// Every estimate the device kept for `[from, to]`, in no guaranteed order.
     ///
     /// Returns empty rather than throwing when the query fails or permission is
@@ -32,7 +29,6 @@ extension MotionActivityHistory: DependencyKey {
     /// A mixed outing: walking, then a run in the middle, then walking again.
     /// Enough for a preview to show something other than a single block.
     static let previewValue = MotionActivityHistory(
-        isAvailable: { true },
         samples: { from, to in
             let third = to.timeIntervalSince(from) / 3
             return [
@@ -55,10 +51,7 @@ extension MotionActivityHistory: DependencyKey {
 
     /// Says nothing, the way an unavailable device does — so a test that has
     /// not opted in gets the fallback rather than an invented classification.
-    static let testValue = MotionActivityHistory(
-        isAvailable: { false },
-        samples: { _, _ in [] }
-    )
+    static let testValue = MotionActivityHistory(samples: { _, _ in [] })
 }
 
 extension DependencyValues {

@@ -60,8 +60,12 @@ let fouleeAppInfoPlist: [String: Plist.Value] = [
     ),
     "NSHealthUpdateUsageDescription":
         "Foulée enregistre tes sorties comme séances dans Santé, ainsi que l'eau que tu bois.",
+    // Le podomètre, et depuis #246 la reconnaissance d'activité : à la fin
+    // d'une sortie « les deux », l'app relit l'historique de mouvement de la
+    // séance pour savoir si tu as marché ou couru. Même registre que les
+    // quatre autres alertes (#222) : tutoiement, « sortie », aucun sport nommé.
     "NSMotionUsageDescription":
-        "Foulée compte tes pas en direct pendant ta sortie.",
+        "Foulée compte tes pas en direct pendant ta sortie, et reconnaît si tu as marché ou couru.",
     "NSLocationWhenInUseUsageDescription":
         "Foulée utilise ta position pour afficher la météo à ton endroit.",
     "NSSupportsLiveActivities": true,

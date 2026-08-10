@@ -13,7 +13,6 @@ extension MotionActivityHistory {
     /// the moment a session ends, where a crash would cost the walk the user
     /// just finished.
     static let liveValue = MotionActivityHistory(
-        isAvailable: { CMMotionActivityManager.isActivityAvailable() },
         samples: { from, to in
             guard CMMotionActivityManager.isActivityAvailable() else { return [] }
             let manager = CMMotionActivityManager()
