@@ -29,6 +29,16 @@ final class WatchWorkoutStore: NSObject {
     @ObservationIgnored private let healthKit: WatchWorkoutHealthKit
     @ObservationIgnored private var sessionHandle: WatchWorkoutSessionHandle?
     @ObservationIgnored private let detection: WatchActivityDetection
+    /// What detection says is happening right now — the source of the sport
+    /// named on screen (issue #250).
+    @ObservationIgnored private var currentActivity: SessionActivity = .walking
+    /// Segments the builder's delegate reported as ended.
+    ///
+    /// Kept because `HKLiveWorkoutBuilder.workoutActivities` is documented only
+    /// for activities added by hand, and a session's own segments disappearing
+    /// from that list would silently zero every per-sport total the moment a
+    /// switch happened. Merged with the two live readings, never trusted alone.
+    @ObservationIgnored private var endedSegments: [WatchWorkoutSegment] = []
 
     init(
         healthKit: WatchWorkoutHealthKit = .live,
@@ -134,8 +144,9 @@ final class WatchWorkoutStore: NSObject {
     func reset() {
         detection.stop()
         sessionHandle = nil
-        lastError = nil
+        endedSegments = []
         state = .idle
+        lastError = nil
     }
 
     #if DEBUG
@@ -158,7 +169,8 @@ final class WatchWorkoutStore: NSObject {
         }
         guard let handle else { return }
         sessionHandle = handle
-        state = .active(.zero)
+        endedSegments = []
+        state = .active(.empty(for: activity))
         beginActivityDetection(from: activity)
     }
 
@@ -178,6 +190,7 @@ final class WatchWorkoutStore: NSObject {
             builder.statistics(for: HKQuantityType(.heartRate)),
             unit: HKUnit(from: "count/min")
         )
+        applyActivityTotals(to: &metrics, at: .now)
         state = .active(metrics)
     }
 
@@ -250,6 +263,18 @@ extension WatchWorkoutStore: HKLiveWorkoutBuilderDelegate {
     nonisolated func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {
         // No event-specific UI; ignore.
     }
+
+    /// The moment a segment's totals stop moving — and the one moment its
+    /// figures are certainly complete.
+    nonisolated func workoutBuilder(
+        _ workoutBuilder: HKLiveWorkoutBuilder,
+        didEnd workoutActivity: HKWorkoutActivity
+    ) {
+        guard let segment = WatchWorkoutSegment(workoutActivity) else { return }
+        Task { @MainActor [weak self] in
+            self?.recordEndedSegment(segment)
+        }
+    }
 }
 
 /// Automatic walk/run detection during a live session (issue #249).
@@ -288,10 +313,43 @@ extension WatchWorkoutStore {
     /// segmenting; nothing here recomputes it.
     private func beginActivityDetection(from activity: SessionActivity) {
         let now = Date.now
+        currentActivity = activity
         sessionHandle?.beginActivity(Self.configuration(for: activity), now)
         detection.start(from: activity, at: now) { [weak self] confirmed in
             self?.applySwitch(confirmed)
         }
+    }
+
+    /// Name the sport being done and total it (issue #250).
+    private func applyActivityTotals(to metrics: inout WatchWorkoutMetrics, at now: Date) {
+        metrics.activity = currentActivity
+        metrics.activityTotals = WatchActivityTotals.of(currentActivity, in: recordedSegments(), at: now)
+    }
+
+    /// Refresh the per-activity block on its own.
+    ///
+    /// Split out of `ingest(builder:)` and internal because that method takes
+    /// an `HKLiveWorkoutBuilder`, a type no test can construct — while this
+    /// half needs none of it.
+    func refreshActivityTotals(at now: Date = .now) {
+        guard case .active(var metrics) = state else { return }
+        applyActivityTotals(to: &metrics, at: now)
+        state = .active(metrics)
+    }
+
+    /// Every segment of the running session, from all three sources that know
+    /// about them. See `WatchWorkoutSegment.merged(_:)` for why there are
+    /// three.
+    func recordedSegments() -> [WatchWorkoutSegment] {
+        WatchWorkoutSegment.merged([endedSegments, sessionHandle?.segments() ?? []])
+    }
+
+    /// Keep a segment the builder's delegate reported as ended.
+    ///
+    /// Internal so a test can drive it without an `HKWorkoutActivity`, which
+    /// cannot be built with statistics.
+    func recordEndedSegment(_ segment: WatchWorkoutSegment) {
+        endedSegments = WatchWorkoutSegment.merged([endedSegments, [segment]])
     }
 
     /// Close the running segment and open the next one, both dated from the
@@ -307,5 +365,6 @@ extension WatchWorkoutStore {
         guard case .active = state, let handle = sessionHandle else { return }
         handle.endCurrentActivity(confirmed.date)
         handle.beginActivity(Self.configuration(for: confirmed.activity), confirmed.date)
+        currentActivity = confirmed.activity
     }
 }

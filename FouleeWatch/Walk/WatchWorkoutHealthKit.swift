@@ -41,11 +41,13 @@ struct WatchWorkoutSessionHandle: Sendable {
     /// algorithms to generate data would be updated to match the new
     /// activity », so the watch *measures differently* afterwards.
     var beginActivity: @MainActor (_ configuration: HKWorkoutConfiguration, _ at: Date) -> Void
-    /// Close the nested activity, reverting to the session's main one — the
-    /// header's own word. There is no way to end the main activity, and no
-    /// need: a session that comes back to what it started as simply has no
-    /// nested activity running.
+    /// Close the running nested activity. HealthKit's own word for it is
+    /// « reverting to the main session activity »; Foulée immediately opens the
+    /// next segment, so the main activity is never what is actually recording.
     var endCurrentActivity: @MainActor (_ at: Date) -> Void
+    /// Every segment HealthKit has recorded for this session, oldest first,
+    /// including the one in flight (issue #250).
+    var segments: @MainActor () -> [WatchWorkoutSegment]
 }
 
 /// The quantity types a live session collects, and the single list the whole
@@ -129,7 +131,22 @@ extension WatchWorkoutHealthKit {
                     beginActivity: { configuration, date in
                         session.beginNewActivity(configuration: configuration, date: date, metadata: nil)
                     },
-                    endCurrentActivity: { session.endCurrentActivity(on: $0) }
+                    endCurrentActivity: { session.endCurrentActivity(on: $0) },
+                    // Two readings of the same list, merged rather than chosen
+                    // between. `workoutActivities` is documented in terms of
+                    // the *manual* `addWorkoutActivity:` path, so whether it
+                    // also carries the ones a session began is not something
+                    // this can assert; `currentWorkoutActivity` is documented
+                    // to hold the one in flight and to go nil the moment it
+                    // ends. Reading both, and letting the store fold in what
+                    // the delegate saw end, covers every combination without
+                    // betting on any.
+                    segments: {
+                        WatchWorkoutSegment.merged([
+                            builder.workoutActivities.compactMap(WatchWorkoutSegment.init),
+                            [builder.currentWorkoutActivity].compactMap { $0 }.compactMap(WatchWorkoutSegment.init)
+                        ])
+                    }
                 )
             }
         )
