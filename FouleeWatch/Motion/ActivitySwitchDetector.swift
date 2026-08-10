@@ -42,19 +42,23 @@ extension MotionActivityEstimate {
 /// side effects — `HKWorkoutSession.beginNewActivity` / `endCurrentActivity` —
 /// belong to `WatchWorkoutStore`, which only ever acts on what this returns.
 ///
-/// ## Why the hysteresis is small
+/// ## Why there is almost no hysteresis
 ///
-/// The instinct is to smooth hard, because a switch costs a permanent segment
-/// in Santé. The device measurement of issue #248 says otherwise:
-/// `CMMotionActivityManager` **already smooths**, and its latency *is* that
-/// smoothing — a walk→run transition surfaced in under 30 s, cleanly, with no
-/// flapping in between. Stacking a long confirmation window on top would add
-/// the two delays: the screen would name the wrong sport for a full minute and
-/// the segment boundary written to Santé would be off by as much.
+/// There used to be one — two consecutive consistent readings — and the reason
+/// was that a switch cost a **permanent segment in Santé**, on a workout that
+/// is immutable and that Foulée cannot delete. That reason is gone: since
+/// issue #256 a switch writes nothing at all, because HealthKit refuses a
+/// subactivity of another sport. All a switch costs now is the word on screen.
 ///
-/// So: require the minimum that protects against a single aberrant estimate —
-/// two consecutive consistent readings — and nothing more. If the field shows
-/// flapping, `confirmations` is the one number to raise.
+/// The trade therefore flips. Waiting for a second reading bought protection
+/// against a record that no longer exists, and it cost real seconds on top of
+/// CoreMotion's own latency — two delays added together, on a feature whose
+/// first field report was « c'est lent ». So: **one consistent reading**, above
+/// the confidence floor. A wrong guess corrects itself on the next estimate.
+///
+/// `confirmations` remains, and remains tested: if the field ever shows the
+/// label flapping, raising it is one number — and the day segmenting becomes
+/// possible again, it must go back up with it.
 struct ActivitySwitchDetector: Sendable {
     /// A confirmed change: the activity to switch to, and when it started.
     struct Switch: Equatable, Sendable {
@@ -64,6 +68,10 @@ struct ActivitySwitchDetector: Sendable {
 
     /// How many consecutive readings of the *other* activity confirm a switch.
     let confirmations: Int
+
+    /// What ships: one. See the note above — the hysteresis protected a
+    /// permanent record that no longer exists.
+    static let defaultConfirmations = 1
     /// Readings below this are not evidence.
     ///
     /// `.medium`, and deliberately not `.low`. The two failure modes are not
@@ -105,7 +113,7 @@ struct ActivitySwitchDetector: Sendable {
     init(
         startedAs: SessionActivity,
         at date: Date,
-        confirmations: Int = 2,
+        confirmations: Int = defaultConfirmations,
         minimumConfidence: MotionActivityConfidence = .medium,
         staleAfter: TimeInterval = 90
     ) {

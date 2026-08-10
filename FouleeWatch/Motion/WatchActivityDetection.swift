@@ -24,10 +24,13 @@ final class WatchActivityDetection {
     private var opening: Task<Void, Never>?
     private var isStreaming = false
 
-    /// - Parameter confirmations: passed straight to `ActivitySwitchDetector`.
-    ///   Surfaced here so a test can force a one-reading switch without
-    ///   pretending the shipped default is anything other than 2.
-    init(source: MotionActivitySource = .live(), confirmations: Int = 2) {
+    /// - Parameter confirmations: passed straight to `ActivitySwitchDetector`,
+    ///   whose own default is the shipped value. Surfaced here so a test can
+    ///   demand more of it without this file having an opinion about how many.
+    init(
+        source: MotionActivitySource = .live(),
+        confirmations: Int = ActivitySwitchDetector.defaultConfirmations
+    ) {
         self.source = source
         self.confirmations = confirmations
     }

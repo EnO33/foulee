@@ -32,38 +32,12 @@ struct WatchWorkoutSessionHandle: Sendable {
     /// `HKLiveWorkoutBuilder.endDate` — non-nil once collection has ended, so
     /// a retry knows not to end it twice.
     var collectionEndDate: @MainActor () -> Date?
-    /// Open a nested `HKWorkoutActivity` inside the running session, dated `at`
-    /// — which may be in the past, and usually is: the boundary comes from
-    /// CoreMotion's own stamp for when the activity began, not from when we
-    /// noticed.
-    ///
-    /// This is not a relabelling. Apple's header is explicit that « sensor
-    /// algorithms to generate data would be updated to match the new
-    /// activity », so the watch *measures differently* afterwards.
-    var beginActivity: @MainActor (_ configuration: HKWorkoutConfiguration, _ at: Date) -> Void
-    /// Close the running nested activity, « reverting to the main session
-    /// activity » in the header's own words.
-    ///
-    /// **Only legal when one is actually running** — see `hasNestedActivity`.
-    /// There is no way to end the *main* activity, and asking is the leading
-    /// suspect for the sessions that died on the wrist (issue #256).
-    var endCurrentActivity: @MainActor (_ at: Date) -> Void
-    /// Whether the session has really started.
-    ///
-    /// `HKWorkoutSession.startDate` is nil until the state reaches `.running`,
-    /// and `startActivity` is documented as **asynchronous** — so there is a
-    /// window, right at the start of a session, where activity calls would be
-    /// made against a session that has not begun. That window is where issue
-    /// #256's crash is suspected to live, and this is what closes it.
-    var isRunning: @MainActor () -> Bool
-    /// Whether a nested activity is currently open.
-    ///
-    /// `HKLiveWorkoutBuilder.currentWorkoutActivity` is documented to hold the
-    /// one in flight and to go nil the moment it ends — so this is HealthKit's
-    /// own answer, not our bookkeeping. Bookkeeping is exactly what was wrong
-    /// before: the code *believed* a nested activity was open because it had
-    /// asked for one, and asked to end something that was never there.
-    var hasNestedActivity: @MainActor () -> Bool
+    // No way to open or close a nested activity here, and there will not be
+    // one: HealthKit refuses a subactivity whose sport differs from the
+    // session's own (« Cannot add subactivity of type
+    // HKWorkoutActivityTypeRunning », observed on a wrist). Reading the
+    // segments back stays — it writes nothing, and watchOS may add activities
+    // of its own that are worth totalling.
     /// Every segment HealthKit has recorded for this session, oldest first,
     /// including the one in flight (issue #250).
     var segments: @MainActor () -> [WatchWorkoutSegment]
@@ -147,12 +121,6 @@ extension WatchWorkoutHealthKit {
                     endCollection: { try await builder.endCollection(at: $0) },
                     finishWorkout: { _ = try await builder.finishWorkout() },
                     collectionEndDate: { builder.endDate },
-                    beginActivity: { configuration, date in
-                        session.beginNewActivity(configuration: configuration, date: date, metadata: nil)
-                    },
-                    endCurrentActivity: { session.endCurrentActivity(on: $0) },
-                    isRunning: { session.startDate != nil && session.state == .running },
-                    hasNestedActivity: { builder.currentWorkoutActivity != nil },
                     // Two readings of the same list, merged rather than chosen
                     // between. `workoutActivities` is documented in terms of
                     // the *manual* `addWorkoutActivity:` path, so whether it

@@ -13,6 +13,9 @@ import Testing
 struct WatchActivitySwitchTests {
     private let start = Date(timeIntervalSince1970: 1_754_000_000)
 
+    /// Defaults to **two** confirmations, which is not what ships — the
+    /// mechanism is worth keeping under test whatever the shipped number is,
+    /// and `theShippedRuleSwitchesOnOneReading` is what pins the number.
     private func detector(
         startedAs: SessionActivity = .walking,
         confirmations: Int = 2
@@ -162,6 +165,24 @@ struct WatchActivitySwitchTests {
     func confirmationsIsNotDecorative() {
         var detector = detector(confirmations: 1)
         #expect(detector.observe(run(at: 60))?.activity == .running)
+    }
+
+    @Test("What ships switches on a single reading")
+    func theShippedRuleSwitchesOnOneReading() {
+        // The hysteresis existed to protect a permanent segment in Santé. Since
+        // #256 a switch writes nothing — HealthKit refuses a subactivity of
+        // another sport — so waiting bought protection against a record that no
+        // longer exists, at the cost of seconds on a feature already reported as
+        // slow. The confidence floor still applies.
+        var shipped = ActivitySwitchDetector(startedAs: .walking, at: start)
+        #expect(shipped.observe(run(at: 60))?.activity == .running)
+
+        var weak = ActivitySwitchDetector(startedAs: .walking, at: start)
+        #expect(weak.observe(motionEstimate(
+            startDate: start.addingTimeInterval(60),
+            confidence: .low,
+            running: true
+        )) == nil)
     }
 
     // MARK: - Where the boundary lands
