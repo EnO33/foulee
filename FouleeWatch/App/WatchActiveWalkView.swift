@@ -21,31 +21,10 @@ import SwiftUI
 struct WatchActiveWalkView: View {
     let metrics: WatchWorkoutMetrics
     var onStop: () -> Void
-    /// Opens the device probe (issue #248) over the running session, without
-    /// touching it. The two numbers that issue is after — how long a flag takes
-    /// to flip when a run starts, and what a continuous stream costs over
-    /// 30–60 min — can only be read *while* a session records, so the probe has
-    /// to be reachable from here and not only from the home screen.
-    var onDiagnostic: () -> Void
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                ticking
-                // Below « Arrêter », never above: nothing is inserted between
-                // the metrics and the control that ends the session, so the
-                // gesture that stops a walk is exactly where it has always
-                // been. And of the two possible mis-taps this is the
-                // recoverable one — the reverse ends a session for good.
-                //
-                // Outside the `TimelineView`, unlike everything above it:
-                // nothing about this button changes each second, and a control
-                // stored inside a per-second closure is a control no test can
-                // reach — see `WatchDiagnosticRouteTests`.
-                WatchDiagnosticButton(open: onDiagnostic)
-                    .padding(.horizontal, 6)
-                    .padding(.top, 8)
-            }
+            ticking
         }
     }
 

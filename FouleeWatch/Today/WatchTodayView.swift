@@ -13,8 +13,6 @@ struct WatchTodayView: View {
     let store: WatchTodayStore
     var errorMessage: String?
     var onStart: () -> Void
-    /// Opens the device probe (issue #248).
-    var onDiagnostic: () -> Void
 
     var body: some View {
         ScrollView {
@@ -30,7 +28,6 @@ struct WatchTodayView: View {
                         .foregroundStyle(.red)
                         .multilineTextAlignment(.center)
                 }
-                diagnosticSection
             }
             .padding(.horizontal, 2)
         }
@@ -164,27 +161,6 @@ struct WatchTodayView: View {
         .buttonStyle(.borderedProminent)
         .tint(Color("AccentColor"))
         .padding(.top, 2)
-    }
-
-    /// « Diagnostic » (issue #248) — a labelled section, last on the home
-    /// screen, below the CTA and any error line.
-    ///
-    /// Last on purpose: the home screen is read at a glance outdoors, and a
-    /// developer instrument must not sit between the streak and « Démarrer ».
-    /// Findable on purpose too — no long press, no hidden gesture: the owner
-    /// has to reach it mid-outing, on a wrist, and a secret gesture is one
-    /// more thing to remember while cold. It ships in **Release** because
-    /// TestFlight is the only route onto a paired Apple Watch and TestFlight
-    /// distributes Release; a `#if DEBUG` screen would not be there at all.
-    private var diagnosticSection: some View {
-        VStack(spacing: 3) {
-            WatchDiagnosticButton(open: onDiagnostic)
-            Text("Capteur de mouvement")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(.top, 6)
     }
 
     private var kmText: String {

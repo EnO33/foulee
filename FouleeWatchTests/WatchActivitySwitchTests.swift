@@ -61,14 +61,11 @@ struct WatchActivitySwitchTests {
         // would answer « marche » here — silently preferring one of them at the
         // exact moment the device is least sure.
         #expect(reading(motionEstimate(startDate: start, walking: true, running: true)) == .noEvidence)
-        // All six false is a real, frequent reading, not an error.
+        // Both clear is a real, frequent reading, not an error — and it is
+        // also what a stationary wearer, a bike ride, a car journey and an
+        // unclassifiable estimate all look like from here, since Foulée records
+        // none of them and stopped carrying their flags with issue #252.
         #expect(reading(silence(at: 0)) == .noEvidence)
-        #expect(reading(motionEstimate(startDate: start, stationary: true)) == .noEvidence)
-        #expect(reading(motionEstimate(startDate: start, unknown: true)) == .noEvidence)
-        // Foulée records neither of these, so there is nothing to switch to —
-        // the session stays what it is rather than leaving {walking, running}.
-        #expect(reading(motionEstimate(startDate: start, cycling: true)) == .noEvidence)
-        #expect(reading(motionEstimate(startDate: start, automotive: true)) == .noEvidence)
     }
 
     @Test("Below the confidence threshold, a clear flag is still not evidence")

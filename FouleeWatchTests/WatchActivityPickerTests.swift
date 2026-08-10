@@ -64,10 +64,7 @@ struct WatchActivityPickerTests {
             intent: { intent },
             onStart: { taps.started.append($0) },
             onAsk: { taps.asked += 1 },
-            onCancel: { taps.cancelled += 1 },
-            // The device probe's entry point (issue #248) — inert here; what
-            // it does is `WatchDiagnosticRouteTests`' subject.
-            onDiagnostic: {}
+            onCancel: { taps.cancelled += 1 }
         )
     }
 

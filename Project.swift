@@ -273,17 +273,17 @@ let project = Project(
                     "Foulée enregistre tes sorties comme séances dans Santé, avec les pas, la distance, les calories et "
                         + "la fréquence cardiaque mesurés au poignet, ainsi que l'eau que tu bois."
                 ),
-                // CoreMotion, for the device probe of issue #248 — until it,
-                // nothing in this target used CoreMotion at all.
+                // CoreMotion, for the automatic walk/run detection of issue
+                // #249. It arrived with the device probe of issue #248 and
+                // stayed when issue #252 removed it: the probe was measuring
+                // the very capability the shipped feature now uses.
                 //
-                // Apple's documentation does not list watchOS for this key, and
-                // whether it is *required* here is precisely one of the things
-                // the probe is meant to find out. Declaring it is strictly safer
-                // than betting: if it is required and absent, the failure mode is
-                // a crash the first time the activity stream opens — on a wrist,
-                // outdoors, mid-outing, which is the one place a crash costs a
-                // whole trip. And the answer changes nothing: activity detection
-                // (issue #244) would need the key anyway, so it stays either way.
+                // Apple's documentation does not list watchOS for this key.
+                // Declaring it is strictly safer than betting: if it is
+                // required and absent, the failure mode is a crash the first
+                // time the activity stream opens — on a wrist, outdoors,
+                // mid-outing, which is the one place a crash costs a whole
+                // trip.
                 //
                 // Same registre as the four alerts above (#222): tutoiement, the
                 // app's « sortie », and no activity named — a system alert can't

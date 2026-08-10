@@ -12,8 +12,13 @@ import Foundation
 /// segment switching of issue #249 — would be reachable only on a wrist.
 struct MotionActivitySource: Sendable {
     var isAvailable: @MainActor () -> Bool
-    var authorization: @MainActor () -> MotionAuthorization
     /// Opens the stream; `handler` is called once per estimate.
+    ///
+    /// There is deliberately no way to ask for the authorization *status*. The
+    /// probe of issue #248 read it to put it on screen; nothing shipped acts on
+    /// it, because there is nothing to do differently — opening the stream is
+    /// what raises the prompt, and a refusal simply means no estimates arrive
+    /// and the session stays the activity it was started as.
     var openStream: @MainActor (_ handler: @escaping @Sendable (MotionActivityEstimate) -> Void) -> Void
     var closeStream: @MainActor () -> Void
 
@@ -26,11 +31,6 @@ struct MotionActivitySource: Sendable {
         let manager = CMMotionActivityManager()
         return MotionActivitySource(
             isAvailable: { CMMotionActivityManager.isActivityAvailable() },
-            authorization: {
-                MotionAuthorization(
-                    rawValue: CMMotionActivityManager.authorizationStatus().rawValue
-                ) ?? .unrecognised
-            },
             openStream: { handler in
                 // Delivered on the main queue, and converted to a value
                 // immediately: `CMMotionActivity` is a reference type this app
@@ -48,20 +48,21 @@ struct MotionActivitySource: Sendable {
 extension MotionActivityEstimate {
     /// The CoreMotion boundary, in full.
     ///
-    /// Each flag copied on its own line: `CMMotionActivity`'s booleans are not
-    /// mutually exclusive and can all be false at once, so any attempt to
-    /// reduce them *here* would throw away information the caller may need.
+    /// The two flags are copied as they come, unreduced: they are not mutually
+    /// exclusive and can both be false, so any attempt to pick a winner *here*
+    /// would hide the ambiguity from the one place equipped to judge it.
+    ///
+    /// The other four — stationary, unknown, cycling, automotive — are not
+    /// read. Foulée records neither a bike ride nor a car journey, so those
+    /// flags could only ever produce « no evidence », which is what two clear
+    /// booleans already produce.
     init(_ activity: CMMotionActivity, receivedAt: Date) {
         self.init(
             startDate: activity.startDate,
             receivedAt: receivedAt,
             confidence: MotionActivityConfidence(rawValue: activity.confidence.rawValue) ?? .unrecognised,
             walking: activity.walking,
-            running: activity.running,
-            stationary: activity.stationary,
-            unknown: activity.unknown,
-            cycling: activity.cycling,
-            automotive: activity.automotive
+            running: activity.running
         )
     }
 }
