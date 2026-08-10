@@ -21,46 +21,71 @@ import SwiftUI
 struct WatchActiveWalkView: View {
     let metrics: WatchWorkoutMetrics
     var onStop: () -> Void
+    /// Opens the device probe (issue #248) over the running session, without
+    /// touching it. The two numbers that issue is after — how long a flag takes
+    /// to flip when a run starts, and what a continuous stream costs over
+    /// 30–60 min — can only be read *while* a session records, so the probe has
+    /// to be reachable from here and not only from the home screen.
+    var onDiagnostic: () -> Void
 
     var body: some View {
         ScrollView {
-            TimelineView(.periodic(from: .now, by: 1)) { _ in
-                VStack(spacing: 8) {
-                    Text(metrics.elapsed.walkClockText)
-                        .font(.system(size: 38, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-
-                    HStack(spacing: 10) {
-                        metric(value: "\(metrics.steps)", label: "pas", icon: "shoe")
-                        metric(value: metrics.distanceKm.kmValue(), label: "km", icon: "location.fill")
-                    }
-                    HStack(spacing: 10) {
-                        metric(
-                            value: "\(metrics.activeCalories)",
-                            label: "kcal",
-                            icon: "flame.fill"
-                        )
-                        metric(
-                            value: metrics.heartRate.map { "\($0)" } ?? "—",
-                            label: "bpm",
-                            icon: "heart.fill"
-                        )
-                    }
-                    .padding(.top, 4)
-
-                    // Was a `Spacer(minLength: 4)`, which only ever pushed the
-                    // button to the bottom of a container this content is too
-                    // tall for. Inside a scroll view the height is unbounded,
-                    // so the gap has to be stated rather than sprung.
-                    Button(role: .destructive, action: onStop) {
-                        Label("Arrêter", systemImage: "stop.fill")
-                            .font(.subheadline.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                    }
-                    .padding(.top, 4)
-                }
-                .padding(.horizontal, 6)
+            VStack(spacing: 0) {
+                ticking
+                // Below « Arrêter », never above: nothing is inserted between
+                // the metrics and the control that ends the session, so the
+                // gesture that stops a walk is exactly where it has always
+                // been. And of the two possible mis-taps this is the
+                // recoverable one — the reverse ends a session for good.
+                //
+                // Outside the `TimelineView`, unlike everything above it:
+                // nothing about this button changes each second, and a control
+                // stored inside a per-second closure is a control no test can
+                // reach — see `WatchDiagnosticRouteTests`.
+                WatchDiagnosticButton(open: onDiagnostic)
+                    .padding(.horizontal, 6)
+                    .padding(.top, 8)
             }
+        }
+    }
+
+    private var ticking: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { _ in
+            VStack(spacing: 8) {
+                Text(metrics.elapsed.walkClockText)
+                    .font(.system(size: 38, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+
+                HStack(spacing: 10) {
+                    metric(value: "\(metrics.steps)", label: "pas", icon: "shoe")
+                    metric(value: metrics.distanceKm.kmValue(), label: "km", icon: "location.fill")
+                }
+                HStack(spacing: 10) {
+                    metric(
+                        value: "\(metrics.activeCalories)",
+                        label: "kcal",
+                        icon: "flame.fill"
+                    )
+                    metric(
+                        value: metrics.heartRate.map { "\($0)" } ?? "—",
+                        label: "bpm",
+                        icon: "heart.fill"
+                    )
+                }
+                .padding(.top, 4)
+
+                // Was a `Spacer(minLength: 4)`, which only ever pushed the
+                // button to the bottom of a container this content is too
+                // tall for. Inside a scroll view the height is unbounded,
+                // so the gap has to be stated rather than sprung.
+                Button(role: .destructive, action: onStop) {
+                    Label("Arrêter", systemImage: "stop.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(.top, 4)
+            }
+            .padding(.horizontal, 6)
         }
     }
 

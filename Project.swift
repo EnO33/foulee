@@ -272,6 +272,25 @@ let project = Project(
                 "NSHealthUpdateUsageDescription": .string(
                     "Foulée enregistre tes sorties comme séances dans Santé, avec les pas, la distance, les calories et "
                         + "la fréquence cardiaque mesurés au poignet, ainsi que l'eau que tu bois."
+                ),
+                // CoreMotion, for the device probe of issue #248 — until it,
+                // nothing in this target used CoreMotion at all.
+                //
+                // Apple's documentation does not list watchOS for this key, and
+                // whether it is *required* here is precisely one of the things
+                // the probe is meant to find out. Declaring it is strictly safer
+                // than betting: if it is required and absent, the failure mode is
+                // a crash the first time the activity stream opens — on a wrist,
+                // outdoors, mid-outing, which is the one place a crash costs a
+                // whole trip. And the answer changes nothing: activity detection
+                // (issue #244) would need the key anyway, so it stays either way.
+                //
+                // Same registre as the four alerts above (#222): tutoiement, the
+                // app's « sortie », and no activity named — a system alert can't
+                // vary with the mode, and this one is shown before anything is
+                // known about what the wearer is doing.
+                "NSMotionUsageDescription": .string(
+                    "Foulée lit les mouvements détectés au poignet pour reconnaître ton activité pendant ta sortie."
                 )
             ]),
             sources: [

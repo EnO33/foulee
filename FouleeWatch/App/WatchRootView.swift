@@ -1,16 +1,30 @@
 import SwiftUI
 
-/// Owns the workout store and routes to home / active / ended screens.
+/// Owns the workout store and routes to home / active / ended screens — plus
+/// the device probe of issue #248, which covers any of them without touching
+/// the session underneath (`WatchRoute`).
 struct WatchRootView: View {
     @State private var store = WatchWorkoutStore()
     @State private var todayStore = WatchTodayStore()
     /// « Les deux » only: the question is on screen and nothing has started.
     /// Local to the idle route — a session in flight clears it.
     @State private var isChoosingActivity = false
+    /// The device probe (issue #248). Covers whatever is underneath, session
+    /// included, and gives it back untouched — see `WatchRoute`.
+    @State private var isShowingDiagnostic = false
+    /// Held here rather than inside the screen so one `CMMotionActivityManager`
+    /// serves the whole outing instead of being rebuilt on every visit.
+    /// Constructing it prompts nothing: `WatchMotionProbe.start()` opens the
+    /// stream. The *readings* deliberately do not survive a close — closing the
+    /// screen closes the stream, and a count from the previous visit next to a
+    /// listening clock that just restarted is a false pair (`MotionProbeState`).
+    @State private var probe = WatchMotionProbe()
 
     var body: some View {
         Group {
-            switch store.state {
+            switch WatchRoute.resolve(state: store.state, isShowingDiagnostic: isShowingDiagnostic) {
+            case .diagnostic:
+                WatchMotionProbeView(probe: probe, onClose: { isShowingDiagnostic = false })
             case .idle:
                 WatchIdleScreen(
                     today: todayStore,
@@ -18,12 +32,15 @@ struct WatchRootView: View {
                     isChoosingActivity: isChoosingActivity,
                     onStart: begin,
                     onAsk: { isChoosingActivity = true },
-                    onCancel: { isChoosingActivity = false }
+                    onCancel: { isChoosingActivity = false },
+                    onDiagnostic: { isShowingDiagnostic = true }
                 )
             case .active(let metrics):
-                WatchActiveWalkView(metrics: metrics) {
-                    Task { await store.stop() }
-                }
+                WatchActiveWalkView(
+                    metrics: metrics,
+                    onStop: { Task { await store.stop() } },
+                    onDiagnostic: { isShowingDiagnostic = true }
+                )
             case .ended(let metrics, let saveFailed):
                 WatchFinishedView(
                     metrics: metrics,
@@ -35,6 +52,7 @@ struct WatchRootView: View {
         }
         .animation(.easeOut(duration: 0.25), value: store.state)
         .animation(.easeOut(duration: 0.25), value: isChoosingActivity)
+        .animation(.easeOut(duration: 0.25), value: isShowingDiagnostic)
         .task { await WatchWaterBackgroundDelivery.start() }
     }
 

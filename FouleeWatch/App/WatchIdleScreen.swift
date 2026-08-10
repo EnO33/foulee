@@ -36,6 +36,10 @@ struct WatchIdleScreen: View {
     var onAsk: () -> Void
     /// Backed out of the question without starting anything.
     var onCancel: () -> Void
+    /// Opens the device probe (issue #248). Not defaulted: a diagnostic
+    /// wired to nothing is a button that lies, and the whole screen exists to
+    /// not lie.
+    var onDiagnostic: () -> Void
 
     var body: some View {
         if isChoosingActivity {
@@ -43,7 +47,12 @@ struct WatchIdleScreen: View {
             // so there is one place a session can begin, not two.
             WatchActivityChoiceView(onChoose: onStart, onCancel: onCancel)
         } else {
-            WatchTodayView(store: today, errorMessage: errorMessage, onStart: start)
+            WatchTodayView(
+                store: today,
+                errorMessage: errorMessage,
+                onStart: start,
+                onDiagnostic: onDiagnostic
+            )
         }
     }
 
