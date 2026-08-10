@@ -34,10 +34,11 @@ struct WorkoutSummaryWorkoutTests {
     private func makeWorkout(
         energyKcal: Double?,
         distanceMeters: Double?,
-        metadata: [String: Any]?
+        metadata: [String: Any]?,
+        activityType: HKWorkoutActivityType = .walking
     ) -> HKWorkout {
         HKWorkout(
-            activityType: .walking,
+            activityType: activityType,
             start: Self.start,
             end: Self.end,
             workoutEvents: nil,
@@ -116,5 +117,28 @@ struct WorkoutSummaryWorkoutTests {
             ]
         )
         #expect(WorkoutSummary(workout: workout).elevationMeters == 42)
+    }
+}
+
+extension WorkoutSummaryWorkoutTests {
+    /// The type was on the `HKWorkout` all along; issue #245 is that nothing
+    /// read it. Asserted here rather than only on `RecordedActivity` because
+    /// the mapping being right is useless if the projection drops it.
+    @Test("The summary carries the type the workout was recorded with", arguments: [
+        (HKWorkoutActivityType.walking, RecordedActivity.walking),
+        (HKWorkoutActivityType.running, RecordedActivity.running),
+        (HKWorkoutActivityType.hiking, RecordedActivity.hiking)
+    ])
+    func summaryCarriesTheActivity(
+        type: HKWorkoutActivityType,
+        expected: RecordedActivity
+    ) {
+        let workout = makeWorkout(
+            energyKcal: 120,
+            distanceMeters: 2_400,
+            metadata: nil,
+            activityType: type
+        )
+        #expect(WorkoutSummary(workout: workout).activity == expected)
     }
 }

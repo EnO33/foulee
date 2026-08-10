@@ -31,4 +31,12 @@ struct WorkoutSummary: Equatable, Hashable, Sendable, Identifiable {
     /// "Foulée", "Forme", "Apple Watch", etc. — read from
     /// `HKWorkout.sourceRevision.source.name`.
     var sourceName: String
+    /// What the session was recorded as (issue #245).
+    ///
+    /// Defaulted to `.other` and **not** to `.walking`, though a walk is by far
+    /// the commoner case: a call site that forgets this field then shows the
+    /// neutral « Séance » instead of asserting a walk that may have been a run.
+    /// Issue #223 is what a silent `.walking` default costs — it stamped every
+    /// session the app had ever written, permanently.
+    var activity: RecordedActivity = .other
 }

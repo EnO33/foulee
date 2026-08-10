@@ -179,8 +179,27 @@ extension ScreenshotSeed {
             activeCalories: Int(Double(daily) * 7.4),
             steps: daily * 118,
             elevationMeters: Double(12 + (offset * 5) % 30),
-            sourceName: sourceName(offset: offset)
+            sourceName: sourceName(offset: offset),
+            activity: activity(offset: offset)
         )
+    }
+
+    /// What each seeded session was recorded as (issue #245).
+    ///
+    /// Mixed on purpose: a résumé board where every row draws the same figure
+    /// shows the feature and proves nothing about it.
+    ///
+    /// Today's is a **run**, and that is not a free choice — it is the same
+    /// session the watch board shows recording, and `watchSessionMetrics` has
+    /// it running. Two boards of the same seeded day contradicting each other
+    /// is exactly the divergence issue #235 shipped once already.
+    private static func activity(offset: Int) -> RecordedActivity {
+        guard offset != 0 else { return .running }
+        switch offset % 3 {
+        case 0: return .hiking
+        case 1: return .walking
+        default: return .running
+        }
     }
 
     /// Today's session is Foulée's own; the rest alternate between the two
