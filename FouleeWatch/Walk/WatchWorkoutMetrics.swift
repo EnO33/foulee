@@ -8,6 +8,19 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     var distanceMeters: Double
     var activeCalories: Int
     var heartRate: Int?
+    /// Virtual start of the session: the instant `elapsed` would have been zero
+    /// (issue #266).
+    ///
+    /// `nil` when there is no clock to run — the zero state, and the seeded
+    /// capture session, whose board must stay byte-identical between runs.
+    ///
+    /// Same construction as the Live Activity's `timerBasis`, and for the same
+    /// reason: a *duration* pushed from the store is frozen between two
+    /// deliveries from HealthKit, while a *date* lets any clock derive the
+    /// current value on its own. Recomputed on every ingest, so HealthKit's own
+    /// `elapsedTime` — which knows about paused stretches — keeps correcting
+    /// any drift.
+    var timerBasis: Date?
     /// What the watch says the wearer is doing right now (issue #250).
     ///
     /// Comes from the detection, not from HealthKit's segment list: the two
@@ -39,6 +52,22 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     }
 
     var distanceKm: Double { distanceMeters / 1_000 }
+
+    /// How long the session has been running, read at `date`.
+    ///
+    /// This is what the live screen must draw. `elapsed` alone is a snapshot
+    /// written when HealthKit delivered a batch: the screen wrapped it in a
+    /// `TimelineView` that rebuilt every second and redrew **the same frozen
+    /// number** — the clock advanced in jerks, at HealthKit's pace, and the
+    /// file's own comment claimed the opposite (issue #266).
+    ///
+    /// Falls back to the pushed snapshot when there is no basis, which is the
+    /// finished session and the seeded capture — both of which want a value
+    /// that does not move.
+    func elapsed(at date: Date) -> TimeInterval {
+        guard let timerBasis else { return elapsed }
+        return max(0, date.timeIntervalSince(timerBasis))
+    }
 
     /// « Course · 12:04 » — the sport being done and how long it has added up
     /// to across the session. Just « Course » when nothing has been measured
