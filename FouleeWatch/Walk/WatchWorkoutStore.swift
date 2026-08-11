@@ -32,13 +32,34 @@ final class WatchWorkoutStore: NSObject {
     /// What detection says is happening right now — the source of the sport
     /// named on screen (issue #250).
     @ObservationIgnored private var currentActivity: SessionActivity = .walking
-    /// Segments the builder's delegate reported as ended.
+    /// The legs of this outing that are already saved as their own `HKWorkout`
+    /// (issue #265).
     ///
-    /// Kept because `HKLiveWorkoutBuilder.workoutActivities` is documented only
-    /// for activities added by hand, and a session's own segments disappearing
-    /// from that list would silently zero every per-sport total the moment a
-    /// switch happened. Merged with the two live readings, never trusted alone.
-    @ObservationIgnored private var endedSegments: [WatchWorkoutSegment] = []
+    /// A change of sport ends the running leg and opens another — the way Forme
+    /// does it, and the only way Santé ends up with a walk *and* a run.
+    /// HealthKit refuses to segment a single session (#256).
+    @ObservationIgnored private var finishedLegs: [WatchWorkoutSegment] = []
+    /// When the leg in flight began. Its own builder counts from here.
+    @ObservationIgnored private var legStartedAt = Date.now
+    /// The sport the leg in flight is **recorded** as.
+    ///
+    /// Not always what the screen says: the display follows detection at once,
+    /// the recording waits for `minimumLegDuration`. That gap is deliberate —
+    /// see `applySwitch`.
+    @ObservationIgnored private var legActivity: SessionActivity = .walking
+    /// Distinguishes the leg in flight from the finished ones when they are
+    /// folded into one list.
+    @ObservationIgnored private var legIdentity = UUID()
+    /// What the leg in flight has measured so far, as of the last batch.
+    @ObservationIgnored private var currentLeg = WatchActivityTotals.zero
+    /// A confirmed change waiting to become a leg (issue #265).
+    ///
+    /// The screen follows detection immediately; the **recording** waits. A leg
+    /// shorter than `minimumLegDuration` is not a stretch of an outing, it is
+    /// noise — and every leg costs a permanent workout in Santé. Dated from the
+    /// boundary, so waiting costs no accuracy: the split, when it happens, is
+    /// back-dated to where the sport actually changed.
+    @ObservationIgnored private var pendingSplit: ActivitySwitchDetector.Switch?
     /// The last counters the classifier of issue #267 was able to read.
     ///
     /// Kept rather than replaced on every batch: HealthKit delivers far more
@@ -116,15 +137,25 @@ final class WatchWorkoutStore: NSObject {
     /// End the session, save the workout and surface a summary. On a save
     /// failure the builder is kept alive so "Réessayer" can finish it.
     func stop() async {
-        guard case .active(let metrics) = state, let handle = sessionHandle else { return }
+        guard case .active(var metrics) = state, let handle = sessionHandle else { return }
         detection.stop()
+        let end = Date.now
         handle.end()
         let saved = await runOrTrap {
-            try await handle.endCollection(.now)
+            try await handle.endCollection(end)
             try await handle.finishWorkout()
             return true as Bool
         }
         if saved == true { sessionHandle = nil }
+
+        // Close the leg in flight so every leg of the outing has an end, and
+        // the summary can give each sport its own figures (issue #265).
+        finishedLegs.append(legInFlight(endingAt: end))
+        metrics.legs = finishedLegs
+        metrics.elapsed = WatchActivityTotals.of(finishedLegs, at: end).elapsed
+        // No basis: the summary shows the final duration, not a clock that
+        // keeps running (issue #266).
+        metrics.timerBasis = nil
         state = .ended(metrics, saveFailed: saved != true)
     }
 
@@ -150,7 +181,8 @@ final class WatchWorkoutStore: NSObject {
     func reset() {
         detection.stop()
         sessionHandle = nil
-        endedSegments = []
+        finishedLegs = []
+        pendingSplit = nil
         state = .idle
         lastError = nil
     }
@@ -170,41 +202,64 @@ final class WatchWorkoutStore: NSObject {
     #endif
 
     private func beginSession(activity: SessionActivity) async {
+        let now = Date.now
         let handle = await runOrTrap {
-            try await healthKit.startSession(Self.configuration(for: activity), self)
+            try await healthKit.startSession(Self.configuration(for: activity), now, self)
         }
         guard let handle else { return }
         sessionHandle = handle
-        endedSegments = []
+        finishedLegs = []
+        legStartedAt = now
+        legActivity = activity
+        legIdentity = UUID()
+        currentLeg = .zero
+        pendingSplit = nil
         lastMovementSample = nil
         state = .active(.empty(for: activity))
         beginActivityDetection(from: activity)
     }
 
-    fileprivate func ingest(builder: HKLiveWorkoutBuilder) {
+    func ingest(builder: HKLiveWorkoutBuilder) {
         guard case .active(var metrics) = state else { return }
         let now = Date.now
-        metrics.elapsed = builder.elapsedTime(at: now)
-        // The instant the clock would have read zero. HealthKit's `elapsedTime`
-        // stays the authority — recomputing the basis on every batch is what
-        // lets it correct whatever the free-running clock drifted to.
-        metrics.timerBasis = now.addingTimeInterval(-metrics.elapsed)
-        metrics.steps = Int(sumDouble(builder.statistics(for: HKQuantityType(.stepCount)), unit: .count()))
-        metrics.distanceMeters = sumDouble(
-            builder.statistics(for: HKQuantityType(.distanceWalkingRunning)),
-            unit: .meter()
+        // The builder counts **this leg**. Every leg before it is already a
+        // saved workout with its own builder, so the outing's figures are the
+        // sum — the screen must never fall back to the leg's own counters, or
+        // it would reset to zero the moment the sport changed.
+        currentLeg = WatchActivityTotals(
+            elapsed: builder.elapsedTime(at: now),
+            steps: Int(sumDouble(builder.statistics(for: HKQuantityType(.stepCount)), unit: .count())),
+            distanceMeters: sumDouble(
+                builder.statistics(for: HKQuantityType(.distanceWalkingRunning)),
+                unit: .meter()
+            ),
+            activeCalories: Int(sumDouble(
+                builder.statistics(for: HKQuantityType(.activeEnergyBurned)),
+                unit: .kilocalorie()
+            ))
         )
-        metrics.activeCalories = Int(sumDouble(
-            builder.statistics(for: HKQuantityType(.activeEnergyBurned)),
-            unit: .kilocalorie()
-        ))
+        applyOutingTotals(to: &metrics, at: now)
         metrics.heartRate = mostRecent(
             builder.statistics(for: HKQuantityType(.heartRate)),
             unit: HKUnit(from: "count/min")
         )
-        applyActivityTotals(to: &metrics, at: now)
         state = .active(metrics)
         classifyMovement(steps: metrics.steps, distanceMeters: metrics.distanceMeters, at: now)
+        Task { await self.splitIfDue(at: now) }
+    }
+
+    /// A failed session is dead mid-walk: land on the summary with the save
+    /// banner instead of leaving `.active` frozen (the error used to go to
+    /// `lastError`, rendered only on the idle screen — after `reset()` had
+    /// already cleared it). The handle stays alive so "Réessayer" can still
+    /// finish the builder.
+    func handleSessionFailure(_ message: String) {
+        lastError = message
+        // Whatever the session's fate, there is nothing left to switch: keep
+        // the builder alive for "Réessayer", but let the motion stream go.
+        detection.stop()
+        guard case .active(let metrics) = state else { return }
+        state = .ended(metrics, saveFailed: true)
     }
 
     private func sumDouble(_ statistics: HKStatistics?, unit: HKUnit) -> Double {
@@ -228,74 +283,6 @@ final class WatchWorkoutStore: NSObject {
     }
 }
 
-extension WatchWorkoutStore: HKWorkoutSessionDelegate {
-    nonisolated func workoutSession(
-        _ workoutSession: HKWorkoutSession,
-        didChangeTo toState: HKWorkoutSessionState,
-        from fromState: HKWorkoutSessionState,
-        date: Date
-    ) {
-        // No-op: state transitions are driven from start/stop on the store.
-    }
-
-    nonisolated func workoutSession(
-        _ workoutSession: HKWorkoutSession,
-        didFailWithError error: Error
-    ) {
-        let message = error.localizedDescription
-        Task { @MainActor [weak self] in
-            self?.handleSessionFailure(message)
-        }
-    }
-
-    /// A failed session is dead mid-walk: land on the summary with the save
-    /// banner instead of leaving `.active` frozen (the error used to go to
-    /// `lastError`, rendered only on the idle screen — after `reset()` had
-    /// already cleared it). The handle stays alive so "Réessayer" can still
-    /// finish the builder.
-    func handleSessionFailure(_ message: String) {
-        lastError = message
-        // Whatever the session's fate, there is nothing left to switch: keep
-        // the builder alive for "Réessayer", but let the motion stream go.
-        detection.stop()
-        guard case .active(let metrics) = state else { return }
-        state = .ended(metrics, saveFailed: true)
-    }
-}
-
-extension WatchWorkoutStore: HKLiveWorkoutBuilderDelegate {
-    nonisolated func workoutBuilder(
-        _ workoutBuilder: HKLiveWorkoutBuilder,
-        didCollectDataOf collectedTypes: Set<HKSampleType>
-    ) {
-        Task { @MainActor [weak self] in
-            self?.ingest(builder: workoutBuilder)
-        }
-    }
-
-    nonisolated func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {
-        // No event-specific UI; ignore.
-    }
-
-    /// The moment a segment's totals stop moving — and the one moment its
-    /// figures are certainly complete.
-    nonisolated func workoutBuilder(
-        _ workoutBuilder: HKLiveWorkoutBuilder,
-        didEnd workoutActivity: HKWorkoutActivity
-    ) {
-        guard let segment = WatchWorkoutSegment(workoutActivity) else { return }
-        Task { @MainActor [weak self] in
-            self?.recordEndedSegment(segment)
-        }
-    }
-}
-
-/// Automatic walk/run detection during a live session (issue #249).
-///
-/// In an extension rather than the class body so the state machine above stays
-/// the thing you read first, and because none of this is state — the decision
-/// is `ActivitySwitchDetector`'s, the stream is `WatchActivityDetection`'s, and
-/// what is left here is only the translation into HealthKit's two calls.
 extension WatchWorkoutStore {
     /// The configuration HealthKit stamps a session — or one of its nested
     /// activities — with.
@@ -344,65 +331,140 @@ extension WatchWorkoutStore {
         }
     }
 
-    /// Name the sport being done and total it (issue #250).
-    private func applyActivityTotals(to metrics: inout WatchWorkoutMetrics, at now: Date) {
+    /// The shortest stretch that deserves a workout of its own.
+    ///
+    /// Chosen with the user, and low on purpose: they would rather tidy an
+    /// occasional stray workout than lose the accuracy of a boundary. Below
+    /// this a leg is shorter than the gap between two readings — noise, not an
+    /// observation.
+    static let minimumLegDuration: TimeInterval = 15
+
+    /// Name the sport being done and total the **outing** — every leg, not the
+    /// one in flight (issue #265).
+    private func applyOutingTotals(to metrics: inout WatchWorkoutMetrics, at now: Date) {
+        let legs = allLegs()
         metrics.activity = currentActivity
-        metrics.activityTotals = WatchActivityTotals.of(currentActivity, in: recordedSegments(), at: now)
+        metrics.legs = legs
+        let outing = WatchActivityTotals.of(legs, at: now)
+        metrics.elapsed = outing.elapsed
+        metrics.steps = outing.steps
+        metrics.distanceMeters = outing.distanceMeters
+        metrics.activeCalories = outing.activeCalories
+        // The instant the clock would have read zero, so the screen can run it
+        // on its own between batches (issue #266).
+        metrics.timerBasis = now.addingTimeInterval(-outing.elapsed)
+        metrics.activityTotals = WatchActivityTotals.of(currentActivity, in: legs, at: now)
     }
 
-    /// Refresh the per-activity block on its own.
+    /// Refresh the totals on their own.
     ///
     /// Split out of `ingest(builder:)` and internal because that method takes
     /// an `HKLiveWorkoutBuilder`, a type no test can construct — while this
     /// half needs none of it.
     func refreshActivityTotals(at now: Date = .now) {
         guard case .active(var metrics) = state else { return }
-        applyActivityTotals(to: &metrics, at: now)
+        applyOutingTotals(to: &metrics, at: now)
         state = .active(metrics)
     }
 
-    /// Every segment of the running session, from all three sources that know
-    /// about them. See `WatchWorkoutSegment.merged(_:)` for why there are
-    /// three.
-    func recordedSegments() -> [WatchWorkoutSegment] {
-        WatchWorkoutSegment.merged([endedSegments, sessionHandle?.segments() ?? []])
+    /// Every leg of the outing: those already saved, plus the one in flight.
+    private func allLegs() -> [WatchWorkoutSegment] {
+        finishedLegs + [legInFlight(endingAt: nil)]
     }
 
-    /// Keep a segment the builder's delegate reported as ended.
-    ///
-    /// Internal so a test can drive it without an `HKWorkoutActivity`, which
-    /// cannot be built with statistics.
-    func recordEndedSegment(_ segment: WatchWorkoutSegment) {
-        endedSegments = WatchWorkoutSegment.merged([endedSegments, [segment]])
+    private func legInFlight(endingAt end: Date?) -> WatchWorkoutSegment {
+        WatchWorkoutSegment(
+            id: legIdentity,
+            activity: legActivity,
+            start: legStartedAt,
+            end: end,
+            steps: currentLeg.steps,
+            distanceMeters: currentLeg.distanceMeters,
+            activeCalories: currentLeg.activeCalories
+        )
     }
 
-    /// Note what the wearer is now doing. **Nothing is written to the session.**
+    /// Note the change on screen at once, and queue the recording.
     ///
-    /// Two outings and one error message settled this. `HKWorkoutActivity`
-    /// subactivities cannot be used to change sport inside a session:
+    /// **The two halves move at different speeds on purpose.** Renaming cannot
+    /// fail and cannot be wrong for long — the next reading corrects it. Cutting
+    /// the outing in two writes a permanent workout into Santé, so it waits
+    /// until the new sport has held for `minimumLegDuration`.
     ///
-    ///     Cannot add subactivity of type HKWorkoutActivityTypeRunning
-    ///
-    /// — the session's own type being `.walking`. Subactivities exist for
-    /// **multisport** (`.swimBikeRun` and `.transition` are the types that
-    /// carry them); a single-sport session accepts none of another sport. And
-    /// the multisport parent is not available to Foulée: leaving
-    /// {walking, running} drops the session from the 7-day résumé
-    /// (`WorkoutActivityFilter`) and changes what Santé calls it.
-    ///
-    /// So a session records **one sport, the one it was started as**, and the
-    /// detection renames the screen and nothing else. Two hypotheses were spent
-    /// before the error message was displayed at all — that display (issue
-    /// #256) is what turned this from guessing into knowing.
+    /// Waiting costs no accuracy: the split carries `confirmed.date`, the
+    /// instant the sport actually changed, and both HealthKit calls accept a
+    /// past date.
     private func applySwitch(_ confirmed: ActivitySwitchDetector.Switch) {
         guard case .active = state else { return }
         currentActivity = confirmed.activity
-        // Push it to the screen now, rather than waiting for the next batch of
-        // HealthKit samples to call `ingest`. Detection is already the slow
-        // part of this feature; letting the *name* lag behind the decision by
-        // another collection interval would add a delay to a delay — and if
-        // collection stalled, the screen would keep naming the wrong sport for
-        // as long as it stayed stalled.
         refreshActivityTotals()
+        // Back to what the leg is already recording: whatever was queued is
+        // moot, and no workout was created — which is the whole point of
+        // waiting.
+        pendingSplit = confirmed.activity == legActivity ? nil : confirmed
+    }
+
+    /// Cut the outing here, if a queued change has held long enough.
+    ///
+    /// Called from `ingest`, so it runs at HealthKit's own pace rather than on
+    /// a timer of its own — there is nothing to decide between two batches.
+    /// Internal so a test can drive it with an explicit clock — `ingest` takes
+    /// an `HKLiveWorkoutBuilder`, which no test can build.
+    func splitIfDue(at now: Date) async {
+        guard case .active = state,
+              let pending = pendingSplit,
+              now.timeIntervalSince(pending.date) >= Self.minimumLegDuration
+        else { return }
+        pendingSplit = nil
+        await splitLeg(to: pending.activity, at: pending.date)
+    }
+
+    /// Close the leg in flight and open the next one at the same instant.
+    ///
+    /// This is what Forme does when you tap « + » mid-outing, and the only
+    /// shape HealthKit allows: a session records one sport, so a second sport
+    /// needs a second session (#256).
+    ///
+    /// **A failure here never costs what came before.** Every finished leg is
+    /// already its own saved workout. If the next leg cannot be opened the
+    /// outing ends, with the reason on screen — which is a smaller loss than a
+    /// session that keeps running while recording nothing.
+    private func splitLeg(to activity: SessionActivity, at boundary: Date) async {
+        guard let handle = sessionHandle else { return }
+        let closed = await runOrTrap {
+            handle.end()
+            try await handle.endCollection(boundary)
+            try await handle.finishWorkout()
+            return true as Bool
+        }
+        finishedLegs.append(legInFlight(endingAt: boundary))
+
+        guard closed == true else {
+            // The builder is still alive, so « Réessayer » can still finish it.
+            endOuting(saveFailed: true)
+            return
+        }
+        sessionHandle = nil
+
+        let next = await runOrTrap {
+            try await healthKit.startSession(Self.configuration(for: activity), boundary, self)
+        }
+        guard let next else {
+            endOuting(saveFailed: false)
+            return
+        }
+        sessionHandle = next
+        legStartedAt = boundary
+        legActivity = activity
+        legIdentity = UUID()
+        currentLeg = .zero
+        lastMovementSample = nil
+    }
+
+    /// End the outing from inside a split that could not continue.
+    private func endOuting(saveFailed: Bool) {
+        detection.stop()
+        guard case .active(let metrics) = state else { return }
+        state = .ended(metrics, saveFailed: saveFailed)
     }
 }

@@ -24,14 +24,13 @@ private final class TrapHealthKit {
             requestAuthorization: { _, _ in
                 self.authorizationRequests += 1
             },
-            startSession: { _, _ in
+            startSession: { _, _, _ in
                 self.sessionStarts += 1
                 return WatchWorkoutSessionHandle(
                     end: {},
                     endCollection: { _ in },
                     finishWorkout: {},
-                    collectionEndDate: { nil },
-                    segments: { [] }
+                    collectionEndDate: { nil }
                 )
             }
         ), detection: WatchActivityDetection(source: .inert))

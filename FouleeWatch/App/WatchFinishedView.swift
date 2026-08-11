@@ -44,6 +44,9 @@ struct WatchFinishedView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                if !metrics.perSport.isEmpty {
+                    breakdown
+                }
                 if let reasonText {
                     reason(reasonText)
                 }
@@ -62,6 +65,29 @@ struct WatchFinishedView: View {
     /// that printed nothing — and `lastError` outlives the failure that set it,
     /// so the guard is load-bearing, not decorative.
     var reasonText: String? { saveFailed ? errorMessage : nil }
+
+    /// One line per sport, when the outing changed sport (issue #265).
+    ///
+    /// A change ends one `HKWorkout` and opens another, so Santé shows a walk
+    /// *and* a run — and this is where that is said before the wearer goes
+    /// looking. Absent from a single-sport outing: the totals above already say
+    /// it, and repeating them would be noise on a screen that has none to
+    /// spare.
+    private var breakdown: some View {
+        VStack(spacing: 2) {
+            Divider()
+                .padding(.vertical, 2)
+            ForEach(metrics.perSport) { sport in
+                // One literal, never a `+` concatenation: the image only
+                // renders when the whole thing is a single text interpolation.
+                Text("\(Image(systemName: sport.activity.icon)) \(sport.text)")
+                    .font(.caption2)
+                    .monospacedDigit()
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .foregroundStyle(.secondary)
+    }
 
     /// The raw message, unwrapped and untranslated.
     ///

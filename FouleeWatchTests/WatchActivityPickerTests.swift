@@ -15,14 +15,13 @@ private final class ConfigurationRecorder {
         WatchWorkoutStore(healthKit: WatchWorkoutHealthKit(
             isAvailable: { true },
             requestAuthorization: { _, _ in },
-            startSession: { configuration, _ in
+            startSession: { configuration, _, _ in
                 self.startedConfiguration = configuration
                 return WatchWorkoutSessionHandle(
                     end: {},
                     endCollection: { _ in },
                     finishWorkout: {},
-                    collectionEndDate: { nil },
-                    segments: { [] }
+                    collectionEndDate: { nil }
                 )
             }
         ), detection: WatchActivityDetection(source: .inert))

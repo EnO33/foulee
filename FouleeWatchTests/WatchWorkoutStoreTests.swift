@@ -33,10 +33,12 @@ final class WorkoutHealthKitStub {
     private(set) var endCollectionCalls = 0
     private(set) var finishCalls = 0
     private(set) var collectionEndDate: Date?
-    /// What HealthKit would report for this session's segments. Set by the
-    /// tests of issue #250; empty everywhere else, which is what a session with
-    /// nothing measured yet looks like.
-    var segments: [WatchWorkoutSegment] = []
+    /// Every leg opened, with the instant it was told to start (issue #265).
+    /// A change of sport ends one session and opens another, so an outing is a
+    /// list — and the dates are what say whether the boundary was back-dated.
+    private(set) var startedLegs: [(configuration: HKWorkoutConfiguration, at: Date)] = []
+    /// Every date a leg was told to stop collecting at.
+    private(set) var endCollectionDates: [Date] = []
 
     /// Weak by design: the only strong reference lives in the handle's
     /// closures, so `nil` here means the store let go of the handle.
@@ -50,9 +52,10 @@ final class WorkoutHealthKitStub {
                 self.requestedReadTypes = read
                 if let error = self.authError { throw error }
             },
-            startSession: { configuration, _ in
+            startSession: { configuration, startDate, _ in
                 self.startCalls += 1
                 self.startedConfiguration = configuration
+                self.startedLegs.append((configuration, startDate))
                 if let error = self.startError { throw error }
                 return self.makeHandle()
             }
@@ -71,13 +74,13 @@ final class WorkoutHealthKitStub {
                 self.endCollectionCalls += 1
                 if let error = self.endCollectionError { throw error }
                 self.collectionEndDate = date
+                self.endCollectionDates.append(date)
             },
             finishWorkout: {
                 self.finishCalls += 1
                 if let error = self.finishError { throw error }
             },
-            collectionEndDate: { self.collectionEndDate },
-            segments: { self.segments }
+            collectionEndDate: { self.collectionEndDate }
         )
     }
 }
@@ -177,7 +180,7 @@ struct WatchWorkoutStoreTests {
         let store = stub.makeStore()
         await store.start(activity: .walking)
         await store.stop()
-        #expect(store.state == .ended(.zero, saveFailed: false))
+        #expect(ended(store) == false)
         #expect(store.lastError == nil)
         #expect(stub.endCalls == 1)
         #expect(stub.endCollectionCalls == 1)
@@ -192,7 +195,7 @@ struct WatchWorkoutStoreTests {
         await store.start(activity: .walking)
         stub.finishError = StubError()
         await store.stop()
-        #expect(store.state == .ended(.zero, saveFailed: true))
+        #expect(ended(store) == true)
         #expect(store.lastError == "boom")
         #expect(stub.endCalls == 1)
         #expect(stub.handleToken != nil)
@@ -207,7 +210,7 @@ struct WatchWorkoutStoreTests {
         await store.stop()
         stub.finishError = nil
         await store.retrySave()
-        #expect(store.state == .ended(.zero, saveFailed: false))
+        #expect(ended(store) == false)
         #expect(store.lastError == nil)
         // Collection ended during stop(); the retry must not end it twice.
         #expect(stub.endCollectionCalls == 1)
@@ -222,13 +225,13 @@ struct WatchWorkoutStoreTests {
         await store.start(activity: .walking)
         stub.endCollectionError = StubError()
         await store.stop()
-        #expect(store.state == .ended(.zero, saveFailed: true))
+        #expect(ended(store) == true)
         #expect(stub.finishCalls == 0)
         stub.endCollectionError = nil
         await store.retrySave()
         #expect(stub.endCollectionCalls == 2)
         #expect(stub.finishCalls == 1)
-        #expect(store.state == .ended(.zero, saveFailed: false))
+        #expect(ended(store) == false)
     }
 
     @Test("A retry that fails again keeps the failed state and the builder")
@@ -239,7 +242,7 @@ struct WatchWorkoutStoreTests {
         stub.finishError = StubError()
         await store.stop()
         await store.retrySave()
-        #expect(store.state == .ended(.zero, saveFailed: true))
+        #expect(ended(store) == true)
         #expect(store.lastError == "boom")
         #expect(stub.finishCalls == 2)
         #expect(stub.handleToken != nil)
@@ -253,7 +256,7 @@ struct WatchWorkoutStoreTests {
         await store.stop()
         await store.retrySave()
         #expect(stub.finishCalls == 1)
-        #expect(store.state == .ended(.zero, saveFailed: false))
+        #expect(ended(store) == false)
     }
 
     @Test("A session failure mid-walk lands on the failed summary, retryable")
@@ -262,12 +265,12 @@ struct WatchWorkoutStoreTests {
         let store = stub.makeStore()
         await store.start(activity: .walking)
         store.handleSessionFailure("session interrompue")
-        #expect(store.state == .ended(.zero, saveFailed: true))
+        #expect(ended(store) == true)
         #expect(store.lastError == "session interrompue")
         #expect(stub.handleToken != nil)
         // "Réessayer" can still end collection and save the walk.
         await store.retrySave()
-        #expect(store.state == .ended(.zero, saveFailed: false))
+        #expect(ended(store) == false)
         #expect(stub.endCollectionCalls == 1)
         #expect(stub.finishCalls == 1)
     }
@@ -301,5 +304,19 @@ struct WatchWorkoutStoreTests {
         await store.stop()
         #expect(store.state == .idle)
         #expect(stub.endCalls == 0)
+    }
+}
+
+@MainActor
+extension WatchWorkoutStoreTests {
+    /// Whether the outing ended, and whether it wants a retry.
+    ///
+    /// The metrics are no longer compared: since issue #265 an ended outing
+    /// carries its legs and a real duration, so `.ended(.zero, …)` could only
+    /// ever match by accident. What these tests are about is the *case* and the
+    /// flag — that is what they now say.
+    func ended(_ store: WatchWorkoutStore) -> Bool? {
+        guard case .ended(_, let saveFailed) = store.state else { return nil }
+        return saveFailed
     }
 }
