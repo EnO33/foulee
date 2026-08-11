@@ -15,6 +15,7 @@ enum WatchSessionPage: Hashable {
     case controls
     case legs
     case day
+    case hydration
 }
 
 /// Live session screen, split into pages (issue #274).
@@ -89,6 +90,10 @@ struct WatchSessionPager: View {
             }
             WatchSessionDayPage(today: today)
                 .tag(WatchSessionPage.day)
+            if today.hydrationEnabled {
+                WatchSessionHydrationPage(today: today)
+                    .tag(WatchSessionPage.hydration)
+            }
         }
         .tabViewStyle(.page)
         // Only while « Journée » is the page on screen (issue #280). Attached
