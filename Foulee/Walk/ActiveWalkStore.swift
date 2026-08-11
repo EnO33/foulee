@@ -392,11 +392,23 @@ private extension ActiveWalkStore {
             activeCalories: 0
         )
         let content = ActivityContent(state: state, staleDate: nextStaleDate())
-        liveActivity = try? Activity.request(
-            attributes: attributes,
-            content: content,
-            pushType: nil
-        )
+        // The failure stays non-fatal — a walk that cannot draw a Live Activity
+        // is still a walk, and always was. What changes is that it stops being
+        // *invisible* (issue #273): `try?` reported "Live Activities are off in
+        // Réglages" and "ActivityKit refused a background request" as the same
+        // nil. Issue #275 has to tell those two apart on a real wrist, with no
+        // debugger attached, so the reason has to reach the console.
+        do {
+            liveActivity = try Activity.request(
+                attributes: attributes,
+                content: content,
+                pushType: nil
+            )
+        } catch {
+            FouleeLog.liveActivity.error(
+                "Activity.request a échoué : \(error.localizedDescription, privacy: .public)"
+            )
+        }
     }
 
     func pushLiveActivity(session: WalkSession, isPaused: Bool) async {
