@@ -284,10 +284,19 @@ the output, nothing tracked by git):
   container at both ends, which pushed the clock up into the overlay — the two
   overprinted into unreadable glyphs on the finished board — and pushed
   « Arrêter » off the bottom. On a 40 mm SE the stop button was off screen
-  entirely, with nothing to scroll: **a session could not be stopped**.
-  `WatchActiveWalkView` is a scroll view now, so its content starts below the
-  system time like the home's does. If a future watch screen draws large text
-  across the top, check it on the 40 mm probe before capturing.
+  entirely, with nothing to scroll: **a session could not be stopped**. Issue
+  #241 answered with a scroll view, so content starts below the system time like
+  the home's does; issue #274 split the screen into pages, and « Arrêter » now
+  has one to itself. If a future watch screen draws large text across the top,
+  check it on the 40 mm probe before capturing.
+- **The session board no longer scrolls, and that was measured, not assumed.**
+  Its `Shot` carries no `scrolls` flag since issue #274. Do not restore one
+  without re-running the 40 mm probe: the first paged version of this screen
+  still cut « kcal » and « bpm » off the bottom of a **46 mm**, because a
+  `.verticalPage` `TabView` keeps more room above its content than a scroll view
+  does. What made it fit was two-line metric tiles, a 34 pt clock and no
+  divider — all of it verified on
+  `appstore-screenshots/raw/probe-40mm/watch-03-session.png`, not on paper.
 - **The watch is uninstalled first**, which clears its app-group container, so
   « Démarrer » starts a session outright instead of asking which activity. That
   question depends on what the phone last synced; the uninstall is what keeps

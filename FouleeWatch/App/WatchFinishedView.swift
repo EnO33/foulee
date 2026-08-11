@@ -4,7 +4,7 @@ import SwiftUI
 /// workout could not be saved to Health, says so and offers a retry instead
 /// of celebrating a session that never landed.
 ///
-/// **Scrolls**, for the reason `WatchActiveWalkView` does (issue #241): on a
+/// **Scrolls**, for the reason the session pages do (issue #241): on a
 /// 40 mm wrist, at large text sizes, a bare `VStack` pushed « Réessayer » off
 /// the bottom — and on this screen that button is the only way to keep a
 /// session that failed to save. The failure line added by issue #256 makes the
