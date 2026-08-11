@@ -27,6 +27,7 @@ struct FouleeApp: App {
         _ = Self.endOrphanedWalkActivitiesOnce
         _ = Self.startHealthObserversOnce
         _ = Self.startGarminConnectIQOnce
+        _ = Self.startMirrorObserverOnce
     }
 
     var body: some Scene {
@@ -114,6 +115,18 @@ struct FouleeApp: App {
         garminConnectIQ.initialize()
         garminConnectIQ.startReceiving()
         Task { await GarminSnapshotIngestion.run(garminConnectIQ.snapshots()) }
+    }()
+
+    // A mirrored workout session (issue #277) arrives through
+    // `HKHealthStore.workoutSessionMirroringStartHandler`, and HealthKit can
+    // relaunch a *terminated* app to deliver one — on that path no UI is ever
+    // mounted, so registering from a screen's `.task` would miss exactly the
+    // case the feature exists for. Same reasoning as the Connect IQ line above.
+    //
+    // Once-gated: `FouleeApp` can be constructed more than once, and a second
+    // observer would overwrite the handler slot the first one installed.
+    private static let startMirrorObserverOnce: Void = {
+        Task { @MainActor in await MirroredSessionStore.shared.observe() }
     }()
 
     /// Ask iOS for a background refresh in ~2 h. Called when the app goes to

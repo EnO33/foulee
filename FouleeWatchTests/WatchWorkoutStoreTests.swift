@@ -17,8 +17,12 @@ final class WorkoutHealthKitStub {
     var startError: Error?
     var endCollectionError: Error?
     var finishError: Error?
+    /// Set to refuse the mirror — a phone that is off, unpaired or out of
+    /// range. The sortie must not notice (issue #277).
+    var mirrorError: Error?
 
     private(set) var startCalls = 0
+    private(set) var mirrorOffers = 0
     /// The types the last `start(activity:)` asked to share. A type the data
     /// source collects but we never asked to share is what makes
     /// `finishWorkout()` fail with an authorization error, so the two lists
@@ -78,6 +82,10 @@ final class WorkoutHealthKitStub {
         return WatchWorkoutSessionHandle(
             sessionID: ObjectIdentifier(token),
             builderID: ObjectIdentifier(token),
+            startMirroring: {
+                self.mirrorOffers += 1
+                if let error = self.mirrorError { throw error }
+            },
             end: {
                 _ = token
                 self.endCalls += 1

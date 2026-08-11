@@ -44,6 +44,18 @@ struct WatchWorkoutSessionHandle: Sendable {
     /// not access, and a stub can name any object it likes.
     var sessionID: ObjectIdentifier
     var builderID: ObjectIdentifier
+    /// Offer this session to the paired iPhone (issue #277).
+    ///
+    /// Separate from `startSession` and allowed to throw on its own, because a
+    /// mirror that will not open is **not** a reason to lose a sortie. The
+    /// store logs the refusal and carries on recording; nothing on the wrist
+    /// depends on the phone being there.
+    ///
+    /// The direction is not a choice: `startMirroringToCompanionDevice()`
+    /// exists only on watchOS, and `HKWorkoutSessionType` has exactly
+    /// `primary` and `mirrored`. The watch is always the engine — there is no
+    /// API for the reverse and there will not be one.
+    var startMirroring: @MainActor () async throws -> Void
     var end: @MainActor () -> Void
     var endCollection: @MainActor (_ at: Date) async throws -> Void
     var finishWorkout: @MainActor () async throws -> Void
@@ -132,6 +144,7 @@ extension WatchWorkoutHealthKit {
                 return WatchWorkoutSessionHandle(
                     sessionID: ObjectIdentifier(session),
                     builderID: ObjectIdentifier(builder),
+                    startMirroring: { try await session.startMirroringToCompanionDevice() },
                     end: { session.end() },
                     endCollection: { try await builder.endCollection(at: $0) },
                     finishWorkout: { _ = try await builder.finishWorkout() },

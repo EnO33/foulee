@@ -21,6 +21,7 @@ private final class ConfigurationRecorder {
                 return WatchWorkoutSessionHandle(
                     sessionID: ObjectIdentifier(token),
                     builderID: ObjectIdentifier(token),
+                    startMirroring: {},
                     end: { _ = token },
                     endCollection: { _ in },
                     finishWorkout: {},
