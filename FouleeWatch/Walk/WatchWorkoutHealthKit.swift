@@ -31,6 +31,19 @@ struct WatchWorkoutHealthKit: Sendable {
 /// so releasing the handle releases the builder — the store's save/retry
 /// logic relies on exactly that.
 struct WatchWorkoutSessionHandle: Sendable {
+    /// Identifies the underlying `HKWorkoutSession`, and its builder.
+    ///
+    /// The store is the delegate of **every** session it opens, and since issue
+    /// #265 an outing opens one per leg. HealthKit hands the delegate the object
+    /// that is calling, and nothing else — so without these the store cannot
+    /// tell a callback about the leg in flight from one about a leg it closed a
+    /// moment ago (issue #290). It could not, and it killed the outing on the
+    /// second switch.
+    ///
+    /// `ObjectIdentifier` rather than the objects themselves: this is identity,
+    /// not access, and a stub can name any object it likes.
+    var sessionID: ObjectIdentifier
+    var builderID: ObjectIdentifier
     var end: @MainActor () -> Void
     var endCollection: @MainActor (_ at: Date) async throws -> Void
     var finishWorkout: @MainActor () async throws -> Void
@@ -117,6 +130,8 @@ extension WatchWorkoutHealthKit {
                 try await builder.beginCollection(at: startDate)
 
                 return WatchWorkoutSessionHandle(
+                    sessionID: ObjectIdentifier(session),
+                    builderID: ObjectIdentifier(builder),
                     end: { session.end() },
                     endCollection: { try await builder.endCollection(at: $0) },
                     finishWorkout: { _ = try await builder.finishWorkout() },

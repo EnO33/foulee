@@ -27,7 +27,10 @@ final class WatchWorkoutStore: NSObject {
     private(set) var lastError: String?
 
     @ObservationIgnored private let healthKit: WatchWorkoutHealthKit
-    @ObservationIgnored private var sessionHandle: WatchWorkoutSessionHandle?
+    /// Internal, not private, because `WatchWorkoutStore+Legs` answers « is
+    /// this callback about the leg in flight? » from it (issue #290) — and that
+    /// question belongs next to the delegates that ask it, not here.
+    @ObservationIgnored var sessionHandle: WatchWorkoutSessionHandle?
     @ObservationIgnored private let detection: WatchActivityDetection
     /// What detection says is happening right now — the source of the sport
     /// named on screen (issue #250).
@@ -220,6 +223,14 @@ final class WatchWorkoutStore: NSObject {
     }
 
     func ingest(builder: HKLiveWorkoutBuilder) {
+        // A closed leg's builder can still deliver one last batch. `currentLeg`
+        // now stands for the *new* leg, so writing the old one's totals into it
+        // would rewind the screen and double-count against the legs already
+        // saved (issue #290).
+        guard isCurrentLeg(builder: ObjectIdentifier(builder)) else {
+            FouleeLog.session.notice("relevé ignoré, jambe abandonnée")
+            return
+        }
         guard case .active(var metrics) = state else { return }
         let now = Date.now
         // The builder counts **this leg**. Every leg before it is already a
@@ -253,7 +264,15 @@ final class WatchWorkoutStore: NSObject {
     /// `lastError`, rendered only on the idle screen — after `reset()` had
     /// already cleared it). The handle stays alive so "Réessayer" can still
     /// finish the builder.
-    func handleSessionFailure(_ message: String) {
+    func handleSessionFailure(_ message: String, from session: ObjectIdentifier? = nil) {
+        // A closed leg is *expected* to fail when the next one opens. Reading
+        // that as the outing's death ended a real sortie (issue #290).
+        guard isCurrentLeg(session: session) else {
+            FouleeLog.session.notice(
+                "échec ignoré, jambe abandonnée : \(message, privacy: .public)"
+            )
+            return
+        }
         lastError = message
         // The path of issue #256, and the one the console has to survive: the
         // session died on its own, so nothing here chose to stop.
@@ -301,20 +320,6 @@ final class WatchWorkoutStore: NSObject {
 }
 
 extension WatchWorkoutStore {
-    /// The configuration HealthKit stamps a session — or one of its nested
-    /// activities — with.
-    ///
-    /// One builder for both, because a nested activity of the same kind must be
-    /// configured exactly like the session that would have started as it:
-    /// `locationType` drifting between the two would make the same walk measure
-    /// differently depending on whether it was chosen or detected.
-    static func configuration(for activity: SessionActivity) -> HKWorkoutConfiguration {
-        let configuration = HKWorkoutConfiguration()
-        configuration.activityType = activity.hkActivityType
-        configuration.locationType = .outdoor
-        return configuration
-    }
-
     /// Start classifying. **Records nothing into the session** — see
     /// `applySwitch`.
     /// Read the session's own counters as a second, much faster opinion on

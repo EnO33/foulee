@@ -43,6 +43,12 @@ final class WorkoutHealthKitStub {
     /// Weak by design: the only strong reference lives in the handle's
     /// closures, so `nil` here means the store let go of the handle.
     private(set) weak var handleToken: AnyObject?
+    /// The identity of every handle handed out, oldest first (issue #290).
+    ///
+    /// A value, so recording it retains nothing — `handleToken` above still
+    /// says whether the store released the builder. This is what lets a test
+    /// deliver a callback *as a leg that has already been closed*.
+    private(set) var handleIDs: [ObjectIdentifier] = []
 
     func makeStore(detection: WatchActivityDetection = WatchActivityDetection(source: .inert)) -> WatchWorkoutStore {
         WatchWorkoutStore(healthKit: WatchWorkoutHealthKit(
@@ -65,7 +71,13 @@ final class WorkoutHealthKitStub {
     private func makeHandle() -> WatchWorkoutSessionHandle {
         let token = NSObject()
         handleToken = token
+        // One object stands for both the session and its builder here. Real
+        // HealthKit hands out two, and the store keeps them apart; a stub has
+        // nothing to gain from the distinction.
+        handleIDs.append(ObjectIdentifier(token))
         return WatchWorkoutSessionHandle(
+            sessionID: ObjectIdentifier(token),
+            builderID: ObjectIdentifier(token),
             end: {
                 _ = token
                 self.endCalls += 1

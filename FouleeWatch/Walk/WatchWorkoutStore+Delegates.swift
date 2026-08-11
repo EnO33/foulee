@@ -17,13 +17,21 @@ extension WatchWorkoutStore: HKWorkoutSessionDelegate {
         // No-op: state transitions are driven from start/stop on the store.
     }
 
+    /// The session is named, not just the error (issue #290).
+    ///
+    /// Since issue #265 an outing opens one session per leg and the store is
+    /// the delegate of every one of them. `HKError.errorAnotherWorkoutSessionStarted`
+    /// is delivered to the session that has just been *superseded* — so opening
+    /// the next leg makes the previous one fail, by design. Handing that to the
+    /// store unattributed is what ended a real sortie on its second switch.
     nonisolated func workoutSession(
         _ workoutSession: HKWorkoutSession,
         didFailWithError error: Error
     ) {
         let message = error.localizedDescription
+        let session = ObjectIdentifier(workoutSession)
         Task { @MainActor [weak self] in
-            self?.handleSessionFailure(message)
+            self?.handleSessionFailure(message, from: session)
         }
     }
 }
