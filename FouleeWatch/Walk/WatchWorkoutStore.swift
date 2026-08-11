@@ -126,7 +126,7 @@ final class WatchWorkoutStore: NSObject {
             writeTypes.insert(waterType)
             readTypes.insert(waterType)
         }
-        let granted = await runOrTrap {
+        let granted = await runOrTrap("autorisation HealthKit") {
             try await healthKit.requestAuthorization(writeTypes, readTypes)
             return true
         }
@@ -141,7 +141,7 @@ final class WatchWorkoutStore: NSObject {
         detection.stop()
         let end = Date.now
         handle.end()
-        let saved = await runOrTrap {
+        let saved = await runOrTrap("enregistrement de la séance") {
             try await handle.endCollection(end)
             try await handle.finishWorkout()
             return true as Bool
@@ -164,7 +164,7 @@ final class WatchWorkoutStore: NSObject {
     /// unconditionally retried.
     func retrySave() async {
         guard case .ended(let metrics, saveFailed: true) = state, let handle = sessionHandle else { return }
-        let saved = await runOrTrap {
+        let saved = await runOrTrap("nouvel essai d'enregistrement") {
             if handle.collectionEndDate() == nil {
                 try await handle.endCollection(.now)
             }
@@ -203,7 +203,7 @@ final class WatchWorkoutStore: NSObject {
 
     private func beginSession(activity: SessionActivity) async {
         let now = Date.now
-        let handle = await runOrTrap {
+        let handle = await runOrTrap("ouverture de la séance") {
             try await healthKit.startSession(Self.configuration(for: activity), now, self)
         }
         guard let handle else { return }
@@ -255,6 +255,9 @@ final class WatchWorkoutStore: NSObject {
     /// finish the builder.
     func handleSessionFailure(_ message: String) {
         lastError = message
+        // The path of issue #256, and the one the console has to survive: the
+        // session died on its own, so nothing here chose to stop.
+        FouleeLog.session.error("séance interrompue : \(message, privacy: .public)")
         // Whatever the session's fate, there is nothing left to switch: keep
         // the builder alive for "Réessayer", but let the motion stream go.
         detection.stop()
@@ -273,11 +276,25 @@ final class WatchWorkoutStore: NSObject {
         return Int(value)
     }
 
-    private func runOrTrap<T: Sendable>(_ body: () async throws -> T) async -> T? {
+    /// The log line is the whole of issue #273. `lastError` reaches a screen,
+    /// but only sometimes and only while that screen lives — a failed split
+    /// mid-outing left nothing behind at all. And HealthKit's own sentence says
+    /// nothing about *which* of the six calls funnelling through here produced
+    /// it, which is the question a wrist test has to answer.
+    ///
+    /// - Parameter step: names the call, for the log only. `lastError` keeps
+    ///   HealthKit's wording, which reads better on a wrist.
+    private func runOrTrap<T: Sendable>(
+        _ step: StaticString,
+        _ body: () async throws -> T
+    ) async -> T? {
         do {
             return try await body()
         } catch {
             lastError = error.localizedDescription
+            FouleeLog.session.error(
+                "\(step, privacy: .public) : \(error.localizedDescription, privacy: .public)"
+            )
             return nil
         }
     }
@@ -431,7 +448,7 @@ extension WatchWorkoutStore {
     /// session that keeps running while recording nothing.
     private func splitLeg(to activity: SessionActivity, at boundary: Date) async {
         guard let handle = sessionHandle else { return }
-        let closed = await runOrTrap {
+        let closed = await runOrTrap("fermeture de la jambe") {
             handle.end()
             try await handle.endCollection(boundary)
             try await handle.finishWorkout()
@@ -446,7 +463,7 @@ extension WatchWorkoutStore {
         }
         sessionHandle = nil
 
-        let next = await runOrTrap {
+        let next = await runOrTrap("ouverture de la jambe suivante") {
             try await healthKit.startSession(Self.configuration(for: activity), boundary, self)
         }
         guard let next else {

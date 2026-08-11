@@ -264,6 +264,18 @@ let project = Project(
                 "WKApplication": true,
                 "WKWatchOnly": false,
                 "WKCompanionAppBundleIdentifier": .string(bundleIdBase),
+                // What lets an `HKWorkoutSession` keep measuring once the
+                // wrist drops and the screen goes dark. Apple documents it as
+                // required for workout sessions, and it was **missing since
+                // the watch app shipped** (issue #273) — no `WKBackgroundModes`
+                // anywhere in the repository.
+                //
+                // The outing of 11/08 on v1.43 worked anyway, so watchOS is
+                // evidently more forgiving than the documentation, or the
+                // screen never stayed off long enough to find out. Declaring it
+                // costs a line and removes the question from every wrist test
+                // that follows.
+                "WKBackgroundModes": ["workout-processing"],
                 // Same registre as the iPhone target's four (#222): system
                 // alerts can't vary with the activity preference, so they name
                 // no activity. "Séance" stays only where the thing really is
@@ -302,6 +314,10 @@ let project = Project(
                 "Foulee/Shared/WalkFormatting.swift",
                 "Foulee/Shared/NumberFormatting.swift",
                 "Foulee/Shared/UncheckedSendableBox.swift",
+                // Both halves of the session path log to the same subsystem, so
+                // one `log stream` follows an outing across the two devices
+                // (issue #273).
+                "Foulee/Shared/FouleeLog.swift",
                 "Foulee/Shared/WatchSyncPayload.swift",
                 "Foulee/Shared/WatchComplicationKind.swift",
                 "Foulee/Shared/WatchComplicationCache.swift",
