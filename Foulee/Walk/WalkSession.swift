@@ -33,8 +33,15 @@ struct WalkSession: Equatable, Sendable {
     /// than inventing.
     var isActivityUndecided: Bool = false
 
-    /// Quick estimate while a Watch HR feed isn't connected — a fixed number of
-    /// kilocalories per step, which depends on the activity (see
+    /// Steps measured over each activity's own stretches (issue #247).
+    ///
+    /// `nil` when the outing was never segmented — an install where motion
+    /// recognition is unavailable or refused, or a session that predates it.
+    /// The estimate below then falls back to exactly what it always was.
+    var stepsByActivity: [SessionActivity: Int]?
+
+    /// Quick estimate while a Watch HR feed isn't connected — kilocalories per
+    /// step, at the rate of the activity those steps were taken at (see
     /// `SessionActivity.kcalPerStep`).
     ///
     /// Not "replaced by HKWorkout's own computation once the session is saved",
@@ -43,8 +50,22 @@ struct WalkSession: Equatable, Sendable {
     /// résumé and detail sheets show forever. Only a session recorded with real
     /// energy samples — the watch, Forme, Garmin — carries a measurement to
     /// prefer over it (`WorkoutSummary.init(workout:)`).
+    ///
+    /// **Priced per stretch since issue #247**, and that is strictly better
+    /// than the single rate it replaces — with or without automatic detection.
+    /// A rate of 0.04 against 0.09 means a genuinely mixed outing was out by up
+    /// to 2.25× whichever way it was labelled, and the picker of #224 could not
+    /// help: ten minutes of walking then twenty of running is neither.
+    ///
+    /// A homogeneous outing lands on exactly the figure it always did — one
+    /// stretch, one rate, the same multiplication.
     var estimatedCalories: Int {
-        Int(Double(steps) * activity.kcalPerStep)
+        guard let stepsByActivity, !stepsByActivity.isEmpty else {
+            return Int(Double(steps) * activity.kcalPerStep)
+        }
+        return Int(stepsByActivity.reduce(0) { total, entry in
+            total + Double(entry.value) * entry.key.kcalPerStep
+        })
     }
 
     var distanceKm: Double {

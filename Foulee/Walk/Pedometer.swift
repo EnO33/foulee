@@ -14,6 +14,19 @@ struct PedometerSample: Equatable, Sendable {
 struct Pedometer: Sendable {
     var startUpdates: @Sendable (_ from: Date) -> AsyncStream<PedometerSample>
     var stop: @Sendable () -> Void
+    /// Steps recorded over a past interval, or `nil` when the device cannot
+    /// say (issue #247).
+    ///
+    /// A **query**, not a second subscription: `Pedometer+Live` holds one
+    /// shared `CMPedometer`, and a second `startUpdates` would replace the
+    /// first's handler while `onTermination` killed both. `queryPedometerData`
+    /// touches neither.
+    ///
+    /// `nil` rather than `0`, because the two mean opposite things: zero steps
+    /// over a stretch is a measurement, and « the device would not answer » is
+    /// not. One credits nothing; the other must fall back to the estimate that
+    /// existed before.
+    var steps: @Sendable (_ from: Date, _ to: Date) async -> Int?
 }
 
 extension Pedometer: DependencyKey {
@@ -34,12 +47,14 @@ extension Pedometer: DependencyKey {
                 }
             }
         },
-        stop: {}
+        stop: {},
+        steps: { from, to in Int(to.timeIntervalSince(from) * 1.8) }
     )
 
     static let testValue = Pedometer(
         startUpdates: { _ in AsyncStream { $0.finish() } },
-        stop: {}
+        stop: {},
+        steps: { _, _ in nil }
     )
 }
 

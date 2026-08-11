@@ -103,7 +103,10 @@ enum ScreenshotDoubles {
                 }
             }
         },
-        stop: {}
+        stop: {},
+        // Capture mode records nothing, so nothing ever asks — and a number
+        // here would be a step count no seeded screen shows.
+        steps: { _, _ in nil }
     )
 
     static let altimeter = Altimeter(

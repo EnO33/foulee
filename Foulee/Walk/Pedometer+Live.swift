@@ -20,7 +20,15 @@ extension Pedometer {
                     continuation.onTermination = { _ in pedometer.stopUpdates() }
                 }
             },
-            stop: { pedometer.stopUpdates() }
+            stop: { pedometer.stopUpdates() },
+            steps: { from, to in
+                guard CMPedometer.isStepCountingAvailable() else { return nil }
+                return await withCheckedContinuation { continuation in
+                    pedometer.queryPedometerData(from: from, to: to) { data, _ in
+                        continuation.resume(returning: data?.numberOfSteps.intValue)
+                    }
+                }
+            }
         )
     }()
 }

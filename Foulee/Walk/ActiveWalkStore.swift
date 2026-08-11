@@ -154,7 +154,7 @@ final class ActiveWalkStore {
         }
         cancelObservers()
         routeTask?.cancel()
-        let recorded = await decidingActivity(of: session)
+        let recorded = await settled(session)
         state = .finished(recorded)
         await runOrTrap { try await healthKit.saveWorkout(recorded) }
         await endLiveActivity(with: session)
@@ -305,24 +305,56 @@ extension ActiveWalkStore {
     ///
     /// `nil` activity only when nothing is in flight; the sole production
     /// caller runs immediately after `state` becomes `.active`.
-    /// Settle « les deux » from what the device measured, or hand the session
-    /// back untouched (issue #246).
+    /// Read the session's own motion history and settle two different things
+    /// with it (issues #246, #247).
     ///
-    /// Runs **before** the workout is saved, because the stamp is permanent —
-    /// `HKWorkout` is immutable and Foulée has no delete path. And it never
-    /// overrides a session the user chose the sport of: a mode of « Marche » or
-    /// « Course » is an answer already given, and detection is not entitled to
-    /// contradict it.
+    /// **What the session is recorded as** — only when « les deux » left it
+    /// open. A mode of « Marche » or « Course » is an answer already given, and
+    /// detection is not entitled to contradict it.
+    ///
+    /// **What it cost** — always, whatever the mode. The two are not the same
+    /// question: the label is a claim about the outing, the energy is a sum
+    /// over its stretches. A user who set « Marche » and ran for ten minutes
+    /// chose their label and still ran those ten minutes, and pricing them at
+    /// 0.04 kcal/step rather than 0.09 is simply wrong.
+    ///
+    /// Runs **before** the workout is saved, because both stamps are permanent:
+    /// `HKWorkout` is immutable, Foulée has no delete path, and the phone
+    /// writes no energy samples — so this estimate is the only energy figure
+    /// the session will ever carry.
     ///
     /// Internal so a test can drive it without a session in flight.
-    func decidingActivity(of session: WalkSession) async -> WalkSession {
-        guard session.isActivityUndecided, let endedAt = session.endedAt else { return session }
+    func settled(_ session: WalkSession) async -> WalkSession {
+        guard let endedAt = session.endedAt else { return session }
         let samples = await motionActivityHistory.samples(session.startedAt, endedAt)
         let segments = ActivitySegmentation.segments(samples, from: session.startedAt, to: endedAt)
-        var decided = session
-        decided.activity = ActivitySegmentation.dominant(segments)
-        decided.isActivityUndecided = false
-        return decided
+        var settled = session
+        if session.isActivityUndecided {
+            settled.activity = ActivitySegmentation.dominant(segments)
+            settled.isActivityUndecided = false
+        }
+        settled.stepsByActivity = await stepsByActivity(over: segments)
+        return settled
+    }
+
+    /// Steps taken during each activity's own stretches, or `nil` when the
+    /// breakdown would be worse than none.
+    ///
+    /// Two ways it declines, both deliberate:
+    ///
+    /// * **One activity only.** A homogeneous outing prices identically with
+    ///   and without a breakdown, so the queries would buy nothing.
+    /// * **Any stretch the pedometer will not answer for.** A partial breakdown
+    ///   is not a smaller truth, it is a wrong total — the missing stretch's
+    ///   steps would silently vanish from the estimate. All or the old formula.
+    private func stepsByActivity(over segments: [ActivitySegment]) async -> [SessionActivity: Int]? {
+        guard Set(segments.map(\.activity)).count > 1 else { return nil }
+        var total: [SessionActivity: Int] = [:]
+        for segment in segments {
+            guard let steps = await pedometer.steps(segment.start, segment.end) else { return nil }
+            total[segment.activity, default: 0] += steps
+        }
+        return total
     }
 
     func liveActivityAttributes(minutesGoal: Int) -> WalkActivityAttributes {

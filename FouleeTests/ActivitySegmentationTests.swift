@@ -188,3 +188,73 @@ struct ActivitySegmentationTests {
         #expect(MotionActivityConfidence(rawValue: 99) == nil)
     }
 }
+
+/// Pricing a mixed outing stretch by stretch (issue #247).
+///
+/// The phone writes **no energy samples at all**, so `estimatedCalories` is the
+/// only energy figure a phone-recorded session will ever carry — stored in the
+/// workout's metadata, read back by the résumé and the detail sheet, on an
+/// immutable `HKWorkout`. A single rate was out by up to 2.25× on a genuinely
+/// mixed outing (0.04 kcal/step walking against 0.09 running), and no picker
+/// could fix that: ten minutes of walking then twenty of running is neither.
+@Suite("Per-activity calories")
+struct SegmentedCaloriesTests {
+    private let start = Date(timeIntervalSince1970: 1_754_000_000)
+
+    private func session(steps: Int, activity: SessionActivity) -> WalkSession {
+        var session = WalkSession(startedAt: start, activity: activity)
+        session.steps = steps
+        return session
+    }
+
+    @Test("Without a breakdown, the figure is exactly what it always was")
+    func noBreakdownChangesNothing() {
+        // Every session already in Santé was priced this way, and an install
+        // where motion recognition is unavailable or refused still is.
+        #expect(session(steps: 4_000, activity: .walking).estimatedCalories == 160)
+        #expect(session(steps: 4_000, activity: .running).estimatedCalories == 360)
+    }
+
+    @Test("A homogeneous outing prices identically with a breakdown")
+    func aHomogeneousBreakdownIsANoOp() {
+        var walk = session(steps: 4_000, activity: .walking)
+        walk.stepsByActivity = [.walking: 4_000]
+        // The regression this guards is the silent one: a « better » formula
+        // that quietly moves the number on outings it was not meant to change.
+        #expect(walk.estimatedCalories == session(steps: 4_000, activity: .walking).estimatedCalories)
+    }
+
+    @Test("A mixed outing is the sum of its stretches, not one rate")
+    func aMixedOutingIsSummed() {
+        var mixed = session(steps: 4_000, activity: .walking)
+        mixed.stepsByActivity = [.walking: 1_000, .running: 3_000]
+
+        // 1 000 × 0,04 + 3 000 × 0,09 = 40 + 270.
+        #expect(mixed.estimatedCalories == 310)
+        // And strictly between the two single-rate answers it replaces — which
+        // is the whole claim: neither label was right for this outing.
+        #expect(mixed.estimatedCalories > session(steps: 4_000, activity: .walking).estimatedCalories)
+        #expect(mixed.estimatedCalories < session(steps: 4_000, activity: .running).estimatedCalories)
+    }
+
+    @Test("The label does not price the outing — the stretches do")
+    func theRecordedActivityDoesNotChangeTheCost() {
+        // A user who set « Marche » and ran for a while chose their label and
+        // still ran. Same steps, same stretches, same energy, whichever way the
+        // session is filed.
+        var asWalk = session(steps: 4_000, activity: .walking)
+        asWalk.stepsByActivity = [.walking: 1_000, .running: 3_000]
+        var asRun = session(steps: 4_000, activity: .running)
+        asRun.stepsByActivity = [.walking: 1_000, .running: 3_000]
+        #expect(asWalk.estimatedCalories == asRun.estimatedCalories)
+    }
+
+    @Test("An empty breakdown falls back rather than crediting nothing")
+    func anEmptyBreakdownIsNotZeroCalories() {
+        var session = session(steps: 4_000, activity: .running)
+        session.stepsByActivity = [:]
+        // Summing an empty dictionary gives zero, and zero calories for four
+        // thousand steps is a worse answer than the old formula.
+        #expect(session.estimatedCalories == 360)
+    }
+}
