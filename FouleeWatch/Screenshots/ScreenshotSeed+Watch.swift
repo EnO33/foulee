@@ -70,8 +70,67 @@ extension ScreenshotSeed {
             distanceMeters: sessionDistanceMeters,
             activeCalories: sessionCalories,
             heartRate: sessionHeartRate,
-            activity: .running
+            activity: .running,
+            legs: sessionLegs
         )
+    }
+
+    /// The two legs the « Jambes » page shows (issue #276): a walk of 12:04 that
+    /// became a run of 06:20 — the outing the detection exists to recognise, and
+    /// the one that leaves two records in Santé since issue #265.
+    ///
+    /// **They add up to the totals above, exactly.** 1 650 + 830 = 2 480 pas,
+    /// 1 000 + 830 = 1 830 m, 60 + 48 = 108 kcal, 12:04 + 06:20 = 18:24. A
+    /// viewer who checks the arithmetic on the board must find it right; a
+    /// listing that does not add up is one a reviewer can notice.
+    ///
+    /// **Frozen, in three ways that all matter:**
+    ///
+    /// - The identifiers are literals, not `UUID()`. Two capture runs must
+    ///   produce byte-identical boards.
+    /// - The dates are offsets from `ScreenshotSeed.instant`, the same fixed
+    ///   afternoon every other seeded value counts from — never the wall clock.
+    /// - **Neither leg is in flight** (`end` is non-nil on both). A running leg
+    ///   measures itself against the instant it is drawn, which would make the
+    ///   board depend on when the shutter fired and break the equality
+    ///   `WatchScreenshotModeTests` asserts. The cost is a small infidelity —
+    ///   during a real outing the newest leg *is* still running — and it is
+    ///   invisible on a still photograph.
+    static var sessionLegs: [WatchWorkoutSegment] {
+        let end = instant
+        let boundary = end.addingTimeInterval(-sessionRunElapsed)
+        let start = boundary.addingTimeInterval(-sessionWalkElapsed)
+        return [
+            WatchWorkoutSegment(
+                id: legID(1),
+                activity: .walking,
+                start: start,
+                end: boundary,
+                steps: 1_650,
+                distanceMeters: 1_000,
+                activeCalories: 60
+            ),
+            WatchWorkoutSegment(
+                id: legID(2),
+                activity: .running,
+                start: boundary,
+                end: end,
+                steps: 830,
+                distanceMeters: 830,
+                activeCalories: 48
+            )
+        ]
+    }
+
+    /// 12:04 of walking then 06:20 of running — `sessionElapsed` split in two.
+    private static let sessionWalkElapsed: TimeInterval = 12 * 60 + 4
+    private static let sessionRunElapsed: TimeInterval = 6 * 60 + 20
+
+    /// Same shape as the phone seed's identifiers, and constant for the same
+    /// reason. The `?? UUID()` is unreachable for a literal this well-formed;
+    /// `seededLegsAreStable` is what says so out loud.
+    private static func legID(_ index: Int) -> UUID {
+        UUID(uuidString: "1E600000-0000-4000-8000-\(String(format: "%012d", index))") ?? UUID()
     }
 }
 #endif

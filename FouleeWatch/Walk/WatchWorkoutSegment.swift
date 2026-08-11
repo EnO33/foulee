@@ -36,6 +36,27 @@ struct WatchWorkoutSegment: Equatable, Sendable, Identifiable {
         max(0, (end ?? now).timeIntervalSince(start))
     }
 
+    var distanceKm: Double { distanceMeters / 1_000 }
+
+    /// « 12:04 · 1,2 km · 6'10"/km » — this leg, on one line (issue #276).
+    ///
+    /// **A function, not a property**, and that is not a style choice: the leg
+    /// in flight has no `end`, so both its duration and its pace are functions
+    /// of the instant they are read at. A stored property would have frozen the
+    /// running leg at whatever second it was first drawn — the same defect
+    /// issue #266 fixed on the session clock.
+    ///
+    /// The pace is dropped rather than shown as a placeholder when the leg is
+    /// too short to divide (see `paceText(overKm:)`): a line that ends after
+    /// the distance reads as a leg that has not gone far yet, which is true,
+    /// while « —'—"/km » reads as a broken counter.
+    func lineText(at now: Date) -> String {
+        let duration = elapsed(at: now)
+        var parts = [duration.walkClockText, distanceKm.kmText(fractionDigits: 1)]
+        if let pace = duration.paceText(overKm: distanceKm) { parts.append(pace) }
+        return parts.joined(separator: " · ")
+    }
+
     /// Fold several readings of the same session into one list.
     ///
     /// Later lists win per `id`. That is the whole point: the segments are read

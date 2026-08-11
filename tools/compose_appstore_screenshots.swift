@@ -135,7 +135,15 @@ let shots: [Shot] = [
     // so. Those two moved to their own pages, and the « Séance » page now fits
     // whole — a fade drawn under a complete screen would claim content that
     // isn't there.
-    Shot(family: .watch, file: "watch-03-session", lines: ["Ta sortie", "en direct"])
+    Shot(family: .watch, file: "watch-03-session", lines: ["Ta sortie", "en direct"]),
+    // The board that shows what issue #265 actually does: one outing, two
+    // records in Santé.
+    //
+    // No fade, though the page *is* a list and a long enough outing would
+    // scroll: the seeded outing has two legs and they both fit, so a fade here
+    // would promise a third that does not exist. Re-check this flag if the seed
+    // ever gains a leg.
+    Shot(family: .watch, file: "watch-04-jambes", lines: ["Marche et course,", "chacune comptée"])
 ]
 
 // MARK: - Layout

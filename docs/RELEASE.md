@@ -220,7 +220,7 @@ tools/capture_screenshots.sh --watch "Apple Watch SE 3 (40mm)" probe-40  # a pro
 ```
 
 Same script, same result bundle, same export; another platform, another scheme
-(`FouleeWatchScreenshots`) and another folder — the three PNGs land in
+(`FouleeWatchScreenshots`) and another folder — the four PNGs land in
 `appstore-screenshots/raw/watch/`. About a minute.
 
 **Only the 46 mm run may omit the set name.** The `watch` folder is the one the
@@ -266,7 +266,7 @@ the output, nothing tracked by git):
   - **Issue #239's « deux exécutions produisent des fichiers identiques » is not
     literally true on the watch, and must not be ticked as if it were.** Two
     consecutive runs give six different md5s. A pixel diff says why, and says it
-    narrowly: every differing pixel on all three boards falls in
+    narrowly: every differing pixel on all the boards falls in
     **x 306…383, y 39…63 counted from the bottom** — the clock glyphs, 1 098 of
     206 336 pixels — and nowhere else. (The count moves with which digits
     changed; the box does not.) Restate the criterion when closing: *identical
@@ -292,23 +292,36 @@ the output, nothing tracked by git):
 - **The session board no longer scrolls, and that was measured, not assumed.**
   Its `Shot` carries no `scrolls` flag since issue #274. Do not restore one
   without re-running the 40 mm probe: the first paged version of this screen
-  still cut « kcal » and « bpm » off the bottom of a **46 mm**, because a
-  `.verticalPage` `TabView` keeps more room above its content than a scroll view
-  does. What made it fit was two-line metric tiles, a 34 pt clock and no
-  divider — all of it verified on
-  `appstore-screenshots/raw/probe-40mm/watch-03-session.png`, not on paper.
+  still cut « kcal » and « bpm » off the bottom of a **46 mm**, because a paged
+  `TabView` keeps more room above its content than a scroll view does. What made
+  it fit was two-line metric tiles, a 34 pt clock and no divider — all of it
+  verified on `appstore-screenshots/raw/probe-40mm/watch-03-session.png`, not on
+  paper.
+- **Run the 40 mm probe whenever the session pager changes.** It is not a
+  formality. Issue #274 shipped the pager on the *vertical* axis; issue #276's
+  probe run found that a swipe on a 40 mm never left the first page, because the
+  page's own scroll view took the gesture — so « Arrêter » was unreachable by
+  swiping, which is issue #241's defect returning by another route. The 46 mm
+  capture passed throughout. The axis is horizontal now; the probe is what
+  found out.
 - **The watch is uninstalled first**, which clears its app-group container, so
   « Démarrer » starts a session outright instead of asking which activity. That
   question depends on what the phone last synced; the uninstall is what keeps
   the third capture from depending on the developer's own wrist. (The phone
   stopped asking altogether in issue #246 — the watch still does, because it
   freezes its `activityType` when the session is created.)
-- **The session board shows one sport and no per-sport figures**, which is what
-  a seeded outing that never changed activity looks like. The app *can* show
-  them — since issue #265 a change of sport opens a second workout, and each one
-  carries its own figures — so a board that showed a breakdown would be
-  truthful. It does not today because the seed describes a single stretch.
-  Whichever way a future board goes, check the app can actually draw it: the
+- **The seeded outing changed sport, and the fourth board is where that shows.**
+  Since issue #276 the seed carries two legs — a 12:04 walk that became a 06:20
+  run — and `watch-04-jambes` photographs them. The « Séance » board is
+  unaffected: it shows the outing's totals and the sport being done, never a
+  breakdown.
+  The legs **add up to those totals exactly** (1 650 + 830 pas, 1 000 + 830 m,
+  60 + 48 kcal, 12:04 + 06:20), asserted by `seededLegsAddUp`. A listing whose
+  own arithmetic does not close is one a reviewer can catch.
+  Both legs are **closed**, though a real outing's newest leg is still running:
+  a running leg measures itself against the instant it is drawn, which would
+  make the board depend on when the shutter fired.
+  Whatever a future board shows here, check the app can actually draw it: the
   seed once advertised a breakdown the app could not produce, and the composed
   board shipped that lie for an afternoon (see
   [ADR 0002](adr/0002-detection-marche-course.md)).

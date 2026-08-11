@@ -193,6 +193,42 @@ struct WatchScreenshotModeTests {
         #expect(metrics.activityHeadlineText == "Course")
     }
 
+    /// The « Jambes » board (issue #276) photographs a **split** outing, so the
+    /// seed carries two legs — and they have to add up to the totals the
+    /// « Séance » board shows two pages up. A listing whose own arithmetic does
+    /// not close is one a reviewer can catch.
+    @Test("The seeded legs add up to the seeded session, exactly")
+    func seededLegsAddUp() {
+        let legs = ScreenshotSeed.sessionLegs
+        #expect(legs.count == 2)
+        #expect(legs.map(\.steps).reduce(0, +) == ScreenshotSeed.sessionSteps)
+        #expect(legs.map(\.distanceMeters).reduce(0, +) == ScreenshotSeed.sessionDistanceMeters)
+        #expect(legs.map(\.activeCalories).reduce(0, +) == ScreenshotSeed.sessionCalories)
+        // The clock is read at `.distantPast`; both legs are closed, so nothing
+        // here depends on when the assertion runs — which is the point below.
+        let totals = WatchActivityTotals.of(legs, at: .distantPast)
+        #expect(totals.elapsed == ScreenshotSeed.sessionElapsed)
+        // A walk that became a run: the outing the detection exists to
+        // recognise, and the one that leaves two records in Santé (issue #265).
+        #expect(legs.map(\.activity) == [.walking, .running])
+    }
+
+    /// Two capture runs must compose byte-identical boards, and a leg is the
+    /// one seeded value that could quietly stop being constant: `UUID()` for an
+    /// identifier, `Date.now` for a boundary, or a leg left **in flight** —
+    /// whose duration is measured against the instant it is drawn.
+    ///
+    /// Read twice and compared whole. `WatchWorkoutSegment` is `Equatable`, so
+    /// this catches all three at once, including the `?? UUID()` fallback in
+    /// `legID` ever becoming reachable.
+    @Test("The seeded legs are frozen: same ids, same dates, none in flight")
+    func seededLegsAreStable() {
+        #expect(ScreenshotSeed.sessionLegs == ScreenshotSeed.sessionLegs)
+        for leg in ScreenshotSeed.sessionLegs {
+            #expect(leg.end != nil, "a leg in flight makes the board depend on the shutter")
+        }
+    }
+
     /// Checked where it is decidable, the way the phone suite does it: writing
     /// a sample takes an `HKHealthStore`, so no file under
     /// `FouleeWatch/Screenshots/` may so much as name one — nor reach any of
