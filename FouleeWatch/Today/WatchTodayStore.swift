@@ -227,7 +227,26 @@ final class WatchTodayStore {
             return
         }
         WidgetCenter.shared.reloadTimelines(ofKind: WatchComplicationKind.hydration)
-        await load()
+        await refreshWater()
+    }
+
+    /// Re-read today's water, and nothing else.
+    ///
+    /// Logging a glass changes one number, so `load()` — authorization plus
+    /// five queries — was always more than this needed. It became worth fixing
+    /// with issue #281: « J'ai bu » is now reachable *during a session*, where
+    /// that path would put an authorization sheet and five queries on a wrist
+    /// already running a workout, a motion stream and a clock.
+    ///
+    /// No capture-mode guard, and it needs none: the only caller returns before
+    /// this line when the mode is on.
+    private func refreshWater() async {
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        loadGeneration += 1
+        let generation = loadGeneration
+        let value = Int(await sumToday(.dietaryWater, unit: .literUnit(with: .milli)))
+        guard generation == loadGeneration else { return }
+        waterML = value
     }
 
     #if DEBUG
