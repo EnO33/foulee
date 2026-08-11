@@ -21,7 +21,7 @@ struct WatchRootView: View {
                     onCancel: { isChoosingActivity = false }
                 )
             case .active(let metrics):
-                WatchActiveWalkView(
+                WatchSessionPager(
                     metrics: metrics,
                     onStop: { Task { await store.stop() } }
                 )

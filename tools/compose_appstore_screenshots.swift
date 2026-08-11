@@ -129,10 +129,13 @@ let shots: [Shot] = [
     // Apple Watch
     Shot(family: .watch, file: "watch-01-today", lines: ["Ta série", "au poignet"], scrolls: true),
     Shot(family: .watch, file: "watch-02-hydration", lines: ["Bois,", "d'un tap"], scrolls: true),
-    // `scrolls` like the other two: the live session screen is a scroll view
-    // (« Arrêter » has to stay reachable on a 40 mm wrist), so the board cuts
-    // below the metric tiles and the fade is what says so.
-    Shot(family: .watch, file: "watch-03-session", lines: ["Ta sortie", "en direct"], scrolls: true)
+    // The one watch board that does **not** scroll, since issue #274. It used
+    // to: « Arrêter » and the per-sport counters shared the screen with the
+    // clock and the tiles, so the capture cut below the tiles and the fade said
+    // so. Those two moved to their own pages, and the « Séance » page now fits
+    // whole — a fade drawn under a complete screen would claim content that
+    // isn't there.
+    Shot(family: .watch, file: "watch-03-session", lines: ["Ta sortie", "en direct"])
 ]
 
 // MARK: - Layout

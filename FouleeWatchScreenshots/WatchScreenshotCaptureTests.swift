@@ -62,11 +62,28 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     /// because the watch resolves the question from the payload the phone
     /// synced and a freshly installed simulator has none — the capture script
     /// uninstalls first for exactly that reason. If it ever did ask, this step
-    /// fails loudly on the missing « Arrêter » instead of photographing the
-    /// wrong screen.
+    /// fails loudly on the missing sentinel instead of photographing the wrong
+    /// screen.
+    ///
+    /// The sentinel is a tile of the « Séance » page — it used to be
+    /// « Arrêter », which issue #274 moved to its own page.
+    ///
+    /// **Verified by inverting it**, because a sentinel nobody has watched fail
+    /// is a sentinel nobody should trust: with the pager's initial page set to
+    /// `.controls`, this step fails. It fails at `waitForExistence`, which is
+    /// the useful finding — a `.verticalPage` `TabView` does *not* keep the
+    /// page it is not showing in the query hierarchy, so existence alone is
+    /// already a framing check here and not merely a spelling one.
+    ///
+    /// `isHittable` stays anyway. It costs one line, it does not depend on that
+    /// hierarchy behaviour holding in a future watchOS, and the failure it
+    /// guards against — photographing the wrong page and shipping it to the App
+    /// Store — is only ever noticed on release day.
     private func captureSession(_ app: XCUIApplication) {
         tapWatchElement(app.buttons["Démarrer"], "Démarrer")
-        waitForWatchScreen(app.buttons["Arrêter"], "Session in progress")
+        let sentinel = app.staticTexts["bpm"]
+        waitForWatchScreen(sentinel, "Session in progress")
+        XCTAssertTrue(sentinel.isHittable, "Session page is not the page on screen")
         captureWatch("watch-03-session")
     }
 }
