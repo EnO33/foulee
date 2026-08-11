@@ -176,7 +176,12 @@ final class WatchWorkoutStore: NSObject {
 
     fileprivate func ingest(builder: HKLiveWorkoutBuilder) {
         guard case .active(var metrics) = state else { return }
-        metrics.elapsed = builder.elapsedTime(at: .now)
+        let now = Date.now
+        metrics.elapsed = builder.elapsedTime(at: now)
+        // The instant the clock would have read zero. HealthKit's `elapsedTime`
+        // stays the authority — recomputing the basis on every batch is what
+        // lets it correct whatever the free-running clock drifted to.
+        metrics.timerBasis = now.addingTimeInterval(-metrics.elapsed)
         metrics.steps = Int(sumDouble(builder.statistics(for: HKQuantityType(.stepCount)), unit: .count()))
         metrics.distanceMeters = sumDouble(
             builder.statistics(for: HKQuantityType(.distanceWalkingRunning)),
@@ -190,7 +195,7 @@ final class WatchWorkoutStore: NSObject {
             builder.statistics(for: HKQuantityType(.heartRate)),
             unit: HKUnit(from: "count/min")
         )
-        applyActivityTotals(to: &metrics, at: .now)
+        applyActivityTotals(to: &metrics, at: now)
         state = .active(metrics)
     }
 

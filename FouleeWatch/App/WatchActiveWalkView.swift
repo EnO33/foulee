@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// Live session screen — uses a `TimelineView` so the elapsed clock keeps
-/// ticking even when the store hasn't pushed an update yet (HealthKit
-/// metric updates arrive every few seconds, the clock needs to be smoother).
+/// Live session screen — a `TimelineView` drives the elapsed clock from **its
+/// own date**, so it advances every second whether or not HealthKit has pushed
+/// anything (issue #266). The metric tiles still move at HealthKit's pace,
+/// which is what they measure; the clock does not have to.
 ///
 /// The content **scrolls**, like the home does, and that is not cosmetic. The
 /// elapsed clock, four metric tiles and « Arrêter » need about 225 pt; a 40 mm
@@ -29,9 +30,13 @@ struct WatchActiveWalkView: View {
     }
 
     private var ticking: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { _ in
+        TimelineView(.periodic(from: .now, by: 1)) { context in
             VStack(spacing: 8) {
-                Text(metrics.elapsed.walkClockText)
+                // `context.date`, not `metrics.elapsed` — that was the whole of
+                // issue #266. The timeline rebuilt every second and redrew the
+                // same frozen number, so the clock only moved when HealthKit
+                // delivered a batch.
+                Text(metrics.elapsed(at: context.date).walkClockText)
                     .font(.system(size: 38, weight: .semibold, design: .rounded))
                     .monospacedDigit()
 
