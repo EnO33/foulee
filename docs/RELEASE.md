@@ -267,9 +267,10 @@ the output, nothing tracked by git):
     literally true on the watch, and must not be ticked as if it were.** Two
     consecutive runs give six different md5s. A pixel diff says why, and says it
     narrowly: every differing pixel on all the boards falls in
-    **x 306…383, y 39…63 counted from the bottom** — the clock glyphs, 1 098 of
-    206 336 pixels — and nowhere else. (The count moves with which digits
-    changed; the box does not.) Restate the criterion when closing: *identical
+    **y 39…63 from the top, and roughly x 300…383** — the clock glyphs, ~1 100 of
+    206 336 pixels — and nowhere else. (Both the count *and* the box's left
+    edge move with which digits changed: 306 and 1 098 at one measurement,
+    300 and 1 104 at another. The right edge and the two rows do not.) Restate the criterion when closing: *identical
     except the watchOS clock overlay, bounded to the top-right corner*. A ticked
     box would otherwise read as a byte-for-byte guarantee the tooling cannot
     give.
