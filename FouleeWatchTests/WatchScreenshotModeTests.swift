@@ -26,8 +26,11 @@ private final class TrapHealthKit {
             },
             startSession: { _, _, _ in
                 self.sessionStarts += 1
+                let token = NSObject()
                 return WatchWorkoutSessionHandle(
-                    end: {},
+                    sessionID: ObjectIdentifier(token),
+                    builderID: ObjectIdentifier(token),
+                    end: { _ = token },
                     endCollection: { _ in },
                     finishWorkout: {},
                     collectionEndDate: { nil }

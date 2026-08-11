@@ -17,8 +17,11 @@ private final class ConfigurationRecorder {
             requestAuthorization: { _, _ in },
             startSession: { configuration, _, _ in
                 self.startedConfiguration = configuration
+                let token = NSObject()
                 return WatchWorkoutSessionHandle(
-                    end: {},
+                    sessionID: ObjectIdentifier(token),
+                    builderID: ObjectIdentifier(token),
+                    end: { _ = token },
                     endCollection: { _ in },
                     finishWorkout: {},
                     collectionEndDate: { nil }
