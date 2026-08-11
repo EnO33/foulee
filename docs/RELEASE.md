@@ -291,7 +291,16 @@ the output, nothing tracked by git):
 - **The watch is uninstalled first**, which clears its app-group container, so
   « Démarrer » starts a session outright instead of asking which activity. That
   question depends on what the phone last synced; the uninstall is what keeps
-  the third capture from depending on the developer's own wrist.
+  the third capture from depending on the developer's own wrist. (The phone
+  stopped asking altogether in issue #246 — the watch still does, because it
+  freezes its `activityType` when the session is created.)
+- **The session board names a sport and gives no figures for it**, and that is
+  the shipped screen, not a shortcut. HealthKit refuses a subactivity of another
+  sport (issue #256), so nothing segments a session and there is nothing to
+  total per sport. The seed carried a breakdown for one afternoon and the
+  composed board advertised a screen the app never draws — see
+  [ADR 0002](adr/0002-detection-marche-course.md). If a future board shows
+  per-sport figures, check that the app can actually produce them.
 
 #### iPad — nothing to capture
 

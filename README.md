@@ -4,6 +4,13 @@
 
 iOS 26 app that helps you keep a daily activity streak going — walking or running. Reads from HealthKit, reminds you just before your window, runs a Live Activity during the session, and ships an Apple Watch companion.
 
+Since the walk/run epic it also **recognises which of the two you are doing**: the
+Watch names the sport on screen while you move, and the iPhone reads the
+session's own motion history when you stop, so a « both » user is never asked.
+What that could and could not deliver — including a HealthKit limit that cost
+two releases — is written up in
+[ADR 0002](docs/adr/0002-detection-marche-course.md) (French).
+
 ## Compatible watches
 
 - **Apple Watch** — native support (companion app, complications, live workouts).
@@ -25,6 +32,8 @@ iOS 26 app that helps you keep a daily activity streak going — walking or runn
 
 - **Swift 6.2**, **SwiftUI**, iOS 26 + watchOS 26
 - **HealthKit** — steps, distance, calories, workouts (walks and runs)
+- **CoreMotion** — pedometer during a session, and activity recognition to tell
+  a walk from a run (live on the Watch, post-hoc on the iPhone)
 - **ActivityKit** — Live Activity for the active walk (Dynamic Island + Lock Screen)
 - **WeatherKit** — local weather card
 - **WidgetKit** — iPhone + Watch streak widgets and complications
