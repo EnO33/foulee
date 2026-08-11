@@ -56,6 +56,12 @@ struct WatchWorkoutSessionHandle: Sendable {
     /// `primary` and `mirrored`. The watch is always the engine — there is no
     /// API for the reverse and there will not be one.
     var startMirroring: @MainActor () async throws -> Void
+    /// Hand a snapshot to the mirrored session on the iPhone (issue #278).
+    ///
+    /// Throwing is the ordinary case, not the exception: there is nothing to
+    /// send to when no phone is mirroring. The store swallows it — a wrist that
+    /// stopped sending is still a wrist that is recording.
+    var sendToRemote: @MainActor (Data) async throws -> Void
     var end: @MainActor () -> Void
     var endCollection: @MainActor (_ at: Date) async throws -> Void
     var finishWorkout: @MainActor () async throws -> Void
@@ -145,6 +151,7 @@ extension WatchWorkoutHealthKit {
                     sessionID: ObjectIdentifier(session),
                     builderID: ObjectIdentifier(builder),
                     startMirroring: { try await session.startMirroringToCompanionDevice() },
+                    sendToRemote: { try await session.sendToRemoteWorkoutSession(data: $0) },
                     end: { session.end() },
                     endCollection: { try await builder.endCollection(at: $0) },
                     finishWorkout: { _ = try await builder.finishWorkout() },

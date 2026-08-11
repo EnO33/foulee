@@ -27,5 +27,9 @@ struct MirroredSession: Equatable, Sendable {
 /// mirror closing.
 enum MirroredSessionEvent: Equatable, Sendable {
     case started(MirroredSession)
+    /// Figures the wrist stated (issue #278). A complete state, dated by the
+    /// wrist — the phone keeps the newest and drops the rest, because HealthKit
+    /// promises delivery, not sequence.
+    case snapshot(WatchSessionSnapshot)
     case ended
 }

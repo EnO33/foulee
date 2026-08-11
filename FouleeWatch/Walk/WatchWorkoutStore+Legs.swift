@@ -26,6 +26,14 @@ extension WatchWorkoutStore {
         return configuration
     }
 
+    /// The shortest stretch that deserves a workout of its own.
+    ///
+    /// Chosen with the user, and low on purpose: they would rather tidy an
+    /// occasional stray workout than lose the accuracy of a boundary. Below
+    /// this a leg is shorter than the gap between two readings — noise, not an
+    /// observation.
+    static let minimumLegDuration: TimeInterval = 15
+
     /// Offer the leg to the paired iPhone, and never lose a sortie over it
     /// (issue #277).
     ///
