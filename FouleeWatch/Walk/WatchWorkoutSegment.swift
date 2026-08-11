@@ -1,16 +1,20 @@
 import Foundation
 
-/// One recorded stretch of a session — an `HKWorkoutActivity`, reduced to the
-/// values the screen needs (issue #250).
+/// One recorded stretch of an outing — its own `HKWorkout` (issues #250, #265).
 ///
-/// HealthKit is what segments a session and what totals each segment: every
-/// number here is read from `HKWorkoutActivity.statisticsForType:`, never
-/// recomputed from the samples. Flattened into a value type for the usual
-/// reason — the aggregation below is then a pure function, exercisable without
-/// a workout, and `HKWorkoutActivity` cannot be built with statistics in a test.
+/// It was read from `HKWorkoutActivity` once, when the plan was to segment a
+/// single session. HealthKit refuses that (#256), so a stretch is now a
+/// **session of its own**, closed and reopened at the boundary — the way Forme
+/// does it, and the way Santé ends up with a walk *and* a run rather than one
+/// mislabelled outing.
+///
+/// The values are still measured, not derived: each leg's figures are what its
+/// own builder had collected when it closed. The aggregation below stayed
+/// exactly as it was, which is the point of having made it a pure function over
+/// values in the first place.
 struct WatchWorkoutSegment: Equatable, Sendable, Identifiable {
-    /// `HKWorkoutActivity.UUID`. Carried because the same segment is read from
-    /// two places that may both know it — see `merged(_:)`.
+    /// Identifies the leg. Carried because `merged(_:)` folds lists that may
+    /// describe the same one.
     var id: UUID
     var activity: SessionActivity
     var start: Date
@@ -84,6 +88,20 @@ struct WatchActivityTotals: Equatable, Sendable {
     /// session and a second decimal would flicker without saying anything.
     var countersText: String {
         "\(steps) pas  \(distanceKm.kmText(fractionDigits: 1))  \(activeCalories) kcal"
+    }
+
+    /// Sum every leg, whatever its sport — the outing's own figures.
+    ///
+    /// The leg in flight has its own builder counting from its own start, so a
+    /// screen reading the builder alone would reset to zero the instant the
+    /// sport changed (issue #265).
+    static func of(_ segments: [WatchWorkoutSegment], at now: Date) -> WatchActivityTotals {
+        segments.reduce(into: .zero) { totals, segment in
+            totals.elapsed += segment.elapsed(at: now)
+            totals.steps += segment.steps
+            totals.distanceMeters += segment.distanceMeters
+            totals.activeCalories += segment.activeCalories
+        }
     }
 
     /// Sum every segment of `activity`. Segments of the other one are skipped,

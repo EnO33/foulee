@@ -32,6 +32,12 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// Everything measured while doing `activity`, since the session started —
     /// not since the last switch. See `WatchActivityTotals`.
     var activityTotals: WatchActivityTotals = .zero
+    /// Every leg of the outing, oldest first (issue #265).
+    ///
+    /// A change of sport ends one `HKWorkout` and opens another, so an outing
+    /// is a list rather than a single record. The summary reads it to give each
+    /// sport its own figures beside the totals.
+    var legs: [WatchWorkoutSegment] = []
 
     static let zero = WatchWorkoutMetrics(
         elapsed: 0,
@@ -52,6 +58,27 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     }
 
     var distanceKm: Double { distanceMeters / 1_000 }
+
+    /// Each sport of the outing with its own figures, oldest first — empty when
+    /// there is nothing to break down (issue #265).
+    ///
+    /// Empty for a single-sport outing **on purpose**: the totals above already
+    /// say everything, and a lone « Marche 18:24 » under an 18:24 clock is a
+    /// line that repeats itself. It appears exactly when the outing changed
+    /// sport, which is when it has something to add.
+    var perSport: [WatchSportSummary] {
+        let sports = Set(legs.map(\.activity))
+        guard sports.count > 1 else { return [] }
+        return SessionActivity.allCases.compactMap { activity in
+            guard sports.contains(activity) else { return nil }
+            // Every leg is closed by the time a summary is shown, so the clock
+            // passed here changes nothing.
+            return WatchSportSummary(
+                activity: activity,
+                totals: WatchActivityTotals.of(activity, in: legs, at: .distantPast)
+            )
+        }
+    }
 
     /// How long the session has been running, read at `date`.
     ///
@@ -101,5 +128,25 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
         return "\(activity.label) : \(activityTotals.elapsed.walkClockText), "
             + "\(activityTotals.steps) pas, \(activityTotals.distanceKm.kmText(fractionDigits: 1)), "
             + "\(activityTotals.activeCalories) kcal"
+    }
+}
+
+/// One sport's share of an outing, as the summary states it (issue #265).
+struct WatchSportSummary: Equatable, Sendable, Identifiable {
+    var activity: SessionActivity
+    var totals: WatchActivityTotals
+
+    var id: SessionActivity { activity }
+
+    /// « Marche · 12:04 · 1,2 km ».
+    ///
+    /// A plain `String`, and the figure is drawn beside it rather than
+    /// interpolated into it. Interpolating a SwiftUI `Image` only works inside
+    /// a **single** text literal: concatenate with `+` and it becomes a
+    /// `String`, so the image renders as
+    /// `SwiftUI.Image(SwiftUI.ImageProviderBox<…>)` — which is exactly what the
+    /// first capture of this screen showed.
+    var text: String {
+        "\(activity.label) · \(totals.elapsed.walkClockText) · \(totals.distanceKm.kmText(fractionDigits: 1))"
     }
 }

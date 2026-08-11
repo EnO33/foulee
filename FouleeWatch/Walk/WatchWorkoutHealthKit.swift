@@ -15,8 +15,13 @@ struct WatchWorkoutHealthKit: Sendable {
     /// Creates, wires and starts a live session, returning a handle to its
     /// lifecycle. The delegate keeps receiving session/builder callbacks
     /// directly — that is how the store's `ingest` gets live metrics.
+    /// - Parameter at: when the leg begins. **May be in the past** (issue
+    ///   #265): a leg opened at a detected boundary starts when the wearer
+    ///   changed sport, not when we noticed. Dating it `.now` would leave the
+    ///   seconds in between belonging to neither leg.
     var startSession: @MainActor (
         _ configuration: HKWorkoutConfiguration,
+        _ at: Date,
         _ delegate: any HKWorkoutSessionDelegate & HKLiveWorkoutBuilderDelegate
     ) async throws -> WatchWorkoutSessionHandle
 }
@@ -32,15 +37,11 @@ struct WatchWorkoutSessionHandle: Sendable {
     /// `HKLiveWorkoutBuilder.endDate` — non-nil once collection has ended, so
     /// a retry knows not to end it twice.
     var collectionEndDate: @MainActor () -> Date?
-    // No way to open or close a nested activity here, and there will not be
-    // one: HealthKit refuses a subactivity whose sport differs from the
-    // session's own (« Cannot add subactivity of type
-    // HKWorkoutActivityTypeRunning », observed on a wrist). Reading the
-    // segments back stays — it writes nothing, and watchOS may add activities
-    // of its own that are worth totalling.
-    /// Every segment HealthKit has recorded for this session, oldest first,
-    /// including the one in flight (issue #250).
-    var segments: @MainActor () -> [WatchWorkoutSegment]
+    // No way to open or close a nested activity, and there will not be one:
+    // HealthKit refuses a subactivity whose sport differs from the session's
+    // own (« Cannot add subactivity of type HKWorkoutActivityTypeRunning »,
+    // observed on a wrist). A change of sport ends this leg and opens another
+    // session instead — issue #265, which is how Forme does it too.
 }
 
 /// The quantity types a live session collects, and the single list the whole
@@ -101,7 +102,7 @@ extension WatchWorkoutHealthKit {
             requestAuthorization: { toShare, read in
                 try await store.requestAuthorization(toShare: toShare, read: read)
             },
-            startSession: { configuration, delegate in
+            startSession: { configuration, startDate, delegate in
                 let session = try HKWorkoutSession(
                     healthStore: store,
                     configuration: configuration
@@ -112,7 +113,6 @@ extension WatchWorkoutHealthKit {
                 session.delegate = delegate
                 builder.delegate = delegate
 
-                let startDate = Date()
                 session.startActivity(with: startDate)
                 try await builder.beginCollection(at: startDate)
 
@@ -120,22 +120,7 @@ extension WatchWorkoutHealthKit {
                     end: { session.end() },
                     endCollection: { try await builder.endCollection(at: $0) },
                     finishWorkout: { _ = try await builder.finishWorkout() },
-                    collectionEndDate: { builder.endDate },
-                    // Two readings of the same list, merged rather than chosen
-                    // between. `workoutActivities` is documented in terms of
-                    // the *manual* `addWorkoutActivity:` path, so whether it
-                    // also carries the ones a session began is not something
-                    // this can assert; `currentWorkoutActivity` is documented
-                    // to hold the one in flight and to go nil the moment it
-                    // ends. Reading both, and letting the store fold in what
-                    // the delegate saw end, covers every combination without
-                    // betting on any.
-                    segments: {
-                        WatchWorkoutSegment.merged([
-                            builder.workoutActivities.compactMap(WatchWorkoutSegment.init),
-                            [builder.currentWorkoutActivity].compactMap { $0 }.compactMap(WatchWorkoutSegment.init)
-                        ])
-                    }
+                    collectionEndDate: { builder.endDate }
                 )
             }
         )

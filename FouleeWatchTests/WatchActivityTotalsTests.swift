@@ -168,3 +168,90 @@ struct WatchActivityTotalsTests {
         #expect(metrics.activityTotals.countersText == "1480 pas  1,8 km  136 kcal")
     }
 }
+
+/// The summary of an outing that changed sport (issue #265).
+///
+/// A change ends one `HKWorkout` and opens another, so Santé shows a walk *and*
+/// a run. The summary is where that is said before the wearer goes looking.
+@Suite("Watch outing breakdown")
+struct WatchOutingBreakdownTests {
+    private let start = Date(timeIntervalSince1970: 1_754_000_000)
+
+    private func leg(
+        _ activity: SessionActivity,
+        from: TimeInterval,
+        to: TimeInterval,
+        metres: Double
+    ) -> WatchWorkoutSegment {
+        WatchWorkoutSegment(
+            id: UUID(),
+            activity: activity,
+            start: start.addingTimeInterval(from),
+            end: start.addingTimeInterval(to),
+            steps: 0,
+            distanceMeters: metres,
+            activeCalories: 0
+        )
+    }
+
+    private func metrics(_ legs: [WatchWorkoutSegment]) -> WatchWorkoutMetrics {
+        var metrics = WatchWorkoutMetrics.zero
+        metrics.legs = legs
+        return metrics
+    }
+
+    @Test("A single-sport outing gets no breakdown")
+    func oneSportSaysNothingMore() {
+        // The totals above already say it. « Marche 18:24 » under an 18:24
+        // clock is a line repeating itself, on a screen with no room to spare.
+        #expect(metrics([leg(.walking, from: 0, to: 1_800, metres: 2_000)]).perSport.isEmpty)
+        #expect(metrics([]).perSport.isEmpty)
+    }
+
+    @Test("An outing that changed sport names both, with their own figures")
+    func bothSportsAreNamed() {
+        let outing = metrics([
+            leg(.walking, from: 0, to: 600, metres: 700),
+            leg(.running, from: 600, to: 1_500, metres: 2_400),
+            leg(.walking, from: 1_500, to: 1_800, metres: 350)
+        ])
+        let sports = outing.perSport
+
+        #expect(sports.map(\.activity) == [.walking, .running])
+        // The two walking legs are one line, summed — not two rows for one
+        // sport.
+        #expect(sports.first?.totals.elapsed == 900)
+        #expect(sports.first?.totals.distanceMeters == 1_050)
+        #expect(sports.last?.totals.elapsed == 900)
+        #expect(sports.last?.totals.distanceMeters == 2_400)
+    }
+
+    @Test("Each sport reads as one line, figure drawn beside the words")
+    func eachSportReadsAsOneLine() {
+        let outing = metrics([
+            leg(.walking, from: 0, to: 724, metres: 1_220),
+            leg(.running, from: 724, to: 1_104, metres: 610)
+        ])
+        // The glyph is *not* in this string. Interpolating a SwiftUI `Image`
+        // only works inside a single text literal — concatenated with `+` it
+        // becomes a `String` and renders as
+        // « SwiftUI.Image(SwiftUI.ImageProviderBox<…>) », which is what the
+        // first capture of this screen actually showed.
+        #expect(outing.perSport.first?.text == "Marche · 12:04 · 1,2 km")
+        #expect(outing.perSport.last?.text == "Course · 06:20 · 0,6 km")
+    }
+
+    @Test("The sports add up to the outing")
+    func theBreakdownPartitionsTheOuting() {
+        let legs = [
+            leg(.walking, from: 0, to: 600, metres: 700),
+            leg(.running, from: 600, to: 1_800, metres: 3_000)
+        ]
+        let outing = metrics(legs)
+        let summed = outing.perSport.reduce(0) { $0 + $1.totals.elapsed }
+        // A breakdown that did not add up would be worse than none: the reader
+        // would have no way to know which figure to believe.
+        #expect(summed == WatchActivityTotals.of(legs, at: start).elapsed)
+        #expect(summed == 1_800)
+    }
+}

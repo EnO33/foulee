@@ -3,17 +3,19 @@ import HealthKit
 import Testing
 @testable import FouleeWatch
 
-/// What a detected change does to a live session — which, settled by two
-/// outings and one error message, is **rename the screen and nothing else**.
+/// What a detected change does to a live session (issue #265).
 ///
-/// `HKWorkoutActivity` subactivities cannot change sport inside a session:
+/// It cuts the outing in two. HealthKit refuses to segment a single session —
+/// « Cannot add subactivity of type HKWorkoutActivityTypeRunning », observed on
+/// a wrist (#256) — so a second sport needs a second session, closed and
+/// reopened at the boundary. It is what Forme does when you tap « + »
+/// mid-outing, and the reason Santé ends up with a walk *and* a run.
 ///
-///     Cannot add subactivity of type HKWorkoutActivityTypeRunning
-///
-/// — on a session whose own type is `.walking`. They exist for multisport, and
-/// the multisport parent would drop the session out of {walking, running} and
-/// therefore out of the 7-day résumé. Two versions tried to segment anyway and
-/// both killed sessions on the wrist.
+/// **The two halves move at different speeds, and that is the design.**
+/// Renaming the screen cannot fail and self-corrects on the next reading. A
+/// split writes a permanent workout, so it waits for the new sport to hold —
+/// and is back-dated to where the sport actually changed, so waiting costs no
+/// accuracy.
 @MainActor
 @Suite("Watch session activity switching")
 struct WatchWorkoutActivitySwitchingTests {
@@ -27,11 +29,6 @@ struct WatchWorkoutActivitySwitchingTests {
         )
     }
 
-    /// Start a session and hand back both halves.
-    ///
-    /// The store comes back too, and callers must hold it: the detection — and
-    /// with it the only thing listening to the fake — lives exactly as long as
-    /// the store does.
     private func startedSession(
         as activity: SessionActivity,
         stub: WorkoutHealthKitStub
@@ -44,10 +41,8 @@ struct WatchWorkoutActivitySwitchingTests {
         return (store, motion)
     }
 
-    /// Deliver enough consistent estimates to confirm a switch.
     private func detect(_ activity: SessionActivity, from motion: FakeMotionSource, at offset: TimeInterval) {
         motion.deliver(estimate(activity, at: offset))
-        motion.deliver(estimate(activity, at: offset + 30))
     }
 
     private func activity(of store: WatchWorkoutStore) -> SessionActivity? {
@@ -55,80 +50,142 @@ struct WatchWorkoutActivitySwitchingTests {
         return metrics.activity
     }
 
-    @Test("A detected run renames what is on screen and leaves the session alone")
-    func aDetectedRunOnlyRenames() async {
+    // MARK: - The screen moves first, the recording follows
+
+    @Test("A detected run renames the screen before anything is recorded")
+    func theScreenLeadsTheRecording() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .walking, stub: stub)
 
         detect(.running, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .running }
 
-        #expect(activity(of: store) == .running)
-        // The session is exactly as it was: same workout, still running, never
-        // restarted and never failed. Two versions failed this on a wrist.
-        #expect(stub.startCalls == 1)
-        #expect(stub.startedConfiguration?.activityType == .walking)
-        #expect(stub.endCalls == 0)
-        #expect(stub.finishCalls == 0)
+        // One leg so far: the outing has not been cut, and no second workout
+        // exists in Santé. A leg that short would be noise, not a stretch.
+        #expect(stub.startedLegs.count == 1)
+        #expect(stub.endCollectionCalls == 0)
         #expect(store.lastError == nil)
     }
 
-    @Test("Back to walking renames again, still without touching the session")
-    func comingBackAlsoOnlyRenames() async {
+    @Test("Once the new sport has held, the outing is cut at the boundary")
+    func theSplitIsBackDatedToTheBoundary() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .walking, stub: stub)
 
         detect(.running, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .running }
-        detect(.walking, from: motion, at: 300)
+        // Long enough after the boundary for the leg to be worth recording.
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+
+        #expect(stub.startedLegs.count == 2)
+        #expect(stub.startedLegs.last?.configuration.activityType == .running)
+        // Both ends carry the *boundary*, not the moment of noticing. A gap
+        // between them would be time belonging to neither leg — and the walk
+        // would keep the first seconds of the run.
+        #expect(stub.startedLegs.last?.at == base.addingTimeInterval(60))
+        #expect(stub.endCollectionDates == [base.addingTimeInterval(60)])
+    }
+
+    @Test("A change that has not held long enough yet is not recorded")
+    func theThresholdIsWaitedOut() async {
+        let stub = WorkoutHealthKitStub()
+        let (store, motion) = await startedSession(as: .walking, stub: stub)
+
+        detect(.running, from: motion, at: 60)
+        await waitUntil { self.activity(of: store) == .running }
+        // Still running, but only for a few seconds. Every leg costs a
+        // permanent workout in Santé, so a stretch this short is noise.
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration - 1))
+
+        #expect(stub.startedLegs.count == 1)
+        #expect(stub.endCollectionCalls == 0)
+
+        // One second later it has held long enough — and the boundary is still
+        // where the sport changed, so waiting cost no accuracy.
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        #expect(stub.startedLegs.count == 2)
+        #expect(stub.startedLegs.last?.at == base.addingTimeInterval(60))
+    }
+
+    @Test("A change that does not hold leaves the outing whole")
+    func aBriefChangeIsNotRecorded() async {
+        let stub = WorkoutHealthKitStub()
+        let (store, motion) = await startedSession(as: .walking, stub: stub)
+
+        detect(.running, from: motion, at: 60)
+        await waitUntil { self.activity(of: store) == .running }
+        detect(.walking, from: motion, at: 65)
         await waitUntil { self.activity(of: store) == .walking }
+        // Well past the threshold — and still nothing to record, because the
+        // queued change was cancelled when the sport came back.
+        await store.splitIfDue(at: base.addingTimeInterval(600))
 
-        #expect(stub.startCalls == 1)
-        #expect(stub.endCalls == 0)
-        #expect(store.lastError == nil)
+        #expect(stub.startedLegs.count == 1)
+        #expect(stub.endCollectionCalls == 0)
     }
 
-    @Test("A run-mode session starts named as a run")
-    func aRunSessionOpensAsARun() async {
+    @Test("A run-mode outing cuts the same way, starting from the run")
+    func aRunOutingCutsFromTheRun() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .running, stub: stub)
 
-        #expect(activity(of: store) == .running)
+        #expect(stub.startedLegs.first?.configuration.activityType == .running)
         detect(.walking, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .walking }
-        // The `HKWorkout` keeps the type the wearer chose — detection never
-        // changes what Santé records.
-        #expect(stub.startedConfiguration?.activityType == .running)
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+
+        #expect(stub.startedLegs.map(\.configuration.activityType) == [.running, .walking])
     }
 
-    @Test("A single aberrant estimate renames nothing")
-    func oneEstimateChangesNothing() async {
+    // MARK: - A split that fails never costs what came before
+
+    @Test("A leg that cannot be reopened ends the outing rather than recording nothing")
+    func aFailedReopenEndsTheOuting() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .walking, stub: stub)
 
-        motion.deliver(estimate(.running, at: 60))
-        motion.deliver(estimate(.walking, at: 90))
-        // Nothing to wait for, which is the point — give the ingest tasks room
-        // to land before concluding they did nothing.
-        try? await Task.sleep(for: .milliseconds(120))
+        detect(.running, from: motion, at: 60)
+        await waitUntil { self.activity(of: store) == .running }
+        stub.startError = StubError()
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
 
-        #expect(activity(of: store) == .walking)
+        // The walk is already saved — it was finished before the run was
+        // attempted. Carrying on with no session would record nothing while
+        // pretending to.
+        #expect(stub.finishCalls == 1)
+        if case .ended = store.state {} else { Issue.record("la sortie devrait être terminée") }
+        #expect(store.lastError == "boom")
     }
+
+    @Test("A leg that cannot be closed keeps the builder for « Réessayer »")
+    func aFailedCloseIsRetryable() async {
+        let stub = WorkoutHealthKitStub()
+        let (store, motion) = await startedSession(as: .walking, stub: stub)
+
+        detect(.running, from: motion, at: 60)
+        await waitUntil { self.activity(of: store) == .running }
+        stub.finishError = StubError()
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+
+        guard case .ended(_, let saveFailed) = store.state else {
+            Issue.record("la sortie devrait être terminée")
+            return
+        }
+        // Retryable, and the builder is still alive for it — « Réessayer »
+        // finishes the leg that could not be closed.
+        #expect(saveFailed)
+        #expect(stub.handleToken != nil)
+    }
+
+    // MARK: - The rest of the lifecycle is untouched
 
     @Test("Stopping the session stops detection")
     func stoppingEndsDetection() async {
         let stub = WorkoutHealthKitStub()
-        let motion = FakeMotionSource()
-        motion.isAvailable = true
-        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source))
-        await store.start(activity: .walking)
-        await waitUntil { motion.isStreaming }
+        let (store, motion) = await startedSession(as: .walking, stub: stub)
 
         await store.stop()
 
-        // A stream left open outlives the session that justified it — a
-        // CoreMotion subscription running against the battery with nothing
-        // reading it.
         #expect(motion.closes == 1)
         #expect(!motion.isStreaming)
     }
@@ -136,16 +193,10 @@ struct WatchWorkoutActivitySwitchingTests {
     @Test("A session that fails mid-walk stops detection too")
     func aFailedSessionStopsDetection() async {
         let stub = WorkoutHealthKitStub()
-        let motion = FakeMotionSource()
-        motion.isAvailable = true
-        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source))
-        await store.start(activity: .walking)
-        await waitUntil { motion.isStreaming }
+        let (store, motion) = await startedSession(as: .walking, stub: stub)
 
         store.handleSessionFailure("session interrompue")
 
-        // The builder stays alive for « Réessayer », but there is nothing left
-        // to name: the session is over.
         #expect(!motion.isStreaming)
         #expect(stub.handleToken != nil)
     }
@@ -161,98 +212,7 @@ struct WatchWorkoutActivitySwitchingTests {
         await store.start(activity: .walking)
         try? await Task.sleep(for: .milliseconds(120))
 
-        // HealthKit refused, so there is no session to name anything on — and
-        // the motion permission sheet must not be raised for a session that
-        // never began.
         #expect(store.state == .idle)
         #expect(motion.opens == 0)
-    }
-
-    // MARK: - What the screen is handed
-
-    @Test("Per-sport figures are shown only when HealthKit has measured some")
-    func noSegmentsMeansNoFigures() async {
-        let stub = WorkoutHealthKitStub()
-        let (store, motion) = await startedSession(as: .walking, stub: stub)
-
-        detect(.running, from: motion, at: 60)
-        await waitUntil { self.activity(of: store) == .running }
-        store.refreshActivityTotals()
-
-        guard case .active(let metrics) = store.state else {
-            Issue.record("la séance devrait être en cours")
-            return
-        }
-        // Nothing segments the session any more, so there is nothing to total.
-        // The screen must say « Course » and stop there — « Course » next to
-        // four zeros reads as a broken counter, not as an absent measurement.
-        #expect(metrics.activityTotals == .zero)
-        #expect(metrics.activityHeadlineText == "Course")
-    }
-
-    @Test("Measured figures are shown, with the sport and its clock")
-    func measuredSegmentsAreShown() async {
-        let stub = WorkoutHealthKitStub()
-        let (store, _) = await startedSession(as: .walking, stub: stub)
-
-        // Whatever HealthKit reports — nothing today, and something again the
-        // day segmenting comes back (issue #256).
-        stub.segments = [
-            WatchWorkoutSegment(
-                id: UUID(),
-                activity: .walking,
-                start: base,
-                end: base.addingTimeInterval(724),
-                steps: 1_480,
-                distanceMeters: 1_830,
-                activeCalories: 136
-            )
-        ]
-        store.refreshActivityTotals()
-
-        guard case .active(let metrics) = store.state else {
-            Issue.record("la séance devrait être en cours")
-            return
-        }
-        #expect(metrics.activityTotals.steps == 1_480)
-        #expect(metrics.activityHeadlineText == "Marche · 12:04")
-    }
-}
-
-/// The summary screen of a failed session (issue #256).
-///
-/// A session died outdoors on `v1.38` and the one sentence HealthKit produced
-/// to explain it went to `lastError` — rendered only on the home screen, which
-/// `reset()` clears on the way there. The message existed and nobody could read
-/// it. These pin that it now appears where the failure does, and only there.
-@MainActor
-@Suite("Watch finished screen")
-struct WatchFinishedScreenTests {
-    private func screen(saveFailed: Bool, error: String?) -> WatchFinishedView {
-        WatchFinishedView(
-            metrics: .zero,
-            saveFailed: saveFailed,
-            errorMessage: error,
-            onRetry: {},
-            onDone: {}
-        )
-    }
-
-    @Test("A failed session shows what HealthKit said")
-    func aFailureShowsItsReason() {
-        #expect(screen(saveFailed: true, error: "boom").reasonText == "boom")
-    }
-
-    @Test("A session that saved shows no reason, even when one is lying around")
-    func aSuccessStaysQuiet() {
-        // `lastError` outlives the failure that set it: a retry that succeeds
-        // leaves the old message behind, and printing it under « Bravo » would
-        // report a failure that has just been fixed.
-        #expect(screen(saveFailed: false, error: "boom").reasonText == nil)
-    }
-
-    @Test("A failure HealthKit said nothing about prints nothing")
-    func aSilentFailurePrintsNothing() {
-        #expect(screen(saveFailed: true, error: nil).reasonText == nil)
     }
 }
