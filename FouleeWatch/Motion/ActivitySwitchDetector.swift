@@ -113,7 +113,16 @@ struct ActivitySwitchDetector: Sendable {
     /// candidate outright: that is what makes a lone spurious estimate
     /// harmless, and it is the rule the noisy-sequence test leans on.
     mutating func observe(_ estimate: MotionActivityEstimate) -> Switch? {
-        guard case .activity(let seen) = estimate.reading(minimumConfidence: minimumConfidence) else {
+        observe(estimate.observation(minimumConfidence: minimumConfidence))
+    }
+
+    /// Feed one observation, from whichever source produced it (issue #267).
+    ///
+    /// CoreMotion and the cadence classifier speak the same words here on
+    /// purpose: the decision below — what confirms, what expires, where the
+    /// boundary lands — must not depend on which sensor happened to notice.
+    mutating func observe(_ observation: ActivityObservation) -> Switch? {
+        guard case .activity(let seen) = observation.reading else {
             // Neutral, not contradicting: the device asserting nothing is not a
             // reason to abandon a candidate, only a reason not to advance it.
             // Staleness, not silence, is what expires a candidate.
@@ -123,10 +132,10 @@ struct ActivitySwitchDetector: Sendable {
             forgetCandidate()
             return nil
         }
-        advanceCandidate(to: seen, with: estimate)
+        advanceCandidate(to: seen, with: observation)
         guard candidateCount >= confirmations, let since = candidateSince else { return nil }
 
-        let date = min(max(since, boundary), estimate.receivedAt)
+        let date = min(max(since, boundary), observation.observed)
         current = seen
         boundary = date
         forgetCandidate()
@@ -135,20 +144,20 @@ struct ActivitySwitchDetector: Sendable {
 
     /// Extend the streak, or open a new one when the candidate changed or the
     /// previous support has gone stale.
-    private mutating func advanceCandidate(to seen: SessionActivity, with estimate: MotionActivityEstimate) {
-        let expired = candidateLastSeen.map { estimate.receivedAt.timeIntervalSince($0) > staleAfter } ?? true
+    private mutating func advanceCandidate(to seen: SessionActivity, with observation: ActivityObservation) {
+        let expired = candidateLastSeen.map { observation.observed.timeIntervalSince($0) > staleAfter } ?? true
         if candidate == seen, !expired {
             candidateCount += 1
         } else {
             candidate = seen
             candidateCount = 1
-            // The *first* estimate of the streak dates the boundary, not the
-            // confirming one. CoreMotion's `startDate` is when the device says
-            // the activity began, so this is what claws back most of the
-            // detection latency instead of stamping the segment 30 s late.
-            candidateSince = estimate.startDate
+            // The *first* observation of the streak dates the boundary, not the
+            // confirming one. `began` is when the source says the activity
+            // started, so this is what claws back the detection latency instead
+            // of stamping the segment seconds — or half a minute — late.
+            candidateSince = observation.began
         }
-        candidateLastSeen = estimate.receivedAt
+        candidateLastSeen = observation.observed
     }
 
     private mutating func forgetCandidate() {
