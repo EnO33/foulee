@@ -14,6 +14,7 @@ enum WatchSessionPage: Hashable {
     case session
     case controls
     case legs
+    case day
 }
 
 /// Live session screen, split into pages (issue #274).
@@ -65,10 +66,13 @@ enum WatchSessionPage: Hashable {
 /// reading « Arrêter » say what they are, and a header line would cost 14–18 pt
 /// of the very budget this change exists to recover. VoiceOver gets the naming
 /// instead, through `accessibilityLabel` on each page, which costs no pixels.
-/// The pages of #276/#280/#281 show figures that *are* ambiguous unlabelled —
-/// that is when a drawn header earns its height, not before.
+/// The later pages carry their own labels in their content — « j de série »,
+/// « / 10 000 pas », the sport at the head of each leg — so none of them has
+/// needed a header either. The rule is not « never a header »: it is that a
+/// header has to buy back the 14–18 pt it costs, and so far the content has.
 struct WatchSessionPager: View {
     let metrics: WatchWorkoutMetrics
+    let today: WatchTodayStore
     var onStop: () -> Void
 
     @State private var page: WatchSessionPage = .session
@@ -83,8 +87,22 @@ struct WatchSessionPager: View {
                 WatchSessionLegsPage(metrics: metrics)
                     .tag(WatchSessionPage.legs)
             }
+            WatchSessionDayPage(today: today)
+                .tag(WatchSessionPage.day)
         }
         .tabViewStyle(.page)
+        // Only while « Journée » is the page on screen (issue #280). Attached
+        // to the pager rather than to the page, and keyed on the selection, so
+        // arriving starts the loop and leaving cancels it: nothing guarantees a
+        // paged `TabView` does not build its neighbours ahead of time, and a
+        // page built off screen must not be querying HealthKit every minute.
+        .task(id: page) {
+            guard page == .day else { return }
+            while !Task.isCancelled {
+                await today.refreshForSession()
+                try? await Task.sleep(for: .seconds(60))
+            }
+        }
     }
 
     /// « Jambes » exists only once the outing has been split (issue #276).

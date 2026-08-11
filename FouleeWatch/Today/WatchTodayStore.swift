@@ -151,6 +151,52 @@ final class WatchTodayStore {
         waterML = newWaterML
     }
 
+    /// Refresh only what the session's « Journée » page draws (issue #280).
+    ///
+    /// **Not `load()`.** That one asks for authorization and fires five
+    /// queries, which is a lot to repeat every minute on a wrist already
+    /// running a workout session, a motion stream and a clock. Authorization
+    /// was granted when the session started — asking again mid-outing would put
+    /// a second sheet on screen for nothing.
+    ///
+    /// The streak and the goals cost no query at all: they are the phone's,
+    /// read synchronously out of the app group, so the page draws filled the
+    /// instant it appears and only the two numerators arrive late.
+    ///
+    /// **The day's steps are read, never accumulated.** Adding the session's
+    /// own counters to the day's would double-count for as long as HealthKit
+    /// takes to publish the wrist's samples — and the error would read as a
+    /// generous day rather than as a bug.
+    func refreshForSession() async {
+        #if DEBUG
+        // Capture mode (issue #239): same seeded day as `load()`, and for the
+        // same reason — a capture must query nothing.
+        if WatchScreenshotMode.isActive {
+            applyScreenshotSeed()
+            return
+        }
+        #endif
+        let sync = WatchSyncStore.read()
+        hasPhoneSync = sync != nil
+        streak = sync?.streak ?? 0
+        stepsGoal = sync?.stepsGoal ?? 6_000
+        minutesGoal = sync?.minutesGoal ?? 20
+
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        // Shares `load()`'s generation counter rather than keeping its own: the
+        // two write the same properties, and a `load()` triggered by the water
+        // observer can land in the middle of this one.
+        loadGeneration += 1
+        let generation = loadGeneration
+        async let stepsValue = sumToday(.stepCount, unit: .count())
+        async let minutesValue = sumToday(.appleExerciseTime, unit: .minute())
+        let newSteps = Int(await stepsValue)
+        let newMinutes = Int(await minutesValue)
+        guard generation == loadGeneration else { return }
+        steps = newSteps
+        minutes = newMinutes
+    }
+
     /// Log one glass (the phone-synced glass size) to Health, then re-read and
     /// refresh the complication. Requests authorization itself so it works
     /// even when `load()` hasn't run yet, and surfaces denial / a failed save

@@ -23,6 +23,7 @@ struct WatchRootView: View {
             case .active(let metrics):
                 WatchSessionPager(
                     metrics: metrics,
+                    today: todayStore,
                     onStop: { Task { await store.stop() } }
                 )
             case .ended(let metrics, let saveFailed):
