@@ -16,8 +16,6 @@ struct ActiveWalkScreen: View {
     /// Backed out of the picker without starting anything. Distinct from
     /// `onDismiss`, which carries a finished session for the home to overlay —
     /// there is no session here, and registering an empty one would move the
-    /// step baseline for a walk that never happened.
-    var onCancel: () -> Void
 
     @State private var store: ActiveWalkStore
     @State private var showRoute = false
@@ -33,13 +31,11 @@ struct ActiveWalkScreen: View {
         minutesGoal: Int,
         intent: ActivityStartIntent,
         store: ActiveWalkStore = ActiveWalkStore(),
-        onDismiss: @escaping (WalkSession) -> Void,
-        onCancel: @escaping () -> Void
+        onDismiss: @escaping (WalkSession) -> Void
     ) {
         self.minutesGoal = minutesGoal
         self.intent = intent
         self.onDismiss = onDismiss
-        self.onCancel = onCancel
         _store = State(wrappedValue: store)
     }
 
@@ -59,18 +55,24 @@ struct ActiveWalkScreen: View {
         .sensoryFeedback(trigger: isFinishedState) { _, now in now ? .success : nil }
     }
 
-    /// Starts the session as soon as the screen appears — but only when the
-    /// mode already answers the question. In « les deux » it does nothing at
-    /// all: the picker is what the screen shows instead, and nothing may be
-    /// recorded before the user has said what this session is.
+    /// Starts the session as soon as the screen appears, in every mode.
+    ///
+    /// « Les deux » starts **undecided** (issue #246): the sport is a
+    /// placeholder, nothing on screen names one, and the session's own motion
+    /// history settles it at `stop()` — before the workout is saved, because
+    /// the stamp is permanent.
     ///
     /// A named method rather than the body of `.onAppear`, and internal rather
     /// than private, because `.onAppear` never fires in a test process: inlined
-    /// there, this guard could be dropped — every « les deux » session silently
-    /// stamped a walk again — with the whole suite green.
+    /// there, the undecided flag could be dropped — every « les deux » session
+    /// silently stamped a walk again, which is exactly issue #223 — with the
+    /// whole suite green.
     func startIfKnown() {
-        guard let activity = intent.immediate else { return }
-        store.start(minutesGoal: minutesGoal, activity: activity)
+        store.start(
+            minutesGoal: minutesGoal,
+            activity: intent.immediate ?? .walking,
+            isUndecided: intent.immediate == nil
+        )
     }
 
     private var isActiveState: Bool {
@@ -98,7 +100,11 @@ struct ActiveWalkScreen: View {
     private var sessionTitle: String {
         switch store.state {
         case .active(let session), .paused(let session), .finished(let session):
-            session.activity.sessionTitle
+            // « Ta sortie » too while « les deux » is unsettled (issue #246):
+            // naming a sport here and saving another one at the end would be
+            // the drift #225 was about, only worse — the screen would have been
+            // wrong for the whole outing.
+            session.isActivityUndecided ? "Ta sortie" : session.activity.sessionTitle
         case .idle:
             "Ta sortie"
         }
@@ -108,17 +114,15 @@ struct ActiveWalkScreen: View {
     private var content: some View {
         switch store.state {
         case .idle:
-            // Idle means "nothing started yet", which is where the question
-            // belongs: `.ask` shows the picker, every other mode shows the
-            // brief spinner it always did while `onAppear` starts the session.
-            if case .ask = intent {
-                ActivityChoiceScreen(
-                    onChoose: { store.start(minutesGoal: minutesGoal, activity: $0) },
-                    onCancel: onCancel
-                )
-            } else {
-                ProgressView()
-            }
+            // The brief spinner while `onAppear` starts the session — for
+            // every mode now, « les deux » included.
+            //
+            // It used to ask, because nothing could tell a walk from a run and
+            // the stamp is permanent (issue #224). The phone can tell now, from
+            // the session's own motion history (issue #246), so the question
+            // has no answer the device will not produce by itself — and the
+            // whole point of the feature is « ne plus s'en soucier ».
+            ProgressView()
         case .active(let session):
             walkBody(session: session, paused: false)
         case .paused(let session):
@@ -352,7 +356,7 @@ private struct ActiveWalkPreview: View {
         }
     }
     var body: some View {
-        ActiveWalkScreen(minutesGoal: 20, intent: .start(.walking), onDismiss: { _ in }, onCancel: {})
+        ActiveWalkScreen(minutesGoal: 20, intent: .start(.walking), onDismiss: { _ in })
     }
 }
 

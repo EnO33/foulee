@@ -60,8 +60,12 @@ let fouleeAppInfoPlist: [String: Plist.Value] = [
     ),
     "NSHealthUpdateUsageDescription":
         "Foulée enregistre tes sorties comme séances dans Santé, ainsi que l'eau que tu bois.",
+    // Le podomètre, et depuis #246 la reconnaissance d'activité : à la fin
+    // d'une sortie « les deux », l'app relit l'historique de mouvement de la
+    // séance pour savoir si tu as marché ou couru. Même registre que les
+    // quatre autres alertes (#222) : tutoiement, « sortie », aucun sport nommé.
     "NSMotionUsageDescription":
-        "Foulée compte tes pas en direct pendant ta sortie.",
+        "Foulée compte tes pas en direct pendant ta sortie, et reconnaît si tu as marché ou couru.",
     "NSLocationWhenInUseUsageDescription":
         "Foulée utilise ta position pour afficher la météo à ton endroit.",
     "NSSupportsLiveActivities": true,
@@ -306,6 +310,11 @@ let project = Project(
                 // preference it resolves from, which rides in the sync payload.
                 "Foulee/Shared/SessionActivity.swift",
                 "Foulee/Shared/SessionActivity+HealthKit.swift",
+                // What one CoreMotion estimate means. Shared because the phone
+                // reads the same history after a session (issue #246), and two
+                // platforms disagreeing about a single estimate would be a bug
+                // nobody could explain.
+                "Foulee/Motion/MotionActivityReading.swift",
                 "Foulee/Preferences/ActivityMode.swift",
                 // « Les deux » makes the watch ask which activity before it
                 // records one (issue #224): the intent is the shared decision,

@@ -4,164 +4,173 @@ import SwiftUI
 import Testing
 @testable import Foulee
 
-/// The phone's picker, on the screen that ships it (issue #224).
+/// How the phone decides what a session was (issues #224, then #246).
 ///
-/// `ActivityStartIntentTests` covers the decision and `TodayStoreActivityTests`
-/// covers the store that makes it; these cover the step in between, which is a
-/// `View` body and therefore the step nothing else can see: whether the
-/// session screen actually *shows* the question in « les deux » — and, just as
-/// importantly, whether it stays out of the way in the other two modes, where
-/// an extra tap would be a regression.
+/// It used to **ask**, on this very screen, because nothing could tell a walk
+/// from a run and the stamp is permanent. The phone can tell now — from the
+/// session's own CoreMotion history, read at `stop()` — so « les deux » starts
+/// straight away like every other mode, names no sport while it runs, and is
+/// settled from what the device measured before the workout is saved.
 ///
 /// The tree is walked with `ViewTreeProbe` rather than testing a stand-in, so
 /// what is asserted is the screen that ships, `@State` store and all.
-@Suite("Activity picker (iPhone)")
+@Suite("Activity decision (iPhone)")
 @MainActor
 struct ActivityPickerTests {
+    private let start = Date(timeIntervalSince1970: 1_700_000_000)
+
     private func screen(
         _ intent: ActivityStartIntent,
-        store: ActiveWalkStore = ActiveWalkStore(),
-        onCancel: @escaping () -> Void = {}
+        store: ActiveWalkStore = ActiveWalkStore()
     ) -> ActiveWalkScreen {
-        ActiveWalkScreen(minutesGoal: 20, intent: intent, store: store, onDismiss: { _ in }, onCancel: onCancel)
+        ActiveWalkScreen(minutesGoal: 20, intent: intent, store: store, onDismiss: { _ in })
     }
 
-    /// The session the screen started, or `nil` if it started none.
-    private func startedActivity(_ store: ActiveWalkStore) -> SessionActivity? {
+    private func session(of store: ActiveWalkStore) -> WalkSession? {
         guard case .active(let session) = store.state else { return nil }
-        return session.activity
+        return session
     }
 
     /// Runs `body` with every sensor the store touches on `start` stubbed —
     /// the same set `ActiveWalkStoreTests` uses, so nothing here reaches a
     /// real pedometer, altimeter or Santé.
-    private func withStubbedSensors(_ body: () throws -> Void) async rethrows {
+    private func withStubbedSensors(
+        history: MotionActivityHistory = .testValue,
+        _ body: () async throws -> Void
+    ) async rethrows {
         try await withDependencies {
-            $0.date = .constant(Date(timeIntervalSince1970: 1_700_000_000))
+            $0.date = .constant(start)
             $0.pedometer = .testValue
             $0.healthKit = .testValue
+            $0.motionActivityHistory = history
             $0.continuousClock = TestClock()
         } operation: {
-            try body()
+            try await body()
         }
     }
 
-    @Test("« Les deux » opens the session screen on the question")
-    func bothShowsThePicker() {
-        // The store is idle at build time — the state the screen is in the
-        // instant the fullScreenCover appears, before anything is recorded.
-        #expect(ViewTreeProbe.contains(ActivityChoiceScreen.self, in: screen(.ask).body))
-    }
+    // MARK: - Nothing is asked any more
 
-    @Test("A single-activity mode shows no picker at all")
-    func singleActivityModesShowNoPicker() {
-        // The acceptance criterion that is easiest to break by accident:
-        // showing the question to everyone "for consistency" costs a tap on
-        // every single session for users who already answered it in Réglages.
-        #expect(ViewTreeProbe.contains(ActivityChoiceScreen.self, in: screen(.start(.walking)).body) == false)
-        #expect(ViewTreeProbe.contains(ActivityChoiceScreen.self, in: screen(.start(.running)).body) == false)
-    }
-
-    @Test("The question offers exactly walking and running, named as everywhere else")
-    func theChoicesAreTheTwoActivities() throws {
-        let picker = try #require(ViewTreeProbe.first(ActivityChoiceScreen.self, in: screen(.ask).body))
-        let walk = try #require(button(.walking, picker))
-        let run = try #require(button(.running, picker))
-
-        #expect(walk.activity.label == "Marche")
-        #expect(run.activity.label == "Course")
-        // Two answers, no third: `SessionActivity` has exactly the cases that
-        // can reach Santé, and the picker offers all of them.
-        #expect(SessionActivity.allCases == [.walking, .running])
-    }
-
-    @Test("Tapping « Course » starts a run, tapping « Marche » a walk")
-    func eachButtonStartsItsOwnActivity() async throws {
-        // The picker is resolved out of the *live* screen and the store it was
-        // handed says what the answer did, because the closure between them is
-        // the hop nothing else covers: a fresh `ActivityChoiceScreen` with a
-        // recording closure of its own only proves that `ForEach` gives each
-        // row its own activity — it stays green with `ActiveWalkScreen`'s own
-        // `onChoose` rewired to start a walk whatever was tapped, which is the
-        // exact bug #224 exists to prevent.
-        for expected in SessionActivity.allCases {
-            let store = ActiveWalkStore()
-            try await withStubbedSensors {
-                let picker = try #require(ViewTreeProbe.first(
-                    ActivityChoiceScreen.self,
-                    in: screen(.ask, store: store).body
-                ))
-                // The buttons live inside a `ForEach`, which stores a closure
-                // instead of its rows: building one through the probe is the
-                // only way to reach the real tap action.
-                try #require(button(expected, picker)).select()
-
-                // …and the session is stamped, from here on, by whatever this
-                // carried: `ActiveWalkStoreTests.stopSavesTheStartedActivity`
-                // takes it to `saveWorkout`, and `SessionActivityTests` from
-                // there to `HKWorkoutConfiguration.activityType`.
-                #expect(startedActivity(store) == expected)
-            }
-        }
-    }
-
-    @Test("« Les deux » records nothing until the question is answered")
-    func askStartsNothingOnAppear() async throws {
+    @Test("« Les deux » starts straight away, like every other mode")
+    func bothStartsWithoutAsking() async {
         let store = ActiveWalkStore()
-        try await withStubbedSensors {
-            // What `.onAppear` calls. The guard inside it is the other half of
-            // the picker: without it the screen starts a walk the instant it
-            // appears — before the user has answered — and still shows the
-            // question, so the mislabelled workout is invisible until Santé.
+        await withStubbedSensors {
             screen(.ask, store: store).startIfKnown()
-            #expect(store.state == .idle)
         }
+        // The question was a stopgap for a device that could not tell. It can.
+        #expect(session(of: store) != nil)
+        #expect(session(of: store)?.isActivityUndecided == true)
     }
 
-    @Test("A single-activity mode starts on appear, stamped with its own mode")
-    func immediateModesStartOnAppear() async throws {
+    @Test("A mode that answers the question is not overruled")
+    func aChosenModeStaysChosen() async {
         for activity in SessionActivity.allCases {
             let store = ActiveWalkStore()
-            try await withStubbedSensors {
+            await withStubbedSensors {
                 screen(.start(activity), store: store).startIfKnown()
-                // One gesture and the right stamp: the user answered this in
-                // Réglages, and the session must carry that answer rather than
-                // the old hardcoded walk.
-                #expect(startedActivity(store) == activity)
             }
+            #expect(session(of: store)?.activity == activity)
+            // Not undecided: the user has said what they do, and detection is
+            // not entitled to contradict an answer already given.
+            #expect(session(of: store)?.isActivityUndecided == false)
         }
     }
 
-    @Test("Backing out records nothing")
-    func cancelDismissesWithoutASession() throws {
-        // Distinct from `onDismiss`, which carries a finished session the home
-        // overlays onto today's counters. A cancel routed there would credit a
-        // session that never happened.
-        var cancelled = false
-        var dismissed = false
-        let live = ActiveWalkScreen(
-            minutesGoal: 20,
-            intent: .ask,
-            onDismiss: { _ in dismissed = true },
-            onCancel: { cancelled = true }
-        )
-        let picker = try #require(ViewTreeProbe.first(ActivityChoiceScreen.self, in: live.body))
-        // The button the screen builds, not the closure it was handed: reading
-        // back `picker.onCancel` would pass just as happily with a « Annuler »
-        // wired to nothing, which strands the user on the picker.
-        try #require(ViewTreeProbe.first(ActivityChoiceCancelButton.self, in: picker.body)).cancel()
+    // MARK: - Nothing is named before it is known
 
-        #expect(cancelled)
-        #expect(dismissed == false)
+    @Test("An unsettled session names no sport, on screen or on the Lock Screen")
+    func anUndecidedSessionNamesNothing() async {
+        let store = ActiveWalkStore()
+        await withStubbedSensors {
+            screen(.ask, store: store).startIfKnown()
+        }
+        // Naming « Ta marche » for a whole outing and saving « Course » at the
+        // end would be the drift #225 was about, only worse.
+        #expect(store.liveActivityAttributes(minutesGoal: 20).activity == nil)
+        #expect(WalkActivityAttributes(goalMinutes: 20, activity: nil).title(isPaused: false) == "Ta sortie")
     }
 
-    /// The button the picker builds for one activity, rebuilt from the live
-    /// screen on every call.
-    private func button(_ activity: SessionActivity, _ picker: ActivityChoiceScreen) -> ActivityChoiceButton? {
-        ViewTreeProbe.forEachRow(
-            activity,
-            of: ForEach<[SessionActivity], SessionActivity, ActivityChoiceButton>.self,
-            in: picker.body
+    @Test("A settled session names its sport everywhere")
+    func aDecidedSessionNamesItsSport() async {
+        let store = ActiveWalkStore()
+        await withStubbedSensors {
+            screen(.start(.running), store: store).startIfKnown()
+        }
+        #expect(store.liveActivityAttributes(minutesGoal: 20).activity == .running)
+    }
+
+    // MARK: - What the device measured decides
+
+    /// A history the test writes: `walking` for the first `runningAfter`
+    /// seconds, running from there to the end.
+    private func history(runningAfter: TimeInterval) -> MotionActivityHistory {
+        MotionActivityHistory(
+            samples: { from, _ in
+                [
+                    MotionHistorySample(startDate: from, confidence: .high, walking: true, running: false),
+                    MotionHistorySample(
+                        startDate: from.addingTimeInterval(runningAfter),
+                        confidence: .high,
+                        walking: false,
+                        running: true
+                    )
+                ]
+            }
         )
+    }
+
+    private func undecidedSession(endingAfter seconds: TimeInterval) -> WalkSession {
+        var session = WalkSession(startedAt: start, activity: .walking, isActivityUndecided: true)
+        session.endedAt = start.addingTimeInterval(seconds)
+        return session
+    }
+
+    @Test("An outing mostly run is recorded as a run")
+    func theDominantActivityWins() async {
+        let store = ActiveWalkStore()
+        var decided: WalkSession?
+        await withStubbedSensors(history: history(runningAfter: 600)) {
+            decided = await store.decidingActivity(of: undecidedSession(endingAfter: 1_800))
+        }
+        #expect(decided?.activity == .running)
+        #expect(decided?.isActivityUndecided == false)
+    }
+
+    @Test("An outing mostly walked is recorded as a walk")
+    func aMostlyWalkedOutingStaysAWalk() async {
+        let store = ActiveWalkStore()
+        var decided: WalkSession?
+        await withStubbedSensors(history: history(runningAfter: 1_500)) {
+            decided = await store.decidingActivity(of: undecidedSession(endingAfter: 1_800))
+        }
+        #expect(decided?.activity == .walking)
+    }
+
+    @Test("A session the user chose the sport of is handed back untouched")
+    func aChosenSessionIsNeverOverridden() async {
+        let store = ActiveWalkStore()
+        var chosen = WalkSession(startedAt: start, activity: .walking)
+        chosen.endedAt = start.addingTimeInterval(1_800)
+        var decided: WalkSession?
+        // A history that screams « course » from end to end.
+        await withStubbedSensors(history: history(runningAfter: 0)) {
+            decided = await store.decidingActivity(of: chosen)
+        }
+        // « Marche » in Réglages is an answer already given. Overriding it
+        // would also over-credit: kcalPerStep is 0.09 running against 0.04.
+        #expect(decided?.activity == .walking)
+    }
+
+    @Test("A device that says nothing leaves the session a walk")
+    func asilentDeviceUnderCredits() async {
+        let store = ActiveWalkStore()
+        var decided: WalkSession?
+        // `testValue` reports itself unavailable and returns no samples — a
+        // simulator, or a phone whose motion permission was refused.
+        await withStubbedSensors {
+            decided = await store.decidingActivity(of: undecidedSession(endingAfter: 1_800))
+        }
+        #expect(decided?.activity == .walking)
+        #expect(decided?.isActivityUndecided == false)
     }
 }

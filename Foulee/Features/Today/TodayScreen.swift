@@ -83,7 +83,6 @@ struct TodayScreen: View {
                     // The baseline `walkWillStart` captured is simply left
                     // unused — no `PendingWalk` is created, so the home shows
                     // the same numbers it already showed.
-                    onCancel: { isWalking = false }
                 )
                 .preferredColorScheme(preferredScheme)
             }

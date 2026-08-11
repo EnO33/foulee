@@ -7,6 +7,9 @@
     "—" : {
 
     },
+    "·" : {
+
+    },
     "%@ · %@" : {
       "localizations" : {
         "fr" : {
@@ -17,19 +20,67 @@
         }
       }
     },
+    "%@ / %@ L" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ / %2$@ L"
+          }
+        }
+      }
+    },
+    "%@ L" : {
+
+    },
+    "%@ pas" : {
+
+    },
     "%lld" : {
+
+    },
+    "%lld / %lld" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld / %2$lld"
+          }
+        }
+      }
+    },
+    "%lld %% de réussite" : {
+
+    },
+    "%lld battements par minute" : {
 
     },
     "%lld bpm" : {
 
     },
+    "%lld jours réussis" : {
+
+    },
     "%lld min" : {
 
     },
-    "%lld vers ton record (%lld)" : {
+    "%lld mL" : {
 
     },
+    "%lld verre%@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld verre%2$@"
+          }
+        }
+      }
+    },
     "%lld°" : {
+
+    },
+    "%lld°C" : {
 
     },
     "1 342" : {
@@ -44,19 +95,34 @@
     "10 minutes avant ta fenêtre, sur les jours actifs." : {
 
     },
+    "12 derniers mois" : {
+
+    },
     "60 min" : {
 
     },
     "Activer les rappels" : {
 
     },
-    "Aucun record pour l'instant — c'est ta chance." : {
+    "Apple Weather, sources des données" : {
+
+    },
+    "Aucune donnée sur cette période" : {
 
     },
     "Aucune marche enregistrée" : {
 
     },
     "Aujourd'hui" : {
+
+    },
+    "Autorise l'eau dans Santé pour compter tes verres" : {
+
+    },
+    "Autorise la localisation pour voir la météo de midi à ton endroit." : {
+
+    },
+    "Autoriser dans Réglages" : {
 
     },
     "Body — bouge un peu, chaque midi." : {
@@ -74,7 +140,22 @@
     "C" : {
 
     },
+    "C'est noté : +%lld ml d'eau." : {
+
+    },
+    "Calendrier de %@" : {
+
+    },
     "Cette semaine" : {
+
+    },
+    "Chaque « J'ai bu » ajoute un verre." : {
+
+    },
+    "Compté toute la journée, ta marche du midi incluse." : {
+
+    },
+    "Connecte Santé et fais quelques pas — ta marche du midi s'affichera ici." : {
 
     },
     "Connecte ta Watch pour le rythme cardiaque" : {
@@ -86,10 +167,19 @@
     "Connexion à Santé…" : {
 
     },
+    "Conseil : %@" : {
+
+    },
+    "Courbe de fréquence cardiaque" : {
+
+    },
     "Dans 1 heure" : {
 
     },
     "Dans 30 minutes" : {
+
+    },
+    "Des notifications « Pense à boire » avec « J'ai bu » et « Rappelle-moi »." : {
 
     },
     "Désactiver les rappels" : {
@@ -105,6 +195,9 @@
 
     },
     "DURÉE" : {
+
+    },
+    "Enregistre un verre d'eau dans Santé." : {
 
     },
     "Fait" : {
@@ -125,22 +218,37 @@
     "Foulée lit uniquement tes pas et marches.\nAucune donnée n'est partagée." : {
 
     },
+    "Foulée n'a pas l'autorisation d'écrire dans Santé. Active l'eau dans Santé > Profil > Apps > Foulée." : {
+
+    },
+    "Fréquence" : {
+
+    },
     "Fréquence cardiaque" : {
+
+    },
+    "Glisse ton doigt sur les jours pour le détail" : {
 
     },
     "Headline" : {
 
     },
-    "J'ai déjà un compte" : {
+    "Hydratation" : {
 
     },
-    "Jour" : {
+    "indisponible" : {
+
+    },
+    "J'ai bu" : {
+
+    },
+    "J'ai bu un verre" : {
+
+    },
+    "jour de repos" : {
 
     },
     "jours" : {
-
-    },
-    "jours d'affilée" : {
 
     },
     "Large title" : {
@@ -149,7 +257,16 @@
     "Marche du midi" : {
 
     },
+    "Marche en cours" : {
+
+    },
     "Marche terminée" : {
+
+    },
+    "Météo du midi à ton emplacement" : {
+
+    },
+    "Météo indisponible" : {
 
     },
     "MIDI" : {
@@ -158,10 +275,7 @@
     "minutes" : {
 
     },
-    "Minutes" : {
-
-    },
-    "Minutes par jour" : {
+    "Minutes de marche par jour cette semaine" : {
 
     },
     "Mis à jour : maintenant" : {
@@ -170,23 +284,22 @@
     "Objectif" : {
 
     },
-    "Objectif : %lld min · %@ pas" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Objectif : %1$lld min · %2$@ pas"
-          }
-        }
-      }
+    "Objectif atteint 🎉" : {
+
     },
-    "Objectif %lld min" : {
+    "Objectif quotidien" : {
 
     },
     "On t'enverra un petit rappel juste avant." : {
 
     },
+    "Ouvre d'abord Foulée pour autoriser l'accès à Santé." : {
+
+    },
     "Ouvrir dans Santé" : {
+
+    },
+    "Ouvrir Santé" : {
 
     },
     "pas" : {
@@ -195,7 +308,19 @@
     "PAS" : {
 
     },
-    "Plage" : {
+    "Pas de marche prévue aujourd'hui — profite de ta pause." : {
+
+    },
+    "Pas encore assez de données" : {
+
+    },
+    "Pas encore de données" : {
+
+    },
+    "Période" : {
+
+    },
+    "Plage horaire" : {
 
     },
     "Plus tard" : {
@@ -204,10 +329,22 @@
     "Préférences" : {
 
     },
+    "Profil et réglages" : {
+
+    },
+    "Progression du jour" : {
+
+    },
     "Quand veux-tu\nmarcher ?" : {
 
     },
     "Rappel avant la marche" : {
+
+    },
+    "Rappels" : {
+
+    },
+    "Rappels de marche" : {
 
     },
     "Record : %lld jours" : {
@@ -216,7 +353,13 @@
     "RÉGLAGES" : {
 
     },
+    "Reporter le rappel ou activer les rappels" : {
+
+    },
     "Résumé 7 jours" : {
+
+    },
+    "Santé n'est pas disponible sur cet appareil." : {
 
     },
     "SÉRIE" : {
@@ -225,7 +368,7 @@
     "SÉRIE ACTUELLE" : {
 
     },
-    "Source : Santé (minutes d'exercice)." : {
+    "Sources des données" : {
 
     },
     "STATISTIQUES" : {
@@ -237,13 +380,22 @@
     "Streak prolongée à %lld jours" : {
 
     },
+    "Suivi d'hydratation" : {
+
+    },
     "Ta fenêtre de marche s'ouvre à %@" : {
 
     },
     "Ta fenêtre est ouverte — départ depuis %@" : {
 
     },
+    "Taille d'un verre" : {
+
+    },
     "Temps" : {
+
+    },
+    "Tes jours les plus réguliers" : {
 
     },
     "Thème" : {
@@ -252,22 +404,50 @@
     "Title 2" : {
 
     },
-    "Ton activité" : {
+    "Ton parcours apparaîtra ici dès les premiers points GPS." : {
 
     },
-    "Ton parcours apparaîtra ici dès les premiers points GPS." : {
+    "toutes les %@" : {
 
     },
     "Tracé en attente" : {
 
     },
+    "Tu es le plus régulier le %@ (%lld %%)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tu es le plus régulier le %1$@ (%2$lld %%)"
+          }
+        }
+      }
+    },
     "Tu peux changer ces autorisations dans Réglages à tout moment." : {
 
     },
-    "Tu tiens ton record : %lld jours" : {
+    "Une carte sur l'accueil et un bouton « J'ai bu ». L'eau est enregistrée dans Santé." : {
+
+    },
+    "Vérifie l'accès à Santé dans Réglages, puis réessaie." : {
+
+    },
+    "Verre non enregistré — réessaie" : {
 
     },
     "Voir dans Santé" : {
+
+    },
+    "Voir l'historique des marches" : {
+
+    },
+    "Voir le détail météo" : {
+
+    },
+    "Voir les statistiques" : {
+
+    },
+    "Voir les statistiques de minutes" : {
 
     }
   },

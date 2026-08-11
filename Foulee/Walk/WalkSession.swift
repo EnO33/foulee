@@ -18,6 +18,21 @@ struct WalkSession: Equatable, Sendable {
     /// user's `ActivityMode`.
     var activity: SessionActivity = .walking
 
+    /// True while `activity` is a placeholder the detection replaces at the end
+    /// (issue #246).
+    ///
+    /// Only « les deux » produces it: the mode says the user does both, the
+    /// phone no longer asks which, and nothing is knowable until the session's
+    /// CoreMotion history can be read — which is at `stop()`. Everywhere it
+    /// matters the app says « Ta sortie » rather than naming a sport it is
+    /// about to overwrite.
+    ///
+    /// A flag rather than an optional `activity`: `estimatedCalories` needs a
+    /// rate at every instant, and the honest provisional rate is walking's —
+    /// the lower of the two, so a session read mid-flight under-credits rather
+    /// than inventing.
+    var isActivityUndecided: Bool = false
+
     /// Quick estimate while a Watch HR feed isn't connected — a fixed number of
     /// kilocalories per step, which depends on the activity (see
     /// `SessionActivity.kcalPerStep`).

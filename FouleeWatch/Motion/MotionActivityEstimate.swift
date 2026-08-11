@@ -12,22 +12,6 @@ import Foundation
 /// #252 deleted the probe and its folder whole once the measurement was in,
 /// and the detection had to stay.
 
-/// How sure CoreMotion says it is. Mirrors `CMMotionActivityConfidence`; the
-/// raw values are pinned against the real enum in the test suite.
-///
-/// `unrecognised` exists because a future watchOS could add a level, and
-/// folding an unknown value into `low` would claim the device said something it
-/// did not. It sorts *below* `low`, so any threshold rejects it — see
-/// `ActivitySwitchDetector` for why that direction is the safe one.
-enum MotionActivityConfidence: Int, CaseIterable, Comparable, Sendable {
-    case unrecognised = -1
-    case low = 0
-    case medium = 1
-    case high = 2
-
-    static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
-}
-
 /// One estimate, with both of its clocks.
 ///
 /// `startDate` is the device's own stamp for when the activity began;

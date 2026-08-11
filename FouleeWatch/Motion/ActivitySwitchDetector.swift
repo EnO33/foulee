@@ -1,36 +1,19 @@
 import Foundation
 
-/// What one estimate says about the two activities Foulée records.
-///
-/// `noEvidence` is a first-class answer, not an error: CoreMotion asserting
-/// nothing is a frequent, normal reading — `CMMotionActivity`'s flags can all
-/// be false — and so is asserting something Foulée does not record (cycling,
-/// a car). Both mean *the same thing here*: no reason to change what the
-/// session is recording.
-enum MotionActivityReading: Equatable, Sendable {
-    case activity(SessionActivity)
-    case noEvidence
-}
-
 extension MotionActivityEstimate {
-    /// Reduce the six booleans to at most one activity.
+    /// Reduce the flags to at most one activity.
     ///
-    /// Only `walking` and `running` are consulted, and **exactly one** of them
-    /// must be set. `if walking … else if running` would be wrong by
-    /// construction: the flags are not mutually exclusive, so that form silently
-    /// prefers walking whenever the device asserts both — precisely the moment
-    /// it is least sure.
-    ///
-    /// Everything else yields `noEvidence` without needing a case of its own:
-    /// both flags clear is what a stationary wearer, a bike ride, a car journey
-    /// and an estimate the device could not classify all look like from here.
+    /// The rule itself lives in `MotionActivityReading`, compiled into both
+    /// targets: the phone reads the same CoreMotion history after a session
+    /// (issue #246), and the two platforms disagreeing about what one estimate
+    /// means would be a bug nobody could explain.
     func reading(minimumConfidence: MotionActivityConfidence) -> MotionActivityReading {
-        guard confidence >= minimumConfidence else { return .noEvidence }
-        switch (walking, running) {
-        case (true, false): return .activity(.walking)
-        case (false, true): return .activity(.running)
-        default: return .noEvidence
-        }
+        .of(
+            walking: walking,
+            running: running,
+            confidence: confidence,
+            minimumConfidence: minimumConfidence
+        )
     }
 }
 

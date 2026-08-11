@@ -40,6 +40,10 @@ final class ActiveWalkStore {
     @ObservationIgnored
     @Dependency(\.healthKit) private var healthKit
 
+    /// The session's own motion history, read once at `stop()` (issue #246).
+    @ObservationIgnored
+    @Dependency(\.motionActivityHistory) private var motionActivityHistory
+
     @ObservationIgnored
     @Dependency(\.continuousClock) private var clock
 
@@ -81,9 +85,20 @@ final class ActiveWalkStore {
     /// (issue #223); the screen derives it from the user's `ActivityMode`. It
     /// defaults to `.walking` like the rest of this path, so a caller that
     /// doesn't care gets the app's historical behaviour.
-    func start(minutesGoal: Int = 20, activity: SessionActivity = .walking) {
+    /// - Parameter isUndecided: « les deux » mode, where `activity` is only a
+    ///   placeholder and the real answer comes from the session's motion
+    ///   history at `stop()` (issue #246).
+    func start(
+        minutesGoal: Int = 20,
+        activity: SessionActivity = .walking,
+        isUndecided: Bool = false
+    ) {
         guard case .idle = state else { return }
-        let session = WalkSession(startedAt: date.now, activity: activity)
+        let session = WalkSession(
+            startedAt: date.now,
+            activity: activity,
+            isActivityUndecided: isUndecided
+        )
         bankedElapsed = 0
         bankedSteps = 0
         bankedDistance = 0
@@ -139,8 +154,9 @@ final class ActiveWalkStore {
         }
         cancelObservers()
         routeTask?.cancel()
-        state = .finished(session)
-        await runOrTrap { try await healthKit.saveWorkout(session) }
+        let recorded = await decidingActivity(of: session)
+        state = .finished(recorded)
+        await runOrTrap { try await healthKit.saveWorkout(recorded) }
         await endLiveActivity(with: session)
 
         // Today's walk just landed in HealthKit — push the streak +
@@ -289,10 +305,34 @@ extension ActiveWalkStore {
     ///
     /// `nil` activity only when nothing is in flight; the sole production
     /// caller runs immediately after `state` becomes `.active`.
+    /// Settle « les deux » from what the device measured, or hand the session
+    /// back untouched (issue #246).
+    ///
+    /// Runs **before** the workout is saved, because the stamp is permanent —
+    /// `HKWorkout` is immutable and Foulée has no delete path. And it never
+    /// overrides a session the user chose the sport of: a mode of « Marche » or
+    /// « Course » is an answer already given, and detection is not entitled to
+    /// contradict it.
+    ///
+    /// Internal so a test can drive it without a session in flight.
+    func decidingActivity(of session: WalkSession) async -> WalkSession {
+        guard session.isActivityUndecided, let endedAt = session.endedAt else { return session }
+        let samples = await motionActivityHistory.samples(session.startedAt, endedAt)
+        let segments = ActivitySegmentation.segments(samples, from: session.startedAt, to: endedAt)
+        var decided = session
+        decided.activity = ActivitySegmentation.dominant(segments)
+        decided.isActivityUndecided = false
+        return decided
+    }
+
     func liveActivityAttributes(minutesGoal: Int) -> WalkActivityAttributes {
         let activity: SessionActivity? = switch state {
         case .idle: nil
-        case .active(let session), .paused(let session), .finished(let session): session.activity
+        case .active(let session), .paused(let session), .finished(let session):
+            // Nil while « les deux » has not been settled: the Lock Screen then
+            // says « Ta sortie » rather than naming a sport the save is about
+            // to overwrite (issue #246).
+            session.isActivityUndecided ? nil : session.activity
         }
         return WalkActivityAttributes(goalMinutes: minutesGoal, activity: activity)
     }
