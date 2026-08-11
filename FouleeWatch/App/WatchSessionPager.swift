@@ -1,21 +1,19 @@
 import SwiftUI
 
-/// The pages of a live session, in the order the crown walks them (issue #274).
+/// The pages of a live session, left to right (issues #274, #276).
 ///
-/// Selection binds to **these cases, never to an index**: the set is already
-/// about to grow (« Jambes » in #276, « Journée » in #280, « Hydratation » in
-/// #281) and « Jambes » only appears once an outing has changed sport, so the
-/// position of everything after it moves at runtime.
+/// Selection binds to **these cases, never to an index**: the set grows
+/// (« Journée » in #280, « Hydratation » in #281) and « Jambes » only appears
+/// once an outing has changed sport, so the position of everything after it
+/// moves at runtime.
 ///
-/// « Contrôles » sits immediately under « Séance » rather than above it, which
-/// is where the epic first put it. The reason is muscle memory: until this
-/// change the whole session lived in one scroll view and « Arrêter » was at the
-/// bottom of it, so *scroll down to stop* is the gesture people already have.
-/// The pages added later go below « Contrôles », so stopping stays one gesture
-/// from the default however many pages arrive.
+/// « Contrôles » sits immediately beside « Séance ». The reason is that
+/// stopping must never be more than one gesture away, whatever pages arrive
+/// later — they queue up after it.
 enum WatchSessionPage: Hashable {
     case session
     case controls
+    case legs
 }
 
 /// Live session screen, split into pages (issue #274).
@@ -35,20 +33,30 @@ enum WatchSessionPage: Hashable {
 ///
 /// **Moving the button was not, on its own, enough** — and the paper estimate
 /// that said it would be (« ~150 pt, fits on a 40 mm ») was wrong twice over. A
-/// `.verticalPage` `TabView` keeps noticeably more room above its content than
-/// a plain scroll view, so the first capture of the paged screen still cut
-/// « kcal » and « bpm » off the bottom of a **46 mm** — the roomiest watch in
-/// the set. What actually made it fit was measuring the board and then cutting:
-/// two-line metric tiles instead of three, a 34 pt clock instead of 38, tighter
-/// spacing, and no `Divider()`. Verified on a 40 mm SE probe, at default text
-/// size, with room to spare.
+/// paged `TabView` keeps noticeably more room above its content than a plain
+/// scroll view, so the first capture of the paged screen still cut « kcal » and
+/// « bpm » off the bottom of a **46 mm** — the roomiest watch in the set. What
+/// actually made it fit was measuring the board and then cutting: two-line
+/// metric tiles instead of three, a 34 pt clock instead of 38, tighter spacing,
+/// and no `Divider()`. Verified on a 40 mm SE probe, at default text size, with
+/// room to spare.
 ///
 /// The pages keep their scroll views for the largest Dynamic Type sizes, where
 /// nothing fits on any wrist.
 ///
-/// **One vertical axis, no horizontal one.** Apple's Workout app spends its
-/// horizontal axis on Now Playing, which Foulée does not have, and nesting two
-/// `TabView`s is not documented behaviour to build on.
+/// **The axis is horizontal, and issue #274 got that wrong.** It shipped
+/// `.verticalPage`, reasoning that Apple only spends its horizontal axis on Now
+/// Playing, which Foulée does not have. That is a *content* argument, and the
+/// mechanism points the other way: these pages scroll vertically, so a vertical
+/// pager competes with them for the same gesture. On a 46 mm the pager happened
+/// to win; **on a 40 mm the inner scroll view swallowed the swipe and the page
+/// never changed** — which means a wearer could not have reached « Arrêter » by
+/// swiping at all. That is issue #241's defect returning by another route, and
+/// it was caught by the 40 mm capture probe rather than by review.
+///
+/// So Apple does not put its pages on the horizontal axis out of taste. It puts
+/// them there because its pages scroll. `.page` costs the index dots ~10 pt at
+/// the bottom, which both wrists were measured to afford.
 ///
 /// **No `navigationTitle`.** There is no `NavigationStack` here on purpose — a
 /// swipe-back gesture and a paging gesture on the same view is a conflict this
@@ -71,9 +79,24 @@ struct WatchSessionPager: View {
                 .tag(WatchSessionPage.session)
             WatchSessionControlsPage(metrics: metrics, onStop: onStop)
                 .tag(WatchSessionPage.controls)
+            if showsLegs {
+                WatchSessionLegsPage(metrics: metrics)
+                    .tag(WatchSessionPage.legs)
+            }
         }
-        .tabViewStyle(.verticalPage(transitionStyle: .identity))
+        .tabViewStyle(.page)
     }
+
+    /// « Jambes » exists only once the outing has been split (issue #276).
+    ///
+    /// There is always at least one leg — the one in flight — so a single-leg
+    /// outing would give the page a lone row repeating the clock two pages up.
+    /// It appears at the moment it has something to say, which is the same rule
+    /// `WatchWorkoutMetrics.perSport` already follows on the recap.
+    ///
+    /// Legs are only ever appended during a session, so this never flips back
+    /// to `false` under a reader standing on the page.
+    private var showsLegs: Bool { metrics.legs.count > 1 }
 }
 
 /// The elapsed clock, and the only thing on any page that has to redraw every

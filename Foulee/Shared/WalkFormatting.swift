@@ -15,6 +15,31 @@ extension TimeInterval {
     }
 }
 
+extension TimeInterval {
+    /// This duration spent covering `km`, as a pace — « 6'10"/km » (issue
+    /// #276).
+    ///
+    /// Nothing new is measured: a leg already carries its distance and its two
+    /// dates, and pace is the division of one by the other. It is here rather
+    /// than on the segment so the watch and the phone would state a pace the
+    /// same way, the way they already agree on `walkClockText`.
+    ///
+    /// `nil` rather than a number below 50 m. A leg can be as short as 15 s
+    /// (`WatchWorkoutStore.minimumLegDuration`), and over twenty paces the
+    /// division amplifies a GPS-less distance estimate into a figure that looks
+    /// precise and is not. Absent says « too short to say »; « 3'02"/km » on a
+    /// stroll says something false.
+    func paceText(overKm km: Double) -> String? {
+        guard km >= 0.05, self > 0 else { return nil }
+        let secondsPerKm = self / km
+        // A pace this slow is a pause someone forgot to end, not a pace.
+        guard secondsPerKm < 99 * 60 else { return nil }
+        let minutes = Int(secondsPerKm) / 60
+        let seconds = Int(secondsPerKm) % 60
+        return String(format: "%d'%02d\"/km", minutes, seconds)
+    }
+}
+
 extension Double {
     /// A km distance with a French decimal comma and no unit, e.g. `1,23`.
     func kmValue(fractionDigits: Int = 2) -> String {
