@@ -211,6 +211,7 @@ final class WatchWorkoutStore: NSObject {
         }
         guard let handle else { return }
         sessionHandle = handle
+        await offerMirror(handle)
         finishedLegs = []
         legStartedAt = now
         legActivity = activity
@@ -476,6 +477,9 @@ extension WatchWorkoutStore {
             return
         }
         sessionHandle = next
+        // Each leg is its own session, so each one has to be offered again —
+        // the mirror does not survive the session it was opened on (#277).
+        await offerMirror(next)
         legStartedAt = boundary
         legActivity = activity
         legIdentity = UUID()

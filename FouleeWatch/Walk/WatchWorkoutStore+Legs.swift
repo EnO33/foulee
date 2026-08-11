@@ -26,6 +26,28 @@ extension WatchWorkoutStore {
         return configuration
     }
 
+    /// Offer the leg to the paired iPhone, and never lose a sortie over it
+    /// (issue #277).
+    ///
+    /// **Deliberately swallowed, deliberately logged.** Mirroring is what lets
+    /// the phone show the outing; it is not what records it. A phone that is
+    /// off, unpaired, out of range or simply refusing has no business ending a
+    /// walk that the wrist is measuring perfectly well.
+    ///
+    /// The log line is the point. Nothing about this path can be exercised in a
+    /// simulator — `HKWorkoutSession` needs a real watch — so the first outing
+    /// on a wrist is the test, and it has to leave a trace either way.
+    func offerMirror(_ handle: WatchWorkoutSessionHandle) async {
+        do {
+            try await handle.startMirroring()
+            FouleeLog.session.notice("miroir offert à l'iPhone")
+        } catch {
+            FouleeLog.session.error(
+                "miroir refusé : \(error.localizedDescription, privacy: .public)"
+            )
+        }
+    }
+
     /// Whether a HealthKit callback concerns the leg in flight (issue #290).
     ///
     /// `nil` is accepted: it means the caller had no session to name, which is

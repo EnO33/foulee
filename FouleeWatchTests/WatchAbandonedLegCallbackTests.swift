@@ -92,6 +92,34 @@ struct WatchAbandonedLegCallbackTests {
         #expect(store.lastError == "boom")
     }
 
+    // MARK: - The mirror never costs a sortie
+
+    /// Issue #277. A phone that is off, unpaired or out of range refuses the
+    /// mirror, and that must be invisible to the wrist: the walk is being
+    /// measured perfectly well without it.
+    @Test("A refused mirror leaves the outing recording")
+    func aRefusedMirrorIsHarmless() async {
+        let stub = WorkoutHealthKitStub()
+        stub.mirrorError = StubError()
+        let store = stub.makeStore()
+        await store.start(activity: .walking)
+
+        #expect(isActive(store))
+        #expect(store.lastError == nil, "a phone problem must not reach the wrist")
+        #expect(stub.mirrorOffers == 1)
+    }
+
+    /// Each leg is a session of its own, so each one has to be offered again —
+    /// a mirror does not outlive the session it was opened on.
+    @Test("Every leg is offered to the phone, not just the first")
+    func everyLegIsOffered() async {
+        let stub = WorkoutHealthKitStub()
+        _ = await splitOuting(stub)
+
+        #expect(stub.startedLegs.count == 2)
+        #expect(stub.mirrorOffers == 2)
+    }
+
     // MARK: - The same hole on the metrics path
 
     @Test("Only the leg in flight is recognised, session and builder alike")
