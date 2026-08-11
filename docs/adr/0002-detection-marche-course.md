@@ -1,7 +1,7 @@
 # ADR 0002 — Détection automatique marche / course
 
 - **Statut** : acceptée (2026-08)
-- **Issues** : [#244](https://github.com/EnO33/foulee/issues/244) (épic), [#248](https://github.com/EnO33/foulee/issues/248), [#249](https://github.com/EnO33/foulee/issues/249), [#250](https://github.com/EnO33/foulee/issues/250), [#246](https://github.com/EnO33/foulee/issues/246), [#247](https://github.com/EnO33/foulee/issues/247), [#256](https://github.com/EnO33/foulee/issues/256)
+- **Issues** : [#244](https://github.com/EnO33/foulee/issues/244) (épic), #248, #249, #250, #246, #247, #256, #265, #266, #267
 
 ## Contexte
 
@@ -58,6 +58,26 @@ Deux refus délibérés : une sortie **homogène** n'est pas ventilée (elle don
 
 Pendant une séance « les deux » non encore tranchée, l'écran de séance et l'écran verrouillé disent **« Ta sortie »**. Nommer « Ta marche » pendant toute une sortie pour enregistrer « Course » à la fin serait pire que la dérive de #225 : l'écran aurait eu tort du début à la fin.
 
+### D7 — Un changement de sport ouvre une nouvelle séance
+
+Une séance HealthKit enregistre **un** sport (voir la section suivante). Un second sport a donc besoin d'une **seconde séance** : à la bascule, la montre termine celle en cours et en ouvre une autre. Santé reçoit une marche *et* une course, chacune correctement typée, chacune restant dans {walking, running}.
+
+C'est ce que fait **Forme** quand on ajoute une activité à la main — constaté par l'utilisateur, et c'est cette observation qui a débloqué la conception.
+
+Trois propriétés font tenir le découpage :
+
+- **La coupure porte la date de la frontière**, pas celle où on l'apprend. `endCollection(at:)` et `startActivity(with:)` acceptent une date passée, donc la marche se termine là où la course a commencé, sans trou entre les deux.
+- **Une portion de moins de 15 s ne devient pas une séance** (`WatchWorkoutStore.minimumLegDuration`). Seuil choisi avec l'utilisateur : il préfère trier un workout de trop que perdre la justesse d'une frontière.
+- **Un échec ne coûte jamais ce qui précède** : chaque portion terminée est sauvée *avant* que la suivante soit tentée. Si celle-ci ne peut pas s'ouvrir, la sortie se termine avec la raison à l'écran — moins coûteux qu'une séance qui continue en n'enregistrant rien.
+
+Les compteurs affichés totalisent la **sortie**, pas la portion : le builder d'une nouvelle portion repart de zéro, et sans ce cumul l'écran se remettrait à zéro à chaque changement de sport.
+
+### D8 — L'écran et l'enregistrement n'avancent pas à la même vitesse
+
+Renommer l'écran ne peut pas échouer et s'autocorrige à la lecture suivante : c'est **immédiat**. Couper la sortie écrit un workout **permanent** : ça **attend** que le nouveau sport tienne.
+
+Attendre ne coûte aucune précision, puisque la coupure est datée de la frontière (D7). C'est ce qui permet d'avoir à la fois un écran réactif et un enregistrement prudent, sans arbitrer entre les deux.
+
 ## Ce qui s'est révélé impossible
 
 ### Segmenter une séance par `HKWorkoutActivity`
@@ -76,7 +96,7 @@ Et le parent multisport est disqualifié : sortir de {walking, running} ferait d
 
 > ⛔ **Ne jamais retenter `beginNewActivity` avec un sport différent de celui de la séance.**
 
-Conséquence : la montre **affiche** le sport en cours mais ne peut pas le **chiffrer**. Les stats par sport de #250 n'ont pas de source par ce chemin.
+Conséquence à l'époque : la montre affichait le sport en cours sans pouvoir le chiffrer. **Résolu depuis par D7** — chaque portion étant une séance à part entière, ses chiffres sont ceux de son propre builder.
 
 ### La leçon, qui vaut plus que la cause
 
@@ -86,22 +106,40 @@ Il existait depuis toujours. `handleSessionFailure` le rangeait dans `lastError`
 
 > **Afficher l'erreur d'abord, corriger ensuite.** Sur un chemin qu'aucun simulateur ne peut exercer, un correctif de diagnostic doit précéder tout correctif de comportement.
 
-## Piste restée ouverte
+## Le multisport, écarté — et pas pour la raison qu'on croyait
 
-L'app **Forme** enchaîne marche → course dans une même sortie et en produit un récap. La question non tranchée : Santé contient-il alors **un** entraînement multisport, ou **deux** entraînements consécutifs ?
+Première objection avancée : « un parent multisport ferait sortir la séance du résumé 7 jours ». Elle était **circulaire** — `WorkoutActivityFilter.summarizedActivityTypes` est un fichier de ce dépôt, y ajouter `.swimBikeRun` est une ligne. L'utilisateur l'a relevé.
 
-Si c'est deux, Foulée peut faire pareil — terminer la séance de marche et en ouvrir une de course à la bascule, chacune restant dans {walking, running}, chacune correctement étiquetée, #245 rendant les deux lignes lisibles dans le résumé. Ce serait une autre conception, pas un correctif.
+Les objections qui tiennent :
+
+1. **Le type est figé à la création de la session.** Pour pouvoir basculer il faudrait démarrer *toutes* les séances en multisport, y compris les marches pures — qui seraient alors étiquetées « Multisport » dans Santé, définitivement.
+2. **Rien ne prouve que `swimBikeRun` accepte marche et course.** L'appareil nous a appris qu'un parent `walking` refuse une sous-activité `running` ; il n'a rien dit du parent multisport.
+3. **Le crédit `appleExerciseTime`** sur un workout multisport n'est pas documenté, et toute la série en dépend.
+
+Et la question qui a tout tranché — *Forme produit-il un multisport ou deux entraînements ?* — a reçu sa réponse par l'observation : **deux entraînements consécutifs**. Apple n'utilise donc pas non plus les sous-activités pour ça, et la voie était D7.
 
 ## Réglages, et ce qui les gouverne
 
 | Réglage | Valeur | Raison |
 |---|---|---|
 | Seuil de confiance | `.medium` | Trop strict → la détection se tait et la séance reste ce qu'elle était (aucune donnée abîmée). Trop laxiste → un sport faux, définitif. |
-| Confirmations avant bascule (montre) | **1** | L'hystérésis à 2 protégeait un segment permanent dans Santé. Ce segment n'existe plus (#256), donc attendre n'achetait plus rien et ajoutait des secondes à la latence propre de CoreMotion. **À remonter si la segmentation redevient possible.** |
+| Confirmations avant bascule (montre) | **1** | L'anti-bruit est assuré par le seuil de 15 s de D7, qui décide seul si une portion mérite une séance. Confirmer deux fois ajouterait des secondes à la latence sans rien protéger de plus. |
+| Durée minimale d'une portion | **15 s** | En dessous, une portion est plus courte que l'écart entre deux lectures : du bruit, pas une observation. Le chiffre à monter si un fractionné découpe trop. |
+| Source rapide de la détection | cadence + vitesse | CoreMotion répond en ~30 s et son lissage *est* sa raison d'être (#248). Les compteurs de la séance donnent une cadence en quelques secondes, sans capteur ni permission de plus. CoreMotion reste l'arbitre. |
 | Repli | marche | Voir D3. |
 
-## Vérification restant à faire sur appareil
+## Ce qui a été constaté sur appareil
 
-- Qu'une sortie marche → course aille **jusqu'au bout** au poignet.
-- La latence réelle des transitions côté iPhone : tapis, poussette, descente rapide.
-- Le coût en batterie du flux au poignet, toujours non mesuré depuis #248.
+| Version | Résultat |
+|---|---|
+| `v1.38`, `v1.39` | ⛔ La bascule **tuait la séance**. C'est `v1.39`, affichant enfin l'erreur, qui a livré la cause. |
+| `v1.41` | Plus d'erreur, la transition se fait, la montre nomme le sport. Restaient un chrono par à-coups et une détection lente. |
+| `v1.42` | ✅ « La détection fonctionne mieux en effet. » Chrono fluide. Une seule séance encore — attendu à ce stade. |
+| `v1.43` | ✅ **Le découpage fonctionne.** Une sortie qui change de sport laisse deux séances. |
+
+## Ce qui reste non mesuré
+
+- **La batterie** du flux au poignet, toujours pas mesurée depuis #248.
+- La latence des transitions côté **iPhone** dans les cas tordus : tapis, poussette, descente rapide.
+- Le comportement sur un **fractionné** : le seuil de 15 s de D7 est le réglage prévu pour ça, jamais éprouvé.
+- **Les seuils de cadence sont personnels** (`MovementClassifier`). Réglés pour une allure ordinaire ; un marcheur très rapide ou un joggeur très lent tombent dans la zone grise.

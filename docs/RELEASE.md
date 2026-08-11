@@ -294,13 +294,15 @@ the output, nothing tracked by git):
   the third capture from depending on the developer's own wrist. (The phone
   stopped asking altogether in issue #246 — the watch still does, because it
   freezes its `activityType` when the session is created.)
-- **The session board names a sport and gives no figures for it**, and that is
-  the shipped screen, not a shortcut. HealthKit refuses a subactivity of another
-  sport (issue #256), so nothing segments a session and there is nothing to
-  total per sport. The seed carried a breakdown for one afternoon and the
-  composed board advertised a screen the app never draws — see
-  [ADR 0002](adr/0002-detection-marche-course.md). If a future board shows
-  per-sport figures, check that the app can actually produce them.
+- **The session board shows one sport and no per-sport figures**, which is what
+  a seeded outing that never changed activity looks like. The app *can* show
+  them — since issue #265 a change of sport opens a second workout, and each one
+  carries its own figures — so a board that showed a breakdown would be
+  truthful. It does not today because the seed describes a single stretch.
+  Whichever way a future board goes, check the app can actually draw it: the
+  seed once advertised a breakdown the app could not produce, and the composed
+  board shipped that lie for an afternoon (see
+  [ADR 0002](adr/0002-detection-marche-course.md)).
 
 #### iPad — nothing to capture
 
