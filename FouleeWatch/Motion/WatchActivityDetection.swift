@@ -72,7 +72,14 @@ final class WatchActivityDetection {
     /// drivable from a test without any motion.
     func ingest(_ estimate: MotionActivityEstimate) {
         guard var detector else { return }
-        let confirmed = detector.observe(estimate)
+        ingest(estimate.observation(minimumConfidence: detector.minimumConfidence))
+    }
+
+    /// Feed an observation from any source — CoreMotion, or the cadence and
+    /// speed the session's own counters give away (issue #267).
+    func ingest(_ observation: ActivityObservation) {
+        guard var detector else { return }
+        let confirmed = detector.observe(observation)
         self.detector = detector
         guard let confirmed else { return }
         onSwitch?(confirmed)

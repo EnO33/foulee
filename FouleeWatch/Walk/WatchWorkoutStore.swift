@@ -39,6 +39,12 @@ final class WatchWorkoutStore: NSObject {
     /// from that list would silently zero every per-sport total the moment a
     /// switch happened. Merged with the two live readings, never trusted alone.
     @ObservationIgnored private var endedSegments: [WatchWorkoutSegment] = []
+    /// The last counters the classifier of issue #267 was able to read.
+    ///
+    /// Kept rather than replaced on every batch: HealthKit delivers far more
+    /// often than there is movement to measure, and a window of half a second
+    /// divides into a meaningless cadence.
+    @ObservationIgnored private var lastMovementSample: MovementSample?
 
     init(
         healthKit: WatchWorkoutHealthKit = .live,
@@ -170,6 +176,7 @@ final class WatchWorkoutStore: NSObject {
         guard let handle else { return }
         sessionHandle = handle
         endedSegments = []
+        lastMovementSample = nil
         state = .active(.empty(for: activity))
         beginActivityDetection(from: activity)
     }
@@ -197,6 +204,7 @@ final class WatchWorkoutStore: NSObject {
         )
         applyActivityTotals(to: &metrics, at: now)
         state = .active(metrics)
+        classifyMovement(steps: metrics.steps, distanceMeters: metrics.distanceMeters, at: now)
     }
 
     private func sumDouble(_ statistics: HKStatistics?, unit: HKUnit) -> Double {
@@ -305,6 +313,29 @@ extension WatchWorkoutStore {
 
     /// Start classifying. **Records nothing into the session** — see
     /// `applySwitch`.
+    /// Read the session's own counters as a second, much faster opinion on
+    /// what the wearer is doing (issue #267).
+    ///
+    /// CoreMotion takes around thirty seconds to change its mind — its
+    /// smoothing is its purpose. Cadence and speed change within one window,
+    /// and they cost nothing new: these are the counters already driving the
+    /// screen. Both feed the same detector, so nothing about the decision
+    /// depends on which noticed first.
+    private func classifyMovement(steps: Int, distanceMeters: Double, at now: Date) {
+        let sample = MovementSample(date: now, steps: steps, distanceMeters: distanceMeters)
+        guard let previous = lastMovementSample else {
+            lastMovementSample = sample
+            return
+        }
+        guard let observation = MovementClassifier.observation(from: previous, to: sample) else {
+            // Not enough of a change to read. Keep the older sample so the
+            // window keeps widening rather than restarting on every batch.
+            return
+        }
+        lastMovementSample = sample
+        detection.ingest(observation)
+    }
+
     private func beginActivityDetection(from activity: SessionActivity) {
         let now = Date.now
         currentActivity = activity
