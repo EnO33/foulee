@@ -282,8 +282,8 @@ struct WatchScreenshotModeTests {
     @Test("Capture mode is wired into every entry point it claims to guard")
     func captureModeIsWiredIn() throws {
         let sites = [
-            // load(), startObserving(), logGlass()
-            GuardSite(path: "FouleeWatch/Today/WatchTodayStore.swift", expected: 3),
+            // load(), refreshForSession(), startObserving(), logGlass()
+            GuardSite(path: "FouleeWatch/Today/WatchTodayStore.swift", expected: 4),
             // start(activity:)
             GuardSite(path: "FouleeWatch/Walk/WatchWorkoutStore.swift", expected: 1),
             // run()

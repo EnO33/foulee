@@ -18,6 +18,8 @@ import os
 /// this flag:
 ///
 /// * `WatchTodayStore.load()` — serves `ScreenshotSeed` instead of querying.
+/// * `WatchTodayStore.refreshForSession()` — the same, for the « Journée » page
+///   of a live session (issue #280), which refreshes on its own timer.
 /// * `WatchTodayStore.startObserving()` — registers no `HKObserverQuery`.
 /// * `WatchTodayStore.logGlass()` — the visible « J'ai bu » button saves no
 ///   `dietaryWater` sample if it is ever tapped on camera.
