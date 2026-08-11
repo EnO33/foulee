@@ -36,17 +36,29 @@ struct ActivityPickerTests {
     /// real pedometer, altimeter or Santé.
     private func withStubbedSensors(
         history: MotionActivityHistory = .testValue,
+        pedometer: Pedometer = .testValue,
         _ body: () async throws -> Void
     ) async rethrows {
         try await withDependencies {
             $0.date = .constant(start)
-            $0.pedometer = .testValue
+            $0.pedometer = pedometer
             $0.healthKit = .testValue
             $0.motionActivityHistory = history
             $0.continuousClock = TestClock()
         } operation: {
             try await body()
         }
+    }
+
+    /// A pedometer that answers every interval with one step per second — so a
+    /// stretch's step count *is* its duration, and the arithmetic below is
+    /// readable.
+    private var countingPedometer: Pedometer {
+        Pedometer(
+            startUpdates: { _ in AsyncStream { $0.finish() } },
+            stop: {},
+            steps: { from, to in Int(to.timeIntervalSince(from)) }
+        )
     }
 
     // MARK: - Nothing is asked any more
@@ -130,7 +142,7 @@ struct ActivityPickerTests {
         let store = ActiveWalkStore()
         var decided: WalkSession?
         await withStubbedSensors(history: history(runningAfter: 600)) {
-            decided = await store.decidingActivity(of: undecidedSession(endingAfter: 1_800))
+            decided = await store.settled(undecidedSession(endingAfter: 1_800))
         }
         #expect(decided?.activity == .running)
         #expect(decided?.isActivityUndecided == false)
@@ -141,7 +153,7 @@ struct ActivityPickerTests {
         let store = ActiveWalkStore()
         var decided: WalkSession?
         await withStubbedSensors(history: history(runningAfter: 1_500)) {
-            decided = await store.decidingActivity(of: undecidedSession(endingAfter: 1_800))
+            decided = await store.settled(undecidedSession(endingAfter: 1_800))
         }
         #expect(decided?.activity == .walking)
     }
@@ -154,7 +166,7 @@ struct ActivityPickerTests {
         var decided: WalkSession?
         // A history that screams « course » from end to end.
         await withStubbedSensors(history: history(runningAfter: 0)) {
-            decided = await store.decidingActivity(of: chosen)
+            decided = await store.settled(chosen)
         }
         // « Marche » in Réglages is an answer already given. Overriding it
         // would also over-credit: kcalPerStep is 0.09 running against 0.04.
@@ -168,9 +180,69 @@ struct ActivityPickerTests {
         // `testValue` reports itself unavailable and returns no samples — a
         // simulator, or a phone whose motion permission was refused.
         await withStubbedSensors {
-            decided = await store.decidingActivity(of: undecidedSession(endingAfter: 1_800))
+            decided = await store.settled(undecidedSession(endingAfter: 1_800))
         }
         #expect(decided?.activity == .walking)
         #expect(decided?.isActivityUndecided == false)
+    }
+}
+
+extension ActivityPickerTests {
+    // MARK: - What the outing cost (issue #247)
+
+    @Test("A mixed outing is broken down stretch by stretch")
+    func aMixedOutingIsBrokenDown() async {
+        let store = ActiveWalkStore()
+        var settled: WalkSession?
+        await withStubbedSensors(history: history(runningAfter: 600), pedometer: countingPedometer) {
+            settled = await store.settled(undecidedSession(endingAfter: 1_800))
+        }
+        // Ten minutes walking, twenty running — one step per second.
+        #expect(settled?.stepsByActivity == [.walking: 600, .running: 1_200])
+    }
+
+    @Test("A homogeneous outing is not broken down at all")
+    func aHomogeneousOutingIsLeftAlone() async {
+        let store = ActiveWalkStore()
+        var settled: WalkSession?
+        // Running from the first second: one stretch, one rate.
+        await withStubbedSensors(history: history(runningAfter: 0), pedometer: countingPedometer) {
+            settled = await store.settled(undecidedSession(endingAfter: 1_800))
+        }
+        // The breakdown would price it identically, so the queries would buy
+        // nothing — and `estimatedCalories` must land on exactly the figure it
+        // always did.
+        #expect(settled?.stepsByActivity == nil)
+    }
+
+    @Test("A pedometer that will not answer leaves the old estimate alone")
+    func anUnanswerablePedometerDeclines() async {
+        let store = ActiveWalkStore()
+        var settled: WalkSession?
+        // `testValue`'s `steps` returns nil — no step counting on this device.
+        await withStubbedSensors(history: history(runningAfter: 600)) {
+            settled = await store.settled(undecidedSession(endingAfter: 1_800))
+        }
+        // A partial breakdown is not a smaller truth, it is a wrong total: the
+        // unmeasured stretch's steps would vanish from the estimate.
+        #expect(settled?.stepsByActivity == nil)
+        // The label is still settled — the two questions are independent.
+        #expect(settled?.activity == .running)
+    }
+
+    @Test("A chosen mode keeps its label and still gets the real breakdown")
+    func aChosenModeIsStillPricedHonestly() async {
+        let store = ActiveWalkStore()
+        var chosen = WalkSession(startedAt: start, activity: .walking)
+        chosen.endedAt = start.addingTimeInterval(1_800)
+        var settled: WalkSession?
+        await withStubbedSensors(history: history(runningAfter: 600), pedometer: countingPedometer) {
+            settled = await store.settled(chosen)
+        }
+        // « Marche » stays the label — the user said so. But twenty of those
+        // thirty minutes were run, and pricing them at the walking rate is
+        // simply wrong.
+        #expect(settled?.activity == .walking)
+        #expect(settled?.stepsByActivity == [.walking: 600, .running: 1_200])
     }
 }
