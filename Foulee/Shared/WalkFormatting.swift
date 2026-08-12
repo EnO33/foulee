@@ -55,6 +55,27 @@ func paceText(secondsPerKm: TimeInterval, roundedTo step: TimeInterval) -> Strin
     return String(format: "%d'%02d\"/km", rounded / 60, rounded % 60)
 }
 
+/// « 95 pas/min » — steps per minute over `elapsed`, or `nil` when the stretch
+/// is too short to divide (issue #302).
+///
+/// **Rounded to five.** Over a short stretch the step counter's own
+/// quantisation is worth a dozen or so steps a minute on its own, so a figure
+/// stated to the step would be showing that quantisation and calling it
+/// cadence. Nothing under ten seconds is stated at all.
+///
+/// HealthKit has nothing to offer here: the only identifier carrying the word
+/// is `cyclingCadence`. Dividing the step count is not a fallback — it is the
+/// only road.
+func cadenceText(steps: Int, over elapsed: TimeInterval) -> String? {
+    guard elapsed >= 10, steps > 0 else { return nil }
+    let perMinute = Double(steps) / elapsed * 60
+    // A **non-breaking** space: « 165 » stranded at the end of a line with
+    // « pas/min » on the next reads as badly as the « pa/s » of issue #261. The
+    // line still wraps on a 40 mm — it just wraps before the number rather than
+    // between the number and what it counts.
+    return "\(Int((perMinute / 5).rounded()) * 5)\u{00A0}pas/min"
+}
+
 extension Double {
     /// A km distance with a French decimal comma and no unit, e.g. `1,23`.
     func kmValue(fractionDigits: Int = 2) -> String {

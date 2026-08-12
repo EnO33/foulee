@@ -215,6 +215,9 @@ struct WatchSportSummary: Equatable, Sendable, Identifiable {
             totals.distanceKm.kmText(fractionDigits: 1)
         ]
         if let pace = totals.elapsed.paceText(overKm: totals.distanceKm) { parts.append(pace) }
+        if let cadence = cadenceText(steps: totals.steps, over: totals.elapsed) {
+            parts.append(cadence)
+        }
         return parts.joined(separator: " · ")
     }
 }
