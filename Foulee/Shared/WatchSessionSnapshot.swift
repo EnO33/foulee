@@ -89,6 +89,20 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         max(0, date.timeIntervalSince(outingStartedAt))
     }
 
+    /// The outing's average pace at the instant the wrist stated these figures
+    /// — « 6'10"/km » — or `nil` when there is not enough distance to divide
+    /// (issue #298).
+    ///
+    /// **Read at `sentAt`, never at « now ».** The screen's clock keeps
+    /// advancing between two wakes while the distance stays frozen at the last
+    /// snapshot, so dividing a frozen distance by a growing duration would make
+    /// the pace drift towards slow — a figure that degrades on its own
+    /// precisely when the mirror has gone quiet, which is when someone looks at
+    /// it.
+    var averagePaceText: String? {
+        elapsed(at: sentAt).paceText(overKm: distanceKm)
+    }
+
     /// How old these figures are. What the screen has to say out loud rather
     /// than pretend away.
     func age(at date: Date) -> TimeInterval {

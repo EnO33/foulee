@@ -82,6 +82,33 @@ struct WatchSessionSnapshotTests {
         }
     }
 
+    /// 600 s over 1,83 km — the seeded sortie, near enough.
+    @Test("The average pace divides the outing, not the wait")
+    func averagePaceUsesTheOuting() {
+        #expect(snapshot().averagePaceText == "5'27\"/km")
+    }
+
+    /// The trap this property exists to avoid. The screen's clock advances
+    /// between two wakes while the distance stays frozen at the last snapshot,
+    /// so a pace read at « now » would drift towards slow on its own —
+    /// precisely when the mirror has gone quiet, which is when someone looks.
+    @Test("The pace does not drift while the mirror is silent")
+    func thePaceDoesNotDriftWithTheClock() {
+        let stated = snapshot().averagePaceText
+        // Ten minutes of silence later, the figures say exactly the same thing.
+        #expect(snapshot().averagePaceText == stated)
+        #expect(snapshot().age(at: base.addingTimeInterval(600)) == 600)
+    }
+
+    /// Same rule as everywhere else: a distance too small to divide says
+    /// nothing rather than something that looks precise.
+    @Test("Under fifty metres there is no average pace either")
+    func noAveragePaceWithoutDistance() {
+        var short = snapshot()
+        short.distanceMeters = 20
+        #expect(short.averagePaceText == nil)
+    }
+
     @Test("The age of the figures is what the screen has to say out loud")
     func ageIsStated() {
         #expect(snapshot().age(at: base.addingTimeInterval(90)) == 90)

@@ -237,8 +237,22 @@ struct WatchOutingBreakdownTests {
         // becomes a `String` and renders as
         // « SwiftUI.Image(SwiftUI.ImageProviderBox<…>) », which is what the
         // first capture of this screen actually showed.
-        #expect(outing.perSport.first?.text == "Marche · 12:04 · 1,2 km")
-        #expect(outing.perSport.last?.text == "Course · 06:20 · 0,6 km")
+        #expect(outing.perSport.first?.text == "Marche · 12:04 · 1,2 km · 9'53\"/km")
+        #expect(outing.perSport.last?.text == "Course · 06:20 · 0,6 km · 10'22\"/km")
+    }
+
+    /// The pace of a whole stretch is the honest one — the relative error of a
+    /// wrist-estimated distance averages out over a sortie, and the duration is
+    /// exact. But `paceText` still says nothing under 50 m, and a line has to
+    /// end cleanly rather than trail an empty separator (issue #297).
+    @Test("A stretch too short to divide ends after its distance")
+    func aShortStretchCarriesNoPace() {
+        let outing = metrics([
+            leg(.walking, from: 0, to: 600, metres: 900),
+            leg(.running, from: 600, to: 615, metres: 20)
+        ])
+        #expect(outing.perSport.last?.text == "Course · 00:15 · 0,0 km")
+        #expect(outing.perSport.first?.text.contains("/km") == true)
     }
 
     @Test("The sports add up to the outing")
