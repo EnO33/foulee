@@ -25,6 +25,7 @@ struct WatchRootView: View {
                 WatchSessionPager(
                     metrics: metrics,
                     today: todayStore,
+                    errorMessage: store.lastError,
                     onStop: { Task { await store.stop() } }
                 )
             case .ended(let metrics, let saveFailed):

@@ -174,9 +174,13 @@ struct WatchScreenshotModeTests {
         #expect(trap.calls == 0)
 
         await store.stop()
-        // Still active, still untouched: `stop()` needs a session handle, and
-        // the seeded path never made one.
-        #expect(store.state == .active(ScreenshotSeed.watchSessionMetrics))
+        // The seeded session ends like any other — `stop()` no longer needs a
+        // handle, because a failed split may legitimately leave the outing
+        // without one and « Terminer » must still work.
+        //
+        // What has to hold is unchanged and is the whole point: **nothing
+        // reached HealthKit**. No session was opened, so there is no builder to
+        // finish and nothing to save.
         #expect(trap.calls == 0)
     }
 
