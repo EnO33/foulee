@@ -323,6 +323,9 @@ let project = Project(
                 // in one place — the tolerant decoder handles the window where
                 // one app has been updated and the other has not.
                 "Foulee/Shared/WatchSessionSnapshot.swift",
+                // What the phone can ask the wrist to do (issue #282). Shared
+                // for the same reason as the snapshot: one type, two ends.
+                "Foulee/Shared/MirrorCommand.swift",
                 "Foulee/Shared/WatchSyncPayload.swift",
                 "Foulee/Shared/WatchComplicationKind.swift",
                 "Foulee/Shared/WatchComplicationCache.swift",

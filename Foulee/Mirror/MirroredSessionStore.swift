@@ -117,4 +117,25 @@ final class MirroredSessionStore {
 
     /// Whether the wrist is recording something right now.
     var isMirroring: Bool { session != nil }
+
+    /// Ask the wrist to end the outing (issue #282).
+    ///
+    /// **Nothing is changed here.** The phone does not end anything — it asks,
+    /// and the watch's own `stop()` does the closing, the folding, the saving
+    /// and the « Réessayer ». The display goes away when the wrist says the
+    /// outing is over, not when the button is tapped, because until then it
+    /// is not over.
+    ///
+    /// A refusal is ordinary rather than exceptional: the wrist may have
+    /// stopped a second before the tap landed. Logged, not surfaced.
+    func requestStop() async {
+        do {
+            try await client.send(.stop)
+            FouleeLog.session.notice("arrêt demandé à la Watch")
+        } catch {
+            FouleeLog.session.notice(
+                "arrêt non transmis : \(error.localizedDescription, privacy: .public)"
+            )
+        }
+    }
 }

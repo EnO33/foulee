@@ -1,6 +1,12 @@
 import os
 @preconcurrency import HealthKit
 
+/// Nothing is mirroring, so there is nobody to ask (issue #282). Ordinary, not
+/// exceptional: the wrist may have stopped a second before the tap landed.
+enum MirrorSendError: Error {
+    case noSession
+}
+
 /// The real mirror, backed by `HKHealthStore.workoutSessionMirroringStartHandler`.
 ///
 /// ⚠️ **None of this file runs in a simulator.** Mirroring needs a real watch
@@ -11,21 +17,28 @@ import os
 extension MirroredWorkoutClient {
     static let liveValue: MirroredWorkoutClient = {
         let store = HKHealthStore()
-        return MirroredWorkoutClient(events: {
-            AsyncStream { continuation in
-                let bridge = MirrorBridge(continuation: continuation)
-                store.workoutSessionMirroringStartHandler = { session in
-                    bridge.adopt(session)
+        // Shared by both closures: `send` has to reach the very session
+        // `events` adopted, and a bridge per stream would leave the sender
+        // talking to nothing.
+        let bridge = MirrorBridge()
+        return MirroredWorkoutClient(
+            events: {
+                AsyncStream { continuation in
+                    bridge.attach(continuation)
+                    store.workoutSessionMirroringStartHandler = { session in
+                        bridge.adopt(session)
+                    }
+                    continuation.onTermination = { _ in
+                        // The handler is a single slot, not a subscriber list —
+                        // leaving a dead closure in it would silently swallow
+                        // the next mirror.
+                        store.workoutSessionMirroringStartHandler = nil
+                        bridge.detach()
+                    }
                 }
-                continuation.onTermination = { _ in
-                    // The handler is a single slot, not a subscriber list —
-                    // leaving a dead closure in it would silently swallow the
-                    // next mirror.
-                    store.workoutSessionMirroringStartHandler = nil
-                    bridge.release()
-                }
-            }
-        })
+            },
+            send: { command in try await bridge.send(command) }
+        )
     }()
 }
 
@@ -36,15 +49,35 @@ extension MirroredWorkoutClient {
 /// handed to the handler is otherwise unowned: dropping it would end the mirror
 /// the instant the handler returned.
 private final class MirrorBridge: NSObject, HKWorkoutSessionDelegate, @unchecked Sendable {
-    private let continuation: AsyncStream<MirroredSessionEvent>.Continuation
+    private let stream = OSAllocatedUnfairLock<AsyncStream<MirroredSessionEvent>.Continuation?>(
+        initialState: nil
+    )
     /// The mirror in flight. Replaced rather than accumulated: a change of
     /// sport closes one session and opens another (issue #265), so the phone
     /// sees a *new* mirror at each switch and only the newest is current.
     private let current = OSAllocatedUnfairLock<HKWorkoutSession?>(initialState: nil)
 
-    init(continuation: AsyncStream<MirroredSessionEvent>.Continuation) {
-        self.continuation = continuation
-        super.init()
+    func attach(_ continuation: AsyncStream<MirroredSessionEvent>.Continuation) {
+        stream.withLock { $0 = continuation }
+    }
+
+    func detach() {
+        stream.withLock { $0 = nil }
+        current.withLock { $0 = nil }
+    }
+
+    /// Ask the wrist to do something (issue #282).
+    ///
+    /// Throws `MirrorSendError.noSession` when nothing is mirroring, which is
+    /// the ordinary case rather than a failure — the caller turns it into « la
+    /// séance n'est plus là » rather than an error banner.
+    func send(_ command: MirrorCommand) async throws {
+        guard let session = current.withLock({ $0 }) else { throw MirrorSendError.noSession }
+        try await session.sendToRemoteWorkoutSession(data: JSONEncoder().encode(command))
+    }
+
+    private func yield(_ event: MirroredSessionEvent) {
+        stream.withLock { $0 }?.yield(event)
     }
 
     func adopt(_ session: HKWorkoutSession) {
@@ -54,7 +87,7 @@ private final class MirrorBridge: NSObject, HKWorkoutSessionDelegate, @unchecked
         FouleeLog.session.notice(
             "miroir reçu de la Watch : \(activity?.label ?? "sport inconnu", privacy: .public)"
         )
-        continuation.yield(
+        yield(
             .started(
                 MirroredSession(
                     // `startDate` is nil until the session has actually begun;
@@ -67,10 +100,6 @@ private final class MirrorBridge: NSObject, HKWorkoutSessionDelegate, @unchecked
                 )
             )
         )
-    }
-
-    func release() {
-        current.withLock { $0 = nil }
     }
 
     func workoutSession(
@@ -89,7 +118,7 @@ private final class MirrorBridge: NSObject, HKWorkoutSessionDelegate, @unchecked
             return
         }
         FouleeLog.session.notice("miroir terminé")
-        continuation.yield(.ended)
+        yield(.ended)
     }
 
     /// Figures pushed by the wrist (issue #278).
@@ -116,7 +145,7 @@ private final class MirrorBridge: NSObject, HKWorkoutSessionDelegate, @unchecked
                 FouleeLog.session.error("snapshot illisible reçu de la Watch")
                 continue
             }
-            continuation.yield(.snapshot(snapshot))
+            yield(.snapshot(snapshot))
         }
     }
 
@@ -126,6 +155,6 @@ private final class MirrorBridge: NSObject, HKWorkoutSessionDelegate, @unchecked
         )
         let isCurrent = current.withLock { $0 === workoutSession }
         guard isCurrent else { return }
-        continuation.yield(.ended)
+        yield(.ended)
     }
 }

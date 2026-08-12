@@ -16,14 +16,23 @@ struct MirroredWorkoutClient: Sendable {
     /// path no UI is ever mounted. Same reason `startGarminConnectIQOnce`
     /// exists in `FouleeApp`.
     var events: @Sendable () -> AsyncStream<MirroredSessionEvent>
+    /// Ask the wrist to do something (issue #282). Throws when there is no
+    /// mirrored session to ask — the ordinary case when nothing is running.
+    var send: @Sendable (MirrorCommand) async throws -> Void
 }
 
 extension MirroredWorkoutClient: DependencyKey {
     /// Nothing, and never anything. A preview has no paired watch, and a mirror
     /// that arrived out of nowhere would be a screen no user could reach.
-    static let previewValue = MirroredWorkoutClient(events: { AsyncStream { $0.finish() } })
+    static let previewValue = MirroredWorkoutClient(
+        events: { AsyncStream { $0.finish() } },
+        send: { _ in }
+    )
 
-    static let testValue = MirroredWorkoutClient(events: { AsyncStream { $0.finish() } })
+    static let testValue = MirroredWorkoutClient(
+        events: { AsyncStream { $0.finish() } },
+        send: { _ in }
+    )
 }
 
 extension DependencyValues {

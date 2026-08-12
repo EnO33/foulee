@@ -193,6 +193,57 @@ struct WatchMirrorSnapshotTests {
         #expect(stub.sentSnapshots.last?.sentAt != boundary)
     }
 
+    // MARK: - What the phone can ask (issue #282)
+
+    /// The point of routing through `stop()` rather than ending the session:
+    /// `stop()` closes the leg, folds the outing's figures, saves, and tells
+    /// the phone it is over. Ending the session from the command handler would
+    /// leave the wrist holding an outing nobody finished.
+    @Test("A stop from the phone ends the outing the way the wrist would")
+    func aStopCommandStops() async {
+        let stub = WorkoutHealthKitStub()
+        let store = stub.makeStore()
+        await store.start(activity: .walking)
+
+        await store.handle(.stop, from: stub.handleIDs[0])
+
+        guard case .ended(_, let saveFailed) = store.state else {
+            Issue.record("a stop from the phone must end the outing")
+            return
+        }
+        #expect(saveFailed == false)
+        #expect(stub.endCollectionCalls == 1)
+        #expect(stub.finishCalls == 1)
+        // And the phone was told, by the same path a wrist-side stop uses.
+        #expect(stub.sentSnapshots.last?.isEnded == true)
+    }
+
+    /// Same rule as every other callback since issue #290: a command that
+    /// arrives on a leg we have already abandoned is not about the outing we
+    /// are recording now.
+    @Test("A stop addressed to an abandoned leg is ignored")
+    func aStopFromAnAbandonedLegIsIgnored() async {
+        let stub = WorkoutHealthKitStub()
+        let motion = FakeMotionSource()
+        motion.isAvailable = true
+        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source))
+        await store.start(activity: .walking)
+        await waitUntil { motion.isStreaming }
+        motion.deliver(estimate(.running, at: 60))
+        await waitUntil {
+            guard case .active(let metrics) = store.state else { return false }
+            return metrics.activity == .running
+        }
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+
+        await store.handle(.stop, from: stub.handleIDs[0])
+
+        guard case .active = store.state else {
+            Issue.record("the outing must survive a command aimed at a closed leg")
+            return
+        }
+    }
+
     // MARK: - A phone that is not there
 
     /// The ordinary case, not the exception. A wrist that cannot reach a phone
