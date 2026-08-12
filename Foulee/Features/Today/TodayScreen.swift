@@ -9,6 +9,11 @@ struct TodayScreen: View {
     @State private var store = TodayStore()
     @State private var hydration = HydrationStore()
     @State private var isWalking = false
+    /// The wrist's outing, shown instead of ours (issue #279). The store is not
+    /// owned here — `FouleeApp` observes it from process launch, because a
+    /// mirror can arrive while no UI is mounted at all.
+    @State private var isShowingMirroredWalk = false
+    private let mirroredSession = MirroredSessionStore.shared
     @State private var isShowingSummary = false
     @State private var isShowingSettings = false
     @State private var selectedMetric: WalkMetric?
@@ -66,6 +71,12 @@ struct TodayScreen: View {
                 // foulee://hydration — widget tap lands on the hydration card.
                 if url.host() == "hydration" { scrollToHydration = true }
             }
+            .mirroredWalkCover(
+                store: mirroredSession,
+                isPresented: $isShowingMirroredWalk,
+                isWalking: $isWalking,
+                scheme: preferredScheme
+            )
             .fullScreenCover(isPresented: $isWalking) {
                 ActiveWalkScreen(
                     minutesGoal: store.minutesGoal,
@@ -149,6 +160,7 @@ struct TodayScreen: View {
     private func heroCard(snapshot: TodaySnapshot) -> some View {
         TodayHeroCard(
             snapshot: snapshot,
+            isMirroring: mirroredSession.isMirroring,
             notificationsEnabled: preferences.notificationsEnabled,
             notificationsDenied: store.notificationsAuthorizationStatus == .denied,
             onStart: { startWalk() },
@@ -263,7 +275,20 @@ struct TodayScreen: View {
     /// Push the active walk sheet. Available from the hero even once today's
     /// goal is met (the card then also offers "Voir le résumé"), so a second
     /// walk can always be started.
+    /// Start on the phone — unless the wrist is already recording (issue #279).
+    ///
+    /// **The watch always wins**, and not by a coin toss: it is the only one of
+    /// the two HealthKit lets mirror, so a phone session beside it would be
+    /// invisible from there. Two overlapping `HKWorkout` records are also
+    /// plainly false, which App Store review has its own wording for.
+    ///
+    /// Nothing prevented this before the mirror existed — the phone had no way
+    /// of knowing.
     private func startWalk() {
+        guard !mirroredSession.isMirroring else {
+            isShowingMirroredWalk = true
+            return
+        }
         // Capture today's totals now so the post-walk overlay lands on the
         // right baseline (see TodayStore.registerFinishedWalk).
         store.walkWillStart()

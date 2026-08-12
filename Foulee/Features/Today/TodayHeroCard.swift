@@ -19,6 +19,11 @@ struct TodayHeroCard: View {
     @Environment(UserPreferences.self) private var preferences
 
     var snapshot: TodaySnapshot
+    /// An outing is already running on the wrist (issue #279). The card offers
+    /// to *watch* it rather than to start a second one — the watch is the only
+    /// device HealthKit lets mirror, so a phone session beside it would be
+    /// invisible from there and would leave two overlapping records in Santé.
+    var isMirroring = false
     var notificationsEnabled: Bool
     /// System permission is denied: the pref alone would lie ("activés" while
     /// iOS delivers nothing), so the bell surfaces the real state instead.
@@ -183,7 +188,9 @@ struct TodayHeroCard: View {
             ? AnyLayout(VStackLayout(spacing: 10))
             : AnyLayout(HStackLayout(spacing: 10))
         return layout {
-            if snapshot.hasWalkedToday {
+            if isMirroring {
+                PrimaryButton(title: "Séance en cours sur ta Watch", systemIcon: "applewatch", action: onStart)
+            } else if snapshot.hasWalkedToday {
                 // Goal already met: still let the user start another session —
                 // the single "Voir le résumé" button used to be the only option.
                 SecondaryButton(title: "Voir le résumé", systemIcon: FouleeIcon.sparkle, action: onSummary)

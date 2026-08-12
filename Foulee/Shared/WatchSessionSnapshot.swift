@@ -75,6 +75,10 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         isEnded = try container.decodeIfPresent(Bool.self, forKey: .isEnded) ?? false
     }
 
+    /// Drawn by `MirroredWalkScreen` — the phone's only view of a distance it
+    /// did not measure.
+    var distanceKm: Double { distanceMeters / 1_000 }
+
     /// How long the outing has run, read at `date`.
     ///
     /// Derived from a **date**, not carried as a duration, so the phone's clock
