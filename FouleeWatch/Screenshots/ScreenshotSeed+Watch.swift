@@ -55,14 +55,27 @@ extension ScreenshotSeed {
     /// **run**, detected inside a session started as a walk, which is the
     /// feature the wrist screen exists to show.
     ///
-    /// `activityTotals` stays **empty**, and that is the point. It briefly
-    /// carried a third of each figure, and the composed board advertised a
-    /// per-sport breakdown — « Course · 06:08 · 826 pas · 0,6 km · 36 kcal ».
-    /// The shipped app cannot produce that any more: HealthKit refuses a
-    /// subactivity of another sport (issue #256), so nothing segments a session
-    /// and there is nothing to total. A store screenshot promising a screen the
-    /// app never draws is worse than a plain one — it is a picture of a feature
-    /// that does not exist.
+    /// `activityTotals` is **derived from the legs**, not left empty and not
+    /// invented (issue #299).
+    ///
+    /// It was empty, and the justification had gone stale in a way that made
+    /// the board *shorter than the app*. The comment invoked issue #256 —
+    /// « nothing segments a session, so there is nothing to total » — but
+    /// issue #265 brought the legs back, and `applyOutingTotals` now fills this
+    /// on **every** ingest, leg in flight included. So the breakdown
+    /// is true from the first second on a wrist, the `countersText` line exists
+    /// in real life, and the 40 mm probe was measuring a page that did not have
+    /// it. Two « it fits with room to spare » conclusions rest on that
+    /// measurement.
+    ///
+    /// Derived rather than written out, so it cannot drift from the legs it is
+    /// supposed to total: this is exactly what the store computes for the sport
+    /// being done.
+    ///
+    /// The opposite failure is still the one to avoid. The seed once carried a
+    /// third of each figure and the composed board advertised a breakdown the
+    /// app could not produce — a picture of a feature that did not exist. The
+    /// rule has not changed, only which side of it the truth is on.
     static var watchSessionMetrics: WatchWorkoutMetrics {
         WatchWorkoutMetrics(
             elapsed: sessionElapsed,
@@ -71,6 +84,7 @@ extension ScreenshotSeed {
             activeCalories: sessionCalories,
             heartRate: sessionHeartRate,
             activity: .running,
+            activityTotals: WatchActivityTotals.of(.running, in: sessionLegs, at: instant),
             legs: sessionLegs
         )
     }

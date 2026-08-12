@@ -106,12 +106,25 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// to three zeros reads as a broken counter; « Course » alone reads as what
     /// it is — the sport, named, with no figures claimed.
     var activityHeadlineText: String {
-        guard hasMeasuredActivityTotals else { return activity.label }
+        guard showsActivityBreakdown else { return activity.label }
         return "\(activity.label) · \(activityTotals.elapsed.walkClockText)"
     }
 
-    /// Whether HealthKit has measured anything for the current sport.
-    var hasMeasuredActivityTotals: Bool { activityTotals != .zero }
+    /// Whether the current sport's own totals say anything the clock and the
+    /// tiles do not (issue #299).
+    ///
+    /// **Not merely « has HealthKit measured something ».** On a sortie that
+    /// has not changed sport there is one leg, so this sport's totals *are* the
+    /// outing's totals — « Course · 18:24 » under an 18:24 clock, and three
+    /// counters repeating the four tiles above them. The same figures twice.
+    ///
+    /// Same rule as `perSport`, and for the same reason: the block appears when
+    /// it has something to add, which is once the outing has been split.
+    ///
+    /// It also buys back the height that let the page overflow a 40 mm. That is
+    /// a consequence, not the reason — but it is how the defect was found, once
+    /// the capture seed stopped photographing a page shorter than the app.
+    var showsActivityBreakdown: Bool { legs.count > 1 && activityTotals != .zero }
 
     /// One sentence naming the current activity and its running totals, for
     /// VoiceOver (issue #250).
@@ -124,7 +137,7 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// Here rather than in the view so it is a pure function of the metrics,
     /// and so the wording is asserted rather than eyeballed.
     var activitySummaryText: String {
-        guard hasMeasuredActivityTotals else { return activity.label }
+        guard showsActivityBreakdown else { return activity.label }
         return "\(activity.label) : \(activityTotals.elapsed.walkClockText), "
             + "\(activityTotals.steps) pas, \(activityTotals.distanceKm.kmText(fractionDigits: 1)), "
             + "\(activityTotals.activeCalories) kcal"

@@ -190,12 +190,26 @@ struct WatchScreenshotModeTests {
         #expect(metrics.distanceMeters == ScreenshotSeed.sessionDistanceMeters)
         #expect(metrics.activeCalories == ScreenshotSeed.sessionCalories)
         #expect(metrics.heartRate == ScreenshotSeed.sessionHeartRate)
-        // The detected sport is shown; its breakdown is not, because the app
-        // cannot compute one since issue #256. A board that showed figures here
-        // would photograph a screen the shipped app never draws.
+        // The detected sport **and** its running totals, because the shipped
+        // app draws both from the first second (issue #299). Leaving these at
+        // zero made the board a page shorter than the app, and two « it fits »
+        // conclusions were drawn from photographing it.
         #expect(metrics.activity == .running)
-        #expect(metrics.activityTotals == .zero)
-        #expect(metrics.activityHeadlineText == "Course")
+        #expect(metrics.activityTotals != .zero)
+        #expect(metrics.showsActivityBreakdown)
+        #expect(metrics.activityHeadlineText == "Course · 06:20")
+    }
+
+    /// Derived from the legs rather than written out, so the two cannot drift:
+    /// what the seed totals for the sport being done is exactly what the store
+    /// would total for it.
+    @Test("The seeded totals are the running leg, to the unit")
+    func seededTotalsMatchTheRunningLeg() {
+        let metrics = ScreenshotSeed.watchSessionMetrics
+        let run = ScreenshotSeed.sessionLegs.last
+        #expect(metrics.activityTotals.steps == run?.steps)
+        #expect(metrics.activityTotals.distanceMeters == run?.distanceMeters)
+        #expect(metrics.activityTotals.activeCalories == run?.activeCalories)
     }
 
     /// The « Jambes » board (issue #276) photographs a **split** outing, so the

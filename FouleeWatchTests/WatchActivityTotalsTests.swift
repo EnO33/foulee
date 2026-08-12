@@ -137,9 +137,17 @@ struct WatchActivityTotalsTests {
 
     // MARK: - What it reads as
 
+    /// Two legs, because the block only appears on a sortie that has changed
+    /// sport (issue #299) — on one leg it would repeat the clock and the tiles.
+    /// These two tests are about the *wording*, so they set up the state the
+    /// wording is actually shown in.
     @Test("The spoken summary names the sport before its numbers")
     func theSummaryNamesTheSport() {
         var metrics = WatchWorkoutMetrics.empty(for: .running)
+        metrics.legs = [
+            segment(.walking, from: 0, to: 380, id: UUID()),
+            segment(.running, from: 380, to: 1_104, id: UUID())
+        ]
         metrics.activityTotals = WatchActivityTotals(
             elapsed: 724,
             steps: 1_480,
@@ -155,6 +163,10 @@ struct WatchActivityTotalsTests {
     @Test("The two displayed lines name the sport and its three counters")
     func theDisplayedLinesReadRight() {
         var metrics = WatchWorkoutMetrics.empty(for: .running)
+        metrics.legs = [
+            segment(.walking, from: 0, to: 380, id: UUID()),
+            segment(.running, from: 380, to: 1_104, id: UUID())
+        ]
         metrics.activityTotals = WatchActivityTotals(
             elapsed: 724,
             steps: 1_480,
@@ -267,5 +279,79 @@ struct WatchOutingBreakdownTests {
         // would have no way to know which figure to believe.
         #expect(summed == WatchActivityTotals.of(legs, at: start).elapsed)
         #expect(summed == 1_800)
+    }
+}
+
+/// When the current sport's own totals earn their place on screen (issue #299).
+///
+/// The block used to appear as soon as HealthKit had measured anything, which
+/// on a sortie that has not changed sport means it repeats the clock and the
+/// tiles above it — the same figures twice. It also made the page overflow a
+/// 40 mm once the capture seed stopped photographing a shorter version of it.
+@Suite("Activity breakdown visibility")
+struct WatchActivityBreakdownTests {
+    private let base = Date(timeIntervalSince1970: 1_754_000_000)
+
+    private func leg(
+        _ activity: SessionActivity,
+        from: TimeInterval,
+        to: TimeInterval,
+        metres: Double
+    ) -> WatchWorkoutSegment {
+        WatchWorkoutSegment(
+            id: UUID(),
+            activity: activity,
+            start: base.addingTimeInterval(from),
+            end: base.addingTimeInterval(to),
+            steps: 100,
+            distanceMeters: metres,
+            activeCalories: 10
+        )
+    }
+
+    private func metrics(_ legs: [WatchWorkoutSegment]) -> WatchWorkoutMetrics {
+        var metrics = WatchWorkoutMetrics.zero
+        metrics.legs = legs
+        metrics.activity = legs.last?.activity ?? .walking
+        metrics.activityTotals = WatchActivityTotals.of(metrics.activity, in: legs, at: .distantPast)
+        return metrics
+    }
+
+    /// One leg: this sport's totals *are* the outing's, so the block would say
+    /// « Course · 18:24 » under an 18:24 clock and repeat the four tiles.
+    @Test("A sortie that has not changed sport shows the sport, and nothing more")
+    func oneLegNamesTheSportOnly() {
+        let outing = metrics([leg(.running, from: 0, to: 1_104, metres: 1_830)])
+
+        #expect(outing.showsActivityBreakdown == false)
+        #expect(outing.activityHeadlineText == "Course")
+        #expect(outing.activitySummaryText == "Course")
+    }
+
+    /// Two legs: the running sport's share is genuinely not the outing's.
+    @Test("Once the outing is split, the sport's own share appears")
+    func twoLegsEarnTheBreakdown() {
+        let outing = metrics([
+            leg(.walking, from: 0, to: 724, metres: 1_000),
+            leg(.running, from: 724, to: 1_104, metres: 830)
+        ])
+
+        #expect(outing.showsActivityBreakdown)
+        #expect(outing.activityHeadlineText == "Course · 06:20")
+        #expect(outing.activitySummaryText.hasPrefix("Course : 06:20"))
+    }
+
+    /// A leg with nothing measured in it yet says nothing either — the guard is
+    /// on both halves, not just the count.
+    @Test("Two legs with nothing measured still show only the sport")
+    func nothingMeasuredShowsNothing() {
+        var outing = metrics([
+            leg(.walking, from: 0, to: 600, metres: 800),
+            leg(.running, from: 600, to: 900, metres: 500)
+        ])
+        outing.activityTotals = .zero
+
+        #expect(outing.showsActivityBreakdown == false)
+        #expect(outing.activityHeadlineText == "Course")
     }
 }
