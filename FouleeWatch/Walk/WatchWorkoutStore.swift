@@ -74,6 +74,10 @@ final class WatchWorkoutStore: NSObject {
     @ObservationIgnored var lastMovementSample: MovementSample?
     /// The wearer's recent speed, smoothed (issue #300).
     @ObservationIgnored var paceEstimator = PaceEstimator()
+    /// Kilometre boundaries, kept on the **outing** (issue #301): a kilometre
+    /// routinely spans a change of sport, and `splitLeg` clears what the leg
+    /// carries.
+    @ObservationIgnored var splitRecorder = SplitRecorder()
 
     init(
         healthKit: WatchWorkoutHealthKit = .live,
@@ -220,6 +224,7 @@ final class WatchWorkoutStore: NSObject {
         sessionHandle = handle
         lastMirrorSendAt = nil
         paceEstimator = PaceEstimator()
+        splitRecorder = SplitRecorder()
         await offerMirror(handle)
         finishedLegs = []
         legStartedAt = now
@@ -369,6 +374,8 @@ extension WatchWorkoutStore {
         metrics.timerBasis = now.addingTimeInterval(-outing.elapsed)
         metrics.activityTotals = WatchActivityTotals.of(currentActivity, in: legs, at: now)
         metrics.recentPace = recentPaceText(at: now)
+        splitRecorder.record(distanceMeters: outing.distanceMeters, elapsed: outing.elapsed)
+        metrics.splits = splitRecorder.splits
     }
 
     /// Refresh the totals on their own.

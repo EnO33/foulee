@@ -38,6 +38,9 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// so the screen stays a function of one value — and so the withholding
     /// rules can be asserted without a session.
     var recentPace: String?
+    /// Each kilometre of the outing and what it cost (issue #301). Empty until
+    /// the first is crossed.
+    var splits: [WalkSplit] = []
     /// Every leg of the outing, oldest first (issue #265).
     ///
     /// A change of sport ends one `HKWorkout` and opens another, so an outing
