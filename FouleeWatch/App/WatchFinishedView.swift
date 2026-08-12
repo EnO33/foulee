@@ -47,6 +47,9 @@ struct WatchFinishedView: View {
                 if !metrics.perSport.isEmpty {
                     breakdown
                 }
+                if !metrics.splits.isEmpty, !saveFailed {
+                    kilometres
+                }
                 if let reasonText {
                     reason(reasonText)
                 }
@@ -87,6 +90,44 @@ struct WatchFinishedView: View {
             }
         }
         .foregroundStyle(.secondary)
+    }
+
+    /// Each kilometre and what it cost (issue #301).
+    ///
+    /// **Here rather than on the session screen**, and not for want of room:
+    /// a list that grows every kilometre has no fixed height, and this screen
+    /// already scrolls by design (issue #241). It is also the only screen in
+    /// the app no App Store board photographs, so it costs no page, no swipe
+    /// and no seed.
+    ///
+    /// **Hidden when the save failed.** That path already carries an icon, a
+    /// two-line title, HealthKit's own message and two buttons, and
+    /// « Réessayer » is the only way to keep a sortie that did not land. A list
+    /// of kilometres pushing it further down would be splits winning an
+    /// argument against the workout itself.
+    ///
+    /// No sport beside a kilometre: a boundary is a fact of the outing, and one
+    /// that straddles a change of sport belongs to neither.
+    private var kilometres: some View {
+        VStack(spacing: 2) {
+            Divider()
+                .padding(.vertical, 2)
+            ForEach(metrics.splits) { split in
+                // mm:ss and never tenths: a boundary is interpolated between
+                // two deliveries, so the second it lands on is already the
+                // finest thing worth stating.
+                Text("km \(split.kilometre) · \(split.duration.walkClockText)")
+                    .font(.caption2)
+                    .monospacedDigit()
+            }
+        }
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            metrics.splits
+                .map { "Kilomètre \($0.kilometre) en \($0.duration.walkClockText)" }
+                .joined(separator: ", ")
+        )
     }
 
     /// The raw message, unwrapped and untranslated.
