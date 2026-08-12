@@ -43,17 +43,39 @@ struct PaceEstimator: Equatable, Sendable {
     static let staleAfter: TimeInterval = 20
     /// Slower than this is a pause somebody forgot to end, not a pace.
     static let slowestPace: TimeInterval = 30 * 60
-    /// The least a reading must add for the wearer to count as moving. Over a
-    /// three-second delivery even a slow stroll covers three metres, so this
-    /// separates standing from walking without being fooled by a bursty
-    /// delivery: one empty interval leaves the movement clock a few seconds
-    /// back, far inside `staleAfter`.
-    static let stillnessDistance: Double = 1
+    /// Below this speed the wearer is standing, not walking.
+    ///
+    /// **A speed, not a distance.** The first version of this compared the raw
+    /// metres between two deliveries against a metre, on the assumption that
+    /// deliveries arrive about every three seconds. Nothing guarantees that:
+    /// `ingest` fires for *any* collected type, heart rate included, and this
+    /// repository's own notes say HealthKit delivers « far more often than
+    /// there is movement to measure ». At two deliveries a second, a metre
+    /// demands more than 2 m/s — so every ordinary walk would have shown no
+    /// pace at all, for the whole outing, silently.
+    ///
+    /// 0,3 m/s is about 1 km/h: slower than any walk, faster than the drift of
+    /// a wrist held still.
+    static let stillnessSpeed: Double = 0.3
+
+    /// One reading, plus how much of the outing had been spent **moving** when
+    /// it arrived.
+    ///
+    /// That second axis is what keeps a red light out of the divisor. Wall time
+    /// counts the standing; moving time does not, so a window that happens to
+    /// span a pause still divides a distance by the time it actually took.
+    private struct Reading: Equatable {
+        var date: Date
+        var distanceMeters: Double
+        var movingTime: TimeInterval
+    }
 
     /// Cumulative readings, oldest first. Trimmed to the window plus the one
     /// sample just outside it, which is what lets a window *span* the boundary
     /// instead of starting again at it.
-    private var samples: [MovementSample] = []
+    private var samples: [Reading] = []
+    /// Seconds spent moving since the estimator was made.
+    private var movingTime: TimeInterval = 0
     private var speed: Double?
     private var smoothedAt: Date?
     /// When the wearer was last seen to move. The staleness clock, and not the
@@ -62,9 +84,15 @@ struct PaceEstimator: Equatable, Sendable {
 
     /// Take one cumulative reading of the session's counters.
     mutating func record(_ sample: MovementSample) {
-        let previous = samples.last
-        samples.append(sample)
-        trim(before: sample.date)
+        guard let previous = samples.last else {
+            samples = [Reading(date: sample.date, distanceMeters: sample.distanceMeters, movingTime: 0)]
+            return
+        }
+        let step = sample.date.timeIntervalSince(previous.date)
+        // Two readings stamped alike, or a clock that went backwards. Neither
+        // is evidence about speed.
+        guard step > 0 else { return }
+        let covered = sample.distanceMeters - previous.distanceMeters
 
         // **Judged on the latest interval, not on the window.** A window still
         // spanning the walk before a red light keeps producing a perfectly
@@ -72,44 +100,48 @@ struct PaceEstimator: Equatable, Sendable {
         // exactly the « figure that is right and has stopped being true » this
         // whole type exists to avoid. Readings keep arriving while standing;
         // only the counters stop.
-        //
-        // The filter is *frozen* rather than fed a zero: zeros take twenty to
-        // thirty seconds to climb out of, and that climb is the jump people
-        // complain about when they set off again.
-        let advanced = sample.distanceMeters - (previous?.distanceMeters ?? sample.distanceMeters)
-        guard advanced >= Self.stillnessDistance else { return }
+        let moving = covered / step >= Self.stillnessSpeed
+        if moving {
+            movingTime += step
+            movedAt = sample.date
+        }
+        samples.append(
+            Reading(date: sample.date, distanceMeters: sample.distanceMeters, movingTime: movingTime)
+        )
+        trim(before: sample.date)
+
+        // The filter is *frozen* while standing rather than fed a zero: zeros
+        // take twenty to thirty seconds to climb out of, and that climb is the
+        // jump people complain about when they set off again.
+        guard moving else { return }
 
         // Setting off after a real stop: the window behind us describes an
-        // effort that is over. Keeping it would blend a stroll before the
-        // light with a run after it.
-        if let movedAt, sample.date.timeIntervalSince(movedAt) > Self.staleAfter {
-            samples = [previous, sample].compactMap { $0 }
+        // effort that is over. Keeping it would blend a stroll before the light
+        // with a run after it. The moving-time axis already keeps the standing
+        // seconds out of the divisor — this is about the *effort*, not the
+        // arithmetic.
+        if let smoothedAt, sample.date.timeIntervalSince(smoothedAt) > Self.staleAfter {
+            samples = Array(samples.suffix(2))
             speed = nil
-            smoothedAt = nil
+            self.smoothedAt = nil
         }
 
-        guard let start = windowStart(endingAt: sample) else { return }
-        let elapsed = sample.date.timeIntervalSince(start.date)
-        let covered = sample.distanceMeters - start.distanceMeters
-        guard elapsed > 0, covered > 0 else { return }
+        guard let start = windowStart(endingAt: samples[samples.count - 1]) else { return }
+        // Moving time, never wall time: this is the whole point of the second
+        // axis. A fifteen-second stop used to count as fifteen seconds of
+        // running and doubled the pace on screen for half a minute afterwards.
+        let elapsed = samples[samples.count - 1].movingTime - start.movingTime
+        let distance = sample.distanceMeters - start.distanceMeters
+        guard elapsed > 0, distance > 0 else { return }
 
-        movedAt = sample.date
-        let raw = covered / elapsed
-        guard let previous = speed, let previousAt = smoothedAt else {
+        let raw = distance / elapsed
+        guard let previousSpeed = speed, let previousAt = smoothedAt else {
             speed = raw
             smoothedAt = sample.date
             return
         }
-        let step = sample.date.timeIntervalSince(previousAt)
-        // Re-seed rather than converge after a long gap: the stored value
-        // describes a pace from before the pause and is no evidence about now.
-        guard step < Self.staleAfter else {
-            speed = raw
-            smoothedAt = sample.date
-            return
-        }
-        let alpha = 1 - exp(-step / Self.smoothing)
-        speed = previous + alpha * (raw - previous)
+        let alpha = 1 - exp(-sample.date.timeIntervalSince(previousAt) / Self.smoothing)
+        speed = previousSpeed + alpha * (raw - previousSpeed)
         smoothedAt = sample.date
     }
 
@@ -144,7 +176,7 @@ struct PaceEstimator: Equatable, Sendable {
     /// **shortest** window that satisfies the distance, so the figure is as
     /// fresh as the accuracy allows. Falls back to the oldest sample held,
     /// which is the full 30 s.
-    private func windowStart(endingAt current: MovementSample) -> MovementSample? {
+    private func windowStart(endingAt current: Reading) -> Reading? {
         for sample in samples.reversed() where sample.date < current.date {
             if current.distanceMeters - sample.distanceMeters >= Self.windowDistance {
                 return sample

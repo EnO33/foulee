@@ -149,6 +149,110 @@ struct PaceEstimatorTests {
         #expect(minutesAndSeconds(pace) == "11'06\"")
     }
 
+    /// **The defect the first version shipped with, swept over its whole
+    /// range.** A stop shorter than the re-seed threshold used to stay inside
+    /// the window, so its standing seconds counted as running seconds: a 15 s
+    /// red light doubled the displayed pace for about half a minute afterwards.
+    ///
+    /// The curve was worse than merely wrong — it was **not monotonic**. A 15 s
+    /// stop was handled far worse than a 21 s one, which is the signature of an
+    /// uncovered interval rather than of a trade-off. Hence a sweep: a single
+    /// case would have left the cliff somewhere between two of them.
+    @Test(
+        "A stop of any length leaves the pace unharmed",
+        arguments: [3.0, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0, 24.0, 27.0]
+    )
+    func aStopOfAnyLengthIsSurvived(stop: TimeInterval) {
+        var estimator = PaceEstimator()
+        let before = run(&estimator, at: 3, for: 120)
+
+        var still = before.end
+        while still < before.end + stop {
+            still += 3
+            estimator.record(
+                MovementSample(
+                    date: base.addingTimeInterval(still),
+                    steps: 0,
+                    distanceMeters: before.distance
+                )
+            )
+        }
+
+        // Off again at the very same speed, reading the pace **as it happens**.
+        //
+        // Sampling the finished estimator at earlier dates would prove nothing:
+        // `pace(at:)` returns the stored speed and only checks staleness, so the
+        // transient right after the restart is invisible that way. The first
+        // version of this test did exactly that, and a deliberate regression
+        // walked straight through it.
+        var elapsed = still
+        var covered = before.distance
+        var worst: TimeInterval = 0
+        while elapsed < still + 30 {
+            elapsed += 3
+            covered += 9
+            estimator.record(
+                MovementSample(date: base.addingTimeInterval(elapsed), steps: 0, distanceMeters: covered)
+            )
+            if let pace = estimator.pace(at: base.addingTimeInterval(elapsed)) {
+                worst = max(worst, pace)
+            }
+        }
+        // 5'33"/km is 333 s. Anything past 360 is standing time leaking into
+        // the divisor.
+        #expect(worst < 360, "a \(Int(stop)) s stop must not inflate the pace")
+    }
+
+    // MARK: - Deliveries we do not control
+
+    /// `ingest` fires for **any** collected type, heart rate included, so the
+    /// interval between two readings is not ours to choose. The first version
+    /// compared raw metres against a metre and assumed three-second deliveries:
+    /// at two a second, that demanded more than 2 m/s, and every ordinary walk
+    /// showed no pace at all — for the whole outing, silently.
+    @Test("A slow walk reported twice a second still has a pace")
+    func fastDeliveriesDoNotHideAWalk() {
+        var estimator = PaceEstimator()
+        var elapsed: TimeInterval = 0
+        var covered = 0.0
+        // 1,2 m/s — an ordinary walk — sampled every half second, so each
+        // reading adds 0,6 m.
+        while elapsed < 120 {
+            elapsed += 0.5
+            covered += 0.6
+            estimator.record(
+                MovementSample(date: base.addingTimeInterval(elapsed), steps: 0, distanceMeters: covered)
+            )
+        }
+        #expect(minutesAndSeconds(estimator.pace(at: base.addingTimeInterval(elapsed))) == "13'53\"")
+    }
+
+    /// Two readings stamped alike, or a clock that stepped backwards. Neither
+    /// is evidence about speed, and dividing by either is a crash or a
+    /// nonsense.
+    @Test("Readings that do not advance the clock are ignored")
+    func aStillClockIsIgnored() {
+        var estimator = PaceEstimator()
+        let end = run(&estimator, at: 3, for: 60)
+        let stated = estimator.pace(at: base.addingTimeInterval(end.end))
+
+        estimator.record(
+            MovementSample(
+                date: base.addingTimeInterval(end.end),
+                steps: 0,
+                distanceMeters: end.distance + 50
+            )
+        )
+        estimator.record(
+            MovementSample(
+                date: base.addingTimeInterval(end.end - 30),
+                steps: 0,
+                distanceMeters: end.distance + 100
+            )
+        )
+        #expect(estimator.pace(at: base.addingTimeInterval(end.end)) == stated)
+    }
+
     // MARK: - Refusing to state a figure
 
     @Test("A crawl slower than thirty minutes a kilometre is withheld")
