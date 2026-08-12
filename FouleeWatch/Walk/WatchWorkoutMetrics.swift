@@ -163,7 +163,16 @@ struct WatchSportSummary: Equatable, Sendable, Identifiable {
 
     var id: SessionActivity { activity }
 
-    /// « Marche · 12:04 · 1,2 km ».
+    /// « Marche · 12:04 · 1,2 km · 12'04"/km » (issue #297).
+    ///
+    /// **The pace of a whole stretch is the honest one.** Over a sortie the
+    /// relative error of a wrist-estimated distance averages out and the
+    /// duration is exact — which is why this line gets a pace while a live
+    /// counter has to earn one (issue #300).
+    ///
+    /// Built rather than interpolated, because `paceText` says nothing under
+    /// 50 m: a stretch too short to divide ends after its distance instead of
+    /// carrying an empty separator.
     ///
     /// A plain `String`, and the figure is drawn beside it rather than
     /// interpolated into it. Interpolating a SwiftUI `Image` only works inside
@@ -172,6 +181,12 @@ struct WatchSportSummary: Equatable, Sendable, Identifiable {
     /// `SwiftUI.Image(SwiftUI.ImageProviderBox<…>)` — which is exactly what the
     /// first capture of this screen showed.
     var text: String {
-        "\(activity.label) · \(totals.elapsed.walkClockText) · \(totals.distanceKm.kmText(fractionDigits: 1))"
+        var parts = [
+            activity.label,
+            totals.elapsed.walkClockText,
+            totals.distanceKm.kmText(fractionDigits: 1)
+        ]
+        if let pace = totals.elapsed.paceText(overKm: totals.distanceKm) { parts.append(pace) }
+        return parts.joined(separator: " · ")
     }
 }

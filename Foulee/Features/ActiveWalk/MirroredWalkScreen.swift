@@ -83,6 +83,15 @@ struct MirroredWalkScreen: View {
                     tile("\(figures.activeCalories)", "kcal")
                     tile(figures.heartRate.map { "\($0)" } ?? "—", "bpm")
                 }
+                // The outing's average, the only pace honest enough to state:
+                // over a whole sortie the relative error of a wrist-estimated
+                // distance averages out and the duration is exact (issue #298).
+                if let pace = figures.averagePaceText {
+                    Label(pace, systemImage: "speedometer")
+                        .font(.subheadline)
+                        .monospacedDigit()
+                        .accessibilityLabel("Allure moyenne \(pace)")
+                }
                 freshness(figures)
             }
         } else {
