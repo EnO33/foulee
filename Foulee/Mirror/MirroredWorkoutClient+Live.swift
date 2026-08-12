@@ -1,5 +1,6 @@
 import os
 @preconcurrency import HealthKit
+@preconcurrency import WatchConnectivity
 
 /// Nothing is mirroring, so there is nobody to ask (issue #282). Ordinary, not
 /// exceptional: the wrist may have stopped a second before the tap landed.
@@ -37,7 +38,19 @@ extension MirroredWorkoutClient {
                     }
                 }
             },
-            send: { command in try await bridge.send(command) }
+            send: { command in try await bridge.send(command) },
+            startWatchSession: { activity in
+                let configuration = HKWorkoutConfiguration()
+                configuration.activityType = activity.hkActivityType
+                configuration.locationType = .outdoor
+                try await store.startWatchApp(toHandle: configuration)
+            },
+            // `WCSession` rather than HealthKit: it is the only one that knows
+            // whether there is an app to wake, and `PhoneWatchSync` already
+            // reads the same flag for the same reason.
+            isWatchAppInstalled: {
+                WCSession.isSupported() && WCSession.default.isWatchAppInstalled
+            }
         )
     }()
 }

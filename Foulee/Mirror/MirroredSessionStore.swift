@@ -118,6 +118,33 @@ final class MirroredSessionStore {
     /// Whether the wrist is recording something right now.
     var isMirroring: Bool { session != nil }
 
+    /// Whether there is a watch app to start a session on (issue #283).
+    var canStartOnWatch: Bool { client.isWatchAppInstalled() }
+
+    /// Wake the watch and ask it to start (issue #283).
+    ///
+    /// **The phone measures nothing.** It hands a configuration to the wrist,
+    /// which opens the session and mirrors it back — the same one-way street as
+    /// everything else here, taken from the other end.
+    ///
+    /// Why bother, when the phone can record a walk itself? Because the wrist
+    /// records a *better* one: real HealthKit samples, heart rate, and the
+    /// leg-by-leg split of issue #265, none of which the phone can produce.
+    ///
+    /// Nothing is assumed about the outcome. If the watch never wakes, no
+    /// mirror arrives and the screen simply never opens — which is why the
+    /// failure is logged rather than swallowed.
+    func startOnWatch(_ activity: SessionActivity) async {
+        do {
+            try await client.startWatchSession(activity)
+            FouleeLog.session.notice("démarrage demandé à la Watch")
+        } catch {
+            FouleeLog.session.error(
+                "démarrage Watch refusé : \(error.localizedDescription, privacy: .public)"
+            )
+        }
+    }
+
     /// Ask the wrist to end the outing (issue #282).
     ///
     /// **Nothing is changed here.** The phone does not end anything — it asks,

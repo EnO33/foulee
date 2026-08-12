@@ -7,6 +7,7 @@ struct WatchRootView: View {
     /// « Les deux » only: the question is on screen and nothing has started.
     /// Local to the idle route — a session in flight clears it.
     @State private var isChoosingActivity = false
+    private let pendingStart = WatchPendingStart.shared
 
     var body: some View {
         Group {
@@ -42,6 +43,21 @@ struct WatchRootView: View {
         .animation(.easeOut(duration: 0.25), value: store.state)
         .animation(.easeOut(duration: 0.25), value: isChoosingActivity)
         .task { await WatchWaterBackgroundDelivery.start() }
+        // A start asked for by the phone (issue #283). Drained on appear *and*
+        // watched, because both orders happen: the request may have launched
+        // this app, or landed while it was already on screen.
+        .task { startIfPhoneAsked() }
+        .onChange(of: pendingStart.activity) { _, _ in startIfPhoneAsked() }
+    }
+
+    /// Start what the phone asked for, if anything, and if nothing is running.
+    ///
+    /// The guard is not politeness: the phone can ask while a session is
+    /// already in flight — `startWatchApp` does not know what the wrist is
+    /// doing — and starting a second one would strand the first.
+    private func startIfPhoneAsked() {
+        guard case .idle = store.state, let activity = pendingStart.take() else { return }
+        begin(activity)
     }
 
     /// One place a session begins, whether the activity came from the synced

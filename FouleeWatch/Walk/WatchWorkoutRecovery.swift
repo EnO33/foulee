@@ -8,6 +8,22 @@ final class WatchAppDelegate: NSObject, WKApplicationDelegate {
     func handleActiveWorkoutRecovery() {
         WatchWorkoutRecovery.run()
     }
+
+    /// The phone asked for a session (issue #283).
+    ///
+    /// This is the whole of `startWatchApp(with:)`'s watch side: the system
+    /// wakes the app — launching it if need be — and hands over the
+    /// configuration. It arrives *before* any view exists, so it is parked
+    /// rather than acted on; `WatchRootView` is what can actually start a
+    /// session.
+    ///
+    /// A sport this app does not record is refused rather than folded into a
+    /// walk. Nothing else asks for one today, but stamping Santé with a sport
+    /// the wearer did not choose is permanent (issue #223).
+    func handle(_ workoutConfiguration: HKWorkoutConfiguration) {
+        guard let activity = SessionActivity(workoutConfiguration.activityType) else { return }
+        Task { @MainActor in WatchPendingStart.shared.request(activity) }
+    }
 }
 
 /// An `HKWorkoutSession` outlives the app process: after a crash, forced

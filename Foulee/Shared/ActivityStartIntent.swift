@@ -24,6 +24,19 @@ enum ActivityStartIntent: Equatable, Sendable {
     /// « Les deux »: ask before recording anything.
     case ask
 
+    /// The activity this intent starts, or `nil` when only the wearer can say.
+    ///
+    /// What « démarrer sur ma Watch » needs (issue #283):
+    /// `startWatchApp(toHandle:)` takes a concrete `HKWorkoutConfiguration`, so
+    /// there is nothing to hand it in « les deux ». Picking one would stamp
+    /// Santé with a sport nobody chose, and that stamp is permanent (#223) —
+    /// so the phone does not offer the shortcut at all, and the watch's own
+    /// picker (#224) stays the place the question is asked.
+    var activity: SessionActivity? {
+        guard case .start(let activity) = self else { return nil }
+        return activity
+    }
+
     init(mode: ActivityMode) {
         switch mode {
         case .walking: self = .start(.walking)
