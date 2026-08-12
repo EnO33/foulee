@@ -19,6 +19,14 @@ struct MirroredWorkoutClient: Sendable {
     /// Ask the wrist to do something (issue #282). Throws when there is no
     /// mirrored session to ask — the ordinary case when nothing is running.
     var send: @Sendable (MirrorCommand) async throws -> Void
+    /// Wake the watch app and ask it to start a session (issue #283).
+    ///
+    /// The phone never measures it: `startWatchApp(with:)` hands a
+    /// configuration to the wrist, which opens the session and mirrors it back.
+    /// A remote control again, from the other end.
+    var startWatchSession: @Sendable (SessionActivity) async throws -> Void
+    /// Whether there is a watch app to wake at all.
+    var isWatchAppInstalled: @Sendable () -> Bool
 }
 
 extension MirroredWorkoutClient: DependencyKey {
@@ -26,12 +34,16 @@ extension MirroredWorkoutClient: DependencyKey {
     /// that arrived out of nowhere would be a screen no user could reach.
     static let previewValue = MirroredWorkoutClient(
         events: { AsyncStream { $0.finish() } },
-        send: { _ in }
+        send: { _ in },
+        startWatchSession: { _ in },
+        isWatchAppInstalled: { false }
     )
 
     static let testValue = MirroredWorkoutClient(
         events: { AsyncStream { $0.finish() } },
-        send: { _ in }
+        send: { _ in },
+        startWatchSession: { _ in },
+        isWatchAppInstalled: { false }
     )
 }
 

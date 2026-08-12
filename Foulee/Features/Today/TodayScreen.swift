@@ -161,6 +161,14 @@ struct TodayScreen: View {
         TodayHeroCard(
             snapshot: snapshot,
             isMirroring: mirroredSession.isMirroring,
+            // Only when the mode already answers « quel sport ? ». In « les
+            // deux » the watch's own picker is where that is asked, and the
+            // stamp it produces is permanent (issues #223, #224).
+            canStartOnWatch: mirroredSession.canStartOnWatch && store.startIntent.activity != nil,
+            onStartOnWatch: {
+                guard let activity = store.startIntent.activity else { return }
+                Task { await mirroredSession.startOnWatch(activity) }
+            },
             notificationsEnabled: preferences.notificationsEnabled,
             notificationsDenied: store.notificationsAuthorizationStatus == .denied,
             onStart: { startWalk() },

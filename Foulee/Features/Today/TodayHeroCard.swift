@@ -24,6 +24,10 @@ struct TodayHeroCard: View {
     /// device HealthKit lets mirror, so a phone session beside it would be
     /// invisible from there and would leave two overlapping records in Santé.
     var isMirroring = false
+    /// A watch app is installed, so the outing can be measured at the wrist
+    /// instead (issue #283).
+    var canStartOnWatch = false
+    var onStartOnWatch: () -> Void = {}
     var notificationsEnabled: Bool
     /// System permission is denied: the pref alone would lie ("activés" while
     /// iOS delivers nothing), so the bell surfaces the real state instead.
@@ -190,6 +194,16 @@ struct TodayHeroCard: View {
         return layout {
             if isMirroring {
                 PrimaryButton(title: "Séance en cours sur ta Watch", systemIcon: "applewatch", action: onStart)
+            } else if canStartOnWatch {
+                // The wrist first, because it records a *better* outing: real
+                // HealthKit samples, heart rate, and the leg-by-leg split of
+                // issue #265, none of which the phone can produce.
+                //
+                // The phone's own start stays, as the secondary. Demoting it
+                // outright would be a behaviour change nobody has been able to
+                // try — nothing about this path is exercisable off a wrist.
+                PrimaryButton(title: "Démarrer sur ma Watch", systemIcon: "applewatch", action: onStartOnWatch)
+                SecondaryButton(title: "Sur l'iPhone", systemIcon: FouleeIcon.play, action: onStart)
             } else if snapshot.hasWalkedToday {
                 // Goal already met: still let the user start another session —
                 // the single "Voir le résumé" button used to be the only option.
