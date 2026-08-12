@@ -51,10 +51,30 @@ struct WatchWorkoutSegment: Equatable, Sendable, Identifiable {
     /// the distance reads as a leg that has not gone far yet, which is true,
     /// while « —'—"/km » reads as a broken counter.
     func lineText(at now: Date) -> String {
+        [effortText(at: now), rhythmText(at: now)]
+            .compactMap { $0 }
+            .joined(separator: " · ")
+    }
+
+    /// « 12:04 · 1,0 km » — what the leg cost.
+    ///
+    /// Split from the rhythm because the two together outgrow a 40 mm and wrap
+    /// **mid-unit**: the first capture of this row read « 7'37"/ » then « km »,
+    /// and « pas/ » then « min ». That is the « pa/s » of issue #261 by another
+    /// route. Two short lines each fit; one long line does not.
+    func effortText(at now: Date) -> String {
+        "\(elapsed(at: now).walkClockText) · \(distanceKm.kmText(fractionDigits: 1))"
+    }
+
+    /// « 7'37"/km · 165 pas/min » — how it was run. `nil` when the leg is too
+    /// short to divide for either.
+    func rhythmText(at now: Date) -> String? {
         let duration = elapsed(at: now)
-        var parts = [duration.walkClockText, distanceKm.kmText(fractionDigits: 1)]
-        if let pace = duration.paceText(overKm: distanceKm) { parts.append(pace) }
-        return parts.joined(separator: " · ")
+        let parts = [
+            duration.paceText(overKm: distanceKm),
+            cadenceText(steps: steps, over: duration)
+        ].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
     /// Fold several readings of the same session into one list.

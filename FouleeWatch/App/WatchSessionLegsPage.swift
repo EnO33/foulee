@@ -41,10 +41,12 @@ struct WatchSessionLegsPage: View {
 
     /// One leg: the sport on its own line, the figures under it.
     ///
-    /// Two lines rather than one, because one line of « Course · 12:04 ·
-    /// 1,2 km · 6'10"/km » is about twenty-five characters and a 40 mm wrist
-    /// gives roughly 150 pt to draw them in. Split, each line wraps only at the
-    /// largest Dynamic Type sizes instead of every time.
+    /// **Three lines**, not one: the sport, what the leg cost, and how it was
+    /// run. A 40 mm gives roughly 150 pt of width, and the first capture of a
+    /// row carrying pace *and* cadence on one line wrapped **mid-unit** —
+    /// « 7'37"/ » then « km », « pas/ » then « min ». That is the « pa/s » of
+    /// issue #261 arriving by another route, and the answer is the same one:
+    /// let the line break where a reader would break it.
     private func row(_ leg: WatchWorkoutSegment) -> some View {
         // The whole row rebuilds every second, and only the running leg has
         // anything to change — the closed ones return the same string from the
@@ -56,10 +58,16 @@ struct WatchSessionLegsPage: View {
                 // only when the whole thing is a single text interpolation.
                 Text("\(Image(systemName: leg.activity.icon)) \(leg.activity.label)")
                     .font(.caption.weight(.semibold))
-                Text(leg.lineText(at: context.date))
+                Text(leg.effortText(at: context.date))
                     .font(.caption2)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
+                if let rhythm = leg.rhythmText(at: context.date) {
+                    Text(rhythm)
+                        .font(.caption2)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("\(leg.activity.label) : \(leg.lineText(at: context.date))")

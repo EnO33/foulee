@@ -98,7 +98,13 @@ extension ScreenshotSeed {
     /// became a run of 06:20 — the outing the detection exists to recognise, and
     /// the one that leaves two records in Santé since issue #265.
     ///
-    /// **They add up to the totals above, exactly.** 1 650 + 830 = 2 480 pas,
+    /// **The step split is a cadence, not just an addition** (issue #302). It
+    /// used to be 1 650 / 830, which adds up correctly and describes a run at
+    /// 131 pas/min — which is not a run. Displaying the cadence is what exposed
+    /// it. At 1 435 / 1 045 the walk reads 120 and the run 165, and the strides
+    /// that follow (0,70 m walking, 0,79 m running at 7'40"/km) are ordinary.
+    ///
+    /// **They add up to the totals above, exactly.** 1 435 + 1 045 = 2 480 pas,
     /// 1 000 + 830 = 1 830 m, 60 + 48 = 108 kcal, 12:04 + 06:20 = 18:24. A
     /// viewer who checks the arithmetic on the board must find it right; a
     /// listing that does not add up is one a reviewer can notice.
@@ -125,7 +131,7 @@ extension ScreenshotSeed {
                 activity: .walking,
                 start: start,
                 end: boundary,
-                steps: 1_650,
+                steps: 1_435,
                 distanceMeters: 1_000,
                 activeCalories: 60
             ),
@@ -134,7 +140,7 @@ extension ScreenshotSeed {
                 activity: .running,
                 start: boundary,
                 end: end,
-                steps: 830,
+                steps: 1_045,
                 distanceMeters: 830,
                 activeCalories: 48
             )

@@ -63,10 +63,14 @@ struct WatchLegLineTests {
 
     // MARK: - The line
 
-    @Test("A closed leg states its duration, its distance and its pace")
+    @Test("A closed leg states its duration, its distance, its pace and its cadence")
     func closedLegReadsInFull() {
-        let leg = segment(from: 0, to: 724, metres: 1_000)
-        #expect(leg.lineText(at: base.addingTimeInterval(9_999)) == "12:04 · 1,0 km · 12'04\"/km")
+        var leg = segment(from: 0, to: 724, metres: 1_000)
+        leg.steps = 1_435
+        #expect(
+            leg.lineText(at: base.addingTimeInterval(9_999))
+                == "12:04 · 1,0 km · 12'04\"/km · 120\u{00A0}pas/min"
+        )
     }
 
     /// The whole reason `lineText` is a function. A stored property would have
@@ -86,5 +90,47 @@ struct WatchLegLineTests {
     func shortLegDropsThePace() {
         let leg = segment(from: 0, to: 15, metres: 20)
         #expect(leg.lineText(at: base) == "00:15 · 0,0 km")
+    }
+}
+
+/// Steps per minute (issue #302).
+///
+/// HealthKit has nothing to offer here — the only identifier carrying the word
+/// is `cyclingCadence` — so dividing the step count is not a fallback but the
+/// only road.
+@Suite("Cadence")
+struct CadenceTests {
+    @Test("A brisk walk reads around a hundred and twenty")
+    func aWalkReadsAsAWalk() {
+        // 1 435 pas en 724 s — la jambe de marche de la graine.
+        #expect(cadenceText(steps: 1_435, over: 724) == "120\u{00A0}pas/min")
+    }
+
+    @Test("A run reads around a hundred and sixty-five")
+    func aRunReadsAsARun() {
+        #expect(cadenceText(steps: 1_045, over: 380) == "165\u{00A0}pas/min")
+    }
+
+    /// Rounded to five: over a short stretch the step counter's own
+    /// quantisation is worth a dozen or so steps a minute on its own, and a
+    /// figure stated to the step would be showing that and calling it cadence.
+    @Test("The figure is rounded to five", arguments: [
+        (600, 300.0, "120\u{00A0}pas/min"),   // 120 exactly
+        (611, 300.0, "120\u{00A0}pas/min"),   // 122,2 → 120
+        (620, 300.0, "125\u{00A0}pas/min")    // 124 → 125
+    ])
+    func roundedToFive(steps: Int, elapsed: TimeInterval, expected: String) {
+        #expect(cadenceText(steps: steps, over: elapsed) == expected)
+    }
+
+    /// Nothing under ten seconds, and nothing without steps. A leg in flight
+    /// starts at zero of both.
+    @Test("Too short or too still says nothing", arguments: [
+        (100, 9.0),
+        (0, 600.0),
+        (0, 0.0)
+    ])
+    func nothingToDivide(steps: Int, elapsed: TimeInterval) {
+        #expect(cadenceText(steps: steps, over: elapsed) == nil)
     }
 }
