@@ -85,6 +85,11 @@ extension ScreenshotSeed {
             heartRate: sessionHeartRate,
             activity: .running,
             activityTotals: WatchActivityTotals.of(.running, in: sessionLegs, at: instant),
+            // The board must show the line the app shows (issue #299 taught
+            // that the hard way). Derived from the run leg — 830 m in 380 s is
+            // 7'37"/km — then quantised to five seconds the way a live figure
+            // is, so the planche cannot claim a resolution the screen does not.
+            recentPace: paceText(secondsPerKm: sessionRunElapsed / (830 / 1_000), roundedTo: 5),
             legs: sessionLegs
         )
     }

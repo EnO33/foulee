@@ -30,10 +30,10 @@ final class WatchWorkoutStore: NSObject {
     /// this callback about the leg in flight? » from it (issue #290) — and that
     /// question belongs next to the delegates that ask it, not here.
     @ObservationIgnored var sessionHandle: WatchWorkoutSessionHandle?
-    @ObservationIgnored private let detection: WatchActivityDetection
+    @ObservationIgnored let detection: WatchActivityDetection
     /// What detection says is happening right now — the source of the sport
     /// named on screen (issue #250).
-    @ObservationIgnored private var currentActivity: SessionActivity = .walking
+    @ObservationIgnored var currentActivity: SessionActivity = .walking
     /// The legs of this outing that are already saved as their own `HKWorkout`
     /// (issue #265).
     ///
@@ -68,7 +68,12 @@ final class WatchWorkoutStore: NSObject {
     /// rather than replaced on every batch: HealthKit delivers far more often
     /// than there is movement to measure, and a window of half a second divides
     /// into a meaningless cadence.
-    @ObservationIgnored private var lastMovementSample: MovementSample?
+    ///
+    /// Internal, like `detection` above, because `WatchWorkoutStore+Pace` reads
+    /// the same stream (issue #300).
+    @ObservationIgnored var lastMovementSample: MovementSample?
+    /// The wearer's recent speed, smoothed (issue #300).
+    @ObservationIgnored var paceEstimator = PaceEstimator()
 
     init(
         healthKit: WatchWorkoutHealthKit = .live,
@@ -214,6 +219,7 @@ final class WatchWorkoutStore: NSObject {
         guard let handle else { return }
         sessionHandle = handle
         lastMirrorSendAt = nil
+        paceEstimator = PaceEstimator()
         await offerMirror(handle)
         finishedLegs = []
         legStartedAt = now
@@ -339,21 +345,6 @@ extension WatchWorkoutStore {
     /// and they cost nothing new: these are the counters already driving the
     /// screen. Both feed the same detector, so nothing about the decision
     /// depends on which noticed first.
-    private func classifyMovement(steps: Int, distanceMeters: Double, at now: Date) {
-        let sample = MovementSample(date: now, steps: steps, distanceMeters: distanceMeters)
-        guard let previous = lastMovementSample else {
-            lastMovementSample = sample
-            return
-        }
-        guard let observation = MovementClassifier.observation(from: previous, to: sample) else {
-            // Not enough of a change to read. Keep the older sample so the
-            // window keeps widening rather than restarting on every batch.
-            return
-        }
-        lastMovementSample = sample
-        detection.ingest(observation)
-    }
-
     private func beginActivityDetection(from activity: SessionActivity) {
         let now = Date.now
         currentActivity = activity
@@ -377,6 +368,7 @@ extension WatchWorkoutStore {
         // on its own between batches (issue #266).
         metrics.timerBasis = now.addingTimeInterval(-outing.elapsed)
         metrics.activityTotals = WatchActivityTotals.of(currentActivity, in: legs, at: now)
+        metrics.recentPace = recentPaceText(at: now)
     }
 
     /// Refresh the totals on their own.
