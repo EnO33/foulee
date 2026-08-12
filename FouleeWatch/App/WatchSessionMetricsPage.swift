@@ -51,12 +51,19 @@ struct WatchSessionMetricsPage: View {
     /// which is which. The big clock stays the session; this reads as a detail
     /// of it.
     ///
-    /// **Two flowing lines of text, not tiles, and not a row of columns.** The
-    /// first attempt gave each counter an equal share of the width, which on a
-    /// 40 mm cut « pas » into « pa / s » and « kcal » into « kc / al » — at the
-    /// *default* text size, before Dynamic Type entered into it. A paragraph
-    /// wraps at its separators instead, so the largest sizes cost extra lines
-    /// rather than legibility.
+    /// **One line, since issue #299.** It used to carry the sport's three
+    /// counters underneath — « 830 pas  0,8 km  48 kcal » — and that line has
+    /// been redundant since issue #276 gave the legs a page of their own, which
+    /// shows the same breakdown *per leg* and with a pace besides.
+    ///
+    /// Redundant, and unaffordable: with the capture seed telling the truth
+    /// about a split outing, those three counters pushed « bpm » off the bottom
+    /// of a 40 mm. The capture sentinel caught it, which is what that sentinel
+    /// is for.
+    ///
+    /// What stays is the line that answers « est-ce que la montre a compris que
+    /// je cours ? », and the sport's own elapsed beside it — one line, and the
+    /// only thing here the tiles above cannot say.
     private var currentActivity: some View {
         VStack(spacing: 3) {
             // The `Divider()` that used to open this block is gone, and it is
@@ -73,11 +80,6 @@ struct WatchSessionMetricsPage: View {
             Text("\(Image(systemName: metrics.activity.icon)) \(metrics.activityHeadlineText)")
                 .font(.footnote.weight(.semibold))
                 .monospacedDigit()
-            if metrics.hasMeasuredActivityTotals {
-                Text(metrics.activityTotals.countersText)
-                    .font(.caption2)
-                    .monospacedDigit()
-            }
         }
         .multilineTextAlignment(.center)
         .foregroundStyle(.secondary)

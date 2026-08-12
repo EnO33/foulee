@@ -298,6 +298,12 @@ the output, nothing tracked by git):
   it fit was two-line metric tiles, a 34 pt clock and no divider — all of it
   verified on `appstore-screenshots/raw/probe-40mm/watch-03-session.png`, not on
   paper.
+- **The capture seed must draw what the app draws, or the probe measures
+  nothing.** Issue #299: the seed left `activityTotals` empty, so the board
+  photographed a « Séance » page one line shorter than the one on a wrist — and
+  two « it fits with room to spare » conclusions were drawn from it. With the
+  seed telling the truth, the page overflowed a 40 mm and the capture sentinel
+  caught it. Any figure the app fills from the first ingest belongs in the seed.
 - **Run the 40 mm probe whenever the session pager changes.** It is not a
   formality. Issue #274 shipped the pager on the *vertical* axis; issue #276's
   probe run found that a swipe on a 40 mm never left the first page, because the
