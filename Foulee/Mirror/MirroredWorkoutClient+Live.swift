@@ -92,6 +92,34 @@ private final class MirrorBridge: NSObject, HKWorkoutSessionDelegate, @unchecked
         continuation.yield(.ended)
     }
 
+    /// Figures pushed by the wrist (issue #278).
+    ///
+    /// **An array**, not one payload: HealthKit caches what a mirrored session
+    /// sends and hands over everything that accumulated since the last wake, so
+    /// a single delivery routinely carries several minutes of snapshots. Each is
+    /// a complete state, so they can simply all be yielded — the store keeps the
+    /// newest by `sentAt` and drops the rest.
+    ///
+    /// Not filtered by session on purpose, unlike the state callbacks. A leg
+    /// that was replaced a second ago may still deliver figures that are the
+    /// freshest the phone has, and `sentAt` already decides which wins.
+    func workoutSession(
+        _ workoutSession: HKWorkoutSession,
+        didReceiveDataFromRemoteWorkoutSession data: [Data]
+    ) {
+        let decoder = JSONDecoder()
+        for payload in data {
+            guard let snapshot = try? decoder.decode(WatchSessionSnapshot.self, from: payload) else {
+                // A payload from a build this one does not understand. The
+                // decoder is written to degrade rather than throw, so reaching
+                // here means something worse than a new field.
+                FouleeLog.session.error("snapshot illisible reçu de la Watch")
+                continue
+            }
+            continuation.yield(.snapshot(snapshot))
+        }
+    }
+
     func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
         FouleeLog.session.error(
             "miroir en échec : \(error.localizedDescription, privacy: .public)"

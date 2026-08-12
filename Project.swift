@@ -318,6 +318,11 @@ let project = Project(
                 // one `log stream` follows an outing across the two devices
                 // (issue #273).
                 "Foulee/Shared/FouleeLog.swift",
+                // The figures the wrist states to the phone (issue #278). Both
+                // ends compile the same type, so a field can only ever be added
+                // in one place — the tolerant decoder handles the window where
+                // one app has been updated and the other has not.
+                "Foulee/Shared/WatchSessionSnapshot.swift",
                 "Foulee/Shared/WatchSyncPayload.swift",
                 "Foulee/Shared/WatchComplicationKind.swift",
                 "Foulee/Shared/WatchComplicationCache.swift",

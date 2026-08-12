@@ -131,6 +131,31 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     }
 }
 
+extension WatchWorkoutMetrics {
+    /// These figures, as the phone will read them (issue #278).
+    ///
+    /// Built from the metrics alone — no store state — so what the wrist sends
+    /// is a pure function of what the wrist shows, and can be asserted without
+    /// a session.
+    ///
+    /// `outingStartedAt` comes from `timerBasis`, which is already the instant
+    /// the outing's clock would have read zero. Falling back to `now - elapsed`
+    /// covers the finished session, where the basis is deliberately cleared so
+    /// the recap stops counting.
+    func snapshot(at now: Date, isEnded: Bool) -> WatchSessionSnapshot {
+        WatchSessionSnapshot(
+            sentAt: now,
+            outingStartedAt: timerBasis ?? now.addingTimeInterval(-elapsed(at: now)),
+            activity: activity,
+            steps: steps,
+            distanceMeters: distanceMeters,
+            activeCalories: activeCalories,
+            heartRate: heartRate,
+            isEnded: isEnded
+        )
+    }
+}
+
 /// One sport's share of an outing, as the summary states it (issue #265).
 struct WatchSportSummary: Equatable, Sendable, Identifiable {
     var activity: SessionActivity

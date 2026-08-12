@@ -8,9 +8,8 @@ import SwiftUI
 /// CMPedometer estimates the iPhone target relies on. The HealthKit calls
 /// go through the injectable `WatchWorkoutHealthKit` facade.
 ///
-/// State is a tiny three-case enum so the view binds declaratively.
-/// Errors funnel through a single boundary (`runOrTrap`); the rest of the
-/// store is happy-path.
+/// State is a tiny three-case enum so the view binds declaratively. Errors
+/// funnel through a single boundary (`runOrTrap`); the rest is happy-path.
 @MainActor
 @Observable
 final class WatchWorkoutStore: NSObject {
@@ -63,11 +62,12 @@ final class WatchWorkoutStore: NSObject {
     /// boundary, so waiting costs no accuracy: the split, when it happens, is
     /// back-dated to where the sport actually changed.
     @ObservationIgnored private var pendingSplit: ActivitySwitchDetector.Switch?
-    /// The last counters the classifier of issue #267 was able to read.
-    ///
-    /// Kept rather than replaced on every batch: HealthKit delivers far more
-    /// often than there is movement to measure, and a window of half a second
-    /// divides into a meaningless cadence.
+    /// When a snapshot last went to the phone; nil until the first (issue #278).
+    @ObservationIgnored var lastMirrorSendAt: Date?
+    /// The last counters the classifier of issue #267 was able to read. Kept
+    /// rather than replaced on every batch: HealthKit delivers far more often
+    /// than there is movement to measure, and a window of half a second divides
+    /// into a meaningless cadence.
     @ObservationIgnored private var lastMovementSample: MovementSample?
 
     init(
@@ -143,14 +143,6 @@ final class WatchWorkoutStore: NSObject {
         guard case .active(var metrics) = state, let handle = sessionHandle else { return }
         detection.stop()
         let end = Date.now
-        handle.end()
-        let saved = await runOrTrap("enregistrement de la séance") {
-            try await handle.endCollection(end)
-            try await handle.finishWorkout()
-            return true as Bool
-        }
-        if saved == true { sessionHandle = nil }
-
         // Close the leg in flight so every leg of the outing has an end, and
         // the summary can give each sport its own figures (issue #265).
         finishedLegs.append(legInFlight(endingAt: end))
@@ -159,7 +151,17 @@ final class WatchWorkoutStore: NSObject {
         // No basis: the summary shows the final duration, not a clock that
         // keeps running (issue #266).
         metrics.timerBasis = nil
+        // **Before** the session is torn down: sending needs a live one, and
+        // this is the phone's only word that the outing is over (issue #278).
+        await mirrorNow(metrics, at: end, isEnded: true)
+        handle.end()
+        let saved = await runOrTrap("enregistrement de la séance") {
+            try await handle.endCollection(end)
+            try await handle.finishWorkout()
+            return true as Bool
+        }
         state = .ended(metrics, saveFailed: saved != true)
+        if saved == true { sessionHandle = nil }
     }
 
     /// Second attempt at persisting the workout after a failed `stop()`.
@@ -211,6 +213,7 @@ final class WatchWorkoutStore: NSObject {
         }
         guard let handle else { return }
         sessionHandle = handle
+        lastMirrorSendAt = nil
         await offerMirror(handle)
         finishedLegs = []
         legStartedAt = now
@@ -257,7 +260,10 @@ final class WatchWorkoutStore: NSObject {
         )
         state = .active(metrics)
         classifyMovement(steps: metrics.steps, distanceMeters: metrics.distanceMeters, at: now)
-        Task { await self.splitIfDue(at: now) }
+        Task {
+            await self.splitIfDue(at: now)
+            await self.mirrorIfDue(at: now)
+        }
     }
 
     /// A failed session is dead mid-walk: land on the summary with the save
@@ -283,6 +289,8 @@ final class WatchWorkoutStore: NSObject {
         detection.stop()
         guard case .active(let metrics) = state else { return }
         state = .ended(metrics, saveFailed: true)
+        // Same debt again — a session that died on its own (issue #278).
+        Task { await mirrorNow(metrics, at: .now, isEnded: true) }
     }
 
     private func sumDouble(_ statistics: HKStatistics?, unit: HKUnit) -> Double {
@@ -353,14 +361,6 @@ extension WatchWorkoutStore {
             self?.applySwitch(confirmed)
         }
     }
-
-    /// The shortest stretch that deserves a workout of its own.
-    ///
-    /// Chosen with the user, and low on purpose: they would rather tidy an
-    /// occasional stray workout than lose the accuracy of a boundary. Below
-    /// this a leg is shorter than the gap between two readings — noise, not an
-    /// observation.
-    static let minimumLegDuration: TimeInterval = 15
 
     /// Name the sport being done and total the **outing** — every leg, not the
     /// one in flight (issue #265).
@@ -464,7 +464,7 @@ extension WatchWorkoutStore {
 
         guard closed == true else {
             // The builder is still alive, so « Réessayer » can still finish it.
-            endOuting(saveFailed: true)
+            await endOuting(saveFailed: true)
             return
         }
         sessionHandle = nil
@@ -473,13 +473,14 @@ extension WatchWorkoutStore {
             try await healthKit.startSession(Self.configuration(for: activity), boundary, self)
         }
         guard let next else {
-            endOuting(saveFailed: false)
+            await endOuting(saveFailed: false)
             return
         }
         sessionHandle = next
         // Each leg is its own session, so each one has to be offered again —
         // the mirror does not survive the session it was opened on (#277).
         await offerMirror(next)
+        await mirrorSwitch()
         legStartedAt = boundary
         legActivity = activity
         legIdentity = UUID()
@@ -488,9 +489,12 @@ extension WatchWorkoutStore {
     }
 
     /// End the outing from inside a split that could not continue.
-    private func endOuting(saveFailed: Bool) {
+    private func endOuting(saveFailed: Bool) async {
         detection.stop()
         guard case .active(let metrics) = state else { return }
+        // Same debt as `stop()`: an outing that died here used to stay « en
+        // cours » on the phone until the snapshot went stale (issue #278).
+        await mirrorNow(metrics, at: .now, isEnded: true)
         state = .ended(metrics, saveFailed: saveFailed)
     }
 }

@@ -22,6 +22,7 @@ private final class ConfigurationRecorder {
                     sessionID: ObjectIdentifier(token),
                     builderID: ObjectIdentifier(token),
                     startMirroring: {},
+                    sendToRemote: { _ in },
                     end: { _ = token },
                     endCollection: { _ in },
                     finishWorkout: {},

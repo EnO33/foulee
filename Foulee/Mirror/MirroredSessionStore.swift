@@ -32,6 +32,27 @@ final class MirroredSessionStore {
     /// goes idle.
     private(set) var outingStartedAt: Date?
 
+    /// The last figures the wrist stated (issue #278).
+    ///
+    /// `nil` while the phone knows a session is running but has not been told
+    /// any numbers yet — which is a real state, not a transient one: HealthKit
+    /// may take minutes to deliver the first batch. The screen says « en
+    /// attente » rather than drawing zeros that look measured.
+    private(set) var figures: WatchSessionSnapshot?
+
+    /// The newest `sentAt` ever seen, kept **across outings**.
+    ///
+    /// Separate from `figures` because the two have different lifetimes, and
+    /// conflating them was a real bug: clearing the figures at the end of an
+    /// outing also cleared the high-water mark, so the first stale snapshot to
+    /// arrive afterwards — and HealthKit delivers in *batches*, so there are
+    /// usually several in flight — would be accepted and put a finished session
+    /// back on screen.
+    ///
+    /// Never reset. A later outing sends later dates by construction, so a
+    /// monotonic bound costs nothing and cannot lock anything out.
+    @ObservationIgnored private var newestSentAt: Date?
+
     @ObservationIgnored
     @Dependency(\.mirroredWorkout) private var client
 
@@ -52,10 +73,46 @@ final class MirroredSessionStore {
             // while the wrist was idle starts a new one.
             if outingStartedAt == nil { outingStartedAt = mirrored.startedAt }
             session = mirrored
+        case .snapshot(let snapshot):
+            apply(snapshot)
         case .ended:
-            session = nil
-            outingStartedAt = nil
+            clear()
         }
+    }
+
+    /// Newest wins, and the outing's own clock comes from the wrist rather than
+    /// from the leg the phone happens to be mirroring.
+    ///
+    /// Out-of-order arrivals are ordinary here: HealthKit hands over everything
+    /// that accumulated since the last wake, and promises delivery rather than
+    /// sequence. Comparing `sentAt` is what keeps a stale batch from rewinding
+    /// the counters on screen.
+    private func apply(_ snapshot: WatchSessionSnapshot) {
+        if let newest = newestSentAt, newest >= snapshot.sentAt { return }
+        newestSentAt = snapshot.sentAt
+        figures = snapshot
+        outingStartedAt = snapshot.outingStartedAt
+        // Figures can arrive before — or instead of — the mirror that should
+        // have announced the session. Believing them is better than showing
+        // nothing while the wrist is plainly recording.
+        if session == nil, !snapshot.isEnded {
+            session = MirroredSession(
+                startedAt: snapshot.outingStartedAt,
+                activity: snapshot.activity
+            )
+        }
+        session?.activity = snapshot.activity
+        // The wrist saying so is the end. The alternative — an
+        // `HKWorkoutType` observer in `.immediate` — fires on every
+        // `finishWorkout()` since issue #265, so it would announce the end of
+        // the outing at the first walk→run switch.
+        if snapshot.isEnded { clear() }
+    }
+
+    private func clear() {
+        session = nil
+        outingStartedAt = nil
+        figures = nil
     }
 
     /// Whether the wrist is recording something right now.
