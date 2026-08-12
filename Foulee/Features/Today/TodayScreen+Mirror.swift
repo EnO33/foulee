@@ -22,7 +22,17 @@ extension View {
         // and ends the Live Activity. A `discard()` of our own would duplicate
         // an exit path that is already correct.
         .onChange(of: store.isMirroring) { _, mirroring in
-            guard mirroring, isWalking.wrappedValue else { return }
+            guard mirroring else {
+                // The wrist finished — by « Arrêter la séance » here (issue
+                // #282) or on the watch itself. Either way the screen has
+                // nothing left to show, and it closes on the *outcome* rather
+                // than on the tap: `stop()` still has to fold and save, and can
+                // fail. Dismissing on the tap would claim a result the phone
+                // cannot know.
+                isPresented.wrappedValue = false
+                return
+            }
+            guard isWalking.wrappedValue else { return }
             isWalking.wrappedValue = false
             isPresented.wrappedValue = true
         }

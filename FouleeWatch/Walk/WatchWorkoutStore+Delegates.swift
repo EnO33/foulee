@@ -34,6 +34,26 @@ extension WatchWorkoutStore: HKWorkoutSessionDelegate {
             self?.handleSessionFailure(message, from: session)
         }
     }
+
+    /// A request from the phone (issue #282).
+    ///
+    /// **An array**, like the phone's side: HealthKit caches and delivers in
+    /// batches. Duplicates are harmless — `stop()` guards on `.active`, so the
+    /// second one is a no-op.
+    nonisolated func workoutSession(
+        _ workoutSession: HKWorkoutSession,
+        didReceiveDataFromRemoteWorkoutSession data: [Data]
+    ) {
+        let decoder = JSONDecoder()
+        let commands = data.compactMap { try? decoder.decode(MirrorCommand.self, from: $0) }
+        guard !commands.isEmpty else { return }
+        let session = ObjectIdentifier(workoutSession)
+        Task { @MainActor [weak self] in
+            for command in commands {
+                await self?.handle(command, from: session)
+            }
+        }
+    }
 }
 
 extension WatchWorkoutStore: HKLiveWorkoutBuilderDelegate {

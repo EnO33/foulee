@@ -37,6 +37,29 @@ extension WatchWorkoutStore {
         await mirrorNow(metrics, at: now, isEnded: false)
     }
 
+    /// Carry out what the phone asked (issue #282).
+    ///
+    /// It goes through `stop()`, which is the point of the whole exercise:
+    /// ending the session from here would skip closing the leg in flight,
+    /// folding the outing's figures, telling the phone it is over, saving, and
+    /// keeping the builder alive for « Réessayer ». The phone holds a remote
+    /// control, not a second engine.
+    ///
+    /// Filtered by leg like every other callback (issue #290): a command that
+    /// arrives on a session we have already abandoned is not about the outing
+    /// we are recording now.
+    func handle(_ command: MirrorCommand, from session: ObjectIdentifier?) async {
+        guard isCurrentLeg(session: session) else {
+            FouleeLog.session.notice("commande ignorée, jambe abandonnée")
+            return
+        }
+        switch command {
+        case .stop:
+            FouleeLog.session.notice("arrêt demandé par l'iPhone")
+            await stop()
+        }
+    }
+
     /// The sport changed — say so at once rather than let the phone name the
     /// previous one for up to an interval.
     ///

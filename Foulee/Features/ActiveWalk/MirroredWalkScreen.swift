@@ -26,6 +26,7 @@ struct MirroredWalkScreen: View {
                 VStack(spacing: 24) {
                     clock
                     figures
+                    stopButton
                     origin
                 }
                 .padding(.horizontal, 20)
@@ -131,8 +132,26 @@ struct MirroredWalkScreen: View {
         .accessibilityLabel("\(value) \(label)")
     }
 
-    /// Says where the session lives, so « pourquoi je ne peux pas l'arrêter
-    /// d'ici ? » has an answer on screen rather than in a support thread.
+    /// Ends the outing — on the wrist (issue #282).
+    ///
+    /// The screen does not close on the tap. It closes when the watch says the
+    /// outing is over, because until then it is not: `stop()` still has to fold
+    /// the figures and save, and it can fail and offer « Réessayer ». Dismissing
+    /// early would claim an outcome the phone has no way of knowing.
+    private var stopButton: some View {
+        Button(role: .destructive) {
+            Task { await store.requestStop() }
+        } label: {
+            Label("Arrêter la séance", systemImage: "stop.fill")
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+        }
+        .buttonStyle(.borderedProminent)
+    }
+
+    /// Says where the session lives, so « pourquoi ça s'arrête depuis ma
+    /// montre ? » has an answer on screen rather than in a support thread.
     private var origin: some View {
         Label("Mesurée par ta Apple Watch", systemImage: "applewatch")
             .font(.footnote)
