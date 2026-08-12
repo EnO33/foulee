@@ -32,6 +32,12 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// Everything measured while doing `activity`, since the session started —
     /// not since the last switch. See `WatchActivityTotals`.
     var activityTotals: WatchActivityTotals = .zero
+    /// « 5'25"/km », or `nil` when there is nothing honest to say (issue #300).
+    ///
+    /// Carried on the snapshot rather than pulled from the store by the view,
+    /// so the screen stays a function of one value — and so the withholding
+    /// rules can be asserted without a session.
+    var recentPace: String?
     /// Every leg of the outing, oldest first (issue #265).
     ///
     /// A change of sport ends one `HKWorkout` and opens another, so an outing
@@ -96,9 +102,15 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
         return max(0, date.timeIntervalSince(timerBasis))
     }
 
-    /// « Course · 12:04 » — the sport being done and how long it has added up
-    /// to across the session. Just « Course » when nothing has been measured
-    /// for it yet.
+    /// « Course · 7'37"/km » — the sport being done and how fast, right now.
+    /// Just « Course » when there is no pace to state (issue #300).
+    ///
+    /// **The pace took the place of this sport's elapsed time**, and only one
+    /// of them fits: three parts on this line wrap on a 40 mm, and the capture
+    /// sentinel said so rather than letting it ship. The elapsed lost, because
+    /// « depuis combien de temps je cours ? » is answered one swipe away on the
+    /// legs page — with a pace per leg besides — while « à quelle allure je
+    /// vais ? » is answered nowhere else at all.
     ///
     /// The clock is dropped rather than shown at zero, and the counters below
     /// it disappear for the same reason: since issue #256 nothing segments the
@@ -106,8 +118,8 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// to three zeros reads as a broken counter; « Course » alone reads as what
     /// it is — the sport, named, with no figures claimed.
     var activityHeadlineText: String {
-        guard showsActivityBreakdown else { return activity.label }
-        return "\(activity.label) · \(activityTotals.elapsed.walkClockText)"
+        guard let recentPace else { return activity.label }
+        return "\(activity.label) · \(recentPace)"
     }
 
     /// Whether the current sport's own totals say anything the clock and the

@@ -80,6 +80,7 @@ struct WatchSessionMetricsPage: View {
             Text("\(Image(systemName: metrics.activity.icon)) \(metrics.activityHeadlineText)")
                 .font(.footnote.weight(.semibold))
                 .monospacedDigit()
+
         }
         .multilineTextAlignment(.center)
         .foregroundStyle(.secondary)

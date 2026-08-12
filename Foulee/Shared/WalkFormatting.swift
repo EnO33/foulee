@@ -40,6 +40,21 @@ extension TimeInterval {
     }
 }
 
+/// « 5'25"/km » from a pace already in seconds per kilometre, rounded to
+/// `step` seconds (issue #300).
+///
+/// Distinct from `paceText(overKm:)`, which divides a whole stretch and can
+/// afford the second it lands on. This one states a *live* figure, so it is
+/// quantised: the rounding is not a convenience, it is the screen declining to
+/// claim a resolution the measurement does not have.
+///
+/// A free function like `litres`, because there is no natural receiver — the
+/// argument is already the answer, only unformatted.
+func paceText(secondsPerKm: TimeInterval, roundedTo step: TimeInterval) -> String {
+    let rounded = Int((secondsPerKm / step).rounded() * step)
+    return String(format: "%d'%02d\"/km", rounded / 60, rounded % 60)
+}
+
 extension Double {
     /// A km distance with a French decimal comma and no unit, e.g. `1,23`.
     func kmValue(fractionDigits: Int = 2) -> String {

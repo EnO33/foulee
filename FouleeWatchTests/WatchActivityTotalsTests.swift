@@ -173,7 +173,8 @@ struct WatchActivityTotalsTests {
             distanceMeters: 1_830,
             activeCalories: 136
         )
-        #expect(metrics.activityHeadlineText == "Course · 12:04")
+        metrics.recentPace = "7'35\"/km"
+        #expect(metrics.activityHeadlineText == "Course · 7'35\"/km")
         // One decimal, not two: this line refreshes with the session, and the
         // second decimal would flicker without adding anything readable at a
         // glance.
@@ -331,13 +332,14 @@ struct WatchActivityBreakdownTests {
     /// Two legs: the running sport's share is genuinely not the outing's.
     @Test("Once the outing is split, the sport's own share appears")
     func twoLegsEarnTheBreakdown() {
-        let outing = metrics([
+        var outing = metrics([
             leg(.walking, from: 0, to: 724, metres: 1_000),
             leg(.running, from: 724, to: 1_104, metres: 830)
         ])
 
         #expect(outing.showsActivityBreakdown)
-        #expect(outing.activityHeadlineText == "Course · 06:20")
+        outing.recentPace = "7'35\"/km"
+        #expect(outing.activityHeadlineText == "Course · 7'35\"/km")
         #expect(outing.activitySummaryText.hasPrefix("Course : 06:20"))
     }
 

@@ -197,7 +197,7 @@ struct WatchScreenshotModeTests {
         #expect(metrics.activity == .running)
         #expect(metrics.activityTotals != .zero)
         #expect(metrics.showsActivityBreakdown)
-        #expect(metrics.activityHeadlineText == "Course · 06:20")
+        #expect(metrics.activityHeadlineText == "Course · 7'40\"/km")
     }
 
     /// Derived from the legs rather than written out, so the two cannot drift:
