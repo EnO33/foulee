@@ -57,10 +57,9 @@ final class WatchWorkoutStore: NSObject {
     /// A confirmed change waiting to become a leg (issue #265).
     ///
     /// The screen follows detection immediately; the **recording** waits. A leg
-    /// shorter than `minimumLegDuration` is not a stretch of an outing, it is
-    /// noise — and every leg costs a permanent workout in Santé. Dated from the
-    /// boundary, so waiting costs no accuracy: the split, when it happens, is
-    /// back-dated to where the sport actually changed.
+    /// shorter than `minimumLegDuration` is noise, not a stretch of an outing —
+    /// and every leg costs a permanent workout in Santé. Dated from the
+    /// boundary, so waiting costs no accuracy.
     @ObservationIgnored private var pendingSplit: ActivitySwitchDetector.Switch?
     /// When a snapshot last went to the phone; nil until the first (issue #278).
     @ObservationIgnored var lastMirrorSendAt: Date?
@@ -146,10 +145,12 @@ final class WatchWorkoutStore: NSObject {
         await beginSession(activity: activity)
     }
 
-    /// End the session, save the workout and surface a summary. On a save
-    /// failure the builder is kept alive so "Réessayer" can finish it.
+    /// End the session, save it, and surface a summary — **the only thing that
+    /// ends an outing**. On a save failure the builder is kept alive so
+    /// « Réessayer » can finish it. A failed split used to end one too, and it
+    /// cost a real sortie (see `splitLeg`).
     func stop() async {
-        guard case .active(var metrics) = state, let handle = sessionHandle else { return }
+        guard case .active(var metrics) = state else { return }
         detection.stop()
         let end = Date.now
         // Close the leg in flight so every leg of the outing has an end, and
@@ -163,6 +164,12 @@ final class WatchWorkoutStore: NSObject {
         // **Before** the session is torn down: sending needs a live one, and
         // this is the phone's only word that the outing is over (issue #278).
         await mirrorNow(metrics, at: end, isEnded: true)
+        // No session left is a real state since a failed split stopped ending
+        // the outing: every leg before it is already saved.
+        guard let handle = sessionHandle else {
+            state = .ended(metrics, saveFailed: false)
+            return
+        }
         handle.end()
         let saved = await runOrTrap("enregistrement de la séance") {
             try await handle.endCollection(end)
@@ -378,11 +385,9 @@ extension WatchWorkoutStore {
         metrics.splits = splitRecorder.splits
     }
 
-    /// Refresh the totals on their own.
-    ///
-    /// Split out of `ingest(builder:)` and internal because that method takes
-    /// an `HKLiveWorkoutBuilder`, a type no test can construct — while this
-    /// half needs none of it.
+    /// Refresh the totals on their own. Split out of `ingest(builder:)` and
+    /// internal because that method takes an `HKLiveWorkoutBuilder`, a type no
+    /// test can construct — while this half needs none of it.
     func refreshActivityTotals(at now: Date = .now) {
         guard case .active(var metrics) = state else { return }
         applyOutingTotals(to: &metrics, at: now)
@@ -462,8 +467,9 @@ extension WatchWorkoutStore {
         finishedLegs.append(legInFlight(endingAt: boundary))
 
         guard closed == true else {
-            // The builder is still alive, so « Réessayer » can still finish it.
-            await endOuting(saveFailed: true)
+            // The builder is alive, so « Terminer » can still finish it — and
+            // **the outing goes on**. Nothing but that button ends one.
+            FouleeLog.session.error("jambe non fermée, la sortie continue")
             return
         }
         sessionHandle = nil
@@ -472,7 +478,12 @@ extension WatchWorkoutStore {
             try await healthKit.startSession(Self.configuration(for: activity), boundary, self)
         }
         guard let next else {
-            await endOuting(saveFailed: false)
+            // **This is what ended a real sortie**: the fifth switch could not
+            // open its leg, and the app finished everything — on the « Bravo »
+            // path, so the reason never reached the screen. Nothing but
+            // « Terminer » ends an outing now. Nothing more is measured, but
+            // every leg recorded is saved and `lastError` says why.
+            FouleeLog.session.error("jambe suivante non ouverte, la sortie continue sans mesure")
             return
         }
         sessionHandle = next
@@ -485,15 +496,5 @@ extension WatchWorkoutStore {
         legIdentity = UUID()
         currentLeg = .zero
         lastMovementSample = nil
-    }
-
-    /// End the outing from inside a split that could not continue.
-    private func endOuting(saveFailed: Bool) async {
-        detection.stop()
-        guard case .active(let metrics) = state else { return }
-        // Same debt as `stop()`: an outing that died here used to stay « en
-        // cours » on the phone until the snapshot went stale (issue #278).
-        await mirrorNow(metrics, at: .now, isEnded: true)
-        state = .ended(metrics, saveFailed: saveFailed)
     }
 }

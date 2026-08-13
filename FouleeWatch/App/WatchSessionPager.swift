@@ -74,13 +74,14 @@ enum WatchSessionPage: Hashable {
 struct WatchSessionPager: View {
     let metrics: WatchWorkoutMetrics
     let today: WatchTodayStore
+    var errorMessage: String?
     var onStop: () -> Void
 
     @State private var page: WatchSessionPage = .session
 
     var body: some View {
         TabView(selection: $page) {
-            WatchSessionMetricsPage(metrics: metrics)
+            WatchSessionMetricsPage(metrics: metrics, errorMessage: errorMessage)
                 .tag(WatchSessionPage.session)
             WatchSessionControlsPage(metrics: metrics, onStop: onStop)
                 .tag(WatchSessionPage.controls)

@@ -121,17 +121,14 @@ struct WatchMirrorSnapshotTests {
         #expect(stub.handleToken == nil)
     }
 
-    /// Every path that ends an outing owes the phone the same word. Only
-    /// `stop()` used to send it, so an outing that died mid-split stayed « en
-    /// cours » on the phone until the figures went stale.
+    /// **The inverse of what this test used to assert**, and the change is the
+    /// point: a split that fails no longer ends the outing, so it must not tell
+    /// the phone that it did. The wearer is still walking; the phone should
+    /// still show the sortie.
     ///
-    /// The **close** is what fails here, not the reopen — deliberately. When
-    /// the reopen fails the session is already gone, so there is nothing left
-    /// to send through and the phone learns of the end from the mirror closing
-    /// instead. This path is the one where a live handle survives, and it is
-    /// the one where silence would have been a bug.
-    @Test("A split whose close fails still tells the phone it is over")
-    func aFailedSplitEndsTheMirrorToo() async {
+    /// Only « Terminer » sends the end — see `theEndIsAlwaysSent`.
+    @Test("A split that fails does not tell the phone the outing is over")
+    func aFailedSplitDoesNotEndTheMirror() async {
         let stub = WorkoutHealthKitStub()
         let motion = FakeMotionSource()
         motion.isAvailable = true
@@ -143,11 +140,10 @@ struct WatchMirrorSnapshotTests {
             guard case .active(let metrics) = store.state else { return false }
             return metrics.activity == .running
         }
-        // The leg cannot be closed — the outing ends here, builder still alive.
         stub.endCollectionError = StubError()
         await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
 
-        #expect(stub.sentSnapshots.last?.isEnded == true)
+        #expect(stub.sentSnapshots.allSatisfy { $0.isEnded == false })
     }
 
     /// A periodic tick from an ended session would carry `isEnded: false` and

@@ -149,20 +149,41 @@ struct PaceEstimatorTests {
         #expect(minutesAndSeconds(pace) == "11'06\"")
     }
 
-    /// **The defect the first version shipped with, swept over its whole
-    /// range.** A stop shorter than the re-seed threshold used to stay inside
-    /// the window, so its standing seconds counted as running seconds: a 15 s
-    /// red light doubled the displayed pace for about half a minute afterwards.
-    ///
-    /// The curve was worse than merely wrong — it was **not monotonic**. A 15 s
-    /// stop was handled far worse than a 21 s one, which is the signature of an
-    /// uncovered interval rather than of a trade-off. Hence a sweep: a single
-    /// case would have left the cliff somewhere between two of them.
+    /// **The bug that reached a wrist.** HealthKit delivers distance in
+    /// *bursts*: several readings carrying nothing, then one that catches up.
+    /// A version of this type judged movement per delivery and dropped the time
+    /// of every reading that carried no metres — while their distance turned up
+    /// in the next one. On a real outing that made an 11'09"/km walk display
+    /// **4'30"/km**, and the average pace on the iPhone, which never used that
+    /// axis, stayed right. That contrast is what identified it.
+    @Test("Distance arriving in bursts gives the true pace")
+    func burstyDeliveriesAreNotFooled() {
+        var estimator = PaceEstimator()
+        var elapsed: TimeInterval = 0
+        var covered = 0.0
+        // 1,5 m/s, readings every second, but the distance only moves every
+        // fifth one — four empty readings, then 7,5 m at once.
+        var tick = 0
+        while elapsed < 180 {
+            elapsed += 1
+            tick += 1
+            if tick % 5 == 0 { covered += 7.5 }
+            estimator.record(
+                MovementSample(date: base.addingTimeInterval(elapsed), steps: 0, distanceMeters: covered)
+            )
+        }
+        // 1,5 m/s is 11'06"/km. The broken version read about 2'13" — and on a
+        // real wrist it turned an 11'09" walk into 4'30".
+        #expect(minutesAndSeconds(estimator.pace(at: base.addingTimeInterval(elapsed))) == "11'06\"")
+    }
+
+    /// A stop long enough to be **detected** must leave nothing behind: the
+    /// window is cleared, so its standing seconds never reach the divisor.
     @Test(
-        "A stop of any length leaves the pace unharmed",
-        arguments: [3.0, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0, 24.0, 27.0]
+        "A detected stop leaves the pace unharmed",
+        arguments: [12.0, 15.0, 18.0, 21.0, 24.0, 27.0, 30.0]
     )
-    func aStopOfAnyLengthIsSurvived(stop: TimeInterval) {
+    func aDetectedStopIsSurvived(stop: TimeInterval) {
         var estimator = PaceEstimator()
         let before = run(&estimator, at: 3, for: 120)
 
@@ -178,13 +199,11 @@ struct PaceEstimatorTests {
             )
         }
 
-        // Off again at the very same speed, reading the pace **as it happens**.
-        //
-        // Sampling the finished estimator at earlier dates would prove nothing:
-        // `pace(at:)` returns the stored speed and only checks staleness, so the
-        // transient right after the restart is invisible that way. The first
-        // version of this test did exactly that, and a deliberate regression
-        // walked straight through it.
+        // Off again at the same speed, reading the pace **as it happens** —
+        // sampling the finished estimator at earlier dates proves nothing,
+        // because `pace(at:)` returns the stored speed and only checks
+        // staleness. An earlier version of this test did exactly that and a
+        // deliberate regression walked straight through it.
         var elapsed = still
         var covered = before.distance
         var worst: TimeInterval = 0
@@ -198,9 +217,47 @@ struct PaceEstimatorTests {
                 worst = max(worst, pace)
             }
         }
-        // 5'33"/km is 333 s. Anything past 360 is standing time leaking into
-        // the divisor.
+        // 5'33"/km is 333 s.
         #expect(worst < 360, "a \(Int(stop)) s stop must not inflate the pace")
+    }
+
+    /// **The boundary of the design, stated rather than hidden.** A pause
+    /// shorter than `stillnessHorizon` is not detected, so the window spans it
+    /// and the pace reads slow for a moment. That is the price of judging
+    /// movement over a horizon instead of per delivery — and judging it per
+    /// delivery is what put 4'30" on a walk.
+    ///
+    /// What must hold is that the excursion is **bounded and brief**.
+    @Test("An undetected pause reads slow briefly, then recovers")
+    func aShortPauseRecovers() {
+        var estimator = PaceEstimator()
+        let before = run(&estimator, at: 3, for: 120)
+
+        var still = before.end
+        for _ in 0..<3 { still += 3 }   // 9 s, under the horizon
+        estimator.record(
+            MovementSample(date: base.addingTimeInterval(still), steps: 0, distanceMeters: before.distance)
+        )
+
+        var elapsed = still
+        var covered = before.distance
+        var worst: TimeInterval = 0
+        while elapsed < still + 60 {
+            elapsed += 3
+            covered += 9
+            estimator.record(
+                MovementSample(date: base.addingTimeInterval(elapsed), steps: 0, distanceMeters: covered)
+            )
+            if let pace = estimator.pace(at: base.addingTimeInterval(elapsed)) {
+                worst = max(worst, pace)
+            }
+        }
+        // Slower than the truth for a while — but never a doubling, and never
+        // the 673 s the per-delivery version reached.
+        #expect(worst < 560, "a nine-second pause must not double the pace")
+        // And back to the truth within a minute — to the second, the EMA
+        // having not quite finished converging.
+        #expect(abs((estimator.pace(at: base.addingTimeInterval(elapsed)) ?? 0) - 333.3) < 2)
     }
 
     // MARK: - Deliveries we do not control

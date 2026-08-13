@@ -137,10 +137,16 @@ struct WatchWorkoutActivitySwitchingTests {
         #expect(stub.startedLegs.map(\.configuration.activityType) == [.running, .walking])
     }
 
-    // MARK: - A split that fails never costs what came before
+    // MARK: - A split that fails never ends the outing
 
-    @Test("A leg that cannot be reopened ends the outing rather than recording nothing")
-    func aFailedReopenEndsTheOuting() async {
+    /// **Nothing but « Terminer » ends an outing.**
+    ///
+    /// This used to end it, and it cost a real sortie: on the fifth switch the
+    /// next leg could not be opened and the app finished everything — on the
+    /// « Bravo » path, so the reason never even reached the screen. The wearer
+    /// was still walking.
+    @Test("A leg that cannot be reopened leaves the outing running")
+    func aFailedReopenKeepsTheOutingAlive() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .walking, stub: stub)
 
@@ -149,16 +155,41 @@ struct WatchWorkoutActivitySwitchingTests {
         stub.startError = StubError()
         await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
 
-        // The walk is already saved — it was finished before the run was
-        // attempted. Carrying on with no session would record nothing while
-        // pretending to.
+        // The walk is saved — it was finished before the run was attempted —
+        // and the outing carries on. Nothing more will be measured, which is a
+        // loss; ending the sortie would have been a bigger one.
         #expect(stub.finishCalls == 1)
-        if case .ended = store.state {} else { Issue.record("la sortie devrait être terminée") }
+        guard case .active = store.state else {
+            Issue.record("only « Terminer » may end an outing")
+            return
+        }
+        // And the reason is on record rather than swallowed.
         #expect(store.lastError == "boom")
     }
 
-    @Test("A leg that cannot be closed keeps the builder for « Réessayer »")
-    func aFailedCloseIsRetryable() async {
+    /// Even with no session left, « Terminer » must work — otherwise the outing
+    /// could never be ended at all, which is worse than ending it early.
+    @Test("« Terminer » still ends an outing whose session is gone")
+    func stopWorksWithoutASession() async {
+        let stub = WorkoutHealthKitStub()
+        let (store, motion) = await startedSession(as: .walking, stub: stub)
+
+        detect(.running, from: motion, at: 60)
+        await waitUntil { self.activity(of: store) == .running }
+        stub.startError = StubError()
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.stop()
+
+        guard case .ended(_, let saveFailed) = store.state else {
+            Issue.record("« Terminer » must end the outing")
+            return
+        }
+        // Nothing to retry: every leg recorded is already saved.
+        #expect(saveFailed == false)
+    }
+
+    @Test("A leg that cannot be closed leaves the outing running too")
+    func aFailedCloseKeepsTheOutingAlive() async {
         let stub = WorkoutHealthKitStub()
         let (store, motion) = await startedSession(as: .walking, stub: stub)
 
@@ -167,14 +198,14 @@ struct WatchWorkoutActivitySwitchingTests {
         stub.finishError = StubError()
         await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
 
-        guard case .ended(_, let saveFailed) = store.state else {
-            Issue.record("la sortie devrait être terminée")
+        guard case .active = store.state else {
+            Issue.record("only « Terminer » may end an outing")
             return
         }
-        // Retryable, and the builder is still alive for it — « Réessayer »
-        // finishes the leg that could not be closed.
-        #expect(saveFailed)
+        // The builder is still alive, so « Terminer » can still finish the leg
+        // that would not close.
         #expect(stub.handleToken != nil)
+        #expect(store.lastError == "boom")
     }
 
     // MARK: - The rest of the lifecycle is untouched

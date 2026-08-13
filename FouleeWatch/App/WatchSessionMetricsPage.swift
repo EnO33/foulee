@@ -10,13 +10,26 @@ import SwiftUI
 /// *ordinary* reading no longer needs it.
 struct WatchSessionMetricsPage: View {
     let metrics: WatchWorkoutMetrics
+    /// What went wrong while the outing carried on (issue #290 and after).
+    ///
+    /// **On this page, not only on the recap.** A split that fails no longer
+    /// ends the sortie — which is right — but it can leave it with no session,
+    /// so nothing more is measured. The counters simply stop moving, and a
+    /// wearer glancing at a frozen screen has no way to tell that from a quiet
+    /// stretch. The reason existed in `lastError` and reached nobody, which is
+    /// exactly what issue #256 cost two versions to learn.
+    var errorMessage: String?
 
     var body: some View {
         ScrollView {
             VStack(spacing: 6) {
                 WatchSessionClock(metrics: metrics, size: 34)
 
-                currentActivity
+                if let errorMessage {
+                    warning(errorMessage)
+                } else {
+                    currentActivity
+                }
 
                 HStack(spacing: 10) {
                     metric(value: "\(metrics.steps)", label: "pas", icon: "shoe")
@@ -86,6 +99,16 @@ struct WatchSessionMetricsPage: View {
         .foregroundStyle(.secondary)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(metrics.activitySummaryText)
+    }
+
+    /// Takes the activity line's place rather than adding to it: the sport and
+    /// the pace are stale the moment measurement stops, so there is nothing to
+    /// lose by replacing them and a line of height to gain.
+    private func warning(_ message: String) -> some View {
+        Label(message, systemImage: "exclamationmark.triangle.fill")
+            .font(.caption2)
+            .foregroundStyle(.orange)
+            .multilineTextAlignment(.center)
     }
 
     /// Two columns at most, and labels of four characters at most. The « pa/s »
