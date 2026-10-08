@@ -13,9 +13,10 @@ import SwiftUI
 /// would be a poor trade.
 struct WatchFinishedView: View {
     let metrics: WatchWorkoutMetrics
-    /// The whole outing's path (issue #312). Empty when location was refused
-    /// or no fix ever came — the recap then simply has no map.
-    var route: [CLLocationCoordinate2D] = []
+    /// The whole outing's path, cut by leg (issues #312, #320). Empty when
+    /// location was refused or no fix ever came — the recap then simply has no
+    /// map.
+    var route: [WatchRoutePortion] = []
     var saveFailed: Bool
     /// What HealthKit actually said, when it said anything (issue #256).
     ///
@@ -109,8 +110,8 @@ struct WatchFinishedView: View {
     /// Hidden when the save failed, on the argument the kilometres make below:
     /// nothing may push « Réessayer » further down.
     private var map: some View {
-        Map(initialPosition: .automatic, interactionModes: []) {
-            WatchRouteLine(coordinates: route)
+        Map(initialPosition: WatchRouteLine.camera(fitting: route), interactionModes: []) {
+            WatchRouteLine(portions: route)
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
         .frame(height: 90)

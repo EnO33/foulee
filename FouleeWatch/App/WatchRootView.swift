@@ -32,7 +32,11 @@ struct WatchRootView: View {
             case .ended(let metrics, let saveFailed):
                 WatchFinishedView(
                     metrics: metrics,
-                    route: store.route.coordinates,
+                    route: WatchRoutePortion.portions(
+                        of: store.route.locations,
+                        legs: metrics.legs,
+                        current: nil
+                    ),
                     saveFailed: saveFailed,
                     // The one sentence that explains a failure, shown where the
                     // failure is (issue #256). It used to reach only the home

@@ -60,9 +60,9 @@ struct WatchRouteStoreTests {
         fake.deliver(latitude: 48.8634, longitude: 2.3270)
         fake.deliver(latitude: 48.8638, longitude: 2.3285)
 
-        await waitUntil { store.coordinates.count == 2 }
-        #expect(store.coordinates.first?.latitude == 48.8634)
-        #expect(store.coordinates.last?.longitude == 2.3285)
+        await waitUntil { store.locations.count == 2 }
+        #expect(store.locations.first?.coordinate.latitude == 48.8634)
+        #expect(store.locations.last?.coordinate.longitude == 2.3285)
         #expect(store.isDenied == false)
     }
 
@@ -88,13 +88,13 @@ struct WatchRouteStoreTests {
         store.start()
         await waitUntil { fake.openedStreams == 1 }
         fake.deliver(latitude: 48.8634, longitude: 2.3270)
-        await waitUntil { store.coordinates.count == 1 }
+        await waitUntil { store.locations.count == 1 }
 
         store.stop()
 
         await waitUntil { fake.terminatedStreams == 1 }
         fake.deliver(latitude: 48.8638, longitude: 2.3285)
-        #expect(store.coordinates.count == 1)
+        #expect(store.locations.count == 1)
     }
 
     @Test("reset() forgets the route and the refusal")
@@ -108,7 +108,7 @@ struct WatchRouteStoreTests {
         store.reset()
 
         #expect(store.isDenied == false)
-        #expect(store.coordinates.isEmpty)
+        #expect(store.locations.isEmpty)
     }
 
     /// A second outing must not start drawn on top of the first one.
@@ -119,11 +119,11 @@ struct WatchRouteStoreTests {
         store.start()
         await waitUntil { fake.openedStreams == 1 }
         fake.deliver(latitude: 48.8634, longitude: 2.3270)
-        await waitUntil { store.coordinates.count == 1 }
+        await waitUntil { store.locations.count == 1 }
 
         store.start()
 
-        #expect(store.coordinates.isEmpty)
+        #expect(store.locations.isEmpty)
         await waitUntil { fake.openedStreams == 2 && fake.terminatedStreams == 1 }
     }
 }
@@ -167,14 +167,14 @@ struct WatchWorkoutRouteLifecycleTests {
         await store.start(activity: .walking)
         await waitUntil { fake.openedStreams == 1 }
         fake.deliver(latitude: 48.8634, longitude: 2.3270)
-        await waitUntil { store.route.coordinates.count == 1 }
+        await waitUntil { store.route.locations.count == 1 }
 
         await store.stop()
         await waitUntil { fake.terminatedStreams == 1 }
-        #expect(store.route.coordinates.count == 1)
+        #expect(store.route.locations.count == 1)
 
         store.reset()
-        #expect(store.route.coordinates.isEmpty)
+        #expect(store.route.locations.isEmpty)
     }
 
     @Test("A session that dies on its own lets the GPS go")

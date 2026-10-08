@@ -92,10 +92,11 @@ final class WatchScreenshotCaptureTests: XCTestCase {
 
     /// The fourth board: the same outing, split (issue #276).
     ///
-    /// **Two swipes**, not one — « Contrôles » sits between « Séance » and
-    /// « Jambes », which is deliberate (see `WatchSessionPage`). If that order
-    /// ever changes, this step fails on a sentinel rather than photographing
-    /// the wrong page.
+    /// **Three swipes**, not one — « Contrôles » and « Plan » sit between
+    /// « Séance » and « Jambes », which is deliberate (see `WatchSessionPage`).
+    /// If that order ever changes, this step fails on a sentinel rather than
+    /// photographing the wrong page — which is exactly how « Plan » (#312) was
+    /// caught arriving: two swipes landed on it, not on « Jambes ».
     ///
     /// **One page at a time, each confirmed before the next**, rather than two
     /// swipes fired back to back — the second would land during the first
@@ -113,6 +114,11 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     private func captureLegs(_ app: XCUIApplication) {
         app.swipeLeft()
         waitForWatchScreen(app.buttons["Arrêter"], "Controls page")
+        app.swipeLeft()
+        let plan = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Plan du parcours"))
+            .firstMatch
+        waitForWatchScreen(plan, "Plan page")
         app.swipeLeft()
         // The row is one combined accessibility element, so it is matched by
         // the label `WatchSessionLegsPage` builds rather than by a bare word.
