@@ -102,30 +102,22 @@ struct WorkoutDetailHeartRate: View {
     }
 
     private var chart: some View {
-        Chart(chartSamples) { sample in
-            LineMark(
-                x: .value("Temps", sample.date),
-                y: .value("BPM", sample.bpm)
-            )
-            .foregroundStyle(FouleeColor.danger)
-            .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-            .interpolationMethod(.catmullRom)
-
-            AreaMark(
-                x: .value("Temps", sample.date),
-                y: .value("BPM", sample.bpm)
-            )
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [
-                        FouleeColor.danger.opacity(0.28),
-                        FouleeColor.danger.opacity(0)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .interpolationMethod(.catmullRom)
+        Chart {
+            // The outing's legs behind the curve, in the timeline's colours
+            // (issue #318), so a climb in heart rate reads against the run that
+            // caused it. Nothing for a single session: there is only one leg.
+            if detail.summary.legs.count > 1 {
+                ForEach(detail.summary.legs) { leg in
+                    RectangleMark(
+                        xStart: .value("Début", leg.startedAt),
+                        xEnd: .value("Fin", leg.endedAt)
+                    )
+                    .foregroundStyle(leg.activity.tint.opacity(0.14))
+                }
+            }
+            ForEach(chartSamples) { sample in
+                curve(sample)
+            }
         }
         .chartXAxis(.hidden)
         .chartYAxis {
@@ -134,5 +126,32 @@ struct WorkoutDetailHeartRate: View {
                 AxisValueLabel()
             }
         }
+    }
+
+    @ChartContentBuilder
+    private func curve(_ sample: HeartRateSample) -> some ChartContent {
+        LineMark(
+            x: .value("Temps", sample.date),
+            y: .value("BPM", sample.bpm)
+        )
+        .foregroundStyle(FouleeColor.danger)
+        .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+        .interpolationMethod(.catmullRom)
+
+        AreaMark(
+            x: .value("Temps", sample.date),
+            y: .value("BPM", sample.bpm)
+        )
+        .foregroundStyle(
+            LinearGradient(
+                colors: [
+                    FouleeColor.danger.opacity(0.28),
+                    FouleeColor.danger.opacity(0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .interpolationMethod(.catmullRom)
     }
 }
