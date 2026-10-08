@@ -24,7 +24,7 @@ private final class TrapHealthKit {
             requestAuthorization: { _, _ in
                 self.authorizationRequests += 1
             },
-            startSession: { _, _, _ in
+            startSession: { _, _, _, _ in
                 self.sessionStarts += 1
                 let token = NSObject()
                 return WatchWorkoutSessionHandle(

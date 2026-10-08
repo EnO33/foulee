@@ -219,6 +219,9 @@ let project = Project(
                 // preference it resolves from, which rides in the sync payload.
                 "Foulee/Shared/SessionActivity.swift",
                 "Foulee/Shared/SessionActivity+HealthKit.swift",
+                // The keys the phone reads back to tie legs into one outing
+                // (issue #316).
+                "Foulee/Shared/FouleeWorkoutMetadata.swift",
                 // What one CoreMotion estimate means. Shared because the phone
                 // reads the same history after a session (issue #246), and two
                 // platforms disagreeing about a single estimate would be a bug

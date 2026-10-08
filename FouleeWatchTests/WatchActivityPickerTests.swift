@@ -15,7 +15,7 @@ private final class ConfigurationRecorder {
         WatchWorkoutStore(healthKit: WatchWorkoutHealthKit(
             isAvailable: { true },
             requestAuthorization: { _, _ in },
-            startSession: { configuration, _, _ in
+            startSession: { configuration, _, _, _ in
                 self.startedConfiguration = configuration
                 let token = NSObject()
                 return WatchWorkoutSessionHandle(
