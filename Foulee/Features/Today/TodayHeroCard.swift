@@ -55,19 +55,20 @@ struct TodayHeroCard: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        // No step / minute pills under the ring: the stats grid below says the
+        // same two numbers with their goals, and saying them twice on one
+        // screen only made it busier. The ring's VoiceOver value still reads
+        // both, so nothing is lost to anyone who cannot see the grid.
+        VStack(spacing: 20) {
             HStack(spacing: 18) {
                 ring
                 content
             }
-            TodayGoalLegend(
-                steps: snapshot.steps,
-                stepsGoal: snapshot.stepsGoal,
-                minutes: snapshot.minutes,
-                minutesGoal: snapshot.minutesGoal
-            )
             actionRow
         }
+        // 22, not more: on an iPhone SE every extra point of margin comes out
+        // of « Sortie terminée » and « Voir le résumé », which then truncate
+        // and wrap.
         .padding(22)
         .fouleeGlass(cornerRadius: 28)
     }

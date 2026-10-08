@@ -9,7 +9,7 @@ struct TodayStreakWeatherRow: View {
     var onWeatherTap: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {
             Button(action: onStreakTap) { streakCard }
                 .buttonStyle(.pressable)
                 .accessibilityHint("Voir les statistiques de minutes")

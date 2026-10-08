@@ -18,17 +18,34 @@ struct OnboardingWelcomeView: View {
         (FouleeIcon.watch, "Détection auto via ta montre")
     ]
 
+    /// Centred when it fits, scrolling when it does not — the same shape as
+    /// the three steps after it, with the button pinned below.
+    ///
+    /// It used to be one fixed column with a 76 pt top margin. On an iPhone SE
+    /// the column ran a few points taller than the screen, and SwiftUI made
+    /// up the difference by squeezing the texts onto one line each:
+    /// « Bouge un peu,… », « Un objectif simple, pas un… ». A scroll view gives
+    /// the texts all the height they ask for, so nothing is ever truncated —
+    /// at any screen size or text size.
     var body: some View {
         VStack(spacing: 0) {
-            Spacer()
-            appIcon
-            heading
-            featureCard
-            Spacer()
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 24)
+                        appIcon
+                        heading
+                        featureCard
+                        Spacer(minLength: 24)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+            }
             footer
+                .padding(.top, 16)
         }
         .padding(.horizontal, 24)
-        .padding(.top, 76)
         .padding(.bottom, 32)
     }
 
@@ -70,9 +87,13 @@ struct OnboardingWelcomeView: View {
                                 .font(.system(size: 20))
                                 .foregroundStyle(FouleeColor.accentMid)
                         }
+                    // Wraps rather than truncates: on an iPhone SE « Un
+                    // objectif simple, pas un score » is wider than the row,
+                    // and without this the row kept it on one line, cut.
                     Text(entry.text)
                         .font(FouleeFont.body)
-                    Spacer()
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
                 }
                 .padding(.vertical, 10)
             }

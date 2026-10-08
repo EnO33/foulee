@@ -190,9 +190,11 @@ struct TodayScreen: View {
     private func loaded(snapshot: TodaySnapshot) -> some View {
         ScrollViewReader { proxy in
         ScrollView {
-            VStack(spacing: 12) {
+            // One margin and one gap for every section, set here rather than
+            // repeated on each card — and wider than the 12 pt it was, so the
+            // home reads as separate blocks instead of one dense column.
+            VStack(spacing: Self.sectionSpacing) {
                 header(date: snapshot.date)
-                    .padding(.horizontal, 20)
                     .padding(.top, 8)
                 // One card at most, most-explanatory first. A failed fetch
                 // outranks both hints — a day can perfectly well hold data
@@ -200,40 +202,37 @@ struct TodayScreen: View {
                 // numbers may be wrong.
                 if store.lastError != nil {
                     TodayErrorBanner()
-                        .padding(.horizontal, 20)
                 } else if store.showsGarminSyncHint {
                     // Before the generic empty state: telling a Garmin user to
                     // "faire quelques pas" when the real gap is an unsynced
                     // Garmin Connect would send them nowhere.
                     GarminSyncHintCard()
-                        .padding(.horizontal, 20)
                 } else if snapshot.hasNoActivity {
                     TodayEmptyStateCard()
-                        .padding(.horizontal, 20)
                 }
                 heroCard(snapshot: snapshot)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 4)
                 TodayStreakWeatherRow(
                     snapshot: snapshot,
                     onStreakTap: { isShowingStreak = true },
                     onWeatherTap: { isShowingWeather = true }
                 )
-                .padding(.horizontal, 20)
                 TodayStatsGrid(snapshot: snapshot) { selectedMetric = $0 }
-                    .padding(.horizontal, 20)
                 HydrationHomeCard(preferences: preferences, store: hydration)
                     .id("hydrationCard")
                 TodayFooter(snapshot: snapshot, activeDays: preferences.activeDays) {
                     isShowingSummary = true
                 }
             }
+            .padding(.horizontal, 20)
             .padding(.bottom, 40)
         }
         .refreshable { await store.refresh() }
         .modifier(HydrationDeepLinkScroll(proxy: proxy, pending: $scrollToHydration))
         }
     }
+
+    /// The gap between two sections of the home.
+    private static let sectionSpacing: CGFloat = 20
 
     private var placeholder: some View {
         VStack(spacing: 16) {
@@ -325,15 +324,13 @@ private struct TodayFooter: View {
             TodayWeekBars(snapshot: snapshot, activeDays: activeDays)
         }
         .buttonStyle(.pressable)
-        .padding(.horizontal, 20)
         // Matches the label of the view it wraps ("Minutes d'activité par jour
         // cette semaine") and the chip inside it ("x / y sorties") — VoiceOver
         // reads label then hint, so the two have to agree (#222).
         .accessibilityHint("Voir l'historique de tes sorties")
         if snapshot.weather.isAvailable {
             WeatherAttributionView()
-                .padding(.horizontal, 20)
-                .padding(.top, 4)
+                .padding(.top, -8)
         }
     }
 }
