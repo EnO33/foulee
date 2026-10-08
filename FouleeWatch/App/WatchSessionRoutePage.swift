@@ -10,16 +10,21 @@ import SwiftUI
 /// zooms; the map recentres on the wearer by itself.
 struct WatchSessionRoutePage: View {
     let route: WatchRouteStore
+    /// For the legs the route is cut at, and the sport being done now (#320).
+    let metrics: WatchWorkoutMetrics
 
     @State private var position: MapCameraPosition = .userLocation(fallback: .automatic)
 
     var body: some View {
-        // Read once per render: the store derives it from every fix of the
-        // outing, and the map needs it twice.
-        let coordinates = route.coordinates
+        // Cut once per render, in one pass over the fixes.
+        let portions = WatchRoutePortion.portions(
+            of: route.locations,
+            legs: metrics.legs,
+            current: metrics.activity
+        )
         Group {
-            if WatchRouteLine.isDrawable(coordinates) {
-                map(coordinates)
+            if WatchRouteLine.isDrawable(portions) {
+                map(portions)
             } else {
                 emptyState
             }
@@ -27,9 +32,9 @@ struct WatchSessionRoutePage: View {
         .accessibilityLabel("Plan du parcours")
     }
 
-    private func map(_ coordinates: [CLLocationCoordinate2D]) -> some View {
+    private func map(_ portions: [WatchRoutePortion]) -> some View {
         Map(position: $position, interactionModes: .zoom) {
-            WatchRouteLine(coordinates: coordinates)
+            WatchRouteLine(portions: portions)
             UserAnnotation()
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))

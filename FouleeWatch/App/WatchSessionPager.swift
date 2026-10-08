@@ -88,7 +88,7 @@ struct WatchSessionPager: View {
                 .tag(WatchSessionPage.session)
             WatchSessionControlsPage(metrics: metrics, onStop: onStop)
                 .tag(WatchSessionPage.controls)
-            WatchSessionRoutePage(route: route)
+            WatchSessionRoutePage(route: route, metrics: metrics)
                 .tag(WatchSessionPage.route)
             if showsLegs {
                 WatchSessionLegsPage(metrics: metrics)

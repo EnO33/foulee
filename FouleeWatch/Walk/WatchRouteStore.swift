@@ -43,10 +43,6 @@ final class WatchRouteStore {
     @ObservationIgnored private let source: WatchRouteSource
     @ObservationIgnored private var recording: Task<Void, Never>?
 
-    /// What the map draws. Derived rather than stored next to `locations`,
-    /// so the two can never disagree.
-    var coordinates: [CLLocationCoordinate2D] { locations.map(\.coordinate) }
-
     init(source: WatchRouteSource = .live) {
         self.source = source
     }

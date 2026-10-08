@@ -234,6 +234,9 @@ let project = Project(
                 // no DesignSystem, so `SessionActivity.icon` reads these.
                 "Foulee/Shared/ActivityStartIntent.swift",
                 "Foulee/Shared/ActivityGlyph.swift",
+                // The colours an outing is drawn in by sport, shared with the
+                // phone's detail (issue #320).
+                "Foulee/Shared/ActivityPalette.swift",
                 "Foulee/Notifications/HydrationNotification.swift",
                 // The App Store capture seed (issue #239). Only the
                 // Foundation-only half: the watch board and the phone board
