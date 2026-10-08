@@ -25,7 +25,7 @@ private final class ConfigurationRecorder {
                     sendToRemote: { _ in },
                     end: { _ = token },
                     endCollection: { _ in },
-                    finishWorkout: {},
+                    finishWorkout: { _ in },
                     collectionEndDate: { nil }
                 )
             }

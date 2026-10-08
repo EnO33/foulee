@@ -14,9 +14,12 @@ struct WatchSessionRoutePage: View {
     @State private var position: MapCameraPosition = .userLocation(fallback: .automatic)
 
     var body: some View {
+        // Read once per render: the store derives it from every fix of the
+        // outing, and the map needs it twice.
+        let coordinates = route.coordinates
         Group {
-            if route.coordinates.count >= 2 {
-                map
+            if WatchRouteLine.isDrawable(coordinates) {
+                map(coordinates)
             } else {
                 emptyState
             }
@@ -24,21 +27,9 @@ struct WatchSessionRoutePage: View {
         .accessibilityLabel("Plan du parcours")
     }
 
-    private var map: some View {
+    private func map(_ coordinates: [CLLocationCoordinate2D]) -> some View {
         Map(position: $position, interactionModes: .zoom) {
-            MapPolyline(coordinates: route.coordinates)
-                .stroke(
-                    .tint,
-                    style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
-                )
-            if let start = route.coordinates.first {
-                Annotation("Départ", coordinate: start) {
-                    Circle()
-                        .fill(.green)
-                        .frame(width: 10, height: 10)
-                        .overlay(Circle().stroke(.white, lineWidth: 2))
-                }
-            }
+            WatchRouteLine(coordinates: coordinates)
             UserAnnotation()
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))

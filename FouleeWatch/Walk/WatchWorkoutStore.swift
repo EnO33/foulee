@@ -102,9 +102,11 @@ final class WatchWorkoutStore: NSObject {
     // Derived from `collectedQuantityTypes` rather than spelled out again: the
     // set that must be authorized *is* the set the data source collects, and
     // the two drifting apart is precisely the authorization failure above.
+    // The route rides along (issue #312); refusing it costs the map, never the
+    // workout.
     private static let writeTypes: Set<HKSampleType> = Set(
         collectedQuantityTypes.map { $0 as HKSampleType }
-    ).union([HKWorkoutType.workoutType()])
+    ).union([HKWorkoutType.workoutType(), HKSeriesType.workoutRoute()])
     private static let readTypes: Set<HKObjectType> = Set(writeTypes.map { $0 as HKObjectType })
 
     /// Begin a fresh session of `activity`. Idempotent: no-op when already
@@ -179,7 +181,7 @@ final class WatchWorkoutStore: NSObject {
         handle.end()
         let saved = await runOrTrap("enregistrement de la séance") {
             try await handle.endCollection(end)
-            try await handle.finishWorkout()
+            try await handle.finishWorkout(route.locations)
             return true as Bool
         }
         state = .ended(metrics, saveFailed: saved != true)
@@ -195,7 +197,7 @@ final class WatchWorkoutStore: NSObject {
             if handle.collectionEndDate() == nil {
                 try await handle.endCollection(.now)
             }
-            try await handle.finishWorkout()
+            try await handle.finishWorkout(route.locations)
             return true as Bool
         }
         guard saved == true else { return }
@@ -451,7 +453,7 @@ extension WatchWorkoutStore {
         let closed = await runOrTrap("fermeture de la jambe") {
             handle.end()
             try await handle.endCollection(boundary)
-            try await handle.finishWorkout()
+            try await handle.finishWorkout(route.locations)
             return true as Bool
         }
         finishedLegs.append(legInFlight(endingAt: boundary))
