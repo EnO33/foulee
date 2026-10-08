@@ -21,18 +21,6 @@ struct TodaySnapshot: Equatable {
     /// True when today isn't one of the user's active days — no walk planned,
     /// so the hero shows a rest state instead of the window countdown.
     var isRestDay: Bool = false
-
-    /// True when HealthKit returned nothing to show — fresh install, denied
-    /// access, or simply no activity yet. Drives the empty-state card so the
-    /// screen never reads as a wall of muted zeros.
-    var hasNoActivity: Bool {
-        steps == 0
-            && minutes == 0
-            && calories == 0
-            && streak == 0
-            && bestStreak == 0
-            && weekMinutes.allSatisfy { $0 == 0 }
-    }
 }
 
 struct WeatherSnapshot: Equatable {

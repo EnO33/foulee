@@ -196,19 +196,21 @@ struct TodayScreen: View {
             VStack(spacing: Self.sectionSpacing) {
                 header(date: snapshot.date)
                     .padding(.top, 8)
-                // One card at most, most-explanatory first. A failed fetch
-                // outranks both hints — a day can perfectly well hold data
-                // *and* a failed fetch, and only the banner explains why the
-                // numbers may be wrong.
+                // One card at most. A failed fetch outranks the Garmin hint —
+                // a day can perfectly well hold data *and* a failed fetch, and
+                // only the banner explains why the numbers may be wrong.
+                //
+                // No « Pas encore de données » card any more: it showed every
+                // morning before the first step, said nothing the zeros below
+                // did not, and its « Ouvrir Santé » led nowhere useful —
+                // HealthKit never tells an app its read access was refused, so
+                // the card could not tell that case from an ordinary empty day.
                 if store.lastError != nil {
                     TodayErrorBanner()
                 } else if store.showsGarminSyncHint {
-                    // Before the generic empty state: telling a Garmin user to
-                    // "faire quelques pas" when the real gap is an unsynced
-                    // Garmin Connect would send them nowhere.
+                    // An unsynced Garmin Connect is a gap with a real fix, so
+                    // this hint stays.
                     GarminSyncHintCard()
-                } else if snapshot.hasNoActivity {
-                    TodayEmptyStateCard()
                 }
                 heroCard(snapshot: snapshot)
                 TodayStreakWeatherRow(
@@ -352,42 +354,6 @@ private struct TodayErrorBanner: View {
         }
         .padding(12)
         .fouleeGlass(cornerRadius: 16)
-    }
-}
-
-/// Shown on a fresh install / denied access / no activity yet, instead of
-/// a screen full of muted zeros.
-private struct TodayEmptyStateCard: View {
-    /// Same environment value the hero card reads (#222): this is the first
-    /// Today screen a fresh install shows, so it is the last place that should
-    /// hand a runner a walking figure and a lunchtime promise.
-    @Environment(UserPreferences.self) private var preferences
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: preferences.activityMode.icon)
-                .scaledSystemFont(size: 40, weight: .semibold)
-                .foregroundStyle(FouleeColor.accentMid)
-            Text("Pas encore de données")
-                .font(FouleeFont.headline)
-            Text("Connecte Santé et bouge un peu — ta première sortie s'affichera ici.")
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button {
-                if let url = URL(string: "x-apple-health://") {
-                    UIApplication.shared.open(url)
-                }
-            } label: {
-                Text("Ouvrir Santé")
-                    .font(FouleeFont.footnote.weight(.semibold))
-                    .foregroundStyle(FouleeColor.accentMid)
-            }
-            .buttonStyle(.pressable)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(24)
-        .fouleeGlass(cornerRadius: 24)
     }
 }
 
