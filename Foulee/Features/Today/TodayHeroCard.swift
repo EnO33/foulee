@@ -184,9 +184,10 @@ struct TodayHeroCard: View {
     @ViewBuilder
     private var windowDetail: some View {
         if snapshot.weather.isAvailable {
+            // A `Button` already reads as one element; `.accessibilityElement`
+            // here would make it stop reading as a button.
             Button(action: onWeatherTap) { weatherLine }
                 .buttonStyle(.pressable)
-                .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Météo à \(snapshot.walkWindowStart.clockText)")
                 .accessibilityValue(
                     "\(snapshot.weather.temperatureCelsius) degrés, "

@@ -216,11 +216,18 @@ struct TodayScreen: View {
                     GarminSyncHintCard()
                 }
                 heroCard(snapshot: snapshot)
-                TodayStatsGrid(snapshot: snapshot) { selectedMetric = $0 }
+                TodayStatsGrid(
+                    snapshot: snapshot,
+                    activeDays: preferences.activeDays,
+                    onSelectMetric: { selectedMetric = $0 },
+                    onShowHistory: { isShowingSummary = true }
+                )
                 HydrationHomeCard(preferences: preferences, store: hydration)
                     .id("hydrationCard")
-                TodayFooter(snapshot: snapshot, activeDays: preferences.activeDays) {
-                    isShowingSummary = true
+                if snapshot.weather.isAvailable {
+                    // Guideline 5.2.5: WeatherKit data on screen needs Apple
+                    // Weather's attribution on the same screen.
+                    WeatherAttributionView()
                 }
             }
             .padding(.horizontal, 20)
@@ -316,29 +323,6 @@ struct TodayScreen: View {
         case .steps: Double(store.stepsGoal)
         case .minutes: Double(store.minutesGoal)
         case .distance, .calories: nil
-        }
-    }
-}
-
-/// Week bars (tap → walk history) + the Apple Weather attribution required by
-/// Guideline 5.2.5. File-scope to keep `TodayScreen` within lint bounds.
-private struct TodayFooter: View {
-    let snapshot: TodaySnapshot
-    let activeDays: Set<Weekday>
-    var onSummary: () -> Void
-
-    var body: some View {
-        Button(action: onSummary) {
-            TodayWeekBars(snapshot: snapshot, activeDays: activeDays)
-        }
-        .buttonStyle(.pressable)
-        // Matches the label of the view it wraps ("Minutes d'activité par jour
-        // cette semaine") and the chip inside it ("x / y sorties") — VoiceOver
-        // reads label then hint, so the two have to agree (#222).
-        .accessibilityHint("Voir l'historique de tes sorties")
-        if snapshot.weather.isAvailable {
-            WeatherAttributionView()
-                .padding(.top, -8)
         }
     }
 }

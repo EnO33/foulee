@@ -24,7 +24,9 @@ struct TodayStreakBadge: View {
             }
         }
         .buttonStyle(.pressable)
-        .accessibilityElement(children: .ignore)
+        // No `.accessibilityElement(children: .ignore)`: on a `Button` it swaps
+        // the button's own element for a plain one, and VoiceOver — like the
+        // App Store capture querying `buttons` — no longer finds a button.
         .accessibilityLabel("Série")
         .accessibilityValue("\(streak) jours, record \(bestStreak) jours")
         .accessibilityHint("Voir ta série")

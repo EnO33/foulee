@@ -2,6 +2,9 @@ import SwiftUI
 
 /// 7 mini bars showing minutes per weekday vs. goal, plus the
 /// "X / 5 sorties" chip and weekday labels.
+///
+/// The « Semaine » tab of the stats card draws it under the week's totals
+/// (issue #327), so it no longer carries a card or a title of its own.
 struct TodayWeekBars: View {
     var snapshot: TodaySnapshot
     var activeDays: Set<Weekday>
@@ -35,8 +38,9 @@ struct TodayWeekBars: View {
     var body: some View {
         VStack(spacing: 14) {
             HStack {
-                Text("Cette semaine")
-                    .font(FouleeFont.headline)
+                Text("Minutes par jour")
+                    .font(FouleeFont.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Chip(
                     label: "\(completedCount) / \(activeDays.count) sorties",
@@ -48,8 +52,6 @@ struct TodayWeekBars: View {
             bars
             weekdayLabels
         }
-        .padding(18)
-        .fouleeGlass(cornerRadius: 24)
         .accessibilityElement(children: .contain)
     }
 
