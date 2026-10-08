@@ -12,7 +12,7 @@ struct WorkoutDetailHero: View {
                 .fill(FouleeColor.accentMid.opacity(0.18))
                 .frame(width: 64, height: 64)
                 .overlay {
-                    Image(systemName: detail.summary.activity.icon)
+                    Image(systemName: detail.summary.activityIcon)
                         .font(.system(size: 32, weight: .bold))
                         .foregroundStyle(FouleeColor.accentMid)
                 }
@@ -22,7 +22,7 @@ struct WorkoutDetailHero: View {
                 .tracking(1.1)
             Text(durationText)
                 .scaledNumericFont(size: 44)
-            Text("\(detail.summary.activity.label) · \(timeRange) · \(detail.summary.sourceName)")
+            Text("\(detail.summary.activityLabel) · \(timeRange) · \(detail.summary.sourceName)")
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

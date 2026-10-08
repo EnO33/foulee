@@ -87,3 +87,30 @@ struct TodayWorkoutsSheetSectionsTests {
         #expect(sections.map(\.day) == expected)
     }
 }
+
+extension TodayWorkoutsSheetSectionsTests {
+    /// The integration point of #317: the sheet rejoins legs, not only the
+    /// algorithm in isolation.
+    @Test("An outing split in legs is one row of the sheet")
+    func legsAreOneRow() {
+        let id = UUID()
+        let start = Self.now.addingTimeInterval(-3_600)
+        let legs = [(RecordedActivity.walking, 0.0), (.running, 600)].enumerated().map { index, part in
+            WorkoutSummary(
+                id: UUID(),
+                startedAt: start.addingTimeInterval(part.1),
+                endedAt: start.addingTimeInterval(part.1 + 600),
+                durationSeconds: 600,
+                distanceKm: 1,
+                activeCalories: 50,
+                sourceName: "Foulée",
+                activity: part.0,
+                outing: OutingLeg(outingID: id, index: index)
+            )
+        }
+        let sections = TodayWorkoutsSheet.sections(from: legs, calendar: Self.calendar, now: Self.now)
+        let rows = sections.flatMap(\.workouts)
+        #expect(rows.count == 1)
+        #expect(rows.first?.legs.count == 2)
+    }
+}

@@ -50,7 +50,8 @@ extension WorkoutSummary {
             sourceName: workout.sourceRevision.source.name,
             // Already on the workout, and read at last (issue #245): the type
             // was available here all along, it simply went nowhere.
-            activity: RecordedActivity(workout.workoutActivityType)
+            activity: RecordedActivity(workout.workoutActivityType),
+            outing: OutingLeg(metadata: metadata)
         )
     }
 }
