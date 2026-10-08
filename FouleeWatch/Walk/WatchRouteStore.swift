@@ -19,25 +19,33 @@ struct WatchRouteSource: Sendable {
     )
 }
 
-/// The path walked so far, for the session's « Plan » page (issue #312).
+/// The path walked so far: drawn on the session's « Plan » page, and saved
+/// with each leg's workout (issue #312).
 ///
 /// Its own observable rather than a field of `WatchWorkoutMetrics`: the metrics
 /// are rebuilt on every HealthKit batch and compared whole, and a route grows
 /// to a thousand points over an hour. Kept here, only the page that draws it
 /// redraws when it grows.
 ///
-/// **Records nothing into the session.** Saving the route with the workout is
-/// lot 2 of the issue; whatever happens here, the outing goes on.
+/// **Writes nothing itself.** It holds the outing's fixes; `WatchWorkoutStore`
+/// hands them to each leg as it is saved, and whatever happens here, the
+/// outing goes on.
 @MainActor
 @Observable
 final class WatchRouteStore {
-    private(set) var coordinates: [CLLocationCoordinate2D] = []
+    /// Every usable fix of the outing, oldest first. Whole `CLLocation`s, not
+    /// coordinates: Santé wants each fix's time, accuracy and altitude.
+    private(set) var locations: [CLLocation] = []
     /// The wearer refused location access — the page says so instead of
     /// waiting forever for a first fix.
     private(set) var isDenied = false
 
     @ObservationIgnored private let source: WatchRouteSource
     @ObservationIgnored private var recording: Task<Void, Never>?
+
+    /// What the map draws. Derived rather than stored next to `locations`,
+    /// so the two can never disagree.
+    var coordinates: [CLLocationCoordinate2D] { locations.map(\.coordinate) }
 
     init(source: WatchRouteSource = .live) {
         self.source = source
@@ -57,7 +65,7 @@ final class WatchRouteStore {
                 return
             }
             for await fix in source.updates() {
-                self?.coordinates.append(fix.coordinate)
+                self?.locations.append(fix)
             }
         }
     }
@@ -72,7 +80,7 @@ final class WatchRouteStore {
     /// Forget the route, back to the home screen.
     func reset() {
         stop()
-        coordinates = []
+        locations = []
         isDenied = false
     }
 }

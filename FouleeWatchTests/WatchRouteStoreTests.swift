@@ -204,3 +204,73 @@ struct WatchWorkoutRouteLifecycleTests {
         #expect(fake.authorizationRequests == 0)
     }
 }
+
+/// Saving the route with each leg's workout (issue #312, lot 2).
+@MainActor
+@Suite("Route saved with the workout")
+struct WatchWorkoutRouteSaveTests {
+    private func fix(at date: Date) -> CLLocation {
+        CLLocation(
+            coordinate: CLLocationCoordinate2D(latitude: 48.86, longitude: 2.33),
+            altitude: 35,
+            horizontalAccuracy: 5,
+            verticalAccuracy: 3,
+            timestamp: date
+        )
+    }
+
+    /// A split is dated at the detected boundary, in the past: the fixes after
+    /// it belong to the next leg, and Santé would draw them on the wrong one.
+    @Test("A leg keeps only the fixes inside its own dates, bounds included")
+    func legSlice() {
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        let end = start.addingTimeInterval(600)
+        let fixes = [-1.0, 0, 300, 600, 601].map { fix(at: start.addingTimeInterval($0)) }
+
+        let leg = WatchWorkoutHealthKit.routeFixes(fixes, from: start, to: end)
+
+        #expect(leg.map(\.timestamp) == [0.0, 300, 600].map { start.addingTimeInterval($0) })
+    }
+
+    @Test("An inverted range yields nothing rather than trapping")
+    func invertedRange() {
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        let fixes = [fix(at: start)]
+        #expect(WatchWorkoutHealthKit.routeFixes(fixes, from: start, to: start.addingTimeInterval(-1)).isEmpty)
+    }
+
+    @Test("« Terminer » hands the outing's fixes to the save")
+    func stopHandsTheRoute() async {
+        let stub = WorkoutHealthKitStub()
+        let fake = FakeRouteSource()
+        let store = stub.makeStore(route: WatchRouteStore(source: fake.source))
+        await store.start(activity: .walking)
+        await waitUntil { fake.openedStreams == 1 }
+        fake.deliver(latitude: 48.8634, longitude: 2.3270)
+        fake.deliver(latitude: 48.8638, longitude: 2.3285)
+        await waitUntil { store.route.locations.count == 2 }
+
+        await store.stop()
+
+        #expect(stub.finishedRoutes.map(\.count) == [2])
+    }
+
+    /// A retry must save the same route the first attempt would have.
+    @Test("A retried save carries the route again")
+    func retryHandsTheRoute() async {
+        let stub = WorkoutHealthKitStub()
+        let fake = FakeRouteSource()
+        let store = stub.makeStore(route: WatchRouteStore(source: fake.source))
+        await store.start(activity: .walking)
+        await waitUntil { fake.openedStreams == 1 }
+        fake.deliver(latitude: 48.8634, longitude: 2.3270)
+        await waitUntil { store.route.locations.count == 1 }
+        stub.finishError = StubError()
+        await store.stop()
+        stub.finishError = nil
+
+        await store.retrySave()
+
+        #expect(stub.finishedRoutes.map(\.count) == [1, 1])
+    }
+}

@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import HealthKit
 import Testing
@@ -61,6 +62,8 @@ final class WorkoutHealthKitStub {
     /// says whether the store released the builder. This is what lets a test
     /// deliver a callback *as a leg that has already been closed*.
     private(set) var handleIDs: [ObjectIdentifier] = []
+    /// The route handed to each `finishWorkout`, in call order (issue #312).
+    private(set) var finishedRoutes: [[CLLocation]] = []
 
     func makeStore(
         detection: WatchActivityDetection = WatchActivityDetection(source: .inert),
@@ -114,8 +117,9 @@ final class WorkoutHealthKitStub {
                 self.collectionEndDate = date
                 self.endCollectionDates.append(date)
             },
-            finishWorkout: {
+            finishWorkout: { route in
                 self.finishCalls += 1
+                self.finishedRoutes.append(route)
                 if let error = self.finishError { throw error }
             },
             collectionEndDate: { self.collectionEndDate }
@@ -167,6 +171,7 @@ struct WatchWorkoutStoreTests {
             #expect(stub.requestedReadTypes.contains(type))
         }
         #expect(stub.requestedShareTypes.contains(HKWorkoutType.workoutType()))
+        #expect(stub.requestedShareTypes.contains(HKSeriesType.workoutRoute()))
     }
 
     @Test("start() is a no-op while a walk is already active")

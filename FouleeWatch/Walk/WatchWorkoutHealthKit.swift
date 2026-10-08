@@ -1,3 +1,4 @@
+@preconcurrency import CoreLocation
 @preconcurrency import HealthKit
 
 /// The HealthKit side effects `WatchWorkoutStore` drives, as an injectable
@@ -64,7 +65,17 @@ struct WatchWorkoutSessionHandle: Sendable {
     var sendToRemote: @MainActor (Data) async throws -> Void
     var end: @MainActor () -> Void
     var endCollection: @MainActor (_ at: Date) async throws -> Void
-    var finishWorkout: @MainActor () async throws -> Void
+    /// Save the workout, then its route (issue #312).
+    ///
+    /// - Parameter route: every fix of the **outing**, not of this leg. The
+    ///   leg's own slice is cut against the saved workout's dates, which are
+    ///   the only ones HealthKit will accept a route for — a split is dated in
+    ///   the past (issue #265), so the store cannot know them as precisely.
+    ///
+    /// Throws only for the workout. A route that will not save is logged and
+    /// dropped: it is never a reason to lose the sortie, same rule as the
+    /// mirror (#277).
+    var finishWorkout: @MainActor (_ route: [CLLocation]) async throws -> Void
     /// `HKLiveWorkoutBuilder.endDate` — non-nil once collection has ended, so
     /// a retry knows not to end it twice.
     var collectionEndDate: @MainActor () -> Date?
@@ -140,6 +151,47 @@ extension WatchWorkoutHealthKit {
         return dataSource
     }
 
+    /// The fixes that belong to a workout spanning `start...end`.
+    ///
+    /// Split out of `saveRoute` because that one needs a saved `HKWorkout`,
+    /// which no test can make — while this is the part that decides which leg
+    /// a fix is drawn on.
+    nonisolated static func routeFixes(
+        _ fixes: [CLLocation],
+        from start: Date,
+        to end: Date
+    ) -> [CLLocation] {
+        fixes.filter { $0.timestamp >= start && $0.timestamp <= end }
+    }
+
+    /// Attach the leg's slice of the route to `workout`. Best effort: the
+    /// workout is already saved, and nothing here may undo that.
+    ///
+    /// Built in one go once the leg is saved, not fed fix by fix while it runs:
+    /// a leg's end is only known after the fact (it is dated at the detected
+    /// boundary, up to a minute back), and a fix inserted live past that
+    /// boundary could not be taken back out. The cost is a route lost if the
+    /// app dies mid-leg — the workout recovery of `WatchWorkoutRecovery` saves
+    /// the workout, not the route.
+    @MainActor private static func saveRoute(
+        _ fixes: [CLLocation],
+        for workout: HKWorkout,
+        in healthStore: HKHealthStore
+    ) async {
+        let leg = routeFixes(fixes, from: workout.startDate, to: workout.endDate)
+        guard !leg.isEmpty else { return }
+        let builder = HKWorkoutRouteBuilder(healthStore: healthStore, device: nil)
+        do {
+            try await builder.insertRouteData(leg)
+            _ = try await builder.finishRoute(with: workout, metadata: nil)
+            FouleeLog.route.notice("tracé enregistré : \(leg.count, privacy: .public) points")
+        } catch {
+            FouleeLog.route.error(
+                "tracé non enregistré : \(error.localizedDescription, privacy: .public)"
+            )
+        }
+    }
+
     @MainActor static var live: WatchWorkoutHealthKit {
         let store = HKHealthStore()
         return WatchWorkoutHealthKit(
@@ -168,7 +220,10 @@ extension WatchWorkoutHealthKit {
                     sendToRemote: { try await session.sendToRemoteWorkoutSession(data: $0) },
                     end: { session.end() },
                     endCollection: { try await builder.endCollection(at: $0) },
-                    finishWorkout: { _ = try await builder.finishWorkout() },
+                    finishWorkout: { route in
+                        guard let workout = try await builder.finishWorkout() else { return }
+                        await saveRoute(route, for: workout, in: store)
+                    },
                     collectionEndDate: { builder.endDate }
                 )
             }

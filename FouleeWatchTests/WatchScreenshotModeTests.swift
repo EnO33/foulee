@@ -34,7 +34,7 @@ private final class TrapHealthKit {
                     sendToRemote: { _ in },
                     end: { _ = token },
                     endCollection: { _ in },
-                    finishWorkout: {},
+                    finishWorkout: { _ in },
                     collectionEndDate: { nil }
                 )
             }
