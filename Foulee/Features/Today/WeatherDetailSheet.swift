@@ -1,9 +1,11 @@
 import SwiftUI
 
-/// Quick midday-weather detail, opened by tapping the weather card. Local-only
-/// data (the single midday snapshot the Today screen already has) — no chart.
+/// Quick weather detail, opened by tapping the weather on the hero. Local-only
+/// data (the single forecast the Today screen already has) — no chart.
 struct WeatherDetailSheet: View {
     let weather: WeatherSnapshot
+    /// The hour the forecast is for: the start of the outing window.
+    var windowStart: DateComponents
     var onClose: () -> Void
 
     private var isAvailable: Bool { weather.isAvailable }
@@ -33,9 +35,9 @@ struct WeatherDetailSheet: View {
                     .font(FouleeFont.title2)
                 adviceRow
                 Spacer()
-                // "à 12 h", not "de 12 h": the latter reads as a 12-hour
-                // horizon as easily as a noon reading.
-                Text("Prévision à 12 h à ton emplacement")
+                // "à 18:30", not "de 18:30": the latter reads as a span as
+                // easily as an hour.
+                Text("Prévision à \(windowStart.clockText) à ton emplacement")
                     .font(FouleeFont.footnote)
                     .foregroundStyle(.secondary)
                 WeatherAttributionView()
@@ -91,6 +93,7 @@ struct WeatherDetailSheet: View {
 #Preview("Ensoleillé") {
     WeatherDetailSheet(
         weather: WeatherSnapshot(temperatureCelsius: 21, condition: "Ensoleillé", advice: "idéal"),
+        windowStart: DateComponents(hour: 12, minute: 30),
         onClose: {}
     )
 }
@@ -98,6 +101,7 @@ struct WeatherDetailSheet: View {
 #Preview("Indisponible") {
     WeatherDetailSheet(
         weather: WeatherSnapshot(temperatureCelsius: 0, condition: "—", advice: ""),
+        windowStart: DateComponents(hour: 12, minute: 30),
         onClose: {}
     )
 }

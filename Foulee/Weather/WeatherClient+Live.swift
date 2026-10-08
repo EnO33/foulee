@@ -4,15 +4,14 @@ import WeatherKit
 
 extension WeatherClient {
     /// Real WeatherKit-backed implementation. Asks for the hourly forecast
-    /// and picks the entry closest to today's local 12:00.
+    /// and picks the entry closest to `target`.
     static let liveValue: WeatherClient = WeatherClient(
-        middayForecast: { coordinate in
+        forecast: { coordinate, target in
             let location = CLLocation(
                 latitude: coordinate.latitude,
                 longitude: coordinate.longitude
             )
             let weather = try await WeatherService.shared.weather(for: location)
-            let target = middayDate()
             let hour = weather.hourlyForecast.forecast.min { lhs, rhs in
                 abs(lhs.date.timeIntervalSince(target)) < abs(rhs.date.timeIntervalSince(target))
             } ?? weather.hourlyForecast.forecast.first
@@ -31,13 +30,4 @@ extension WeatherClient {
             )
         }
     )
-}
-
-private func middayDate(now: Date = .now, calendar: Calendar = .current) -> Date {
-    let components = calendar.dateComponents([.year, .month, .day], from: now)
-    var midday = components
-    midday.hour = 12
-    midday.minute = 0
-    midday.second = 0
-    return calendar.date(from: midday) ?? now
 }

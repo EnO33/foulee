@@ -34,6 +34,8 @@ struct TodayHeroCard: View {
     var notificationsDenied: Bool
     var onStart: () -> Void
     var onSummary: () -> Void
+    /// The forecast on the card opens its detail.
+    var onWeatherTap: () -> Void = {}
     var onSnooze: (TimeInterval) -> Void
     var onToggleNotifications: () -> Void
     var onOpenNotificationSettings: () -> Void
@@ -55,19 +57,20 @@ struct TodayHeroCard: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        // No step / minute pills under the ring: the stats grid below says the
+        // same two numbers with their goals, and saying them twice on one
+        // screen only made it busier. The ring's VoiceOver value still reads
+        // both, so nothing is lost to anyone who cannot see the grid.
+        VStack(spacing: 20) {
             HStack(spacing: 18) {
                 ring
                 content
             }
-            TodayGoalLegend(
-                steps: snapshot.steps,
-                stepsGoal: snapshot.stepsGoal,
-                minutes: snapshot.minutes,
-                minutesGoal: snapshot.minutesGoal
-            )
             actionRow
         }
+        // 22, not more: on an iPhone SE every extra point of margin comes out
+        // of « Sortie terminée » and « Voir le résumé », which then truncate
+        // and wrap.
         .padding(22)
         .fouleeGlass(cornerRadius: 28)
     }
@@ -114,9 +117,12 @@ struct TodayHeroCard: View {
                 )
                 Text("Bravo, \(Text("\(snapshot.minutes) min").foregroundStyle(FouleeColor.accentMid)) d'activité")
                     .font(FouleeFont.title3)
-                Text("Streak prolongée à \(snapshot.streak) jours")
-                    .font(FouleeFont.footnote)
-                    .foregroundStyle(.secondary)
+                // The weather stays once the outing is done, in one line —
+                // where « Streak prolongée à N jours » used to be, which the
+                // flame in the header now says.
+                if snapshot.weather.isAvailable {
+                    weatherButton
+                }
             }
         } else if snapshot.isRestDay {
             VStack(alignment: .leading, spacing: 10) {
@@ -128,6 +134,9 @@ struct TodayHeroCard: View {
                 )
                 Text("Pas de sortie prévue aujourd'hui — profite de ta pause.")
                     .font(FouleeFont.title3)
+                if snapshot.weather.isAvailable {
+                    weatherButton
+                }
             }
         } else {
             VStack(alignment: .leading, spacing: 10) {
@@ -137,8 +146,11 @@ struct TodayHeroCard: View {
                     tint: FouleeColor.accentMid,
                     fill: FouleeColor.accentMid.opacity(0.16)
                 )
-                windowSentence
+                // Same shape as « Bravo » once done: what the day is at, then
+                // the weather on one line.
+                Text("Encore \(Text("\(minutesToGo) min").foregroundStyle(FouleeColor.accentMid)) d'activité")
                     .font(FouleeFont.title3)
+                windowDetail
             }
         }
     }
@@ -156,12 +168,6 @@ struct TodayHeroCard: View {
         return Int(windowStart.timeIntervalSinceNow / 60)
     }
 
-    private var formattedWindowStart: String {
-        guard let hour = snapshot.walkWindowStart.hour,
-              let minute = snapshot.walkWindowStart.minute else { return "—" }
-        return String(format: "%02d:%02d", hour, minute)
-    }
-
     /// "Départ dans …" rather than the old "Marche dans …" / "Marche du midi":
     /// the chip counts down to the window, and the window is the same one
     /// whatever the user does inside it (#222).
@@ -175,14 +181,59 @@ struct TodayHeroCard: View {
         return "Départ dans \(hours) h \(remaining)"
     }
 
+    /// What is left of the day's activity goal — never below zero.
+    private var minutesToGo: Int {
+        max(snapshot.minutesGoal - snapshot.minutes, 0)
+    }
+
+    /// Under the countdown: the weather for the outing, on one line.
+    ///
+    /// It replaced « Ta fenêtre est ouverte », which only repeated the chip.
+    /// The forecast is for the window's start (`WeatherClient.forecast`), so
+    /// here it is the weather the user will go out in.
+    ///
+    /// Without a forecast (location refused, WeatherKit down), the opening
+    /// time takes the line before the window; once it is open, the chip
+    /// already says everything.
     @ViewBuilder
-    private var windowSentence: some View {
-        let accent = Text(formattedWindowStart).foregroundStyle(FouleeColor.accentMid)
-        if let minutes = minutesUntilWindow, minutes <= 0 {
-            Text("Ta fenêtre est ouverte — départ depuis \(accent)")
-        } else {
-            Text("Ta fenêtre s'ouvre à \(accent)")
+    private var windowDetail: some View {
+        if snapshot.weather.isAvailable {
+            weatherButton
+        } else if let minutes = minutesUntilWindow, minutes > 0 {
+            Text("Fenêtre à \(snapshot.walkWindowStart.clockText)")
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
         }
+    }
+
+    /// The forecast on one line, opening its detail — the same in every state
+    /// of the card.
+    private var weatherButton: some View {
+        // A `Button` already reads as one element; `.accessibilityElement`
+        // here would make it stop reading as a button.
+        Button(action: onWeatherTap) {
+            weatherLine
+        }
+        .buttonStyle(.pressable)
+        .accessibilityLabel("Météo à \(snapshot.walkWindowStart.clockText)")
+        .accessibilityValue(
+            "\(snapshot.weather.temperatureCelsius) degrés, "
+                + "\(snapshot.weather.condition), \(snapshot.weather.advice)"
+        )
+        .accessibilityHint("Voir le détail météo")
+        // Same handle the old weather card carried: the App Store capture
+        // (issue #235) taps it to open the sheet.
+        .accessibilityIdentifier(TodayAccessibility.weatherCard)
+    }
+
+    private var weatherLine: some View {
+        HStack(spacing: 6) {
+            Image(systemName: FouleeIcon.sun)
+                .foregroundStyle(FouleeColor.warning)
+            Text("\(snapshot.weather.temperatureCelsius)° · \(snapshot.weather.condition)")
+                .foregroundStyle(.secondary)
+        }
+        .font(FouleeFont.footnote)
     }
 
     private var actionRow: some View {

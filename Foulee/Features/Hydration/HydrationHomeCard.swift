@@ -27,7 +27,6 @@ struct HydrationHomeCard: View {
                     Task { await store.logGlass(ml: preferences.hydrationGlassML) }
                 }
             }
-            .padding(.horizontal, 20)
         }
     }
 

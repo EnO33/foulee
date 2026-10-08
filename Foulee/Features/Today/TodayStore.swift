@@ -162,6 +162,7 @@ final class TodayStore {
     func apply(preferences: UserPreferences) {
         let newWindow = Self.window(for: preferences)
         let changed = hasChanged(preferences: preferences)
+        let windowMoved = newWindow != walkWindowStart
         stepsGoal = preferences.stepsGoal
         minutesGoal = preferences.minutesGoal
         walkWindowStart = newWindow
@@ -202,6 +203,14 @@ final class TodayStore {
             )
             publishToWidgets()
         }
+        // The forecast is for the window's start: a moved window needs a new
+        // one, not the next refresh's.
+        if windowMoved, snapshot != nil { Task { await refreshWeather() } }
+    }
+
+    func refreshWeather() async {
+        guard let weather = await fetchWeatherIfAuthorized() else { return }
+        snapshot?.weather = weather
     }
 
     /// Ask for HealthKit + Location authorization and trigger an initial
@@ -384,13 +393,24 @@ final class TodayStore {
         }
     }
 
+    /// Today at the start of the outing window — the hour the forecast is for.
+    private var windowStartToday: Date {
+        let now = date.now
+        return Calendar.current.date(
+            bySettingHour: walkWindowStart.hour ?? 12,
+            minute: walkWindowStart.minute ?? 0,
+            second: 0,
+            of: now
+        ) ?? now
+    }
+
     private func fetchWeatherIfAuthorized() async -> WeatherSnapshot? {
         guard let coordinate = await location.currentLocation() else { return nil }
         // Weather is non-critical and self-evident — its card just hides when
         // unavailable. Don't route a transient WeatherKit failure (rate limits,
         // flaky network) through `lastError`: that raises the Health-data banner
         // which wrongly tells the user to check their Santé permissions.
-        return try? await weather.middayForecast(coordinate)
+        return try? await weather.forecast(coordinate, windowStartToday)
     }
 
     private func makeSnapshot(

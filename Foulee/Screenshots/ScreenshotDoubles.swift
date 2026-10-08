@@ -39,7 +39,7 @@ enum ScreenshotDoubles {
     )
 
     static let weather = WeatherClient(
-        middayForecast: { _ in ScreenshotSeed.weather }
+        forecast: { _, _ in ScreenshotSeed.weather }
     )
 
     static let location = LocationClient(

@@ -117,7 +117,9 @@ struct TodayScreen: View {
             )
             .sheet(isPresented: $isShowingWeather) {
                 if let weather = store.snapshot?.weather {
-                    WeatherDetailSheet(weather: weather) { isShowingWeather = false }
+                    WeatherDetailSheet(weather: weather, windowStart: store.walkWindowStart) {
+                        isShowingWeather = false
+                    }
                         .preferredColorScheme(preferredScheme)
                 }
             }
@@ -173,6 +175,7 @@ struct TodayScreen: View {
             notificationsDenied: store.notificationsAuthorizationStatus == .denied,
             onStart: { startWalk() },
             onSummary: { isShowingSummary = true },
+            onWeatherTap: { isShowingWeather = true },
             onSnooze: { interval in
                 Task { await scheduler.snooze(after: interval) }
             },
@@ -190,50 +193,53 @@ struct TodayScreen: View {
     private func loaded(snapshot: TodaySnapshot) -> some View {
         ScrollViewReader { proxy in
         ScrollView {
-            VStack(spacing: 12) {
-                header(date: snapshot.date)
-                    .padding(.horizontal, 20)
+            // One margin and one gap for every section, set here rather than
+            // repeated on each card — and wider than the 12 pt it was, so the
+            // home reads as separate blocks instead of one dense column.
+            VStack(spacing: Self.sectionSpacing) {
+                header(snapshot: snapshot)
                     .padding(.top, 8)
-                // One card at most, most-explanatory first. A failed fetch
-                // outranks both hints — a day can perfectly well hold data
-                // *and* a failed fetch, and only the banner explains why the
-                // numbers may be wrong.
+                // One card at most. A failed fetch outranks the Garmin hint —
+                // a day can perfectly well hold data *and* a failed fetch, and
+                // only the banner explains why the numbers may be wrong.
+                //
+                // No « Pas encore de données » card any more: it showed every
+                // morning before the first step, said nothing the zeros below
+                // did not, and its « Ouvrir Santé » led nowhere useful —
+                // HealthKit never tells an app its read access was refused, so
+                // the card could not tell that case from an ordinary empty day.
                 if store.lastError != nil {
                     TodayErrorBanner()
-                        .padding(.horizontal, 20)
                 } else if store.showsGarminSyncHint {
-                    // Before the generic empty state: telling a Garmin user to
-                    // "faire quelques pas" when the real gap is an unsynced
-                    // Garmin Connect would send them nowhere.
+                    // An unsynced Garmin Connect is a gap with a real fix, so
+                    // this hint stays.
                     GarminSyncHintCard()
-                        .padding(.horizontal, 20)
-                } else if snapshot.hasNoActivity {
-                    TodayEmptyStateCard()
-                        .padding(.horizontal, 20)
                 }
                 heroCard(snapshot: snapshot)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 4)
-                TodayStreakWeatherRow(
+                TodayStatsGrid(
                     snapshot: snapshot,
-                    onStreakTap: { isShowingStreak = true },
-                    onWeatherTap: { isShowingWeather = true }
+                    activeDays: preferences.activeDays,
+                    onSelectMetric: { selectedMetric = $0 },
+                    onShowHistory: { isShowingSummary = true }
                 )
-                .padding(.horizontal, 20)
-                TodayStatsGrid(snapshot: snapshot) { selectedMetric = $0 }
-                    .padding(.horizontal, 20)
                 HydrationHomeCard(preferences: preferences, store: hydration)
                     .id("hydrationCard")
-                TodayFooter(snapshot: snapshot, activeDays: preferences.activeDays) {
-                    isShowingSummary = true
+                if snapshot.weather.isAvailable {
+                    // Guideline 5.2.5: WeatherKit data on screen needs Apple
+                    // Weather's attribution on the same screen.
+                    WeatherAttributionView()
                 }
             }
+            .padding(.horizontal, 20)
             .padding(.bottom, 40)
         }
         .refreshable { await store.refresh() }
         .modifier(HydrationDeepLinkScroll(proxy: proxy, pending: $scrollToHydration))
         }
     }
+
+    /// The gap between two sections of the home.
+    private static let sectionSpacing: CGFloat = 20
 
     private var placeholder: some View {
         VStack(spacing: 16) {
@@ -246,17 +252,25 @@ struct TodayScreen: View {
         }
     }
 
-    private func header(date: Date) -> some View {
-        HStack(alignment: .center) {
+    private func header(snapshot: TodaySnapshot) -> some View {
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(formatted(date: date))
+                Text(formatted(date: snapshot.date))
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .tracking(1.2)
                 Text("Aujourd'hui")
                     .font(FouleeFont.largeTitle)
+                    // Shrinks rather than breaking into « Aujourd'-hui » when
+                    // the streak beside it runs to three digits, or the text
+                    // size is large, on a narrow iPhone.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             Spacer()
+            TodayStreakBadge(streak: snapshot.streak, bestStreak: snapshot.bestStreak) {
+                isShowingStreak = true
+            }
             Button { isShowingSettings = true } label: {
                 Image(systemName: "person.crop.circle")
                     .scaledSystemFont(size: 32)
@@ -313,31 +327,6 @@ struct TodayScreen: View {
     }
 }
 
-/// Week bars (tap → walk history) + the Apple Weather attribution required by
-/// Guideline 5.2.5. File-scope to keep `TodayScreen` within lint bounds.
-private struct TodayFooter: View {
-    let snapshot: TodaySnapshot
-    let activeDays: Set<Weekday>
-    var onSummary: () -> Void
-
-    var body: some View {
-        Button(action: onSummary) {
-            TodayWeekBars(snapshot: snapshot, activeDays: activeDays)
-        }
-        .buttonStyle(.pressable)
-        .padding(.horizontal, 20)
-        // Matches the label of the view it wraps ("Minutes d'activité par jour
-        // cette semaine") and the chip inside it ("x / y sorties") — VoiceOver
-        // reads label then hint, so the two have to agree (#222).
-        .accessibilityHint("Voir l'historique de tes sorties")
-        if snapshot.weather.isAvailable {
-            WeatherAttributionView()
-                .padding(.horizontal, 20)
-                .padding(.top, 4)
-        }
-    }
-}
-
 private struct TodayErrorBanner: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -355,42 +344,6 @@ private struct TodayErrorBanner: View {
         }
         .padding(12)
         .fouleeGlass(cornerRadius: 16)
-    }
-}
-
-/// Shown on a fresh install / denied access / no activity yet, instead of
-/// a screen full of muted zeros.
-private struct TodayEmptyStateCard: View {
-    /// Same environment value the hero card reads (#222): this is the first
-    /// Today screen a fresh install shows, so it is the last place that should
-    /// hand a runner a walking figure and a lunchtime promise.
-    @Environment(UserPreferences.self) private var preferences
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: preferences.activityMode.icon)
-                .scaledSystemFont(size: 40, weight: .semibold)
-                .foregroundStyle(FouleeColor.accentMid)
-            Text("Pas encore de données")
-                .font(FouleeFont.headline)
-            Text("Connecte Santé et bouge un peu — ta première sortie s'affichera ici.")
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button {
-                if let url = URL(string: "x-apple-health://") {
-                    UIApplication.shared.open(url)
-                }
-            } label: {
-                Text("Ouvrir Santé")
-                    .font(FouleeFont.footnote.weight(.semibold))
-                    .foregroundStyle(FouleeColor.accentMid)
-            }
-            .buttonStyle(.pressable)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(24)
-        .fouleeGlass(cornerRadius: 24)
     }
 }
 

@@ -7,19 +7,29 @@ struct OnboardingGoalView: View {
     var onContinue: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 28) {
-            OnboardingStepIndicator(step: .goal)
-                .frame(maxWidth: .infinity)
-            heading
-            daysSection
-            windowSection
-            goalSection
-            Spacer()
+        VStack(alignment: .leading, spacing: 20) {
+            // Scrolled like the activity and permissions screens. As a fixed
+            // stack, three sections and their heading ran taller than an
+            // iPhone SE: the title was cut to « Quand veux-tu… » and
+            // « Continuer » slid half off the bottom of the screen.
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
+                    OnboardingStepIndicator(step: .goal)
+                        .frame(maxWidth: .infinity)
+                    heading
+                    daysSection
+                    windowSection
+                    goalSection
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 70)
+                .padding(.bottom, 8)
+            }
+            .scrollBounceBehavior(.basedOnSize)
             PrimaryButton(title: "Continuer", systemIcon: nil, action: onContinue)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 36)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 70)
-        .padding(.bottom, 36)
     }
 
     private var heading: some View {

@@ -14,3 +14,12 @@ extension Date {
         return formatter
     }()
 }
+
+extension DateComponents {
+    /// « 18:30 » for an hour-and-minute setting such as the outing window, or
+    /// « — » when it carries neither.
+    var clockText: String {
+        guard let hour, let minute else { return "—" }
+        return String(format: "%02d:%02d", hour, minute)
+    }
+}
