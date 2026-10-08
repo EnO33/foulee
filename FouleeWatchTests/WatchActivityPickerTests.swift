@@ -29,7 +29,7 @@ private final class ConfigurationRecorder {
                     collectionEndDate: { nil }
                 )
             }
-        ), detection: WatchActivityDetection(source: .inert))
+        ), detection: WatchActivityDetection(source: .inert), route: WatchRouteStore(source: .inert))
     }
 }
 

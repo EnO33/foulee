@@ -17,8 +17,9 @@ struct GarminDevice: Codable, Equatable, Sendable {
 /// Constants the SDK needs at initialization time.
 enum GarminConnectIQConfiguration {
     /// URL scheme Garmin Connect Mobile calls back with the device-selection
-    /// response. Declared in `Project.swift` as `garminReturnURLScheme` — the
-    /// two must stay equal, and there is no compiler check for that.
+    /// response. Declared in `Tuist/ProjectDescriptionHelpers/InfoPlists.swift`
+    /// as `garminReturnURLScheme` — the two must stay equal, and there is no
+    /// compiler check for that.
     static let returnURLScheme = "foulee-ciq"
 
     /// Passed to the SDK as `CBCentralManagerOptionRestoreIdentifierKey`. With

@@ -62,7 +62,10 @@ final class WorkoutHealthKitStub {
     /// deliver a callback *as a leg that has already been closed*.
     private(set) var handleIDs: [ObjectIdentifier] = []
 
-    func makeStore(detection: WatchActivityDetection = WatchActivityDetection(source: .inert)) -> WatchWorkoutStore {
+    func makeStore(
+        detection: WatchActivityDetection = WatchActivityDetection(source: .inert),
+        route: WatchRouteStore = WatchRouteStore(source: .inert)
+    ) -> WatchWorkoutStore {
         WatchWorkoutStore(healthKit: WatchWorkoutHealthKit(
             isAvailable: { self.isAvailable },
             requestAuthorization: { toShare, read in
@@ -77,7 +80,7 @@ final class WorkoutHealthKitStub {
                 if let error = self.startError { throw error }
                 return self.makeHandle()
             }
-        ), detection: detection)
+        ), detection: detection, route: route)
     }
 
     private func makeHandle() -> WatchWorkoutSessionHandle {
