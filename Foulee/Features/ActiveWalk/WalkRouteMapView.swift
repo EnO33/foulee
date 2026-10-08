@@ -8,7 +8,7 @@ struct WalkRouteMapView: View {
     var onClose: () -> Void
 
     private var coordinates: [CLLocationCoordinate2D] {
-        route.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
+        route.map(\.locationCoordinate)
     }
 
     var body: some View {

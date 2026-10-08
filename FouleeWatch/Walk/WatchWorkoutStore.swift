@@ -77,13 +77,18 @@ final class WatchWorkoutStore: NSObject {
     /// routinely spans a change of sport, and `splitLeg` clears what the leg
     /// carries.
     @ObservationIgnored var splitRecorder = SplitRecorder()
+    /// The path of the outing, for the « Plan » page (issue #312). Spans every
+    /// leg: a change of sport is not a change of route.
+    @ObservationIgnored let route: WatchRouteStore
 
     init(
         healthKit: WatchWorkoutHealthKit = .live,
-        detection: WatchActivityDetection = WatchActivityDetection()
+        detection: WatchActivityDetection = WatchActivityDetection(),
+        route: WatchRouteStore = WatchRouteStore()
     ) {
         self.healthKit = healthKit
         self.detection = detection
+        self.route = route
         super.init()
     }
 
@@ -152,6 +157,7 @@ final class WatchWorkoutStore: NSObject {
     func stop() async {
         guard case .active(var metrics) = state else { return }
         detection.stop()
+        route.stop()
         let end = Date.now
         // Close the leg in flight so every leg of the outing has an end, and
         // the summary can give each sport its own figures (issue #265).
@@ -201,6 +207,7 @@ final class WatchWorkoutStore: NSObject {
     /// Return to idle so a new session can start.
     func reset() {
         detection.stop()
+        route.reset()
         sessionHandle = nil
         finishedLegs = []
         pendingSplit = nil
@@ -242,6 +249,7 @@ final class WatchWorkoutStore: NSObject {
         lastMovementSample = nil
         state = .active(.empty(for: activity))
         beginActivityDetection(from: activity)
+        route.start()
     }
 
     func ingest(builder: HKLiveWorkoutBuilder) {
@@ -261,21 +269,12 @@ final class WatchWorkoutStore: NSObject {
         // it would reset to zero the moment the sport changed.
         currentLeg = WatchActivityTotals(
             elapsed: builder.elapsedTime(at: now),
-            steps: Int(sumDouble(builder.statistics(for: HKQuantityType(.stepCount)), unit: .count())),
-            distanceMeters: sumDouble(
-                builder.statistics(for: HKQuantityType(.distanceWalkingRunning)),
-                unit: .meter()
-            ),
-            activeCalories: Int(sumDouble(
-                builder.statistics(for: HKQuantityType(.activeEnergyBurned)),
-                unit: .kilocalorie()
-            ))
+            steps: Int(builder.sum(of: .stepCount, in: .count())),
+            distanceMeters: builder.sum(of: .distanceWalkingRunning, in: .meter()),
+            activeCalories: Int(builder.sum(of: .activeEnergyBurned, in: .kilocalorie()))
         )
         applyOutingTotals(to: &metrics, at: now)
-        metrics.heartRate = mostRecent(
-            builder.statistics(for: HKQuantityType(.heartRate)),
-            unit: HKUnit(from: "count/min")
-        )
+        metrics.heartRate = builder.mostRecent(of: .heartRate, in: HKUnit(from: "count/min")).map(Int.init)
         state = .active(metrics)
         classifyMovement(steps: metrics.steps, distanceMeters: metrics.distanceMeters, at: now)
         Task {
@@ -303,23 +302,14 @@ final class WatchWorkoutStore: NSObject {
         // session died on its own, so nothing here chose to stop.
         FouleeLog.session.error("séance interrompue : \(message, privacy: .public)")
         // Whatever the session's fate, there is nothing left to switch: keep
-        // the builder alive for "Réessayer", but let the motion stream go.
+        // the builder alive for "Réessayer", but let the motion and GPS
+        // streams go.
         detection.stop()
+        route.stop()
         guard case .active(let metrics) = state else { return }
         state = .ended(metrics, saveFailed: true)
         // Same debt again — a session that died on its own (issue #278).
         Task { await mirrorNow(metrics, at: .now, isEnded: true) }
-    }
-
-    private func sumDouble(_ statistics: HKStatistics?, unit: HKUnit) -> Double {
-        statistics?.sumQuantity()?.doubleValue(for: unit) ?? 0
-    }
-
-    private func mostRecent(_ statistics: HKStatistics?, unit: HKUnit) -> Int? {
-        guard let value = statistics?.mostRecentQuantity()?.doubleValue(for: unit) else {
-            return nil
-        }
-        return Int(value)
     }
 
     /// The log line is the whole of issue #273. `lastError` reaches a screen,

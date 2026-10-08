@@ -89,6 +89,20 @@ let collectedQuantityTypes: [HKQuantityType] = [
     HKQuantityType(.heartRate)
 ]
 
+extension HKWorkoutBuilder {
+    /// What the builder has summed for `identifier` so far, or 0 before the
+    /// first sample.
+    func sum(of identifier: HKQuantityTypeIdentifier, in unit: HKUnit) -> Double {
+        statistics(for: HKQuantityType(identifier))?.sumQuantity()?.doubleValue(for: unit) ?? 0
+    }
+
+    /// The latest discrete sample for `identifier` — `nil` until the sensor has
+    /// spoken, which the screen shows as a dash rather than a zero.
+    func mostRecent(of identifier: HKQuantityTypeIdentifier, in unit: HKUnit) -> Double? {
+        statistics(for: HKQuantityType(identifier))?.mostRecentQuantity()?.doubleValue(for: unit)
+    }
+}
+
 extension WatchWorkoutHealthKit {
     /// The live data source for `configuration`, with every type the store
     /// reads back in `ingest` force-enabled.

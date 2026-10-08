@@ -1,6 +1,6 @@
 import os
 
-/// The two boundaries where a failure would otherwise be invisible.
+/// The boundaries where a failure would otherwise be invisible.
 ///
 /// Foulée had no logging at all before issue #273 — `import os` appeared in
 /// half a dozen files, always for `OSAllocatedUnfairLock`, never for a log
@@ -9,7 +9,7 @@ import os
 /// standing outdoors with a watch on their wrist. Everywhere else, an error
 /// already reaches a screen.
 ///
-/// Both categories below name a path that has cost something:
+/// The first two categories name a path that has already cost something:
 ///
 /// - The session path is the one that shipped **two broken versions and lost
 ///   two outings** (issue #256). The cause was on screen the whole time, in
@@ -34,4 +34,8 @@ enum FouleeLog {
     /// Activities switched off in Réglages) and reasons only the system knows;
     /// the two want telling apart.
     static let liveActivity = Logger(subsystem: subsystem, category: "live-activity")
+
+    /// GPS route recording (issue #312). Whether the stream keeps delivering
+    /// with the wrist down is only answerable outdoors, from this log.
+    static let route = Logger(subsystem: subsystem, category: "route")
 }
