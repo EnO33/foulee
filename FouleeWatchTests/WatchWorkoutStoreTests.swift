@@ -62,6 +62,8 @@ final class WorkoutHealthKitStub {
     /// says whether the store released the builder. This is what lets a test
     /// deliver a callback *as a leg that has already been closed*.
     private(set) var handleIDs: [ObjectIdentifier] = []
+    /// What each opened leg was told it is, in call order (issue #316).
+    private(set) var outingLegs: [OutingLeg] = []
     /// The route handed to each `finishWorkout`, in call order (issue #312).
     private(set) var finishedRoutes: [[CLLocation]] = []
 
@@ -76,10 +78,11 @@ final class WorkoutHealthKitStub {
                 self.requestedReadTypes = read
                 if let error = self.authError { throw error }
             },
-            startSession: { configuration, startDate, _ in
+            startSession: { configuration, startDate, leg, _ in
                 self.startCalls += 1
                 self.startedConfiguration = configuration
                 self.startedLegs.append((configuration, startDate))
+                self.outingLegs.append(leg)
                 if let error = self.startError { throw error }
                 return self.makeHandle()
             }

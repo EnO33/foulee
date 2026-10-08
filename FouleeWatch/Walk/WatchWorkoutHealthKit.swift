@@ -20,9 +20,13 @@ struct WatchWorkoutHealthKit: Sendable {
     ///   #265): a leg opened at a detected boundary starts when the wearer
     ///   changed sport, not when we noticed. Dating it `.now` would leave the
     ///   seconds in between belonging to neither leg.
+    /// - Parameter leg: stamped on the leg's workout as soon as collection
+    ///   begins (issue #316) — not at the end, so every path that saves a leg
+    ///   carries it, crash recovery included.
     var startSession: @MainActor (
         _ configuration: HKWorkoutConfiguration,
         _ at: Date,
+        _ leg: OutingLeg,
         _ delegate: any HKWorkoutSessionDelegate & HKLiveWorkoutBuilderDelegate
     ) async throws -> WatchWorkoutSessionHandle
 }
@@ -199,7 +203,7 @@ extension WatchWorkoutHealthKit {
             requestAuthorization: { toShare, read in
                 try await store.requestAuthorization(toShare: toShare, read: read)
             },
-            startSession: { configuration, startDate, delegate in
+            startSession: { configuration, startDate, leg, delegate in
                 let session = try HKWorkoutSession(
                     healthStore: store,
                     configuration: configuration
@@ -212,6 +216,15 @@ extension WatchWorkoutHealthKit {
 
                 session.startActivity(with: startDate)
                 try await builder.beginCollection(at: startDate)
+                // Never a reason to lose the leg: without it the phone falls
+                // back to grouping by contiguity (issue #316).
+                do {
+                    try await builder.addMetadata(leg.metadata)
+                } catch {
+                    FouleeLog.session.error(
+                        "jambe \(leg.index, privacy: .public) non reliée : \(error.localizedDescription, privacy: .public)"
+                    )
+                }
 
                 return WatchWorkoutSessionHandle(
                     sessionID: ObjectIdentifier(session),

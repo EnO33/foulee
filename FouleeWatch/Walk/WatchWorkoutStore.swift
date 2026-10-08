@@ -52,6 +52,8 @@ final class WatchWorkoutStore: NSObject {
     /// Distinguishes the leg in flight from the finished ones when they are
     /// folded into one list.
     @ObservationIgnored private var legIdentity = UUID()
+    /// Ties every leg of this outing together in Santé (issue #316).
+    @ObservationIgnored private var outingID = UUID()
     /// What the leg in flight has measured so far, as of the last batch.
     @ObservationIgnored private var currentLeg = WatchActivityTotals.zero
     /// A confirmed change waiting to become a leg (issue #265).
@@ -233,8 +235,10 @@ final class WatchWorkoutStore: NSObject {
 
     private func beginSession(activity: SessionActivity) async {
         let now = Date.now
+        outingID = UUID()
+        let leg = OutingLeg(outingID: outingID, index: 0)
         let handle = await runOrTrap("ouverture de la séance") {
-            try await healthKit.startSession(Self.configuration(for: activity), now, self)
+            try await healthKit.startSession(Self.configuration(for: activity), now, leg, self)
         }
         guard let handle else { return }
         sessionHandle = handle
@@ -466,8 +470,9 @@ extension WatchWorkoutStore {
         }
         sessionHandle = nil
 
+        let leg = OutingLeg(outingID: outingID, index: finishedLegs.count)
         let next = await runOrTrap("ouverture de la jambe suivante") {
-            try await healthKit.startSession(Self.configuration(for: activity), boundary, self)
+            try await healthKit.startSession(Self.configuration(for: activity), boundary, leg, self)
         }
         guard let next else {
             // **This is what ended a real sortie**: the fifth switch could not
