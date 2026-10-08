@@ -1,6 +1,6 @@
 # Politique de confidentialité — Foulée
 
-_Dernière mise à jour : 6 août 2026_
+_Dernière mise à jour : 8 octobre 2026_
 
 Foulée est une application **locale**. Elle t'aide à entretenir une série de
 sorties — marche ou course — à partir de tes données d'activité. **Aucune
@@ -12,12 +12,12 @@ montre Garmin si tu y installes l'app Connect IQ de Foulée.
 
 Avec ton autorisation, Foulée **lit** depuis l'app Santé : tes pas, ta distance,
 tes minutes d'exercice, tes calories actives, ta fréquence cardiaque, l'eau que
-tu as bue et tes séances. Ces données servent uniquement à afficher tes
-statistiques dans l'app et à calculer ta série.
+tu as bue, tes séances et leur parcours. Ces données servent uniquement à
+afficher tes statistiques et tes sorties dans l'app, et à calculer ta série.
 
 Foulée **écrit** aussi dans l'app Santé, si tu le souhaites : tes sorties
-(sous forme de séances) et l'eau que tu enregistres dans le suivi
-d'hydratation.
+(sous forme de séances, avec leur parcours quand elles sont enregistrées sur
+l'Apple Watch) et l'eau que tu enregistres dans le suivi d'hydratation.
 
 Ces données de santé **ne quittent jamais ton appareil** : elles ne sont ni
 transmises à un tiers, ni stockées ailleurs que dans l'app Santé d'Apple, que tu
@@ -67,17 +67,25 @@ d'afficher tes compteurs du jour sur la montre.
 
 ## Localisation
 
-Avec ton autorisation, Foulée utilise ta position **uniquement pendant que
-l'app est ouverte** (« lorsque l'app est active ») pour deux usages :
+Avec ton autorisation (« lorsque l'app est active »), Foulée utilise ta
+position pour deux usages, et jamais en dehors :
 
-- afficher la **météo** à ton endroit ;
-- tracer le **parcours** de ta sortie en cours sur une carte.
+- afficher la **météo** à ton endroit, sur l'iPhone ;
+- tracer le **parcours** de ta sortie sur une carte, sur l'iPhone ou sur
+  l'Apple Watch — **pendant la sortie seulement**. Sur la montre, la position
+  n'est demandée qu'au démarrage d'une sortie et n'est plus lue une fois la
+  sortie terminée.
 
 Pour la météo, tes coordonnées sont transmises à **Apple WeatherKit**, qui
 renvoie les conditions locales (voir la
 [politique de confidentialité d'Apple](https://www.apple.com/legal/privacy/)).
-Le tracé de la sortie reste sur ton appareil pendant la séance et n'est ni
-enregistré durablement, ni partagé.
+
+Le parcours d'une sortie faite avec l'**Apple Watch** est enregistré **dans
+l'app Santé**, avec la séance, comme le fait l'app Forme d'Apple : c'est ce qui
+permet de le revoir sur une carte dans Foulée, dans Forme ou dans toute app à
+laquelle tu donnes accès à Santé. Il reste sur tes appareils, dans Santé, que
+tu contrôles entièrement, et n'est envoyé à personne. Le parcours tracé par
+l'iPhone, lui, n'est pas conservé après la sortie.
 
 ## Mouvement et forme
 
@@ -125,7 +133,7 @@ Comme tout est local, tu gardes le contrôle à tout moment via les **Réglages
 iOS** :
 
 - **Confidentialité et sécurité → Santé → Foulée** pour l'accès aux données de santé ;
-- **Confidentialité et sécurité → Service de localisation → Foulée** pour la localisation ;
+- **Confidentialité et sécurité → Service de localisation → Foulée** pour la localisation, sur l'iPhone comme sur l'Apple Watch ;
 - **Notifications → Foulée** pour les rappels.
 
 Supprimer l'application efface toutes les préférences qu'elle a stockées. Les
