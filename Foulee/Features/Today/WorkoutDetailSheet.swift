@@ -44,6 +44,12 @@ struct WorkoutDetailSheet: View {
             ScrollView {
                 VStack(spacing: 16) {
                     hero(detail: detail)
+                    if !detail.route.isEmpty {
+                        WorkoutDetailRouteMap(
+                            route: detail.route,
+                            legs: RouteSegment.sources(of: detail.summary)
+                        )
+                    }
                     if detail.summary.legs.count > 1 {
                         WorkoutDetailOuting(summary: detail.summary)
                     }

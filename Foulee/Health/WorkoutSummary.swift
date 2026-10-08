@@ -44,12 +44,7 @@ extension WorkoutSummary {
     /// One for an ordinary row. For a regrouped outing, each sport once:
     /// walk → run → walk → run is « Marche et course », not a list of four.
     var activities: [RecordedActivity] {
-        guard !legs.isEmpty else { return [activity] }
-        var seen: [RecordedActivity] = []
-        for leg in legs where !seen.contains(leg.activity) {
-            seen.append(leg.activity)
-        }
-        return seen
+        legs.isEmpty ? [activity] : legs.map(\.activity).firstOccurrences
     }
 
     /// How the row names what was done: « Course », or « Marche et course » for
@@ -63,6 +58,9 @@ extension WorkoutSummary {
         guard let last = labels.last, labels.count > 1 else { return labels.first ?? activity.label }
         return labels.dropLast().joined(separator: ", ") + " et " + last
     }
+
+    /// « 08:00 → 08:41 » — the row, the detail and the bubbles all say it so.
+    var timeRangeText: String { "\(startedAt.clockText) → \(endedAt.clockText)" }
 
     /// The figure drawn next to the row: the sport's own, or the walk-and-run
     /// figure once an outing mixes them — what `ActivityGlyph.mixedCardio`

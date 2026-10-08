@@ -22,7 +22,7 @@ struct WorkoutDetailHero: View {
                 .tracking(1.1)
             Text(durationText)
                 .scaledNumericFont(size: 44)
-            Text("\(detail.summary.activityLabel) · \(timeRange) · \(detail.summary.sourceName)")
+            Text("\(detail.summary.activityLabel) · \(detail.summary.timeRangeText) · \(detail.summary.sourceName)")
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -40,23 +40,12 @@ struct WorkoutDetailHero: View {
         return formatter
     }()
 
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }()
-
     private var dateLabel: String {
         let calendar = Calendar.current
         let date = detail.summary.startedAt
         if calendar.isDateInToday(date) { return "Aujourd'hui" }
         if calendar.isDateInYesterday(date) { return "Hier" }
         return Self.dayFormatter.string(from: date).uppercased()
-    }
-
-    private var timeRange: String {
-        "\(Self.timeFormatter.string(from: detail.summary.startedAt)) → \(Self.timeFormatter.string(from: detail.summary.endedAt))"
     }
 
     private var durationText: String {

@@ -139,7 +139,7 @@ struct TodayWorkoutsSheet: View {
                             .foregroundStyle(FouleeColor.accentMid)
                     }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(timeRange(workout))
+                    Text(workout.timeRangeText)
                         .font(FouleeFont.headline)
                     // The sport in words next to the source, not only as a
                     // figure: « figure.walk » and « figure.run » are two thin
@@ -274,13 +274,6 @@ struct TodayWorkoutsSheet: View {
         return formatter
     }()
 
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }()
-
     private func dayLabel(_ day: Date) -> String {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: date.now)
@@ -288,10 +281,6 @@ struct TodayWorkoutsSheet: View {
         let yesterday = calendar.date(byAdding: .day, value: -1, to: today) ?? today
         if calendar.isDate(day, inSameDayAs: yesterday) { return "Hier" }
         return Self.dayFormatter.string(from: day)
-    }
-
-    private func timeRange(_ workout: WorkoutSummary) -> String {
-        "\(Self.timeFormatter.string(from: workout.startedAt)) → \(Self.timeFormatter.string(from: workout.endedAt))"
     }
 
     private func durationText(_ seconds: TimeInterval) -> String {

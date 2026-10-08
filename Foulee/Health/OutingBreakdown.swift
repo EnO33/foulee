@@ -34,6 +34,21 @@ enum OutingBreakdown {
         }
     }
 
+    /// The leg being done at `date`, for the finger on the timeline or the
+    /// heart-rate curve (#319). A boundary belongs to the leg it starts; the
+    /// outing's very last instant, to the last leg.
+    static func leg(at date: Date, in legs: [WorkoutSummary]) -> WorkoutSummary? {
+        legs.first { $0.startedAt <= date && date < $0.endedAt }
+            ?? legs.last.flatMap { $0.endedAt == date ? $0 : nil }
+    }
+
+    /// One leg in a line: « 08:10 → 08:18 · 1,50 km · 5'20"/km ».
+    static func legText(_ leg: WorkoutSummary) -> String {
+        [leg.timeRangeText, leg.distanceKm.kmText(), leg.durationSeconds.paceText(overKm: leg.distanceKm)]
+            .compactMap(\.self)
+            .joined(separator: " · ")
+    }
+
     /// The timeline read aloud: « Marche, 10 minutes ; course, 8 minutes… »,
     /// leg by leg, in order.
     ///
