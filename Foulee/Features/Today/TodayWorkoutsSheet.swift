@@ -134,7 +134,7 @@ struct TodayWorkoutsSheet: View {
                         // runs and hikes — it drew one neutral figure for all
                         // three until `WorkoutSummary` started carrying the
                         // type.
-                        Image(systemName: workout.activity.icon)
+                        Image(systemName: workout.activityIcon)
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(FouleeColor.accentMid)
                     }
@@ -145,7 +145,7 @@ struct TodayWorkoutsSheet: View {
                     // figure: « figure.walk » and « figure.run » are two thin
                     // silhouettes, and the whole point of this line is that a
                     // mis-stamped session should be *noticeable*.
-                    Text("\(workout.activity.label) · \(workout.sourceName)")
+                    Text("\(workout.activityLabel) · \(workout.sourceName)")
                         .font(FouleeFont.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -234,7 +234,7 @@ struct TodayWorkoutsSheet: View {
     /// the deduplicated sessions filed under it.
     ///
     /// Internal, and taking its calendar and clock as parameters, so a test can
-    /// reach it (#218). The two lines below are an ordering the unit tests on
+    /// reach it (#218). The lines below are an ordering the unit tests on
     /// `WorkoutDeduplication` cannot see: they pin the algorithm, not the fact
     /// that this sheet runs it, nor that it runs it *before* grouping. Both were
     /// removable with the whole suite still green.
@@ -252,7 +252,12 @@ struct TodayWorkoutsSheet: View {
         // just before midnight can have its twin recorded just after. Grouping
         // first would file them under two days and neither bucket would ever see
         // the overlap.
-        let byDay = Dictionary(grouping: WorkoutDeduplication.collapsingOverlaps(workouts)) {
+        //
+        // Legs are rejoined before either (#317): an outing must meet a copy of
+        // itself from another writer as one session, or the copy would swallow
+        // its first leg and leave the others as rows of their own.
+        let outings = OutingGrouping.groupingLegs(workouts)
+        let byDay = Dictionary(grouping: WorkoutDeduplication.collapsingOverlaps(outings)) {
             calendar.startOfDay(for: $0.startedAt)
         }
         return dayStarts.map { day in

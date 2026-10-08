@@ -255,12 +255,21 @@ private func fetchWorkoutDetail(
     for summary: WorkoutSummary,
     store: HKHealthStore
 ) async throws -> WorkoutDetail {
-    guard let workout = try await fetchWorkout(uuid: summary.id, store: store) else {
-        // Workout disappeared between summary and detail fetch — return a
-        // detail with the summary alone so the UI can still render.
-        return WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: summary.steps)
+    let window: DateInterval
+    if summary.legs.isEmpty {
+        guard let workout = try await fetchWorkout(uuid: summary.id, store: store) else {
+            // Workout disappeared between summary and detail fetch — return a
+            // detail with the summary alone so the UI can still render.
+            return WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: summary.steps)
+        }
+        window = DateInterval(start: workout.startDate, end: workout.endDate)
+    } else {
+        // A regrouped outing (#317) is no single sample: its window is the
+        // outing's, first leg to last, so the heart rate and the steps cover
+        // every leg the row adds up — not the first one alone.
+        window = DateInterval(start: summary.startedAt, end: max(summary.startedAt, summary.endedAt))
     }
-    async let hrTask = fetchHeartRateSamples(for: workout, store: store)
+    async let hrTask = fetchHeartRateSamples(in: window, store: store)
     // Foulée walks carry their measured step count in metadata (we don't write
     // step samples); fall back to a window query for walks from other sources
     // (Watch, Apple Workouts).
@@ -268,7 +277,7 @@ private func fetchWorkoutDetail(
     if summary.steps > 0 {
         steps = summary.steps
     } else {
-        steps = try await fetchStepsCount(for: workout, store: store)
+        steps = try await fetchStepsCount(in: window, store: store)
     }
     return WorkoutDetail(
         summary: summary,
@@ -305,12 +314,12 @@ private func fetchWorkout(uuid: UUID, store: HKHealthStore) async throws -> HKWo
 /// either way. `HKError.noDataAvailable` is treated as an empty array,
 /// not an error.
 private func fetchHeartRateSamples(
-    for workout: HKWorkout,
+    in window: DateInterval,
     store: HKHealthStore
 ) async throws -> [HeartRateSample] {
     let predicate = HKQuery.predicateForSamples(
-        withStart: workout.startDate,
-        end: workout.endDate,
+        withStart: window.start,
+        end: window.end,
         options: .strictStartDate
     )
     let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
@@ -351,12 +360,12 @@ private func fetchHeartRateSamples(
 /// `HKError.noDataAvailable` as 0 since "0 steps" is the right UI
 /// answer when nothing matched.
 private func fetchStepsCount(
-    for workout: HKWorkout,
+    in window: DateInterval,
     store: HKHealthStore
 ) async throws -> Int {
     let predicate = HKQuery.predicateForSamples(
-        withStart: workout.startDate,
-        end: workout.endDate,
+        withStart: window.start,
+        end: window.end,
         options: .strictStartDate
     )
 

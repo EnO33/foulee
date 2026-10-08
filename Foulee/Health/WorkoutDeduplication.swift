@@ -116,11 +116,17 @@ enum WorkoutDeduplication {
         return [row]
     }
 
-    /// Longest wins; earliest breaks a tie on duration; the sample id breaks a
-    /// tie on both. Negating the duration turns "longest" into "smallest" so
-    /// the whole rule reads as one tuple comparison.
+    /// A regrouped outing first (issue #317), then longest; earliest breaks a
+    /// tie on duration; the sample id breaks a tie on both. Negating the
+    /// duration turns "longest" into "smallest" so the whole rule reads as one
+    /// tuple comparison.
+    ///
+    /// The outing comes first because it is the only copy that knows where
+    /// the sport changed. A Strava or Garmin record of the same sortie is one
+    /// undivided session and can easily run a few seconds longer — letting it
+    /// win would throw the legs away, and with them the detail and the map.
     private static func isPreferred(_ lhs: WorkoutSummary, over rhs: WorkoutSummary) -> Bool {
-        (-lhs.durationSeconds, lhs.startedAt, lhs.id.uuidString)
-            < (-rhs.durationSeconds, rhs.startedAt, rhs.id.uuidString)
+        (lhs.legs.isEmpty ? 1 : 0, -lhs.durationSeconds, lhs.startedAt, lhs.id.uuidString)
+            < (rhs.legs.isEmpty ? 1 : 0, -rhs.durationSeconds, rhs.startedAt, rhs.id.uuidString)
     }
 }

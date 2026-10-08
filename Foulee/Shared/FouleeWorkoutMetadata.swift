@@ -29,11 +29,27 @@ enum FouleeWorkoutMetadata {
 /// five records in Santé that nothing ties together. Contiguity is not enough
 /// to tie them back up: two outings can follow each other within seconds, and
 /// a leg lost to a crash leaves a gap inside one. This is the exact link.
-struct OutingLeg: Equatable, Sendable {
+struct OutingLeg: Hashable, Sendable {
     /// Drawn once when the outing starts, shared by every leg of it.
     var outingID: UUID
     /// 0 for the first leg, then one more per change of sport.
     var index: Int
+
+    /// Read a leg back from a workout's metadata — `nil` for anything not
+    /// stamped by the watch, which is every outing recorded before #316 and
+    /// every workout from another app.
+    init?(metadata: [String: Any]?) {
+        guard let raw = metadata?[FouleeWorkoutMetadata.outingID] as? String,
+              let outingID = UUID(uuidString: raw),
+              let index = metadata?[FouleeWorkoutMetadata.legIndex] as? Int
+        else { return nil }
+        self.init(outingID: outingID, index: index)
+    }
+
+    init(outingID: UUID, index: Int) {
+        self.outingID = outingID
+        self.index = index
+    }
 
     /// What the leg's workout is stamped with. HealthKit takes only strings,
     /// numbers, dates and quantities, hence the UUID as a string.
