@@ -34,8 +34,11 @@ final class UserPreferences {
     var themeMode: ThemeMode {
         didSet { defaults.set(themeMode.rawValue, forKey: Keys.themeMode) }
     }
-    /// Hydration tracking + reminders (opt-in). Intake is stored in Apple
-    /// Health (`dietaryWater`); these only hold the goal and glass size.
+    /// Hydration tracking. Intake is stored in Apple Health (`dietaryWater`);
+    /// these only hold the goal and glass size.
+    ///
+    /// **On for a new install, untouched for an existing one** (issue #329).
+    /// See `init` for how the two are told apart. Reminders stay opt-in.
     var hydrationEnabled: Bool {
         didSet { defaults.set(hydrationEnabled, forKey: Keys.hydrationEnabled) }
     }
@@ -79,10 +82,22 @@ final class UserPreferences {
         self.walkWindowEnd = rawEnd.map(TimeOfDay.init(rawMinutes:)) ?? .middayWindowEnd
         self.minutesGoal = (defaults.object(forKey: Keys.minutesGoal) as? Int) ?? 20
         self.stepsGoal = (defaults.object(forKey: Keys.stepsGoal) as? Int) ?? 6_000
-        self.hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)
+        let hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)
+        self.hasCompletedOnboarding = hasCompletedOnboarding
         self.notificationsEnabled = (defaults.object(forKey: Keys.notificationsEnabled) as? Bool) ?? true
         let rawTheme = defaults.string(forKey: Keys.themeMode)
         self.themeMode = rawTheme.flatMap(ThemeMode.init(rawValue:)) ?? .system
+        // A new install starts with hydration on (issue #329); one that has
+        // already been through onboarding keeps what it had — off — whether or
+        // not its owner ever touched the toggle. « Never written » alone cannot
+        // tell the two apart, the onboarding flag can.
+        //
+        // Written straight away, not just read: once onboarding completes, the
+        // same rule would otherwise read the missing key as « existing
+        // install » on the next launch, and switch it back off.
+        if defaults.object(forKey: Keys.hydrationEnabled) == nil, !hasCompletedOnboarding {
+            defaults.set(true, forKey: Keys.hydrationEnabled)
+        }
         self.hydrationEnabled = defaults.bool(forKey: Keys.hydrationEnabled)
         self.hydrationGoalML = (defaults.object(forKey: Keys.hydrationGoalML) as? Int) ?? 2_000
         self.hydrationGlassML = (defaults.object(forKey: Keys.hydrationGlassML) as? Int) ?? 250
