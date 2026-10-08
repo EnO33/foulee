@@ -20,6 +20,36 @@ struct UserPreferencesTests {
         #expect(prefs.activityMode == .walking)
     }
 
+    /// Issue #329: on for a new install, reminders still off.
+    @Test("A new install starts with hydration on and its reminders off")
+    func newInstallHydration() {
+        let defaults = cleanDefaults()
+        let prefs = UserPreferences(defaults: defaults)
+        #expect(prefs.hydrationEnabled)
+        #expect(prefs.hydrationRemindersEnabled == false)
+
+        // Still on after onboarding completes and the app relaunches: the
+        // default was written, not merely assumed.
+        prefs.hasCompletedOnboarding = true
+        #expect(UserPreferences(defaults: defaults).hydrationEnabled)
+    }
+
+    /// An install that finished onboarding before this change keeps what it
+    /// had, even though it never wrote the key.
+    @Test("An existing install that never touched hydration keeps it off")
+    func existingInstallUnchanged() {
+        let defaults = cleanDefaults()
+        defaults.set(true, forKey: "preferences.hasCompletedOnboarding")
+        #expect(UserPreferences(defaults: defaults).hydrationEnabled == false)
+    }
+
+    @Test("A choice already made is kept, whatever it was", arguments: [true, false])
+    func explicitChoiceKept(choice: Bool) {
+        let defaults = cleanDefaults()
+        defaults.set(choice, forKey: "preferences.hydrationEnabled")
+        #expect(UserPreferences(defaults: defaults).hydrationEnabled == choice)
+    }
+
     @Test("Edits round-trip through UserDefaults across instances")
     func roundTrip() {
         let defaults = cleanDefaults()
