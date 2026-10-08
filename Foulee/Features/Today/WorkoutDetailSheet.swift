@@ -44,6 +44,9 @@ struct WorkoutDetailSheet: View {
             ScrollView {
                 VStack(spacing: 16) {
                     hero(detail: detail)
+                    if detail.summary.legs.count > 1 {
+                        WorkoutDetailOuting(summary: detail.summary)
+                    }
                     if !detail.heartRateSamples.isEmpty {
                         heartRateSection(detail: detail)
                     }
