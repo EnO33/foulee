@@ -7,6 +7,9 @@ struct WalkRouteMapView: View {
     let route: [Coordinate]
     var onClose: () -> Void
 
+    /// The live route is a single stroke; its identity never changes.
+    private static let strokeID = UUID()
+
     private var coordinates: [CLLocationCoordinate2D] {
         route.map(\.locationCoordinate)
     }
@@ -25,19 +28,9 @@ struct WalkRouteMapView: View {
 
     private var map: some View {
         Map(initialPosition: .automatic) {
-            MapPolyline(coordinates: coordinates)
-                .stroke(
-                    FouleeColor.accentMid,
-                    style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round)
-                )
-            if let start = coordinates.first {
-                Annotation("Départ", coordinate: start) {
-                    Circle()
-                        .fill(FouleeColor.success)
-                        .frame(width: 14, height: 14)
-                        .overlay(Circle().stroke(.white, lineWidth: 2))
-                }
-            }
+            RouteLines(strokes: [
+                RouteLines.Stroke(id: Self.strokeID, coordinates: coordinates, tint: FouleeColor.accentMid)
+            ])
             if let last = coordinates.last {
                 Annotation("Position", coordinate: last) {
                     // Neutral glyph (#222): the map is drawn from a route, and

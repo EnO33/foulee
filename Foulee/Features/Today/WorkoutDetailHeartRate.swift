@@ -18,6 +18,9 @@ struct WorkoutDetailHeartRate: View {
     /// Downsampled once at init — not recomputed on every `body` evaluation.
     private let chartSamples: [HeartRateSample]
 
+    /// Where the finger is on the curve (#319), `nil` when it is not on it.
+    @State private var selectedDate: Date?
+
     init(detail: WorkoutDetail) {
         self.detail = detail
         self.chartSamples = Self.downsample(detail.heartRateSamples)
@@ -118,7 +121,13 @@ struct WorkoutDetailHeartRate: View {
             ForEach(chartSamples) { sample in
                 curve(sample)
             }
+            if let selectedDate, let reading = detail.heartRate(nearest: selectedDate) {
+                selection(reading)
+            }
         }
+        // Read against the full set, not the downsampled curve: the bubble
+        // names a real reading, never an interpolated one.
+        .chartXSelection(value: $selectedDate)
         .chartXAxis(.hidden)
         .chartYAxis {
             AxisMarks(position: .leading) { _ in
@@ -126,6 +135,55 @@ struct WorkoutDetailHeartRate: View {
                 AxisValueLabel()
             }
         }
+    }
+
+    /// The cursor under the finger: a rule at the reading, a dot on the curve,
+    /// and a bubble saying when, how fast the heart was beating, and — on an
+    /// outing — which sport was being done.
+    @ChartContentBuilder
+    private func selection(_ reading: HeartRateSample) -> some ChartContent {
+        RuleMark(x: .value("Temps", reading.date))
+            .foregroundStyle(Color.secondary.opacity(0.5))
+            .lineStyle(StrokeStyle(lineWidth: 1))
+            .annotation(
+                position: .top,
+                spacing: 4,
+                overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
+            ) {
+                bubble(reading)
+            }
+        PointMark(
+            x: .value("Temps", reading.date),
+            y: .value("BPM", reading.bpm)
+        )
+        .foregroundStyle(FouleeColor.danger)
+        .symbolSize(60)
+    }
+
+    private func bubble(_ reading: HeartRateSample) -> some View {
+        let leg = detail.summary.legs.count > 1
+            ? OutingBreakdown.leg(at: reading.date, in: detail.summary.legs)
+            : nil
+        return VStack(alignment: .leading, spacing: 2) {
+            Text("\(reading.bpm) bpm")
+                .scaledNumericFont(size: 15, weight: .semibold)
+                .foregroundStyle(FouleeColor.danger)
+            Text(reading.date.clockText)
+                .font(FouleeFont.caption)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+            if let leg {
+                Label(leg.activity.label, systemImage: leg.activity.icon)
+                    .font(FouleeFont.caption.weight(.semibold))
+                    .foregroundStyle(leg.activity.tint)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        // Opaque, not a material: the chart is flattened by `drawingGroup()`,
+        // and a blur does not survive being drawn into a bitmap.
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
     }
 
     @ChartContentBuilder

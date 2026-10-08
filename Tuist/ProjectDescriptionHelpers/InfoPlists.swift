@@ -58,7 +58,7 @@ public let fouleeAppInfoPlist: [String: Plist.Value] = [
     // HKWorkout record.
     "NSHealthShareUsageDescription": .string(
         "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, "
-            + "ainsi que tes séances et leur fréquence cardiaque, pour afficher ta journée."
+            + "ainsi que tes séances, leur fréquence cardiaque et leur parcours, pour afficher ta journée."
     ),
     "NSHealthUpdateUsageDescription":
         "Foulée enregistre tes sorties comme séances dans Santé, ainsi que l'eau que tu bois.",

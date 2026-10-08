@@ -22,10 +22,11 @@ extension HealthKitClient {
         // Heart rate is read-only and only surfaces in WorkoutDetailSheet
         // (HR samples scoped to a single HKWorkout) — without it the
         // workoutDetail query fails with "Authorization not determined".
-        // Water is read+write for the hydration tracker.
+        // Water is read+write for the hydration tracker. Routes are read for
+        // the detail map (#319) — refusing them costs the map and nothing else.
         let readTypes: Set<HKObjectType> = [
             stepsType, distanceType, minutesType, caloriesType,
-            heartRateType, workoutType, waterType
+            heartRateType, workoutType, waterType, HKSeriesType.workoutRoute()
         ]
         let writeTypes: Set<HKSampleType> = [workoutType, waterType]
 
@@ -270,6 +271,9 @@ private func fetchWorkoutDetail(
         window = DateInterval(start: summary.startedAt, end: max(summary.startedAt, summary.endedAt))
     }
     async let hrTask = fetchHeartRateSamples(in: window, store: store)
+    // Alongside the heart rate, never in its way: no route is an empty map,
+    // not a failed detail.
+    async let routeTask = fetchRouteSegments(for: summary, store: store)
     // Foulée walks carry their measured step count in metadata (we don't write
     // step samples); fall back to a window query for walks from other sources
     // (Watch, Apple Workouts).
@@ -282,11 +286,12 @@ private func fetchWorkoutDetail(
     return WorkoutDetail(
         summary: summary,
         heartRateSamples: try await hrTask,
-        stepsCount: steps
+        stepsCount: steps,
+        route: await routeTask
     )
 }
 
-private func fetchWorkout(uuid: UUID, store: HKHealthStore) async throws -> HKWorkout? {
+func fetchWorkout(uuid: UUID, store: HKHealthStore) async throws -> HKWorkout? {
     let predicate = HKQuery.predicateForObject(with: uuid)
     return try await withCheckedThrowingContinuation { continuation in
         let query = HKSampleQuery(
