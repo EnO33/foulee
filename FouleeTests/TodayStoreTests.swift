@@ -121,7 +121,7 @@ struct TodayStoreTests {
             )
             $0.location = .previewValue
             $0.weather = WeatherClient(
-                middayForecast: { _ in
+                forecast: { _, _ in
                     WeatherSnapshot(
                         temperatureCelsius: 18,
                         condition: "Partiellement nuageux",
@@ -158,8 +158,8 @@ struct TodayStoreTests {
             )
             $0.location = .testValue
             $0.weather = WeatherClient(
-                middayForecast: { _ in
-                    Issue.record("middayForecast should not run without location")
+                forecast: { _, _ in
+                    Issue.record("forecast should not run without location")
                     return WeatherSnapshot(temperatureCelsius: 0, condition: "", advice: "")
                 }
             )
@@ -405,7 +405,7 @@ struct TodayStoreWeatherTests {
                 }
             )
             $0.location = .previewValue
-            $0.weather = WeatherClient(middayForecast: { _ in throw WeatherDown() })
+            $0.weather = WeatherClient(forecast: { _, _ in throw WeatherDown() })
         } operation: {
             let store = TodayStore()
             await store.refresh()

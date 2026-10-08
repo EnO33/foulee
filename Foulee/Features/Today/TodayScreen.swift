@@ -117,7 +117,9 @@ struct TodayScreen: View {
             )
             .sheet(isPresented: $isShowingWeather) {
                 if let weather = store.snapshot?.weather {
-                    WeatherDetailSheet(weather: weather) { isShowingWeather = false }
+                    WeatherDetailSheet(weather: weather, windowStart: store.walkWindowStart) {
+                        isShowingWeather = false
+                    }
                         .preferredColorScheme(preferredScheme)
                 }
             }
@@ -173,6 +175,7 @@ struct TodayScreen: View {
             notificationsDenied: store.notificationsAuthorizationStatus == .denied,
             onStart: { startWalk() },
             onSummary: { isShowingSummary = true },
+            onWeatherTap: { isShowingWeather = true },
             onSnooze: { interval in
                 Task { await scheduler.snooze(after: interval) }
             },
@@ -194,7 +197,7 @@ struct TodayScreen: View {
             // repeated on each card — and wider than the 12 pt it was, so the
             // home reads as separate blocks instead of one dense column.
             VStack(spacing: Self.sectionSpacing) {
-                header(date: snapshot.date)
+                header(snapshot: snapshot)
                     .padding(.top, 8)
                 // One card at most. A failed fetch outranks the Garmin hint —
                 // a day can perfectly well hold data *and* a failed fetch, and
@@ -213,11 +216,6 @@ struct TodayScreen: View {
                     GarminSyncHintCard()
                 }
                 heroCard(snapshot: snapshot)
-                TodayStreakWeatherRow(
-                    snapshot: snapshot,
-                    onStreakTap: { isShowingStreak = true },
-                    onWeatherTap: { isShowingWeather = true }
-                )
                 TodayStatsGrid(snapshot: snapshot) { selectedMetric = $0 }
                 HydrationHomeCard(preferences: preferences, store: hydration)
                     .id("hydrationCard")
@@ -247,17 +245,25 @@ struct TodayScreen: View {
         }
     }
 
-    private func header(date: Date) -> some View {
-        HStack(alignment: .center) {
+    private func header(snapshot: TodaySnapshot) -> some View {
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(formatted(date: date))
+                Text(formatted(date: snapshot.date))
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .tracking(1.2)
                 Text("Aujourd'hui")
                     .font(FouleeFont.largeTitle)
+                    // Shrinks rather than breaking into « Aujourd'-hui » when
+                    // the streak beside it runs to three digits, or the text
+                    // size is large, on a narrow iPhone.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             Spacer()
+            TodayStreakBadge(streak: snapshot.streak, bestStreak: snapshot.bestStreak) {
+                isShowingStreak = true
+            }
             Button { isShowingSettings = true } label: {
                 Image(systemName: "person.crop.circle")
                     .scaledSystemFont(size: 32)

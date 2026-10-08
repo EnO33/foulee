@@ -34,6 +34,8 @@ struct TodayHeroCard: View {
     var notificationsDenied: Bool
     var onStart: () -> Void
     var onSummary: () -> Void
+    /// The forecast on the card opens its detail.
+    var onWeatherTap: () -> Void = {}
     var onSnooze: (TimeInterval) -> Void
     var onToggleNotifications: () -> Void
     var onOpenNotificationSettings: () -> Void
@@ -138,8 +140,7 @@ struct TodayHeroCard: View {
                     tint: FouleeColor.accentMid,
                     fill: FouleeColor.accentMid.opacity(0.16)
                 )
-                windowSentence
-                    .font(FouleeFont.title3)
+                windowDetail
             }
         }
     }
@@ -157,12 +158,6 @@ struct TodayHeroCard: View {
         return Int(windowStart.timeIntervalSinceNow / 60)
     }
 
-    private var formattedWindowStart: String {
-        guard let hour = snapshot.walkWindowStart.hour,
-              let minute = snapshot.walkWindowStart.minute else { return "—" }
-        return String(format: "%02d:%02d", hour, minute)
-    }
-
     /// "Départ dans …" rather than the old "Marche dans …" / "Marche du midi":
     /// the chip counts down to the window, and the window is the same one
     /// whatever the user does inside it (#222).
@@ -176,14 +171,52 @@ struct TodayHeroCard: View {
         return "Départ dans \(hours) h \(remaining)"
     }
 
+    /// Under the countdown: the weather for the outing.
+    ///
+    /// It replaced a sentence that only repeated the chip — « C'est l'heure de
+    /// bouger » over « Ta fenêtre est ouverte » said the same thing twice. The
+    /// forecast is for the window's start (`WeatherClient.forecast`), so here,
+    /// next to the countdown, it is the weather the user will go out in.
+    ///
+    /// Without a forecast (location refused, WeatherKit down), the opening
+    /// time is still worth saying before the window; once it is open, the chip
+    /// already says everything.
     @ViewBuilder
-    private var windowSentence: some View {
-        let accent = Text(formattedWindowStart).foregroundStyle(FouleeColor.accentMid)
-        if let minutes = minutesUntilWindow, minutes <= 0 {
-            Text("Ta fenêtre est ouverte — départ depuis \(accent)")
-        } else {
+    private var windowDetail: some View {
+        if snapshot.weather.isAvailable {
+            Button(action: onWeatherTap) { weatherLine }
+                .buttonStyle(.pressable)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Météo à \(snapshot.walkWindowStart.clockText)")
+                .accessibilityValue(
+                    "\(snapshot.weather.temperatureCelsius) degrés, "
+                        + "\(snapshot.weather.condition), \(snapshot.weather.advice)"
+                )
+                .accessibilityHint("Voir le détail météo")
+                // Same handle the old weather card carried: the App Store
+                // capture (issue #235) taps it to open the sheet.
+                .accessibilityIdentifier(TodayAccessibility.weatherCard)
+        } else if let minutes = minutesUntilWindow, minutes > 0 {
+            let accent = Text(snapshot.walkWindowStart.clockText).foregroundStyle(FouleeColor.accentMid)
             Text("Ta fenêtre s'ouvre à \(accent)")
+                .font(FouleeFont.title3)
         }
+    }
+
+    private var weatherLine: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Image(systemName: FouleeIcon.sun)
+                    .scaledSystemFont(size: 20)
+                    .foregroundStyle(FouleeColor.warning)
+                Text("\(snapshot.weather.temperatureCelsius)°")
+                    .scaledNumericFont(size: 28, weight: .semibold)
+            }
+            Text("\(snapshot.weather.condition) · \(snapshot.weather.advice)")
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .foregroundStyle(.primary)
     }
 
     private var actionRow: some View {
