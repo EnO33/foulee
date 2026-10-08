@@ -15,10 +15,10 @@ struct WatchSessionRoutePage: View {
 
     var body: some View {
         // Read once per render: the store derives it from every fix of the
-        // outing, and the map needs it three times.
+        // outing, and the map needs it twice.
         let coordinates = route.coordinates
         Group {
-            if coordinates.count >= 2 {
+            if WatchRouteLine.isDrawable(coordinates) {
                 map(coordinates)
             } else {
                 emptyState
@@ -29,19 +29,7 @@ struct WatchSessionRoutePage: View {
 
     private func map(_ coordinates: [CLLocationCoordinate2D]) -> some View {
         Map(position: $position, interactionModes: .zoom) {
-            MapPolyline(coordinates: coordinates)
-                .stroke(
-                    .tint,
-                    style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
-                )
-            if let start = coordinates.first {
-                Annotation("Départ", coordinate: start) {
-                    Circle()
-                        .fill(.green)
-                        .frame(width: 10, height: 10)
-                        .overlay(Circle().stroke(.white, lineWidth: 2))
-                }
-            }
+            WatchRouteLine(coordinates: coordinates)
             UserAnnotation()
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))

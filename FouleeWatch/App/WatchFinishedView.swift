@@ -1,3 +1,4 @@
+import MapKit
 import SwiftUI
 
 /// Post-session summary — quick recap + a button to clear the slate. When the
@@ -12,6 +13,9 @@ import SwiftUI
 /// would be a poor trade.
 struct WatchFinishedView: View {
     let metrics: WatchWorkoutMetrics
+    /// The whole outing's path (issue #312). Empty when location was refused
+    /// or no fix ever came — the recap then simply has no map.
+    var route: [CLLocationCoordinate2D] = []
     var saveFailed: Bool
     /// What HealthKit actually said, when it said anything (issue #256).
     ///
@@ -46,6 +50,9 @@ struct WatchFinishedView: View {
                 }
                 if !metrics.perSport.isEmpty {
                     breakdown
+                }
+                if WatchRouteLine.isDrawable(route), !saveFailed {
+                    map
                 }
                 if !metrics.splits.isEmpty, !saveFailed {
                     kilometres
@@ -90,6 +97,27 @@ struct WatchFinishedView: View {
             }
         }
         .foregroundStyle(.secondary)
+    }
+
+    /// The outing from end to end (issue #312).
+    ///
+    /// **A picture, not a map**: no interaction and no hit testing, because
+    /// this screen scrolls and a map would take the drag for itself. The camera
+    /// fits the line, not the wearer — the outing is over, the route is the
+    /// subject.
+    ///
+    /// Hidden when the save failed, on the argument the kilometres make below:
+    /// nothing may push « Réessayer » further down.
+    private var map: some View {
+        Map(initialPosition: .automatic, interactionModes: []) {
+            WatchRouteLine(coordinates: route)
+        }
+        .mapStyle(.standard(pointsOfInterest: .excludingAll))
+        .frame(height: 90)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .allowsHitTesting(false)
+        .padding(.top, 4)
+        .accessibilityLabel("Plan du parcours")
     }
 
     /// Each kilometre and what it cost (issue #301).
