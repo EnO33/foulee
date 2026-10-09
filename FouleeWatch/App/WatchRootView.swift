@@ -8,19 +8,24 @@ struct WatchRootView: View {
     /// Local to the idle route — a session in flight clears it.
     @State private var isChoosingActivity = false
     private let pendingStart = WatchPendingStart.shared
+    /// The phone's session in flight, shown while the wrist records nothing
+    /// itself (issue #342).
+    private let phoneSession = WatchPhoneSession.shared
 
     var body: some View {
         Group {
             switch store.state {
             case .idle:
-                WatchIdleScreen(
-                    today: todayStore,
-                    errorMessage: store.lastError,
-                    isChoosingActivity: isChoosingActivity,
-                    onStart: begin,
-                    onAsk: { isChoosingActivity = true },
-                    onCancel: { isChoosingActivity = false }
-                )
+                if let snapshot = phoneSession.shown(at: .now) {
+                    WatchPhoneSessionPager(
+                        snapshot: snapshot,
+                        isSending: phoneSession.isSending,
+                        errorMessage: phoneSession.errorMessage,
+                        onCommand: { command in Task { await phoneSession.send(command) } }
+                    )
+                } else {
+                    idleScreen
+                }
             case .active(let metrics):
                 WatchSessionPager(
                     metrics: metrics,
@@ -55,6 +60,18 @@ struct WatchRootView: View {
         // this app, or landed while it was already on screen.
         .task { startIfPhoneAsked() }
         .onChange(of: pendingStart.activity) { _, _ in startIfPhoneAsked() }
+    }
+
+    /// Home, with nothing in flight here or on the phone.
+    private var idleScreen: some View {
+        WatchIdleScreen(
+            today: todayStore,
+            errorMessage: store.lastError,
+            isChoosingActivity: isChoosingActivity,
+            onStart: begin,
+            onAsk: { isChoosingActivity = true },
+            onCancel: { isChoosingActivity = false }
+        )
     }
 
     /// Start what the phone asked for, if anything, and if nothing is running.

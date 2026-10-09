@@ -4,13 +4,34 @@ import os
 /// Pushes the streak-relevant prefs (goal + active days) to the Watch via
 /// WatchConnectivity application context — latest-state, coalesced, delivered
 /// even when the watch app isn't running. iPhone side only.
+///
+/// Since issue #342 it also carries the phone's session in flight to the
+/// wrist, and runs the commands the wrist sends back.
 final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
     static let shared = PhoneWatchSync()
 
-    /// Last payload handed to `send`. Activation is asynchronous, so the first
-    /// send of a launch races it — keep the payload and resend once the
-    /// session activates (or the watch app gets installed).
-    private let pendingPayload = OSAllocatedUnfairLock<WatchSyncPayload?>(initialState: nil)
+    /// Everything the context carries. One value, because
+    /// `updateApplicationContext` **replaces** the whole dictionary: sending
+    /// the session alone would wipe the synced prefs off the wrist.
+    struct Context: Sendable {
+        var payload: WatchSyncPayload?
+        var session: PhoneSessionSnapshot?
+
+        /// The dictionary as WatchConnectivity wants it. Pure, so what reaches
+        /// the wrist is asserted without a `WCSession`.
+        var dictionary: [String: Any] {
+            let encoder = JSONEncoder()
+            var context: [String: Any] = [:]
+            context["payload"] = payload.flatMap { try? encoder.encode($0) }
+            context[PhoneSessionKey.snapshot] = session.flatMap { try? encoder.encode($0) }
+            return context
+        }
+    }
+
+    /// The last state handed in. Activation is asynchronous, so the first send
+    /// of a launch races it — keep it and resend once the session activates
+    /// (or the watch app gets installed).
+    private let pending = OSAllocatedUnfairLock(initialState: Context())
 
     #if DEBUG
     /// Set by the screenshot capture mode, whose streak is fabricated and has
@@ -31,10 +52,35 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
     }
 
     func send(_ payload: WatchSyncPayload) {
+        update { $0.payload = payload }
+    }
+
+    /// The phone's session in flight, or `nil` once there is none (#342).
+    ///
+    /// Twice: live to a wrist that is listening right now, and in the context
+    /// for one that opens the app later — the context alone arrives when
+    /// WatchConnectivity sees fit, which is no clock to run a session on.
+    /// « No session » travels in the context only: an ended session has
+    /// already been said live.
+    func publish(session snapshot: PhoneSessionSnapshot?) {
         #if DEBUG
         guard !Self.isMuted else { return }
         #endif
-        pendingPayload.withLock { $0 = payload }
+        update { $0.session = snapshot }
+        guard let snapshot, WCSession.isSupported(), WCSession.default.isReachable,
+              let data = try? JSONEncoder().encode(snapshot) else { return }
+        WCSession.default.sendMessage([PhoneSessionKey.snapshot: data], replyHandler: nil) { error in
+            FouleeLog.session.notice(
+                "séance non transmise en direct : \(error.localizedDescription, privacy: .public)"
+            )
+        }
+    }
+
+    private func update(_ change: @Sendable (inout Context) -> Void) {
+        #if DEBUG
+        guard !Self.isMuted else { return }
+        #endif
+        pending.withLock { change(&$0) }
         pushPendingPayloadIfPossible()
     }
 
@@ -50,10 +96,41 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
         guard Self.canPush(
             activationState: session.activationState,
             isWatchAppInstalled: session.isWatchAppInstalled
-        ),
-            let payload = pendingPayload.withLock({ $0 }),
-            let data = try? JSONEncoder().encode(payload) else { return }
-        try? session.updateApplicationContext(["payload": data])
+        ) else { return }
+        let context = pending.withLock { $0 }.dictionary
+        guard !context.isEmpty else { return }
+        do {
+            try session.updateApplicationContext(context)
+        } catch {
+            FouleeLog.session.error(
+                "contexte Watch non transmis : \(error.localizedDescription, privacy: .public)"
+            )
+        }
+    }
+
+    /// A command from the wrist (issue #342).
+    ///
+    /// Delivered even with the app in the background — iOS wakes it for a
+    /// message from the watch. The reply says whether a session was there to
+    /// obey.
+    func session(
+        _ session: WCSession,
+        didReceiveMessage message: [String: Any],
+        replyHandler: @escaping ([String: Any]) -> Void
+    ) {
+        let reply = UncheckedSendableBox(replyHandler)
+        guard let raw = message[PhoneSessionKey.command] as? String,
+              let command = PhoneSessionCommand(rawValue: raw) else {
+            reply.value([PhoneSessionKey.done: false])
+            return
+        }
+        Task { @MainActor in
+            let done = await ActiveWalkStore.current?.perform(command) ?? false
+            FouleeLog.session.notice(
+                "commande Watch \(raw, privacy: .public) : \(done ? "exécutée" : "sans séance", privacy: .public)"
+            )
+            reply.value([PhoneSessionKey.done: done])
+        }
     }
 
     func session(

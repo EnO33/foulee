@@ -30,7 +30,15 @@ final class WatchSyncReceiver: NSObject, WCSessionDelegate, @unchecked Sendable 
         store(applicationContext)
     }
 
+    /// A live state of the phone's session (issue #342).
+    func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+        guard let data = message[PhoneSessionKey.snapshot] as? Data,
+              let snapshot = try? JSONDecoder().decode(PhoneSessionSnapshot.self, from: data) else { return }
+        Task { @MainActor in WatchPhoneSession.shared.receive(snapshot) }
+    }
+
     private func store(_ context: [String: Any]) {
+        receivePhoneSession(context)
         guard let data = context["payload"] as? Data,
               let payload = try? JSONDecoder().decode(WatchSyncPayload.self, from: data) else { return }
         Task { @MainActor in
@@ -39,5 +47,14 @@ final class WatchSyncReceiver: NSObject, WCSessionDelegate, @unchecked Sendable 
             // Refresh the Série complication with the new goal / active days.
             WidgetCenter.shared.reloadAllTimelines()
         }
+    }
+
+    /// The phone's session from the context (issue #342). Read on every
+    /// context, key present or not: the phone resends the whole context at
+    /// each change, so an absent key is the phone saying « no session ».
+    private func receivePhoneSession(_ context: [String: Any]) {
+        let snapshot = (context[PhoneSessionKey.snapshot] as? Data)
+            .flatMap { try? JSONDecoder().decode(PhoneSessionSnapshot.self, from: $0) }
+        Task { @MainActor in WatchPhoneSession.shared.receive(snapshot) }
     }
 }

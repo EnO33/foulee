@@ -48,7 +48,14 @@ final class ActiveWalkStore {
     @Dependency(\.continuousClock) private var clock
 
     @ObservationIgnored
-    @Dependency(\.date) private var date
+    @Dependency(\.date) var date
+
+    /// The wrist, told of the session in flight (issue #342).
+    @ObservationIgnored
+    @Dependency(\.watchLive) var watchLive
+
+    /// When the wrist was last told; paces `tellWatchIfDue`.
+    @ObservationIgnored var lastWatchUpdateAt: Date?
 
     @ObservationIgnored
     private var pedometerTask: Task<Void, Never>?
@@ -109,6 +116,7 @@ final class ActiveWalkStore {
         state = .active(session)
         tickerTask = makeTickerTask()
         startLiveActivity(minutesGoal: minutesGoal)
+        tellWatch()
     }
 
     /// Freeze the clock + pedometer without ending the walk.
@@ -121,6 +129,7 @@ final class ActiveWalkStore {
         session.distanceMeters = bankedDistance
         session.elevationGainMeters = bankedElevation
         state = .paused(session)
+        tellWatch()
         await pushLiveActivity(session: session, isPaused: true)
     }
 
@@ -130,6 +139,7 @@ final class ActiveWalkStore {
         beginSegment()
         state = .active(session)
         tickerTask = makeTickerTask()
+        tellWatch()
         Task { await self.pushLiveActivity(session: session, isPaused: false) }
     }
 
@@ -156,6 +166,7 @@ final class ActiveWalkStore {
         routeTask?.cancel()
         let recorded = await settled(session)
         state = .finished(recorded)
+        tellWatch()
         await runOrTrap { try await healthKit.saveWorkout(recorded) }
         await endLiveActivity(with: session)
 
@@ -185,6 +196,7 @@ final class ActiveWalkStore {
         route = []
         state = .idle
         lastError = nil
+        tellWatch()
     }
 
     // MARK: - Segments
@@ -272,6 +284,7 @@ final class ActiveWalkStore {
                     session.elapsed = self.bankedElapsed
                         + self.date.now.timeIntervalSince(self.segmentStart)
                     self.state = .active(session)
+                    self.tellWatchIfDue()
                 }
             }
         }
