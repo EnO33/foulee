@@ -68,7 +68,7 @@ final class WorkoutHealthKitStub {
     private(set) var finishedRoutes: [[CLLocation]] = []
 
     func makeStore(
-        detection: WatchActivityDetection = WatchActivityDetection(source: .inert),
+        detection: WatchActivityDetection = WatchActivityDetection(source: .inert, pedometer: .inert),
         route: WatchRouteStore = WatchRouteStore(source: .inert)
     ) -> WatchWorkoutStore {
         WatchWorkoutStore(healthKit: WatchWorkoutHealthKit(

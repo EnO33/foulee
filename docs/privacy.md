@@ -90,7 +90,9 @@ l'iPhone, lui, n'est pas conservé après la sortie.
 ## Mouvement et forme
 
 Foulée utilise le **podomètre** (CoreMotion) pour compter tes pas en direct
-pendant ta sortie. Ces données sont traitées localement, en temps réel.
+pendant ta sortie et, sur l'**Apple Watch**, pour lire ta cadence et ton allure
+du moment : elles s'affichent au poignet et aident à reconnaître si tu marches
+ou si tu cours. Ces données sont traitées localement, en temps réel.
 
 Avec ton autorisation, Foulée lit aussi la **détection de mouvement** du
 système pour reconnaître toute seule si tu marches ou si tu cours :

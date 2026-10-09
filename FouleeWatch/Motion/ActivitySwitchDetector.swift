@@ -43,10 +43,21 @@ extension MotionActivityEstimate {
 /// label flapping, raising it is one number — and the day segmenting becomes
 /// possible again, it must go back up with it.
 struct ActivitySwitchDetector: Sendable {
-    /// A confirmed change: the activity to switch to, and when it started.
+    /// A confirmed change: the activity to switch to, when it started, and
+    /// when that was decided.
     struct Switch: Equatable, Sendable {
         var activity: SessionActivity
+        /// Where the boundary lands — back-dated to when the source says the
+        /// new activity began.
         var date: Date
+        /// When the switch was decided: the observation that confirmed it.
+        ///
+        /// Not the same instant as `date`, and the difference is issue #331. A
+        /// leg must hold for `minimumLegDuration` before it is recorded, and
+        /// that wait has to start *here*: measured from the back-dated
+        /// boundary, a switch noticed thirty seconds late had « held » before
+        /// anything could contradict it, and was cut on the spot.
+        var confirmedAt: Date
     }
 
     /// How many consecutive readings of the *other* activity confirm a switch.
@@ -139,7 +150,7 @@ struct ActivitySwitchDetector: Sendable {
         current = seen
         boundary = date
         forgetCandidate()
-        return Switch(activity: seen, date: date)
+        return Switch(activity: seen, date: date, confirmedAt: observation.observed)
     }
 
     /// Extend the streak, or open a new one when the candidate changed or the

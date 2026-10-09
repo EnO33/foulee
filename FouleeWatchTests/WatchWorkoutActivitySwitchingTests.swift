@@ -35,7 +35,7 @@ struct WatchWorkoutActivitySwitchingTests {
     ) async -> (store: WatchWorkoutStore, motion: FakeMotionSource) {
         let motion = FakeMotionSource()
         motion.isAvailable = true
-        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source))
+        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source, pedometer: .inert))
         await store.start(activity: activity)
         await waitUntil { motion.isStreaming }
         return (store, motion)
@@ -105,6 +105,53 @@ struct WatchWorkoutActivitySwitchingTests {
         await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
         #expect(stub.startedLegs.count == 2)
         #expect(stub.startedLegs.last?.at == base.addingTimeInterval(60))
+    }
+
+    /// Issue #331: CoreMotion hands a change over up to half a minute after it
+    /// began. Timed from that back-dated boundary, the wait was over before it
+    /// started — the split went out on arrival, and a reading contradicting it
+    /// a second later came too late. A walk nobody walked stayed in Santé.
+    @Test("A change noticed late still has to hold before it is recorded")
+    func aLateChangeIsNotCutOnArrival() async {
+        let stub = WorkoutHealthKitStub()
+        let (store, motion) = await startedSession(as: .running, stub: stub)
+
+        motion.deliver(motionEstimate(
+            startDate: base.addingTimeInterval(60),
+            receivedAt: base.addingTimeInterval(90),
+            walking: true
+        ))
+        await waitUntil { self.activity(of: store) == .walking }
+        await store.splitIfDue(at: base.addingTimeInterval(90))
+
+        #expect(stub.startedLegs.count == 1)
+        #expect(stub.endCollectionCalls == 0)
+
+        // Held long enough after the decision: now it is cut — at the
+        // boundary, so the wait cost no accuracy.
+        await store.splitIfDue(at: base.addingTimeInterval(90 + WatchWorkoutStore.minimumLegDuration))
+        #expect(stub.startedLegs.count == 2)
+        #expect(stub.endCollectionDates == [base.addingTimeInterval(60)])
+    }
+
+    @Test("A late change contradicted before it held is never recorded")
+    func aLateChangeCanStillBeCancelled() async {
+        let stub = WorkoutHealthKitStub()
+        let (store, motion) = await startedSession(as: .running, stub: stub)
+
+        motion.deliver(motionEstimate(
+            startDate: base.addingTimeInterval(60),
+            receivedAt: base.addingTimeInterval(90),
+            walking: true
+        ))
+        await waitUntil { self.activity(of: store) == .walking }
+        await store.splitIfDue(at: base.addingTimeInterval(90))
+        detect(.running, from: motion, at: 95)
+        await waitUntil { self.activity(of: store) == .running }
+        await store.splitIfDue(at: base.addingTimeInterval(600))
+
+        #expect(stub.startedLegs.count == 1)
+        #expect(stub.endCollectionCalls == 0)
     }
 
     @Test("A change that does not hold leaves the outing whole")
@@ -238,7 +285,7 @@ struct WatchWorkoutActivitySwitchingTests {
         stub.isAvailable = false
         let motion = FakeMotionSource()
         motion.isAvailable = true
-        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source))
+        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source, pedometer: .inert))
 
         await store.start(activity: .walking)
         try? await Task.sleep(for: .milliseconds(120))
