@@ -27,6 +27,8 @@ final class WatchPhoneHandoff {
     /// Outings already taken up. The application context is resent whole at
     /// every change, so the same handoff comes back long after it was used.
     @ObservationIgnored private var taken: Set<UUID> = []
+    /// The phone's context has reached this app at least once since launch.
+    @ObservationIgnored private var hasHeardFromPhone = false
     @ObservationIgnored private let requester: PhoneHandoffRequester
 
     init(requester: PhoneHandoffRequester = .live) {
@@ -36,6 +38,7 @@ final class WatchPhoneHandoff {
     /// What the phone's context said. Absent keys mean « nothing »: the phone
     /// sends the whole context every time.
     func receive(phoneSession: PhoneSessionStatus?, handoff: SessionHandoff?) {
+        hasHeardFromPhone = true
         self.phoneSession = phoneSession
         offered = handoff
     }
@@ -46,6 +49,32 @@ final class WatchPhoneHandoff {
         guard let offered, offered.isFresh(at: now), !taken.contains(offered.outingID) else { return nil }
         take(offered)
         return offered
+    }
+
+    /// The handoff to carry on for a start the phone asked for, once the
+    /// phone's word has arrived (issue #340).
+    ///
+    /// `startWatchApp` wakes this app at once, while the handoff sent ahead of
+    /// it rides the application context — which only lands after `WCSession`
+    /// has activated. Reading it on the spot found nothing, and the outing
+    /// started from zero, without the phone's leg. So wait until the phone has
+    /// said where it stands: a fresh handoff to take up, or no walk in
+    /// progress at all. Bounded: a phone that stays silent must not hold the
+    /// start back.
+    func awaitOffered(timeout: Duration = .seconds(3)) async -> SessionHandoff? {
+        let deadline = ContinuousClock.now.advanced(by: timeout)
+        while !isSettled(at: .now), ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        return takeOffered(at: .now)
+    }
+
+    /// Whether what the phone said can be acted on. A walk still in progress
+    /// with no handoff is the phone mid-way through handing over.
+    private func isSettled(at now: Date) -> Bool {
+        guard hasHeardFromPhone else { return false }
+        if let offered, offered.isFresh(at: now), !taken.contains(offered.outingID) { return true }
+        return phoneSession == nil
     }
 
     /// Ask the phone to stop and hand its walk over.

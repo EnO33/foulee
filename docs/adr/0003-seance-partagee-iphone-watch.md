@@ -1,7 +1,7 @@
 # ADR 0003 — Séance partagée entre l'iPhone et l'Apple Watch
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#272](https://github.com/EnO33/foulee/issues/272) (épic), #277, #278, #279, #282, #283, [#334](https://github.com/EnO33/foulee/issues/334), [#335](https://github.com/EnO33/foulee/issues/335)
+- **Issues** : [#272](https://github.com/EnO33/foulee/issues/272) (épic), #277, #278, #279, #282, #283, [#334](https://github.com/EnO33/foulee/issues/334), [#335](https://github.com/EnO33/foulee/issues/335), [#340](https://github.com/EnO33/foulee/issues/340)
 
 ## Contexte
 
@@ -41,7 +41,7 @@ L'écran miroir propose « Voir le parcours » **seulement quand une ligne exist
 Le fait 1 interdit de *déplacer* une séance de l'iPhone vers la montre. La reprise **coupe** donc la sortie au lieu de la déplacer : l'iPhone arrête sa mesure et l'enregistre comme **portion 0** d'une sortie (`OutingLeg`), la montre ouvre la **portion 1** de la même sortie. Le regroupement par `outingID` (ADR 0002) en refait une seule ligne de l'historique, comme pour les portions d'une sortie montre.
 
 - **Deux portes, un mécanisme.** « Continuer sur ma Watch » sur l'iPhone (`ActiveWalkStore.handOffToWatch`) et « Reprendre la séance de l'iPhone » sur la montre aboutissent au même `handOff()` : arrêter, enregistrer, rendre un `SessionHandoff` (identifiant de sortie + chiffres de la portion iPhone).
-- **Depuis l'iPhone**, la reprise part dans le *contexte d'application* **avant** `startWatchApp(toHandle:)`, qui ne transporte qu'un sport : la montre, réveillée, la trouve en écoutant. Elle remplace ensuite l'écran de l'iPhone par le miroir (D1), par le chemin existant.
+- **Depuis l'iPhone**, la reprise part dans le *contexte d'application* **avant** `startWatchApp(toHandle:)`, qui ne transporte qu'un sport : la montre, réveillée, la trouve en écoutant. Le contexte n'arrive qu'après l'activation de `WCSession`, donc **après** la demande de démarrage : la montre attend, au plus 3 s, que l'iPhone ait dit où il en est — une reprise fraîche, ou aucune séance en cours — avant d'ouvrir quoi que ce soit (#340). Démarrer aussitôt ouvrait une sortie neuve, à zéro, sans la portion iPhone. Elle remplace ensuite l'écran de l'iPhone par le miroir (D1), par le chemin existant.
 - **Depuis la montre**, `sendMessage` réveille l'app iOS en arrière-plan ; l'iPhone répond avec la reprise, ou rien si sa séance vient de finir. Le contexte annonce en continu la séance en cours (`PhoneSessionStatus`), d'où le bouton et son chrono.
 - **Les deux portions se touchent.** La portion montre commence où l'iPhone s'est arrêté, sans remonter plus loin que la fraîcheur d'une reprise (`SessionHandoff.freshness`, 2 min) ni dépasser l'instant présent : aucune minute non mesurée n'est revendiquée.
 - **Les totaux continuent.** La portion iPhone entre dans les totaux et le chrono de la montre dès la première seconde, sans jamais être réenregistrée par la montre. Les kilomètres continuent la numérotation de la sortie ; celui en cours à la reprise, mesuré pour partie par chaque appareil, n'est pas chronométré.

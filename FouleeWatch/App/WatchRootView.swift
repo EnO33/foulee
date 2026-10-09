@@ -67,17 +67,23 @@ struct WatchRootView: View {
     /// The guard is not politeness: the phone can ask while a session is
     /// already in flight — `startWatchApp` does not know what the wrist is
     /// doing — and starting a second one would strand the first.
+    ///
+    /// A handoff the phone sent ahead of waking this app may still be on its
+    /// way (issue #340): wait for the phone's word before opening anything.
     private func startIfPhoneAsked() {
         guard case .idle = store.state, let activity = pendingStart.take() else { return }
-        begin(activity)
+        isChoosingActivity = false
+        Task {
+            let handoff = await phoneHandoff.awaitOffered()
+            await store.start(activity: handoff?.phoneLeg.activity ?? activity, continuing: handoff)
+        }
     }
 
     /// One place a session begins, whether the activity came from the synced
     /// mode or from the user answering the question.
     ///
-    /// A handoff the phone sent ahead of waking this app (issue #335) is taken
-    /// up here, whichever way the start came: the phone's request, or a tap
-    /// on « Démarrer » after the phone handed over.
+    /// A handoff the phone already sent (issue #335) is taken up here: a tap
+    /// on « Démarrer » after the phone handed over still carries it on.
     private func begin(_ activity: SessionActivity) {
         isChoosingActivity = false
         let handoff = phoneHandoff.takeOffered(at: .now)
