@@ -34,6 +34,10 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
     /// is not one: since issue #265 it fires on *every* `finishWorkout()`, so
     /// it would announce the end of the outing at the first walk→run switch.
     var isEnded: Bool
+    /// The outing's route so far, cut by portion and thinned by the wrist
+    /// (issue #334). Empty when there is no fix — location refused, no GPS
+    /// yet — and from a watch on a build that predates the map.
+    var route: [MirroredRoutePortion]
 
     init(
         sentAt: Date,
@@ -43,7 +47,8 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         distanceMeters: Double,
         activeCalories: Int,
         heartRate: Int?,
-        isEnded: Bool
+        isEnded: Bool,
+        route: [MirroredRoutePortion] = []
     ) {
         self.sentAt = sentAt
         self.outingStartedAt = outingStartedAt
@@ -53,6 +58,7 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         self.activeCalories = activeCalories
         self.heartRate = heartRate
         self.isEnded = isEnded
+        self.route = route
     }
 
     /// Tolerant by hand, because the two ends are **two apps that update
@@ -73,6 +79,8 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         activeCalories = try container.decodeIfPresent(Int.self, forKey: .activeCalories) ?? 0
         heartRate = try container.decodeIfPresent(Int.self, forKey: .heartRate)
         isEnded = try container.decodeIfPresent(Bool.self, forKey: .isEnded) ?? false
+        // A malformed route costs the map, never the figures beside it.
+        route = (try? container.decodeIfPresent([MirroredRoutePortion].self, forKey: .route)) ?? []
     }
 
     /// Drawn by `MirroredWalkScreen` — the phone's only view of a distance it

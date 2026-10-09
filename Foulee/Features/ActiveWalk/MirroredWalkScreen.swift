@@ -20,12 +20,15 @@ struct MirroredWalkScreen: View {
     let store: MirroredSessionStore
     var onDismiss: () -> Void
 
+    @State private var isShowingRoute = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     clock
                     figures
+                    routeButton
                     stopButton
                     origin
                 }
@@ -39,6 +42,31 @@ struct MirroredWalkScreen: View {
                     Button("Fermer", action: onDismiss)
                 }
             }
+            .sheet(isPresented: $isShowingRoute) {
+                // Read inside the sheet, so the map grows with each wake
+                // rather than freezing on the route it opened with.
+                WalkRouteMapView(
+                    strokes: MirroredRoutePortion.strokes(store.figures?.route ?? [])
+                ) { isShowingRoute = false }
+            }
+        }
+    }
+
+    /// The route the wrist is recording (issue #334) — offered only once there
+    /// is a line to draw: location refused, or no fix yet, and the button
+    /// would open an empty map.
+    @ViewBuilder
+    private var routeButton: some View {
+        if store.figures?.route.isDrawable == true {
+            Button {
+                isShowingRoute = true
+            } label: {
+                Label("Voir le parcours", systemImage: "map")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+            }
+            .buttonStyle(.bordered)
         }
     }
 
