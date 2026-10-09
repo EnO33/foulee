@@ -75,7 +75,9 @@ func cadenceText(steps: Int, over elapsed: TimeInterval) -> String? {
 /// (issue #331) — or `nil` for no rhythm at all. Rounded to five like the
 /// average: the pedometer is a better source, not a finer one.
 func cadenceText(stepsPerSecond: Double) -> String? {
-    guard stepsPerSecond > 0 else { return nil }
+    // Finite first: the figure comes straight from the system, and `Int(_:)`
+    // on an infinity or a NaN is a crash, not a rounding (issue #338).
+    guard stepsPerSecond.isFinite, stepsPerSecond > 0 else { return nil }
     // A **non-breaking** space: « 165 » stranded at the end of a line with
     // « pas/min » on the next reads as badly as the « pa/s » of issue #261. The
     // line still wraps on a 40 mm — it just wraps before the number rather than

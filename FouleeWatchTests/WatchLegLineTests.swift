@@ -151,6 +151,13 @@ struct CadenceTests {
         #expect(cadenceText(stepsPerSecond: -1) == nil)
     }
 
+    /// `Int(_:)` traps on these: a figure the system got wrong must cost the
+    /// line, never the outing (issue #338).
+    @Test("A cadence that is not a number says nothing", arguments: [Double.infinity, .nan])
+    func aNonFiniteCadenceSaysNothing(stepsPerSecond: Double) {
+        #expect(cadenceText(stepsPerSecond: stepsPerSecond) == nil)
+    }
+
     private func runningLeg(liveCadence: Double?, end: Date?) -> WatchWorkoutSegment {
         let start = Date(timeIntervalSince1970: 1_754_000_000)
         return WatchWorkoutSegment(
