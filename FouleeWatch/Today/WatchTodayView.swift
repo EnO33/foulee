@@ -12,17 +12,11 @@ import SwiftUI
 struct WatchTodayView: View {
     let store: WatchTodayStore
     var errorMessage: String?
-    /// A walk the phone is measuring, offered first because it is the thing
-    /// to do right now (issue #335).
-    var phoneSession: PhoneSessionStatus?
-    var isResumingPhoneSession = false
-    var onResumePhoneSession: () -> Void = {}
     var onStart: () -> Void
 
     var body: some View {
         ScrollView {
             VStack(spacing: 10) {
-                if let phoneSession { resumeButton(phoneSession) }
                 streakHero
                 statsGrid
                 if store.hydrationEnabled { WatchHydrationCard(store: store) }
@@ -109,33 +103,6 @@ struct WatchTodayView: View {
             .font(.caption2)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
-    }
-
-    /// « Reprendre la séance de l'iPhone »: the phone stops, saves what it
-    /// measured, and the wrist carries the outing on. The phone's clock runs
-    /// on the button, so it is plainly that walk being taken over.
-    private func resumeButton(_ session: PhoneSessionStatus) -> some View {
-        Button(action: onResumePhoneSession) {
-            HStack(spacing: 6) {
-                if isResumingPhoneSession {
-                    ProgressView()
-                } else {
-                    Image(systemName: "iphone")
-                }
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Reprendre la séance de l'iPhone")
-                        .font(.footnote.weight(.semibold))
-                    Text(session.startedAt, style: .timer)
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-                .multilineTextAlignment(.leading)
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.bordered)
-        .tint(Color("AccentColor"))
-        .disabled(isResumingPhoneSession)
     }
 
     private var startButton: some View {

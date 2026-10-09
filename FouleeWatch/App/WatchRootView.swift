@@ -8,24 +8,24 @@ struct WatchRootView: View {
     /// Local to the idle route — a session in flight clears it.
     @State private var isChoosingActivity = false
     private let pendingStart = WatchPendingStart.shared
-    /// A phone walk to carry on (issue #335).
-    private let phoneHandoff = WatchPhoneHandoff.shared
+    /// The phone's session in flight, shown while the wrist records nothing
+    /// itself (issue #342).
+    private let phoneSession = WatchPhoneSession.shared
 
     var body: some View {
         Group {
             switch store.state {
             case .idle:
-                WatchIdleScreen(
-                    today: todayStore,
-                    errorMessage: store.lastError ?? phoneHandoff.errorMessage,
-                    isChoosingActivity: isChoosingActivity,
-                    phoneSession: phoneHandoff.phoneSession,
-                    isResumingPhoneSession: phoneHandoff.isRequesting,
-                    onResumePhoneSession: resumePhoneSession,
-                    onStart: begin,
-                    onAsk: { isChoosingActivity = true },
-                    onCancel: { isChoosingActivity = false }
-                )
+                if let snapshot = phoneSession.shown(at: .now) {
+                    WatchPhoneSessionPager(
+                        snapshot: snapshot,
+                        isSending: phoneSession.isSending,
+                        errorMessage: phoneSession.errorMessage,
+                        onCommand: { command in Task { await phoneSession.send(command) } }
+                    )
+                } else {
+                    idleScreen
+                }
             case .active(let metrics):
                 WatchSessionPager(
                     metrics: metrics,
@@ -62,41 +62,33 @@ struct WatchRootView: View {
         .onChange(of: pendingStart.activity) { _, _ in startIfPhoneAsked() }
     }
 
+    /// Home, with nothing in flight here or on the phone.
+    private var idleScreen: some View {
+        WatchIdleScreen(
+            today: todayStore,
+            errorMessage: store.lastError,
+            isChoosingActivity: isChoosingActivity,
+            onStart: begin,
+            onAsk: { isChoosingActivity = true },
+            onCancel: { isChoosingActivity = false }
+        )
+    }
+
     /// Start what the phone asked for, if anything, and if nothing is running.
     ///
     /// The guard is not politeness: the phone can ask while a session is
     /// already in flight — `startWatchApp` does not know what the wrist is
     /// doing — and starting a second one would strand the first.
-    ///
-    /// A handoff the phone sent ahead of waking this app may still be on its
-    /// way (issue #340): wait for the phone's word before opening anything.
     private func startIfPhoneAsked() {
         guard case .idle = store.state, let activity = pendingStart.take() else { return }
-        isChoosingActivity = false
-        Task {
-            let handoff = await phoneHandoff.awaitOffered()
-            await store.start(activity: handoff?.phoneLeg.activity ?? activity, continuing: handoff)
-        }
+        begin(activity)
     }
 
     /// One place a session begins, whether the activity came from the synced
     /// mode or from the user answering the question.
-    ///
-    /// A handoff the phone already sent (issue #335) is taken up here: a tap
-    /// on « Démarrer » after the phone handed over still carries it on.
     private func begin(_ activity: SessionActivity) {
         isChoosingActivity = false
-        let handoff = phoneHandoff.takeOffered(at: .now)
-        Task { await store.start(activity: handoff?.phoneLeg.activity ?? activity, continuing: handoff) }
-    }
-
-    /// « Reprendre la séance de l'iPhone »: the phone stops and saves its leg,
-    /// and the wrist opens the next one of the same outing (issue #335).
-    private func resumePhoneSession() {
-        Task {
-            guard let handoff = await phoneHandoff.request() else { return }
-            await store.start(activity: handoff.phoneLeg.activity, continuing: handoff)
-        }
+        Task { await store.start(activity: activity) }
     }
 
     /// What a tap on « Démarrer » resolves to, given the mode the phone synced

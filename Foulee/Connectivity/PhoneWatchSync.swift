@@ -5,19 +5,17 @@ import os
 /// WatchConnectivity application context — latest-state, coalesced, delivered
 /// even when the watch app isn't running. iPhone side only.
 ///
-/// Since issue #335 the context also carries the phone's walk in progress and
-/// a handoff to the wrist, and this is where the wrist's « stop and hand
-/// over » request lands.
+/// Since issue #342 it also carries the phone's session in flight to the
+/// wrist, and runs the commands the wrist sends back.
 final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
     static let shared = PhoneWatchSync()
 
     /// Everything the context carries. One value, because
     /// `updateApplicationContext` **replaces** the whole dictionary: sending
-    /// the walk's state alone would wipe the synced prefs off the wrist.
+    /// the session alone would wipe the synced prefs off the wrist.
     struct Context: Sendable {
         var payload: WatchSyncPayload?
-        var phoneSession: PhoneSessionStatus?
-        var handoff: SessionHandoff?
+        var session: PhoneSessionSnapshot?
 
         /// The dictionary as WatchConnectivity wants it. Pure, so what reaches
         /// the wrist is asserted without a `WCSession`.
@@ -25,8 +23,7 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
             let encoder = JSONEncoder()
             var context: [String: Any] = [:]
             context["payload"] = payload.flatMap { try? encoder.encode($0) }
-            context[SessionHandoffKey.phoneSession] = phoneSession.flatMap { try? encoder.encode($0) }
-            context[SessionHandoffKey.handoff] = handoff.flatMap { try? encoder.encode($0) }
+            context[PhoneSessionKey.snapshot] = session.flatMap { try? encoder.encode($0) }
             return context
         }
     }
@@ -58,17 +55,25 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
         update { $0.payload = payload }
     }
 
-    /// The phone's walk in progress, or `nil` once it is over (issue #335).
-    func publish(phoneSession: PhoneSessionStatus?) {
-        update { $0.phoneSession = phoneSession }
-    }
-
-    /// The phone stopped so the wrist can carry on (issue #335). Kept in the
-    /// context rather than sent as a message: the watch app is being woken by
-    /// `startWatchApp` at this very moment and is not reachable yet, while the
-    /// context is waiting for it whenever it starts listening.
-    func publish(handoff: SessionHandoff) {
-        update { $0.handoff = handoff }
+    /// The phone's session in flight, or `nil` once there is none (#342).
+    ///
+    /// Twice: live to a wrist that is listening right now, and in the context
+    /// for one that opens the app later — the context alone arrives when
+    /// WatchConnectivity sees fit, which is no clock to run a session on.
+    /// « No session » travels in the context only: an ended session has
+    /// already been said live.
+    func publish(session snapshot: PhoneSessionSnapshot?) {
+        #if DEBUG
+        guard !Self.isMuted else { return }
+        #endif
+        update { $0.session = snapshot }
+        guard let snapshot, WCSession.isSupported(), WCSession.default.isReachable,
+              let data = try? JSONEncoder().encode(snapshot) else { return }
+        WCSession.default.sendMessage([PhoneSessionKey.snapshot: data], replyHandler: nil) { error in
+            FouleeLog.session.notice(
+                "séance non transmise en direct : \(error.localizedDescription, privacy: .public)"
+            )
+        }
     }
 
     private func update(_ change: @Sendable (inout Context) -> Void) {
@@ -103,29 +108,28 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
         }
     }
 
-    /// The wrist asks to carry on the walk in progress (issue #335).
+    /// A command from the wrist (issue #342).
     ///
     /// Delivered even with the app in the background — iOS wakes it for a
-    /// message from the watch — so the phone stops and saves its leg without
-    /// being opened. The reply is the handoff, or empty when there is no walk
-    /// to hand over: the phone stopped a second before the tap landed.
+    /// message from the watch. The reply says whether a session was there to
+    /// obey.
     func session(
         _ session: WCSession,
         didReceiveMessage message: [String: Any],
         replyHandler: @escaping ([String: Any]) -> Void
     ) {
         let reply = UncheckedSendableBox(replyHandler)
-        guard message[SessionHandoffKey.request] != nil else {
-            reply.value([:])
+        guard let raw = message[PhoneSessionKey.command] as? String,
+              let command = PhoneSessionCommand(rawValue: raw) else {
+            reply.value([PhoneSessionKey.done: false])
             return
         }
         Task { @MainActor in
-            let handoff = await ActiveWalkStore.current?.handOff()
-            let data = handoff.flatMap { try? JSONEncoder().encode($0) }
+            let done = await ActiveWalkStore.current?.perform(command) ?? false
             FouleeLog.session.notice(
-                "reprise demandée par la Watch : \(data == nil ? "aucune séance" : "transmise", privacy: .public)"
+                "commande Watch \(raw, privacy: .public) : \(done ? "exécutée" : "sans séance", privacy: .public)"
             )
-            reply.value(data.map { [SessionHandoffKey.handoff: $0] } ?? [:])
+            reply.value([PhoneSessionKey.done: done])
         }
     }
 

@@ -22,9 +22,7 @@ final class ActiveWalkStore {
     }
 
     private(set) var state: State = .idle
-    /// Settable from `ActiveWalkStore+Handoff`, which reports a watch that
-    /// would not take the walk over (issue #335).
-    var lastError: String?
+    private(set) var lastError: String?
 
     /// Fixes recorded since the walk started, drawn by the route map. Keeps
     /// recording across pauses — a pause just leaves a straight gap.
@@ -49,16 +47,15 @@ final class ActiveWalkStore {
     @ObservationIgnored
     @Dependency(\.continuousClock) private var clock
 
-    /// What the wrist is told of this walk, and how it takes it over
-    /// (issue #335 — see `ActiveWalkStore+Handoff`).
     @ObservationIgnored
-    @Dependency(\.watchHandoff) var watchHandoff
+    @Dependency(\.date) var date
 
+    /// The wrist, told of the session in flight (issue #342).
     @ObservationIgnored
-    @Dependency(\.mirroredWorkout) var mirroredWorkout
+    @Dependency(\.watchLive) var watchLive
 
-    @ObservationIgnored
-    @Dependency(\.date) private var date
+    /// When the wrist was last told; paces `tellWatchIfDue`.
+    @ObservationIgnored var lastWatchUpdateAt: Date?
 
     @ObservationIgnored
     private var pedometerTask: Task<Void, Never>?
@@ -119,7 +116,7 @@ final class ActiveWalkStore {
         state = .active(session)
         tickerTask = makeTickerTask()
         startLiveActivity(minutesGoal: minutesGoal)
-        announceToWatch(session)
+        tellWatch()
     }
 
     /// Freeze the clock + pedometer without ending the walk.
@@ -132,6 +129,7 @@ final class ActiveWalkStore {
         session.distanceMeters = bankedDistance
         session.elevationGainMeters = bankedElevation
         state = .paused(session)
+        tellWatch()
         await pushLiveActivity(session: session, isPaused: true)
     }
 
@@ -141,16 +139,14 @@ final class ActiveWalkStore {
         beginSegment()
         state = .active(session)
         tickerTask = makeTickerTask()
+        tellWatch()
         Task { await self.pushLiveActivity(session: session, isPaused: false) }
     }
 
     /// Stop, cancel observers and persist the workout in HealthKit. Works
     /// from both the active and paused states.
-    ///
-    /// - Parameter outing: the outing this walk opens, when the wrist carries
-    ///   it on (issue #335) — stamped on the saved workout.
-    func stop(as outing: OutingLeg? = nil) async {
-        var session: WalkSession
+    func stop() async {
+        let session: WalkSession
         switch state {
         case .active(var live):
             bankSegment()
@@ -168,10 +164,9 @@ final class ActiveWalkStore {
         }
         cancelObservers()
         routeTask?.cancel()
-        withdrawFromWatch()
-        session.outing = outing
         let recorded = await settled(session)
         state = .finished(recorded)
+        tellWatch()
         await runOrTrap { try await healthKit.saveWorkout(recorded) }
         await endLiveActivity(with: session)
 
@@ -185,7 +180,6 @@ final class ActiveWalkStore {
     func reset() {
         cancelObservers()
         routeTask?.cancel()
-        withdrawFromWatch()
         // Normally already ended by stop(), but no path may leak the handle:
         // an unended activity outlives the store on the Lock Screen.
         if let liveActivity {
@@ -202,6 +196,7 @@ final class ActiveWalkStore {
         route = []
         state = .idle
         lastError = nil
+        tellWatch()
     }
 
     // MARK: - Segments
@@ -289,6 +284,7 @@ final class ActiveWalkStore {
                     session.elapsed = self.bankedElapsed
                         + self.date.now.timeIntervalSince(self.segmentStart)
                     self.state = .active(session)
+                    self.tellWatchIfDue()
                 }
             }
         }

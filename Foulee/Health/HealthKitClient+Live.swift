@@ -93,12 +93,6 @@ extension HealthKitClient {
                     metadata[HKMetadataKeyElevationAscended] =
                         HKQuantity(unit: .meter(), doubleValue: session.elevationGainMeters)
                 }
-                // Leg 0 of an outing the wrist carried on (issue #335): the same
-                // keys the watch stamps its legs with, so the history folds
-                // both into one outing.
-                if let outing = session.outing {
-                    metadata.merge(outing.metadata) { _, leg in leg }
-                }
                 try await builder.addMetadata(metadata)
 
                 try await builder.endCollection(at: endedAt)

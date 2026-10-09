@@ -39,11 +39,6 @@ struct WalkSession: Equatable, Sendable {
     /// recognition is unavailable or refused, or a session that predates it.
     /// The estimate below then falls back to exactly what it always was.
     var stepsByActivity: [SessionActivity: Int]?
-    /// The outing this walk is the first leg of, when the wrist carried it on
-    /// (issue #335). Stamped on the saved workout, so the history shows one
-    /// outing rather than a phone walk and a watch walk side by side. `nil`
-    /// for a walk that ends on the phone.
-    var outing: OutingLeg?
 
     /// Quick estimate while a Watch HR feed isn't connected — kilocalories per
     /// step, at the rate of the activity those steps were taken at (see

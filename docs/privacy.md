@@ -23,11 +23,6 @@ Ces données de santé **ne quittent jamais ton appareil** : elles ne sont ni
 transmises à un tiers, ni stockées ailleurs que dans l'app Santé d'Apple, que tu
 contrôles entièrement.
 
-Seule exception, entre **tes propres appareils** : quand tu reprends sur
-l'Apple Watch une sortie commencée sur l'iPhone, l'iPhone envoie à ta montre le
-résumé de ce qu'il a mesuré (sport, heures de début et de fin, pas, distance,
-calories), directement entre les deux, pour que la sortie continue au poignet.
-
 ## Montres Garmin
 
 Si tu portes une montre Garmin, tes données arrivent dans Foulée **par l'app
@@ -83,6 +78,9 @@ position pour deux usages, et jamais en dehors :
   Pendant une sortie lancée sur la montre, son parcours est aussi envoyé à
   **ton iPhone**, directement entre tes deux appareils, pour l'afficher sur la
   carte de la séance.
+  À l'inverse, pendant une sortie lancée sur l'iPhone, son parcours et ses
+  chiffres (durée, pas, distance, calories) sont envoyés à **ton Apple Watch**,
+  directement entre tes deux appareils, pour l'afficher au poignet.
 
 Pour la météo, tes coordonnées sont transmises à **Apple WeatherKit**, qui
 renvoie les conditions locales (voir la

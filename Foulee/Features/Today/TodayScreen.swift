@@ -86,7 +86,6 @@ struct TodayScreen: View {
                     // « les deux » it is `.ask`, and the session screen opens
                     // on the picker.
                     intent: store.startIntent,
-                    canContinueOnWatch: mirroredSession.canStartOnWatch,
                     onDismiss: { session in
                         isWalking = false
                         Task { await store.registerFinishedWalk(session) }
