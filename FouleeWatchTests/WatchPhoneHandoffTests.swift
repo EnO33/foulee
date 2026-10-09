@@ -98,4 +98,49 @@ struct WatchPhoneHandoffTests {
         #expect(sut.errorMessage != nil)
         #expect(sut.phoneSession != nil)
     }
+
+    // MARK: - Woken by the phone (issue #340)
+
+    /// The order on a real wrist: `startWatchApp` lands first, the context
+    /// carrying the handoff only once `WCSession` has activated.
+    @Test("A start the phone asked for waits for the handoff on its way")
+    func waitsForTheHandoff() async {
+        let sut = handoffClient { nil }
+        let handed = handoff(at: .now)
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            sut.receive(phoneSession: nil, handoff: handed)
+        }
+        #expect(await sut.awaitOffered(timeout: .seconds(5)) == handed)
+    }
+
+    /// A phone still mid-walk has not handed over yet: its next word will.
+    @Test("A phone still mid-walk is waited for")
+    func midWalkIsWaitedFor() async {
+        let sut = handoffClient { nil }
+        sut.receive(phoneSession: PhoneSessionStatus(startedAt: .now), handoff: nil)
+        let handed = handoff(at: .now)
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            sut.receive(phoneSession: nil, handoff: handed)
+        }
+        #expect(await sut.awaitOffered(timeout: .seconds(5)) == handed)
+    }
+
+    /// « Démarrer sur la Watch » with no walk on the phone (issue #283) must
+    /// not sit out the timeout.
+    @Test("No walk on the phone starts at once")
+    func noWalkStartsAtOnce() async {
+        let sut = handoffClient { nil }
+        sut.receive(phoneSession: nil, handoff: nil)
+        let clock = ContinuousClock()
+        let took = await clock.measure { #expect(await sut.awaitOffered(timeout: .seconds(5)) == nil) }
+        #expect(took < .seconds(1))
+    }
+
+    @Test("A silent phone does not hold the start back")
+    func aSilentPhoneTimesOut() async {
+        let sut = handoffClient { nil }
+        #expect(await sut.awaitOffered(timeout: .milliseconds(300)) == nil)
+    }
 }
