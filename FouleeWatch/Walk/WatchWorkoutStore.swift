@@ -61,7 +61,8 @@ final class WatchWorkoutStore: NSObject {
     /// The screen follows detection immediately; the **recording** waits. A leg
     /// shorter than `minimumLegDuration` is noise, not a stretch of an outing —
     /// and every leg costs a permanent workout in Santé. Dated from the
-    /// boundary, so waiting costs no accuracy.
+    /// boundary, so waiting costs no accuracy; timed from the decision, so a
+    /// late-noticed change still has to hold (issue #331).
     @ObservationIgnored private var pendingSplit: ActivitySwitchDetector.Switch?
     /// When a snapshot last went to the phone; nil until the first (issue #278).
     @ObservationIgnored var lastMirrorSendAt: Date?
@@ -412,7 +413,8 @@ extension WatchWorkoutStore {
     /// **The two halves move at different speeds on purpose.** Renaming cannot
     /// fail and cannot be wrong for long — the next reading corrects it. Cutting
     /// the outing in two writes a permanent workout into Santé, so it waits
-    /// until the new sport has held for `minimumLegDuration`.
+    /// until the new sport has held for `minimumLegDuration` — counted from
+    /// `confirmed.confirmedAt`, the moment it was decided (issue #331).
     ///
     /// Waiting costs no accuracy: the split carries `confirmed.date`, the
     /// instant the sport actually changed, and both HealthKit calls accept a
@@ -436,7 +438,10 @@ extension WatchWorkoutStore {
     func splitIfDue(at now: Date) async {
         guard case .active = state,
               let pending = pendingSplit,
-              now.timeIntervalSince(pending.date) >= Self.minimumLegDuration
+              // From the decision, never from the back-dated boundary: a
+              // switch noticed late would otherwise be cut on arrival, before
+              // any reading could contradict it (issue #331).
+              now.timeIntervalSince(pending.confirmedAt) >= Self.minimumLegDuration
         else { return }
         pendingSplit = nil
         await splitLeg(to: pending.activity, at: pending.date)
