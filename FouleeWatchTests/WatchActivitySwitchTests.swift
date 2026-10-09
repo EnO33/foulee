@@ -200,6 +200,17 @@ struct WatchActivitySwitchTests {
         #expect(switched?.date == start.addingTimeInterval(100))
     }
 
+    @Test("A switch remembers when it was decided, apart from where it lands")
+    func theDecisionIsDatedSeparately() {
+        var detector = detector(confirmations: 1)
+        let switched = detector.observe(run(began: 100, seen: 130))
+        // The boundary is back-dated; the decision is not. A leg's wait for
+        // `minimumLegDuration` starts at the decision (issue #331) — from the
+        // boundary, a change noticed thirty seconds late had already « held ».
+        #expect(switched?.date == start.addingTimeInterval(100))
+        #expect(switched?.confirmedAt == start.addingTimeInterval(130))
+    }
+
     @Test("A boundary never precedes the session or the previous segment")
     func boundariesAreClamped() {
         var detector = detector()
