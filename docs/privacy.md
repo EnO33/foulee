@@ -75,6 +75,9 @@ position pour deux usages, et jamais en dehors :
   l'Apple Watch — **pendant la sortie seulement**. Sur la montre, la position
   n'est demandée qu'au démarrage d'une sortie et n'est plus lue une fois la
   sortie terminée.
+  Pendant une sortie lancée sur la montre, son parcours est aussi envoyé à
+  **ton iPhone**, directement entre tes deux appareils, pour l'afficher sur la
+  carte de la séance.
 
 Pour la météo, tes coordonnées sont transmises à **Apple WeatherKit**, qui
 renvoie les conditions locales (voir la

@@ -258,4 +258,35 @@ struct WatchMirrorSnapshotTests {
         // mirror path deleted.
         #expect(stub.sentSnapshots.count == 1)
     }
+
+    // MARK: - The route (issue #334)
+
+    @Test("The route travels with the figures, by portion")
+    func theRouteTravels() async {
+        let stub = WorkoutHealthKitStub()
+        let fake = FakeRouteSource()
+        let store = stub.makeStore(route: WatchRouteStore(source: fake.source))
+        await store.start(activity: .running)
+        await waitUntil { fake.openedStreams == 1 }
+        fake.deliver(latitude: 48.8634, longitude: 2.3270)
+        fake.deliver(latitude: 48.8640, longitude: 2.3290)
+        await waitUntil { store.route.locations.count == 2 }
+
+        await store.mirrorIfDue(at: base)
+
+        let route = stub.sentSnapshots.last?.route ?? []
+        #expect(route.map(\.activity) == [.running])
+        #expect(route.first?.coordinates.count == 2)
+    }
+
+    /// No fix, no line: the phone then offers no map at all.
+    @Test("Without a fix, the route is empty")
+    func noFixNoRoute() async {
+        let stub = WorkoutHealthKitStub()
+        let store = stub.makeStore()
+        await store.start(activity: .walking)
+        await store.mirrorIfDue(at: base)
+
+        #expect(stub.sentSnapshots.last?.route.isEmpty == true)
+    }
 }

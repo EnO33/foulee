@@ -1,6 +1,6 @@
 import Foundation
 
-/// What the wrist tells the phone, and how often (issue #278).
+/// What the wrist tells the phone, and how often (issues #278, #334).
 ///
 /// **Not one message per second.** HealthKit caches what a mirrored session
 /// sends and wakes the iOS app *periodically* — potentially minutes apart —
@@ -86,7 +86,12 @@ extension WatchWorkoutStore {
         guard !WatchScreenshotMode.isActive else { return }
         #endif
         guard let handle = sessionHandle else { return }
-        let snapshot = metrics.snapshot(at: now, isEnded: isEnded)
+        var snapshot = metrics.snapshot(at: now, isEnded: isEnded)
+        // The same portions the « Plan » page draws, so the phone's map agrees
+        // with the wrist about which stretch was run (issue #334).
+        snapshot.route = MirroredRoutePortion.mirrored(
+            WatchRoutePortion.portions(of: route.locations, legs: metrics.legs, current: metrics.activity)
+        )
         guard let data = try? JSONEncoder().encode(snapshot) else { return }
         lastMirrorSendAt = now
         do {

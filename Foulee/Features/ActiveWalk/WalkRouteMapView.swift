@@ -3,23 +3,45 @@ import SwiftUI
 
 /// Sheet that draws the path walked so far as a polyline over a map. Shows a
 /// friendly empty state until enough fixes have come in to draw a line.
+///
+/// One line per stretch, in that stretch's colour: a single stroke for the
+/// phone's own walk, one per portion for an outing mirrored from the wrist
+/// (issue #334).
 struct WalkRouteMapView: View {
-    let route: [Coordinate]
+    let strokes: [RouteLines.Stroke]
     var onClose: () -> Void
 
     /// The live route is a single stroke; its identity never changes.
     private static let strokeID = UUID()
 
-    private var coordinates: [CLLocationCoordinate2D] {
-        route.map(\.locationCoordinate)
+    /// The phone's own walk: one stroke, in the accent colour — the phone
+    /// cannot tell a walk from a run while it records (issue #246).
+    init(route: [Coordinate], onClose: @escaping () -> Void) {
+        self.strokes = [
+            RouteLines.Stroke(
+                id: Self.strokeID,
+                coordinates: route.map(\.locationCoordinate),
+                tint: FouleeColor.accentMid
+            )
+        ]
+        self.onClose = onClose
+    }
+
+    init(strokes: [RouteLines.Stroke], onClose: @escaping () -> Void) {
+        self.strokes = strokes
+        self.onClose = onClose
+    }
+
+    private var isDrawable: Bool {
+        strokes.contains { $0.coordinates.count >= 2 }
     }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            if coordinates.count < 2 {
-                emptyState
-            } else {
+            if isDrawable {
                 map
+            } else {
+                emptyState
             }
             closeButton
                 .padding(20)
@@ -28,10 +50,8 @@ struct WalkRouteMapView: View {
 
     private var map: some View {
         Map(initialPosition: .automatic) {
-            RouteLines(strokes: [
-                RouteLines.Stroke(id: Self.strokeID, coordinates: coordinates, tint: FouleeColor.accentMid)
-            ])
-            if let last = coordinates.last {
+            RouteLines(strokes: strokes)
+            if let last = strokes.last?.coordinates.last {
                 Annotation("Position", coordinate: last) {
                     // Neutral glyph (#222): the map is drawn from a route, and
                     // nothing here knows whether it was walked or run.

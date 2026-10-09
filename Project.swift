@@ -237,6 +237,9 @@ let project = Project(
                 // The colours an outing is drawn in by sport, shared with the
                 // phone's detail (issue #320).
                 "Foulee/Shared/ActivityPalette.swift",
+                "Foulee/Shared/SessionActivity+Tint.swift",
+                // The route a mirrored outing sends to the phone (issue #334).
+                "Foulee/Shared/MirroredRoute.swift",
                 "Foulee/Notifications/HydrationNotification.swift",
                 // The App Store capture seed (issue #239). Only the
                 // Foundation-only half: the watch board and the phone board
