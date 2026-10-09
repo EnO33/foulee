@@ -240,8 +240,6 @@ let project = Project(
                 "Foulee/Shared/SessionActivity+Tint.swift",
                 // The route a mirrored outing sends to the phone (issue #334).
                 "Foulee/Shared/MirroredRoute.swift",
-                // A phone walk the wrist carries on (issue #335).
-                "Foulee/Shared/SessionHandoff.swift",
                 "Foulee/Notifications/HydrationNotification.swift",
                 // The App Store capture seed (issue #239). Only the
                 // Foundation-only half: the watch board and the phone board
