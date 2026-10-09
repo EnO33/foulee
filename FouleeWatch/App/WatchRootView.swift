@@ -8,6 +8,8 @@ struct WatchRootView: View {
     /// Local to the idle route — a session in flight clears it.
     @State private var isChoosingActivity = false
     private let pendingStart = WatchPendingStart.shared
+    /// A phone walk to carry on (issue #335).
+    private let phoneHandoff = WatchPhoneHandoff.shared
 
     var body: some View {
         Group {
@@ -15,8 +17,11 @@ struct WatchRootView: View {
             case .idle:
                 WatchIdleScreen(
                     today: todayStore,
-                    errorMessage: store.lastError,
+                    errorMessage: store.lastError ?? phoneHandoff.errorMessage,
                     isChoosingActivity: isChoosingActivity,
+                    phoneSession: phoneHandoff.phoneSession,
+                    isResumingPhoneSession: phoneHandoff.isRequesting,
+                    onResumePhoneSession: resumePhoneSession,
                     onStart: begin,
                     onAsk: { isChoosingActivity = true },
                     onCancel: { isChoosingActivity = false }
@@ -69,9 +74,23 @@ struct WatchRootView: View {
 
     /// One place a session begins, whether the activity came from the synced
     /// mode or from the user answering the question.
+    ///
+    /// A handoff the phone sent ahead of waking this app (issue #335) is taken
+    /// up here, whichever way the start came: the phone's request, or a tap
+    /// on « Démarrer » after the phone handed over.
     private func begin(_ activity: SessionActivity) {
         isChoosingActivity = false
-        Task { await store.start(activity: activity) }
+        let handoff = phoneHandoff.takeOffered(at: .now)
+        Task { await store.start(activity: handoff?.phoneLeg.activity ?? activity, continuing: handoff) }
+    }
+
+    /// « Reprendre la séance de l'iPhone »: the phone stops and saves its leg,
+    /// and the wrist opens the next one of the same outing (issue #335).
+    private func resumePhoneSession() {
+        Task {
+            guard let handoff = await phoneHandoff.request() else { return }
+            await store.start(activity: handoff.phoneLeg.activity, continuing: handoff)
+        }
     }
 
     /// What a tap on « Démarrer » resolves to, given the mode the phone synced

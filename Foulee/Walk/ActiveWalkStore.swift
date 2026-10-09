@@ -22,7 +22,9 @@ final class ActiveWalkStore {
     }
 
     private(set) var state: State = .idle
-    private(set) var lastError: String?
+    /// Settable from `ActiveWalkStore+Handoff`, which reports a watch that
+    /// would not take the walk over (issue #335).
+    var lastError: String?
 
     /// Fixes recorded since the walk started, drawn by the route map. Keeps
     /// recording across pauses — a pause just leaves a straight gap.
@@ -46,6 +48,14 @@ final class ActiveWalkStore {
 
     @ObservationIgnored
     @Dependency(\.continuousClock) private var clock
+
+    /// What the wrist is told of this walk, and how it takes it over
+    /// (issue #335 — see `ActiveWalkStore+Handoff`).
+    @ObservationIgnored
+    @Dependency(\.watchHandoff) var watchHandoff
+
+    @ObservationIgnored
+    @Dependency(\.mirroredWorkout) var mirroredWorkout
 
     @ObservationIgnored
     @Dependency(\.date) private var date
@@ -109,6 +119,7 @@ final class ActiveWalkStore {
         state = .active(session)
         tickerTask = makeTickerTask()
         startLiveActivity(minutesGoal: minutesGoal)
+        announceToWatch(session)
     }
 
     /// Freeze the clock + pedometer without ending the walk.
@@ -135,8 +146,11 @@ final class ActiveWalkStore {
 
     /// Stop, cancel observers and persist the workout in HealthKit. Works
     /// from both the active and paused states.
-    func stop() async {
-        let session: WalkSession
+    ///
+    /// - Parameter outing: the outing this walk opens, when the wrist carries
+    ///   it on (issue #335) — stamped on the saved workout.
+    func stop(as outing: OutingLeg? = nil) async {
+        var session: WalkSession
         switch state {
         case .active(var live):
             bankSegment()
@@ -154,6 +168,8 @@ final class ActiveWalkStore {
         }
         cancelObservers()
         routeTask?.cancel()
+        withdrawFromWatch()
+        session.outing = outing
         let recorded = await settled(session)
         state = .finished(recorded)
         await runOrTrap { try await healthKit.saveWorkout(recorded) }
@@ -169,6 +185,7 @@ final class ActiveWalkStore {
     func reset() {
         cancelObservers()
         routeTask?.cancel()
+        withdrawFromWatch()
         // Normally already ended by stop(), but no path may leak the handle:
         // an unended activity outlives the store on the Lock Screen.
         if let liveActivity {
