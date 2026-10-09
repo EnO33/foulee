@@ -1,7 +1,7 @@
 # ADR 0002 — Détection automatique marche / course
 
 - **Statut** : acceptée (2026-08)
-- **Issues** : [#244](https://github.com/EnO33/foulee/issues/244) (épic), #248, #249, #250, #246, #247, #256, #265, #266, #267
+- **Issues** : [#244](https://github.com/EnO33/foulee/issues/244) (épic), #248, #249, #250, #246, #247, #256, #265, #266, #267, #331
 
 ## Contexte
 
@@ -78,6 +78,29 @@ Renommer l'écran ne peut pas échouer et s'autocorrige à la lecture suivante :
 
 Attendre ne coûte aucune précision, puisque la coupure est datée de la frontière (D7). C'est ce qui permet d'avoir à la fois un écran réactif et un enregistrement prudent, sans arbitrer entre les deux.
 
+### D9 — La cadence est celle du podomètre d'Apple, pas une division de sommes HealthKit (#331)
+
+Depuis #267, la source rapide divisait deux sommes cumulées de `HKLiveWorkoutBuilder` (pas, distance), lues **à leur réception**, sur une fenêtre de 3 s. C'était faux par construction : HealthKit livre les pas **par paquets irréguliers**, et l'heure de livraison n'est pas l'heure des foulées. Une fenêtre pouvait ne contenir que deux secondes de pas — une course à 2,8 pas/s lue 1,8 pas/s, donc **marche**, sur un tronçon couru. Le retour à la course, lui, exigeait une vitesse tirée de la distance (GPS), livrée par d'autres paquets : souvent vétoée.
+
+Le classifieur lit désormais **`CMPedometer.currentCadence` et `currentPace`** (`PedometerSource`, `PedometerReading`) : la cadence et l'allure instantanées que le système calcule lui-même, datées par leur propre `endDate`. Aucune permission nouvelle — « Mouvements et forme » couvre le podomètre comme la reconnaissance d'activité. Les pas, la distance et l'énergie **enregistrés** restent ceux de HealthKit : rien ne change dans Santé.
+
+Deux règles l'accompagnent :
+
+- **Un arrêt n'est pas une marche.** Sous 1 pas/s, le classifieur ne dit rien (`minimumWalkingCadence`). Avant, toute cadence ≤ 2,1 était « marche » — un feu rouge compris.
+- **Une frontière ne remonte pas au-delà de 10 s** (`maximumLookback`). Un podomètre resté muet ne dit rien du moment où l'allure actuelle a commencé.
+
+La **cadence affichée** de la portion en cours vient du même podomètre. Elle divisait les pas du dernier paquet par une durée qui avance chaque seconde : trop basse, en dents de scie, et c'était une moyenne de portion présentée comme un chiffre en direct. Une portion **close** garde sa moyenne, exacte sur une durée terminée. Une cadence de plus de 10 s n'est plus affichée (`cadenceShelfLife`).
+
+### D10 — Les 15 s d'une portion se comptent depuis la décision, pas depuis la frontière (#331)
+
+D7 date la coupure de la **frontière** et D8 fait **attendre** l'enregistrement. Les deux tenaient séparément ; ensemble, ils s'annulaient : `splitIfDue` mesurait les 15 s **depuis la frontière**, qui est rétrodatée. Une bascule apprise 30 s après son début (latence CoreMotion, #248) avait donc « tenu » avant même d'être connue, et partait **à l'instant** — aucune lecture contraire n'avait le temps de l'annuler.
+
+`ActivitySwitchDetector.Switch` porte désormais **deux dates** : `date`, la frontière (inchangée, D7), et `confirmedAt`, l'instant de la décision. L'attente se compte depuis `confirmedAt`. Aucune précision perdue — la coupure reste datée de la frontière — mais une erreur ponctuelle ne peut plus écrire un workout.
+
+### Journal de détection
+
+Chaque observation (source, verdict, début, réception) et chaque bascule s'écrivent dans `FouleeLog.detection` (catégorie `detection`, sous-système `com.eno33.foulee`). Pour suivre une sortie : Console.app avec la montre connectée, filtre `category:detection`, messages *Info* inclus. C'est la leçon de #256 appliquée d'avance : sur un chemin qu'aucun simulateur n'exerce, la trace précède le réglage.
+
 ## Ce qui s'est révélé impossible
 
 ### Segmenter une séance par `HKWorkoutActivity`
@@ -124,8 +147,11 @@ Et la question qui a tout tranché — *Forme produit-il un multisport ou deux e
 |---|---|---|
 | Seuil de confiance | `.medium` | Trop strict → la détection se tait et la séance reste ce qu'elle était (aucune donnée abîmée). Trop laxiste → un sport faux, définitif. |
 | Confirmations avant bascule (montre) | **1** | L'anti-bruit est assuré par le seuil de 15 s de D7, qui décide seul si une portion mérite une séance. Confirmer deux fois ajouterait des secondes à la latence sans rien protéger de plus. |
-| Durée minimale d'une portion | **15 s** | En dessous, une portion est plus courte que l'écart entre deux lectures : du bruit, pas une observation. Le chiffre à monter si un fractionné découpe trop. |
-| Source rapide de la détection | cadence + vitesse | CoreMotion répond en ~30 s et son lissage *est* sa raison d'être (#248). Les compteurs de la séance donnent une cadence en quelques secondes, sans capteur ni permission de plus. CoreMotion reste l'arbitre. |
+| Durée minimale d'une portion | **15 s**, comptées depuis la décision | En dessous, une portion est plus courte que l'écart entre deux lectures : du bruit, pas une observation. Le chiffre à monter si un fractionné découpe trop. Comptées depuis la frontière, elles ne gardaient rien (D10). |
+| Source rapide de la détection | cadence + allure de `CMPedometer` | CoreMotion répond en ~30 s et son lissage *est* sa raison d'être (#248). Le podomètre donne une cadence en quelques secondes, sans permission de plus. Elle était dérivée des sommes HealthKit jusqu'à #331 — à tort (D9). |
+| Plancher de la marche | **1 pas/s** | En dessous, on s'arrête ou on piétine : « sans avis », pas « marche » (D9). |
+| Recul maximal d'une frontière | **10 s** | Un flux muet ne date pas le début de l'allure suivante (D9). |
+| Fraîcheur de la cadence affichée | **10 s** | Au-delà, le poignet afficherait un rythme que personne ne tient plus. |
 | Repli | marche | Voir D3. |
 
 ## Ce qui a été constaté sur appareil
@@ -136,10 +162,12 @@ Et la question qui a tout tranché — *Forme produit-il un multisport ou deux e
 | `v1.41` | Plus d'erreur, la transition se fait, la montre nomme le sport. Restaient un chrono par à-coups et une détection lente. |
 | `v1.42` | ✅ « La détection fonctionne mieux en effet. » Chrono fluide. Une seule séance encore — attendu à ce stade. |
 | `v1.43` | ✅ **Le découpage fonctionne.** Une sortie qui change de sport laisse deux séances. |
+| `v1.49` | ⚠️ Des **segments de marche au milieu d'une course**, sur un tronçon couru — pas à un arrêt. Cadence affichée jugée fausse. Causes : D9 et D10 (#331). |
 
 ## Ce qui reste non mesuré
 
 - **La batterie** du flux au poignet, toujours pas mesurée depuis #248.
 - La latence des transitions côté **iPhone** dans les cas tordus : tapis, poussette, descente rapide.
 - Le comportement sur un **fractionné** : le seuil de 15 s de D7 est le réglage prévu pour ça, jamais éprouvé.
+- **La qualité de `currentCadence` au poignet** (#331) : fréquence des mises à jour pendant une séance, comportement bras immobile (gourde, téléphone en main). À lire dans le journal de détection.
 - **Les seuils de cadence sont personnels** (`MovementClassifier`). Réglés pour une allure ordinaire ; un marcheur très rapide ou un joggeur très lent tombent dans la zone grise.

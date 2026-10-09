@@ -34,8 +34,9 @@ that cost two releases to find, are written up in
 
 - **Swift 6.2**, **SwiftUI**, iOS 26 + watchOS 26
 - **HealthKit** — steps, distance, calories, workouts (walks and runs)
-- **CoreMotion** — pedometer during a session, and activity recognition to tell
-  a walk from a run (live on the Watch, post-hoc on the iPhone)
+- **CoreMotion** — pedometer during a session (live cadence and pace on the
+  Watch), and activity recognition to tell a walk from a run (live on the
+  Watch, post-hoc on the iPhone)
 - **ActivityKit** — Live Activity for the active walk (Dynamic Island + Lock Screen)
 - **WeatherKit** — local weather card
 - **WidgetKit** — iPhone + Watch streak widgets and complications
