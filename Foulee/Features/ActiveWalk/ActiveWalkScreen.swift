@@ -235,67 +235,6 @@ struct ActiveWalkScreen: View {
         }
     }
 
-    /// The watch's place on this screen: a way to hand the walk over when
-    /// there is a watch app to take it (issue #335), the old hint otherwise.
-    @ViewBuilder
-    private var watchCard: some View {
-        if canContinueOnWatch {
-            continueOnWatchButton
-        } else {
-            heartRatePlaceholder
-        }
-    }
-
-    /// « Continuer sur ma Watch ». The phone saves what it measured as the
-    /// outing's first leg and the wrist carries on — with the heart rate and
-    /// the walk / run split the phone cannot give. The home swaps this screen
-    /// for the mirrored one once the wrist has taken over.
-    private var continueOnWatchButton: some View {
-        Button {
-            Task { await store.handOffToWatch() }
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "applewatch")
-                    .scaledSystemFont(size: 20, weight: .semibold)
-                    .foregroundStyle(FouleeColor.accentMid)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Continuer sur ma Watch")
-                        .font(FouleeFont.headline)
-                        .foregroundStyle(.primary)
-                    Text("Rythme cardiaque, marche et course détaillées")
-                        .font(FouleeFont.footnote)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(16)
-            .fouleeGlass(cornerRadius: 22)
-        }
-        .buttonStyle(.pressable)
-        .padding(.horizontal, 20)
-        .padding(.top, 32)
-        .accessibilityHint("Arrête la mesure sur l'iPhone et la poursuit sur ta Watch")
-    }
-
-    private var heartRatePlaceholder: some View {
-        HStack(spacing: 10) {
-            Image(systemName: FouleeIcon.heart)
-                .scaledSystemFont(size: 20)
-                .foregroundStyle(FouleeColor.danger)
-            Text("Connecte ta Watch pour le rythme cardiaque")
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
-        .padding(16)
-        .fouleeGlass(cornerRadius: 22)
-        .padding(.horizontal, 20)
-        .padding(.top, 32)
-    }
-
     private func controls(paused: Bool) -> some View {
         HStack(spacing: 28) {
             controlButton(icon: FouleeIcon.stop, color: FouleeColor.danger, label: "Arrêter") {
@@ -350,6 +289,72 @@ struct ActiveWalkScreen: View {
         }
     }
 
+}
+
+/// The watch card (issue #335). In an extension for the same reason as the
+/// end-of-session presentation: the screen's type body stays inside the length
+/// budget, and the card reads as one piece.
+private extension ActiveWalkScreen {
+    /// The watch's place on this screen: a way to hand the walk over when
+    /// there is a watch app to take it (issue #335), the old hint otherwise.
+    @ViewBuilder
+    var watchCard: some View {
+        if canContinueOnWatch {
+            continueOnWatchButton
+        } else {
+            heartRatePlaceholder
+        }
+    }
+
+    /// « Continuer sur ma Watch ». The phone saves what it measured as the
+    /// outing's first leg and the wrist carries on — with the heart rate and
+    /// the walk / run split the phone cannot give. The home swaps this screen
+    /// for the mirrored one once the wrist has taken over.
+    var continueOnWatchButton: some View {
+        Button {
+            Task { await store.handOffToWatch() }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "applewatch")
+                    .scaledSystemFont(size: 20, weight: .semibold)
+                    .foregroundStyle(FouleeColor.accentMid)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Continuer sur ma Watch")
+                        .font(FouleeFont.headline)
+                        .foregroundStyle(.primary)
+                    Text("Rythme cardiaque, marche et course détaillées")
+                        .font(FouleeFont.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .fouleeGlass(cornerRadius: 22)
+        }
+        .buttonStyle(.pressable)
+        .padding(.horizontal, 20)
+        .padding(.top, 32)
+        .accessibilityHint("Arrête la mesure sur l'iPhone et la poursuit sur ta Watch")
+    }
+
+    var heartRatePlaceholder: some View {
+        HStack(spacing: 10) {
+            Image(systemName: FouleeIcon.heart)
+                .scaledSystemFont(size: 20)
+                .foregroundStyle(FouleeColor.danger)
+            Text("Connecte ta Watch pour le rythme cardiaque")
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(16)
+        .fouleeGlass(cornerRadius: 22)
+        .padding(.horizontal, 20)
+        .padding(.top, 32)
+    }
 }
 
 /// The end-of-session presentation. In an extension so the screen's own
