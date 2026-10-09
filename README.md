@@ -15,8 +15,10 @@ that cost two releases to find, are written up in
 
 An outing recorded on the Watch is **mirrored to the iPhone** — figures and,
 when there is a GPS fix, the route on a map, coloured by sport. The phone shows
-how old each figure is rather than pretending to be live: see
-[ADR 0003](docs/adr/0003-seance-partagee-iphone-watch.md) (French).
+how old each figure is rather than pretending to be live. The other way
+round, an outing started on the iPhone is **shown on the Watch** — figures,
+route, and pause / stop buttons — while the iPhone keeps recording it as one
+workout: see [ADR 0003](docs/adr/0003-seance-partagee-iphone-watch.md) (French).
 
 ## Compatible watches
 

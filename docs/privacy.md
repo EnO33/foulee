@@ -78,6 +78,9 @@ position pour deux usages, et jamais en dehors :
   Pendant une sortie lancée sur la montre, son parcours est aussi envoyé à
   **ton iPhone**, directement entre tes deux appareils, pour l'afficher sur la
   carte de la séance.
+  À l'inverse, pendant une sortie lancée sur l'iPhone, son parcours et ses
+  chiffres (durée, pas, distance, calories) sont envoyés à **ton Apple Watch**,
+  directement entre tes deux appareils, pour l'afficher au poignet.
 
 Pour la météo, tes coordonnées sont transmises à **Apple WeatherKit**, qui
 renvoie les conditions locales (voir la

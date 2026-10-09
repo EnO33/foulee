@@ -1,7 +1,7 @@
 # ADR 0003 — Séance partagée entre l'iPhone et l'Apple Watch
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#272](https://github.com/EnO33/foulee/issues/272) (épic), #277, #278, #279, #282, #283, [#334](https://github.com/EnO33/foulee/issues/334)
+- **Issues** : [#272](https://github.com/EnO33/foulee/issues/272) (épic), #277, #278, #279, #282, #283, [#334](https://github.com/EnO33/foulee/issues/334), [#342](https://github.com/EnO33/foulee/issues/342)
 
 ## Contexte
 
@@ -36,7 +36,22 @@ L'écran miroir propose « Voir le parcours » **seulement quand une ligne exist
 
 Écarté : un message séparé pour le tracé, ou des deltas de points. Les deux réintroduisent ce que D2 évite — un état que la perte d'un message rend faux pour le reste de la sortie.
 
+### D4 — Une séance de l'iPhone s'affiche sur la montre ; elle n'y est pas reprise (#342)
+
+Le pendant de D1 dans l'autre sens : pour une séance lancée sur l'iPhone, **l'iPhone est le moteur et la montre une télécommande**. Un seul enregistrement, celui de l'iPhone. La montre affiche la séance (chrono, pas, distance, kcal, carte) et peut la mettre en pause, la reprendre ou la terminer.
+
+- **Transport : WatchConnectivity**, puisque le miroir HealthKit ne va que montre → iPhone (fait 1). L'état suit D2 : un `PhoneSessionSnapshot` complet et daté. Il part à chaque changement d'état (début, pause, reprise, fin), puis toutes les 3 s pendant la séance.
+  - **En direct**, par `sendMessage`, quand la montre est joignable.
+  - **Dans le contexte d'application**, pour une montre qui ouvre l'app plus tard. Le contexte porte aussi les préférences synchronisées, car il est remplacé en entier à chaque envoi.
+- **La montre garde le plus récent** (`sentAt`), fait tourner le chrono elle-même (`timerBasis`) et affiche l'âge du relevé. Elle oublie une séance terminée, retirée du contexte, ou silencieuse depuis 15 min (app iPhone tuée).
+- **Commandes** : la montre envoie `pause`, `resume` ou `stop` par `sendMessage`, ce qui réveille l'app iOS en arrière-plan. L'iPhone répond si la séance était en état d'obéir. L'écran change quand l'iPhone dit que la séance a changé, pas au toucher.
+- **Le parcours de l'iPhone** est allégé par les mêmes règles que D3 (`MirroredRoutePortion.thinning`, désormais partagé).
+- **La page de chiffres est celle d'une séance montre**, alimentée par l'iPhone : une seule façon de lire une séance, quel que soit l'appareil qui l'enregistre. Sans capteur cardiaque sur l'iPhone, la tuile affiche un tiret.
+
+**Écarté, après l'avoir livré (#335, #337, #341) :** reprendre la séance à la montre en la coupant en deux portions d'une même sortie. Le code regroupait bien les deux portions dans l'historique de Foulée, mais Santé et Forme montraient **deux entraînements** pour une seule sortie. Ce n'est pas ce qu'on attend d'une séance « reprise ». Aucune API ne permet de déplacer une séance d'un appareil à l'autre.
+
 ## Ce qui reste non mesuré
 
 - **La taille maximale d'un envoi** par `sendToRemoteWorkoutSession(data:)` n'est pas documentée. 1 500 points compacts font environ 30 Ko ; le plafond est le réglage à baisser si un envoi échoue (le journal `session` le dira : « snapshot non transmis »).
 - **Le coût CPU** de l'allègement toutes les 8 s sur une longue sortie : linéaire, jamais mesuré au poignet.
+- **Le coût en batterie** d'un `sendMessage` toutes les 3 s pendant une séance iPhone, des deux côtés. C'est le réglage à allonger (`ActiveWalkStore.watchInterval`) si la montre s'en ressent.
