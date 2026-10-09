@@ -13,6 +13,11 @@ you stop, so a « both » user is never asked. The design, and the HealthKit lim
 that cost two releases to find, are written up in
 [ADR 0002](docs/adr/0002-detection-marche-course.md) (French).
 
+An outing recorded on the Watch is **mirrored to the iPhone** — figures and,
+when there is a GPS fix, the route on a map, coloured by sport. The phone shows
+how old each figure is rather than pretending to be live: see
+[ADR 0003](docs/adr/0003-seance-partagee-iphone-watch.md) (French).
+
 ## Compatible watches
 
 - **Apple Watch** — native support (companion app, complications, live workouts).
