@@ -37,7 +37,7 @@ struct PedometerReading: Equatable, Sendable {
 struct PedometerSource: Sendable {
     var isAvailable: @MainActor () -> Bool
     /// Opens the stream from `start`; `handler` is called once per update, on
-    /// whatever queue CoreMotion picks.
+    /// whatever queue CoreMotion picks — never assume the main one (#338).
     var openStream: @MainActor (_ start: Date, _ handler: @escaping @Sendable (PedometerReading) -> Void) -> Void
     var closeStream: @MainActor () -> Void
 
@@ -47,25 +47,39 @@ struct PedometerSource: Sendable {
         return PedometerSource(
             isAvailable: { CMPedometer.isCadenceAvailable() && CMPedometer.isPaceAvailable() },
             openStream: { start, handler in
-                pedometer.startUpdates(from: start) { data, error in
-                    // Converted to a value at once: `CMPedometerData` is a
-                    // reference type this app must not hold on to.
-                    guard let data else {
-                        if let error {
-                            FouleeLog.detection.error(
-                                "podomètre muet : \(error.localizedDescription, privacy: .public)"
-                            )
-                        }
-                        return
-                    }
-                    handler(PedometerReading(
-                        date: data.endDate,
-                        cadence: data.currentCadence?.doubleValue,
-                        pace: data.currentPace?.doubleValue
-                    ))
-                }
+                pedometer.startUpdates(from: start, withHandler: updateHandler(forwardingTo: handler))
             },
             closeStream: { pedometer.stopUpdates() }
         )
+    }
+
+    /// CoreMotion's handler, built **outside** the main actor (issue #338).
+    ///
+    /// `CMPedometer` calls it on a queue of its own. A closure written inside
+    /// `openStream` would inherit that closure's `@MainActor`, and Swift 6
+    /// checks the isolation on entry: the first update — a few seconds into
+    /// any outing on foot — killed the app. `@Sendable` and `nonisolated`
+    /// make it callable from anywhere; the caller hops to the main actor
+    /// itself.
+    nonisolated static func updateHandler(
+        forwardingTo handler: @escaping @Sendable (PedometerReading) -> Void
+    ) -> @Sendable (CMPedometerData?, Error?) -> Void {
+        { data, error in
+            // Converted to a value at once: `CMPedometerData` is a reference
+            // type this app must not hold on to.
+            guard let data else {
+                if let error {
+                    FouleeLog.detection.error(
+                        "podomètre muet : \(error.localizedDescription, privacy: .public)"
+                    )
+                }
+                return
+            }
+            handler(PedometerReading(
+                date: data.endDate,
+                cadence: data.currentCadence?.doubleValue,
+                pace: data.currentPace?.doubleValue
+            ))
+        }
     }
 }
