@@ -133,4 +133,53 @@ struct CadenceTests {
     func nothingToDivide(steps: Int, elapsed: TimeInterval) {
         #expect(cadenceText(steps: steps, over: elapsed) == nil)
     }
+
+    // MARK: - The pedometer's live cadence (issue #331)
+
+    @Test("A measured cadence is stated per minute, rounded to five", arguments: [
+        (2.0, "120\u{00A0}pas/min"),
+        (2.75, "165\u{00A0}pas/min"),
+        (2.79, "165\u{00A0}pas/min")   // 167,4 → 165
+    ])
+    func aMeasuredCadenceIsWorded(stepsPerSecond: Double, expected: String) {
+        #expect(cadenceText(stepsPerSecond: stepsPerSecond) == expected)
+    }
+
+    @Test("No rhythm says nothing")
+    func noRhythmNoFigure() {
+        #expect(cadenceText(stepsPerSecond: 0) == nil)
+        #expect(cadenceText(stepsPerSecond: -1) == nil)
+    }
+
+    private func runningLeg(liveCadence: Double?, end: Date?) -> WatchWorkoutSegment {
+        let start = Date(timeIntervalSince1970: 1_754_000_000)
+        return WatchWorkoutSegment(
+            id: UUID(),
+            activity: .running,
+            start: start,
+            end: end,
+            steps: 600,
+            distanceMeters: 1_000,
+            activeCalories: 0,
+            liveCadence: liveCadence
+        )
+    }
+
+    /// The bug of issue #331, on screen: steps from HealthKit's last batch
+    /// divided by a duration ticking every second read low, in a sawtooth.
+    @Test("The leg in flight states the pedometer's cadence, not its average")
+    func theLegInFlightIsLive() throws {
+        let leg = runningLeg(liveCadence: 2.75, end: nil)
+        let now = leg.start.addingTimeInterval(300)
+        // 600 steps over 300 s would average 120.
+        let rhythm = try #require(leg.rhythmText(at: now))
+        #expect(rhythm.hasSuffix("165\u{00A0}pas/min"))
+    }
+
+    @Test("Without a live cadence, the leg falls back to its average")
+    func noLiveCadenceFallsBack() throws {
+        let leg = runningLeg(liveCadence: nil, end: nil)
+        let rhythm = try #require(leg.rhythmText(at: leg.start.addingTimeInterval(300)))
+        #expect(rhythm.hasSuffix("120\u{00A0}pas/min"))
+    }
 }

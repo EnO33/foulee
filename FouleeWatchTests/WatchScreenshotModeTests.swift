@@ -38,7 +38,7 @@ private final class TrapHealthKit {
                     collectionEndDate: { nil }
                 )
             }
-        ), detection: WatchActivityDetection(source: .inert))
+        ), detection: WatchActivityDetection(source: .inert, pedometer: .inert))
     }
 }
 

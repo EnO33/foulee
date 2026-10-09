@@ -23,6 +23,9 @@ struct WatchWorkoutSegment: Equatable, Sendable, Identifiable {
     var steps: Int
     var distanceMeters: Double
     var activeCalories: Int
+    /// Steps per second from the pedometer, for the leg in flight only
+    /// (issue #331). `nil` on a closed leg, whose average is the honest figure.
+    var liveCadence: Double?
 
     /// How long this segment has been recording.
     ///
@@ -68,12 +71,16 @@ struct WatchWorkoutSegment: Equatable, Sendable, Identifiable {
 
     /// « 7'37"/km · 165 pas/min » — how it was run. `nil` when the leg is too
     /// short to divide for either.
+    ///
+    /// The cadence of the leg in flight is the pedometer's, live (issue #331).
+    /// The average used to stand in for it, and read low in a sawtooth: its
+    /// steps came from HealthKit's last batch while its duration ticked every
+    /// second. A closed leg keeps the average — over a finished stretch it is
+    /// exact.
     func rhythmText(at now: Date) -> String? {
         let duration = elapsed(at: now)
-        let parts = [
-            duration.paceText(overKm: distanceKm),
-            cadenceText(steps: steps, over: duration)
-        ].compactMap { $0 }
+        let cadence = liveCadence.flatMap(cadenceText(stepsPerSecond:)) ?? cadenceText(steps: steps, over: duration)
+        let parts = [duration.paceText(overKm: distanceKm), cadence].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 

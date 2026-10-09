@@ -27,7 +27,7 @@ struct PaceEstimatorTests {
             elapsed += 3
             covered += speed * 3
             estimator.record(
-                MovementSample(date: base.addingTimeInterval(elapsed), steps: 0, distanceMeters: covered)
+                MovementSample(date: base.addingTimeInterval(elapsed), distanceMeters: covered)
             )
         }
         return (elapsed, covered)
@@ -49,7 +49,7 @@ struct PaceEstimatorTests {
     @Test("A single reading is not a window")
     func oneSampleIsNotAWindow() {
         var estimator = PaceEstimator()
-        estimator.record(MovementSample(date: base, steps: 0, distanceMeters: 0))
+        estimator.record(MovementSample(date: base, distanceMeters: 0))
         #expect(estimator.pace(at: base) == nil)
     }
 
@@ -115,7 +115,6 @@ struct PaceEstimatorTests {
             estimator.record(
                 MovementSample(
                     date: base.addingTimeInterval(still),
-                    steps: 0,
                     distanceMeters: end.distance
                 )
             )
@@ -135,7 +134,7 @@ struct PaceEstimatorTests {
         for _ in 0..<10 {
             still += 3
             estimator.record(
-                MovementSample(date: base.addingTimeInterval(still), steps: 0, distanceMeters: end.distance)
+                MovementSample(date: base.addingTimeInterval(still), distanceMeters: end.distance)
             )
         }
 
@@ -169,7 +168,7 @@ struct PaceEstimatorTests {
             tick += 1
             if tick % 5 == 0 { covered += 7.5 }
             estimator.record(
-                MovementSample(date: base.addingTimeInterval(elapsed), steps: 0, distanceMeters: covered)
+                MovementSample(date: base.addingTimeInterval(elapsed), distanceMeters: covered)
             )
         }
         // 1,5 m/s is 11'06"/km. The broken version read about 2'13" — and on a
@@ -193,7 +192,6 @@ struct PaceEstimatorTests {
             estimator.record(
                 MovementSample(
                     date: base.addingTimeInterval(still),
-                    steps: 0,
                     distanceMeters: before.distance
                 )
             )
@@ -211,7 +209,7 @@ struct PaceEstimatorTests {
             elapsed += 3
             covered += 9
             estimator.record(
-                MovementSample(date: base.addingTimeInterval(elapsed), steps: 0, distanceMeters: covered)
+                MovementSample(date: base.addingTimeInterval(elapsed), distanceMeters: covered)
             )
             if let pace = estimator.pace(at: base.addingTimeInterval(elapsed)) {
                 worst = max(worst, pace)
@@ -236,7 +234,7 @@ struct PaceEstimatorTests {
         var still = before.end
         for _ in 0..<3 { still += 3 }   // 9 s, under the horizon
         estimator.record(
-            MovementSample(date: base.addingTimeInterval(still), steps: 0, distanceMeters: before.distance)
+            MovementSample(date: base.addingTimeInterval(still), distanceMeters: before.distance)
         )
 
         var elapsed = still
@@ -246,7 +244,7 @@ struct PaceEstimatorTests {
             elapsed += 3
             covered += 9
             estimator.record(
-                MovementSample(date: base.addingTimeInterval(elapsed), steps: 0, distanceMeters: covered)
+                MovementSample(date: base.addingTimeInterval(elapsed), distanceMeters: covered)
             )
             if let pace = estimator.pace(at: base.addingTimeInterval(elapsed)) {
                 worst = max(worst, pace)
@@ -278,7 +276,7 @@ struct PaceEstimatorTests {
             elapsed += 0.5
             covered += 0.6
             estimator.record(
-                MovementSample(date: base.addingTimeInterval(elapsed), steps: 0, distanceMeters: covered)
+                MovementSample(date: base.addingTimeInterval(elapsed), distanceMeters: covered)
             )
         }
         #expect(minutesAndSeconds(estimator.pace(at: base.addingTimeInterval(elapsed))) == "13'53\"")
@@ -296,14 +294,12 @@ struct PaceEstimatorTests {
         estimator.record(
             MovementSample(
                 date: base.addingTimeInterval(end.end),
-                steps: 0,
                 distanceMeters: end.distance + 50
             )
         )
         estimator.record(
             MovementSample(
                 date: base.addingTimeInterval(end.end - 30),
-                steps: 0,
                 distanceMeters: end.distance + 100
             )
         )

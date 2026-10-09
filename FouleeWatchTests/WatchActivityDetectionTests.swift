@@ -32,7 +32,7 @@ struct WatchActivityDetectionTests {
         let motion = FakeMotionSource()
         // Unavailable on the first two reads, available afterwards.
         motion.becomesAvailableOnRead = 3
-        let detection = WatchActivityDetection(source: motion.source)
+        let detection = WatchActivityDetection(source: motion.source, pedometer: .inert)
 
         detection.start(from: .walking, at: base, retryInterval: .milliseconds(10)) { _ in }
         await waitUntil { motion.isStreaming }
@@ -46,7 +46,7 @@ struct WatchActivityDetectionTests {
     @Test("An unavailable device is never asked for a stream, and not forever either")
     func anUnavailableDeviceIsLeftAlone() async {
         let motion = FakeMotionSource()
-        let detection = WatchActivityDetection(source: motion.source)
+        let detection = WatchActivityDetection(source: motion.source, pedometer: .inert)
 
         detection.start(
             from: .walking,
@@ -70,7 +70,7 @@ struct WatchActivityDetectionTests {
     func aConfirmedSwitchIsReported() async {
         let motion = FakeMotionSource()
         motion.isAvailable = true
-        let detection = WatchActivityDetection(source: motion.source)
+        let detection = WatchActivityDetection(source: motion.source, pedometer: .inert)
         let log = SwitchLog()
 
         detection.start(from: .walking, at: base, retryInterval: .milliseconds(10)) { log.record($0) }
@@ -87,7 +87,7 @@ struct WatchActivityDetectionTests {
     func stoppingClosesTheStream() async {
         let motion = FakeMotionSource()
         motion.isAvailable = true
-        let detection = WatchActivityDetection(source: motion.source)
+        let detection = WatchActivityDetection(source: motion.source, pedometer: .inert)
 
         detection.start(from: .walking, at: base, retryInterval: .milliseconds(10)) { _ in }
         await waitUntil { motion.isStreaming }
@@ -104,7 +104,7 @@ struct WatchActivityDetectionTests {
     func startingTwiceDoesNotStackStreams() async {
         let motion = FakeMotionSource()
         motion.isAvailable = true
-        let detection = WatchActivityDetection(source: motion.source)
+        let detection = WatchActivityDetection(source: motion.source, pedometer: .inert)
 
         detection.start(from: .walking, at: base, retryInterval: .milliseconds(10)) { _ in }
         await waitUntil { motion.isStreaming }
@@ -118,11 +118,104 @@ struct WatchActivityDetectionTests {
     @Test("An estimate arriving before any session is ignored")
     func estimatesOutsideASessionChangeNothing() {
         let motion = FakeMotionSource()
-        let detection = WatchActivityDetection(source: motion.source)
+        let detection = WatchActivityDetection(source: motion.source, pedometer: .inert)
         // No detector, so nothing to decide with. Reaching for one anyway is
         // how a stop-then-late-callback turns into a switch on a dead session.
         detection.ingest(running(at: 60))
         detection.ingest(running(at: 90))
         #expect(motion.opens == 0)
+    }
+
+    // MARK: - The pedometer (issue #331)
+
+    private func pedometerReading(_ offset: TimeInterval, cadence: Double, speed: Double) -> PedometerReading {
+        PedometerReading(date: base.addingTimeInterval(offset), cadence: cadence, pace: 1 / speed)
+    }
+
+    @Test("Both streams open, the pedometer from the session's start")
+    func bothStreamsOpen() async {
+        let motion = FakeMotionSource()
+        motion.isAvailable = true
+        let pedometer = FakePedometerSource()
+        pedometer.isAvailable = true
+        let detection = WatchActivityDetection(source: motion.source, pedometer: pedometer.source)
+
+        detection.start(from: .walking, at: base, retryInterval: .milliseconds(10)) { _ in }
+        await waitUntil { motion.isStreaming && pedometer.isStreaming }
+
+        #expect(pedometer.opens == 1)
+        #expect(pedometer.openedFrom == base)
+    }
+
+    @Test("A pedometer that resolves late still opens, without reopening the other stream")
+    func lateAvailabilityOpensThePedometer() async {
+        let motion = FakeMotionSource()
+        motion.isAvailable = true
+        let pedometer = FakePedometerSource()
+        let detection = WatchActivityDetection(source: motion.source, pedometer: pedometer.source)
+
+        detection.start(from: .walking, at: base, retryInterval: .milliseconds(10)) { _ in }
+        await waitUntil { motion.isStreaming }
+        pedometer.isAvailable = true
+        await waitUntil { pedometer.isStreaming }
+
+        #expect(motion.opens == 1)
+        #expect(pedometer.opens == 1)
+    }
+
+    @Test("The pedometer's cadence switches the session on its own")
+    func thePedometerSwitches() async {
+        let pedometer = FakePedometerSource()
+        pedometer.isAvailable = true
+        let detection = WatchActivityDetection(source: .inert, pedometer: pedometer.source)
+        let log = SwitchLog()
+
+        detection.start(from: .walking, at: base, retryInterval: .milliseconds(10)) { log.record($0) }
+        await waitUntil { pedometer.isStreaming }
+        pedometer.deliver(pedometerReading(60, cadence: 1.8, speed: 1.4))
+        pedometer.deliver(pedometerReading(63, cadence: 2.8, speed: 3))
+        await waitUntil { log.switches.count == 1 }
+
+        #expect(log.switches.first?.activity == .running)
+        // From the previous update: the running began after the last walking
+        // reading, not when it was noticed.
+        #expect(log.switches.first?.date == base.addingTimeInterval(60))
+        #expect(log.switches.first?.confirmedAt == base.addingTimeInterval(63))
+    }
+
+    @Test("The live cadence is the latest one, and goes stale")
+    func theLiveCadenceExpires() async {
+        let pedometer = FakePedometerSource()
+        pedometer.isAvailable = true
+        let detection = WatchActivityDetection(source: .inert, pedometer: pedometer.source)
+
+        detection.start(from: .running, at: base, retryInterval: .milliseconds(10)) { _ in }
+        await waitUntil { pedometer.isStreaming }
+        pedometer.deliver(pedometerReading(60, cadence: 2.75, speed: 3))
+        await waitUntil { detection.cadence(at: self.base.addingTimeInterval(60)) != nil }
+
+        #expect(detection.cadence(at: base.addingTimeInterval(60)) == 2.75)
+        let shelfLife = WatchActivityDetection.cadenceShelfLife
+        #expect(detection.cadence(at: base.addingTimeInterval(60 + shelfLife)) == 2.75)
+        // A stream gone quiet is a wearer who stopped, or a pedometer that did
+        // — a frozen figure would claim a rhythm nobody is keeping.
+        #expect(detection.cadence(at: base.addingTimeInterval(61 + shelfLife)) == nil)
+    }
+
+    @Test("Stopping closes the pedometer and forgets its cadence")
+    func stoppingClosesThePedometer() async {
+        let pedometer = FakePedometerSource()
+        pedometer.isAvailable = true
+        let detection = WatchActivityDetection(source: .inert, pedometer: pedometer.source)
+
+        detection.start(from: .running, at: base, retryInterval: .milliseconds(10)) { _ in }
+        await waitUntil { pedometer.isStreaming }
+        pedometer.deliver(pedometerReading(60, cadence: 2.75, speed: 3))
+        await waitUntil { detection.cadence(at: self.base.addingTimeInterval(60)) != nil }
+        detection.stop()
+
+        #expect(pedometer.closes == 1)
+        #expect(!pedometer.isStreaming)
+        #expect(detection.cadence(at: base.addingTimeInterval(60)) == nil)
     }
 }
