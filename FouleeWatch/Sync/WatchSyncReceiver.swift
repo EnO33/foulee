@@ -31,6 +31,7 @@ final class WatchSyncReceiver: NSObject, WCSessionDelegate, @unchecked Sendable 
     }
 
     private func store(_ context: [String: Any]) {
+        receiveHandoff(context)
         guard let data = context["payload"] as? Data,
               let payload = try? JSONDecoder().decode(WatchSyncPayload.self, from: data) else { return }
         Task { @MainActor in
@@ -38,6 +39,20 @@ final class WatchSyncReceiver: NSObject, WCSessionDelegate, @unchecked Sendable 
             NotificationCenter.default.post(name: .watchSyncReceived, object: nil)
             // Refresh the Série complication with the new goal / active days.
             WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    /// The phone's walk and handoff (issue #335). Read on every context, keys
+    /// present or not: the phone resends the whole context at each change, so
+    /// an absent key is the phone saying « none ».
+    private func receiveHandoff(_ context: [String: Any]) {
+        let decoder = JSONDecoder()
+        let phoneSession = (context[SessionHandoffKey.phoneSession] as? Data)
+            .flatMap { try? decoder.decode(PhoneSessionStatus.self, from: $0) }
+        let handoff = (context[SessionHandoffKey.handoff] as? Data)
+            .flatMap { try? decoder.decode(SessionHandoff.self, from: $0) }
+        Task { @MainActor in
+            WatchPhoneHandoff.shared.receive(phoneSession: phoneSession, handoff: handoff)
         }
     }
 }

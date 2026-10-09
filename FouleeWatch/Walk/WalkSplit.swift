@@ -27,6 +27,30 @@ struct SplitRecorder: Equatable, Sendable {
     /// When the last recorded kilometre was reached — the base of the next
     /// one's duration.
     private var lastBoundaryElapsed: TimeInterval = 0
+    /// The next boundary still ahead. Also the high-water mark: a distance
+    /// that dips and climbs again cannot re-cross a boundary already passed.
+    private var nextKilometre = 1
+    /// Kilometres this device did not time whole (issue #335). Their
+    /// boundaries are still passed — the numbering is the outing's — but they
+    /// are not recorded: a duration the wrist half-measured is not one.
+    private var untimedThrough = 0
+
+    init() {}
+
+    /// Carry on an outing that already covered `distanceMeters` in `elapsed`
+    /// on another device — the phone, before it handed over (issue #335).
+    ///
+    /// The kilometres before were the phone's, and one in progress is part
+    /// phone, part wrist: neither is timed here. Timing starts with the first
+    /// kilometre run whole on the wrist — the very next one when the handoff
+    /// falls on a boundary, or covered nothing — numbered as the outing's.
+    init(continuingFrom distanceMeters: Double, elapsed: TimeInterval) {
+        let whole = Int(distanceMeters / 1_000)
+        previous = (distanceMeters, elapsed)
+        lastBoundaryElapsed = elapsed
+        nextKilometre = whole + 1
+        untimedThrough = Double(whole) * 1_000 == distanceMeters ? whole : nextKilometre
+    }
 
     static func == (lhs: SplitRecorder, rhs: SplitRecorder) -> Bool {
         lhs.splits == rhs.splits && lhs.lastBoundaryElapsed == rhs.lastBoundaryElapsed
@@ -48,15 +72,14 @@ struct SplitRecorder: Equatable, Sendable {
         // is a kilometre.
         guard covered > 0, took > 0 else { return }
 
-        // The count of recorded kilometres *is* the high-water mark: a distance
-        // that dips and climbs again cannot re-cross a boundary already noted.
-        while distanceMeters >= Double(splits.count + 1) * 1_000 {
-            let boundary = Double(splits.count + 1) * 1_000
+        while distanceMeters >= Double(nextKilometre) * 1_000 {
+            let boundary = Double(nextKilometre) * 1_000
             let reached = previous.elapsed + (boundary - previous.distanceMeters) * took / covered
-            splits.append(
-                WalkSplit(kilometre: splits.count + 1, duration: reached - lastBoundaryElapsed)
-            )
+            if nextKilometre > untimedThrough {
+                splits.append(WalkSplit(kilometre: nextKilometre, duration: reached - lastBoundaryElapsed))
+            }
             lastBoundaryElapsed = reached
+            nextKilometre += 1
         }
     }
 }

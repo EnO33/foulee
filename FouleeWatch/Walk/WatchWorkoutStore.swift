@@ -111,8 +111,8 @@ final class WatchWorkoutStore: NSObject {
     /// Santé records the session as — and that stamp is permanent (issue
     /// #223). It comes from the mode the phone synced, or from the user
     /// answering the « les deux » question (issue #224); this path is the same
-    /// either way.
-    func start(activity: SessionActivity) async {
+    /// either way. `handoff` carries on a walk the phone handed over (#335).
+    func start(activity: SessionActivity, continuing handoff: SessionHandoff? = nil) async {
         guard case .idle = state else { return }
         #if DEBUG
         // Capture mode (issue #239): show the seeded session and open nothing.
@@ -144,7 +144,7 @@ final class WatchWorkoutStore: NSObject {
             return true
         }
         guard granted == true else { return }
-        await beginSession(activity: activity)
+        await beginSession(activity: activity, opening: OutingOpening(continuing: handoff, at: .now))
     }
 
     /// End the session, save it, and surface a summary — **the only thing that
@@ -226,27 +226,27 @@ final class WatchWorkoutStore: NSObject {
     }
     #endif
 
-    private func beginSession(activity: SessionActivity) async {
-        let now = Date.now
-        outingID = UUID()
-        let leg = OutingLeg(outingID: outingID, index: 0)
+    private func beginSession(activity: SessionActivity, opening: OutingOpening) async {
+        outingID = opening.leg.outingID
         let handle = await runOrTrap("ouverture de la séance") {
-            try await healthKit.startSession(Self.configuration(for: activity), now, leg, self)
+            try await healthKit.startSession(Self.configuration(for: activity), opening.start, opening.leg, self)
         }
         guard let handle else { return }
         sessionHandle = handle
         lastMirrorSendAt = nil
         paceEstimator = PaceEstimator()
-        splitRecorder = SplitRecorder()
+        splitRecorder = opening.splitRecorder
         await offerMirror(handle)
-        finishedLegs = []
-        legStartedAt = now
+        finishedLegs = opening.priorLegs
+        legStartedAt = opening.start
         legActivity = activity
         legIdentity = UUID()
         currentLeg = .zero
         pendingSplit = nil
         state = .active(.empty(for: activity))
         beginActivityDetection(from: activity)
+        // A handed-over outing shows the phone's leg from the first second.
+        if !opening.priorLegs.isEmpty { refreshActivityTotals() }
         route.start()
     }
 

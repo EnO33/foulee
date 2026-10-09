@@ -117,3 +117,41 @@ struct SplitRecorderTests {
         #expect(recorder.splits.isEmpty)
     }
 }
+
+/// Carrying on an outing the phone started (issue #335).
+@Suite("Split recorder, continuing")
+struct SplitRecorderContinuingTests {
+    /// The phone's kilometres are not the wrist's to time.
+    @Test("Kilometres covered elsewhere are not recorded again")
+    func priorKilometresStayUntimed() {
+        var recorder = SplitRecorder(continuingFrom: 1_500, elapsed: 600)
+        recorder.record(distanceMeters: 1_900, elapsed: 760)
+        recorder.record(distanceMeters: 2_100, elapsed: 840)
+        #expect(recorder.splits.isEmpty)
+    }
+
+    @Test("The first whole kilometre on the wrist is numbered as the outing's")
+    func numberingIsTheOutings() {
+        var recorder = SplitRecorder(continuingFrom: 1_500, elapsed: 600)
+        recorder.record(distanceMeters: 2_000, elapsed: 800)
+        recorder.record(distanceMeters: 3_000, elapsed: 1_150)
+        #expect(recorder.splits == [WalkSplit(kilometre: 3, duration: 350)])
+    }
+
+    /// Exactly on a boundary: that kilometre was the phone's, whole.
+    @Test("A handoff on a boundary times the very next kilometre")
+    func onABoundary() {
+        var recorder = SplitRecorder(continuingFrom: 2_000, elapsed: 700)
+        recorder.record(distanceMeters: 3_000, elapsed: 1_000)
+        recorder.record(distanceMeters: 4_000, elapsed: 1_300)
+        #expect(recorder.splits == [WalkSplit(kilometre: 3, duration: 300), WalkSplit(kilometre: 4, duration: 300)])
+    }
+
+    /// Indoors, or without a GPS fix, the phone may hand over 0 m.
+    @Test("A phone leg that covered nothing leaves every kilometre to the wrist")
+    func nothingCoveredYet() {
+        var recorder = SplitRecorder(continuingFrom: 0, elapsed: 600)
+        recorder.record(distanceMeters: 1_000, elapsed: 950)
+        #expect(recorder.splits == [WalkSplit(kilometre: 1, duration: 350)])
+    }
+}

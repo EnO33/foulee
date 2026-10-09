@@ -26,6 +26,10 @@ struct WatchIdleScreen: View {
     /// passed in rather than held here so the route is a function of its
     /// inputs and a test can build both halves.
     var isChoosingActivity: Bool
+    /// The phone's walk in progress, which the wrist can carry on (#335).
+    var phoneSession: PhoneSessionStatus?
+    var isResumingPhoneSession = false
+    var onResumePhoneSession: () -> Void = {}
     /// The synced mode, resolved at tap time rather than at build: the phone
     /// can push a new mode while this screen sits on the wrist, and the stamp
     /// is permanent. Defaulted to the real read, overridden by tests.
@@ -46,6 +50,9 @@ struct WatchIdleScreen: View {
             WatchTodayView(
                 store: today,
                 errorMessage: errorMessage,
+                phoneSession: phoneSession,
+                isResumingPhoneSession: isResumingPhoneSession,
+                onResumePhoneSession: onResumePhoneSession,
                 onStart: start
             )
         }
