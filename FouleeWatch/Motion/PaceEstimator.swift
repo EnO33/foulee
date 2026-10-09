@@ -1,5 +1,12 @@
 import Foundation
 
+/// The session's distance at one instant, as `HKLiveWorkoutBuilder` hands it
+/// over — cumulative, not a delta.
+struct MovementSample: Equatable, Sendable {
+    var date: Date
+    var distanceMeters: Double
+}
+
 /// The wearer's recent speed, smoothed enough to be worth reading (issue #300).
 ///
 /// **A pure value, driven by an explicit clock.** Everything here is arithmetic

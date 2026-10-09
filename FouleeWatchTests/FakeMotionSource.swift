@@ -97,3 +97,46 @@ func waitUntil(
     }
     #expect(condition(), sourceLocation: sourceLocation)
 }
+
+/// A pedometer that does what the test says (issue #331). Exists for the same
+/// reason as `FakeMotionSource`: no simulator reports a cadence.
+@MainActor
+final class FakePedometerSource {
+    var isAvailable = false
+    private(set) var opens = 0
+    private(set) var closes = 0
+    private(set) var openedFrom: Date?
+    private var handler: (@Sendable (PedometerReading) -> Void)?
+
+    var source: PedometerSource {
+        PedometerSource(
+            isAvailable: { [self] in isAvailable },
+            openStream: { [self] start, handler in
+                opens += 1
+                openedFrom = start
+                self.handler = handler
+            },
+            closeStream: { [self] in
+                closes += 1
+                handler = nil
+            }
+        )
+    }
+
+    /// Deliver one update the way CoreMotion would.
+    func deliver(_ reading: PedometerReading) {
+        handler?(reading)
+    }
+
+    var isStreaming: Bool { handler != nil }
+}
+
+extension PedometerSource {
+    /// A device without a pedometer: available to nobody, opening nothing.
+    /// The default for suites that are not about the cadence.
+    static let inert = PedometerSource(
+        isAvailable: { false },
+        openStream: { _, _ in },
+        closeStream: {}
+    )
+}

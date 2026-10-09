@@ -35,7 +35,7 @@ struct WatchWorkoutActivitySwitchingTests {
     ) async -> (store: WatchWorkoutStore, motion: FakeMotionSource) {
         let motion = FakeMotionSource()
         motion.isAvailable = true
-        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source))
+        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source, pedometer: .inert))
         await store.start(activity: activity)
         await waitUntil { motion.isStreaming }
         return (store, motion)
@@ -285,7 +285,7 @@ struct WatchWorkoutActivitySwitchingTests {
         stub.isAvailable = false
         let motion = FakeMotionSource()
         motion.isAvailable = true
-        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source))
+        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source, pedometer: .inert))
 
         await store.start(activity: .walking)
         try? await Task.sleep(for: .milliseconds(120))

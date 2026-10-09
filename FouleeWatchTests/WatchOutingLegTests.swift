@@ -23,7 +23,7 @@ struct WatchOutingLegTests {
         let stub = WorkoutHealthKitStub()
         let motion = FakeMotionSource()
         motion.isAvailable = true
-        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source))
+        let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source, pedometer: .inert))
         await store.start(activity: .walking)
         await waitUntil { motion.isStreaming }
 

@@ -2,20 +2,28 @@ import Foundation
 import Testing
 @testable import FouleeWatch
 
-/// Telling a walk from a run by how fast the wearer is moving (issue #267).
+/// Telling a walk from a run by how fast the wearer is moving (issues #267,
+/// #331).
 ///
 /// The reason this exists is a measurement, not a preference:
 /// `CMMotionActivityManager` took **under thirty seconds** to change its mind
 /// on a real wrist (#248), and its smoothing is its purpose — no setting of
-/// ours makes it quicker. Cadence changes within one window, and it costs
-/// nothing new: these are the counters already driving the screen.
+/// ours makes it quicker. The pedometer's own cadence changes within seconds,
+/// and needs no permission beyond the one detection already asks for.
 @Suite("Movement classifier")
 struct MovementClassifierTests {
     private let start = Date(timeIntervalSince1970: 1_754_000_000)
 
-    private func sample(_ offset: TimeInterval, steps: Int, metres: Double) -> MovementSample {
-        MovementSample(date: start.addingTimeInterval(offset), steps: steps, distanceMeters: metres)
+    /// One pedometer update: `cadence` in steps/s, `speed` in m/s.
+    private func reading(_ offset: TimeInterval, cadence: Double?, speed: Double? = nil) -> PedometerReading {
+        PedometerReading(
+            date: start.addingTimeInterval(offset),
+            cadence: cadence,
+            pace: speed.map { 1 / $0 }
+        )
     }
+
+    private func at(_ offset: TimeInterval) -> Date { start.addingTimeInterval(offset) }
 
     // MARK: - The rule, in the units a reader thinks in
 
@@ -48,69 +56,90 @@ struct MovementClassifierTests {
         #expect(MovementClassifier.reading(cadence: 2.9, speed: 0.3) != .activity(.running))
     }
 
-    // MARK: - Reading two counters apart
+    @Test("Standing still is not walking", arguments: [0.0, 0.4, 0.99])
+    func standingIsNotWalking(cadence: Double) {
+        // A red light on a run used to read as a walk, and became a walking
+        // segment in Santé (issue #331). Below a step a second the wearer is
+        // stopping, and saying so would be a guess.
+        #expect(MovementClassifier.reading(cadence: cadence, speed: 0) == .noEvidence)
+    }
 
-    @Test("A run is recognised from one window of the session's own counters")
-    func aWindowOfCountersIsEnough() throws {
-        // Six seconds: 18 steps (3/s), 18 m (3 m/s).
+    @Test("A slow walk is still a walk")
+    func theWalkingFloorIsLow() {
+        #expect(MovementClassifier.reading(cadence: MovementClassifier.minimumWalkingCadence, speed: 0.8)
+            == .activity(.walking))
+    }
+
+    // MARK: - Reading the pedometer
+
+    @Test("A run is recognised from one pedometer update")
+    func oneUpdateIsEnough() throws {
         let observation = try #require(
-            MovementClassifier.observation(
-                from: sample(0, steps: 100, metres: 80),
-                to: sample(6, steps: 118, metres: 98)
-            )
+            MovementClassifier.observation(reading(6, cadence: 2.8, speed: 3), since: at(3))
         )
         #expect(observation.reading == .activity(.running))
-        // Six seconds, not thirty. That gap is the whole issue.
-        #expect(observation.observed.timeIntervalSince(observation.began) == 6)
+        #expect(observation.observed == at(6))
     }
 
-    @Test("The boundary is dated from the start of the window, not its end")
+    /// The bug of issue #331, as the classifier used to see it: two seconds of
+    /// strides in a three-second HealthKit batch read a 2,8 steps/s run as 1,8.
+    /// The pedometer reports the rhythm itself, whatever the batching.
+    @Test("The pedometer's cadence is read as is, not rebuilt from counters")
+    func theCadenceIsTheDevices() throws {
+        let observation = try #require(
+            MovementClassifier.observation(reading(3.3, cadence: 2.8, speed: 3), since: at(0))
+        )
+        #expect(observation.reading == .activity(.running))
+    }
+
+    @Test("The boundary is dated from the previous update, not this one")
     func theBoundaryErrsEarly() throws {
         let observation = try #require(
-            MovementClassifier.observation(
-                from: sample(300, steps: 100, metres: 80),
-                to: sample(306, steps: 118, metres: 98)
-            )
+            MovementClassifier.observation(reading(306, cadence: 2.8, speed: 3), since: at(303))
         )
-        // The pace held across the window, so the window's *start* is when it
-        // began. Erring early is the right side: a late boundary puts running
-        // inside the walk, and issue #265 will make that permanent.
-        #expect(observation.began == start.addingTimeInterval(300))
+        // Erring early is the right side: a late boundary puts running inside
+        // the walk, permanently.
+        #expect(observation.began == at(303))
     }
 
-    @Test("A window too short to divide by is refused, not guessed")
-    func aShortWindowIsRefused() {
-        // `nil` and `.noEvidence` are different answers: this one means « ask
-        // me again later », so the caller keeps its older sample and lets the
-        // window widen instead of restarting.
-        #expect(MovementClassifier.observation(
-            from: sample(0, steps: 100, metres: 80),
-            to: sample(1, steps: 105, metres: 84)
-        ) == nil)
-    }
-
-    @Test("A long window with almost no steps is refused too")
-    func aStillWindowIsRefused() {
-        // Standing at a crossing for a minute: the window is wide, and there is
-        // nothing in it to measure a cadence from.
-        #expect(MovementClassifier.observation(
-            from: sample(0, steps: 100, metres: 80),
-            to: sample(60, steps: 102, metres: 81)
-        ) == nil)
-    }
-
-    @Test("A distance that goes backwards cannot produce a negative speed")
-    func distanceNeverRunsBackwards() throws {
-        // HealthKit statistics can be revised downwards between two reads.
+    @Test("A boundary never reaches further back than the lookback")
+    func aQuietStreamDoesNotStretchTheBoundary() throws {
+        // A minute without an update says nothing about when this pace began.
         let observation = try #require(
-            MovementClassifier.observation(
-                from: sample(0, steps: 100, metres: 90),
-                to: sample(6, steps: 118, metres: 80)
-            )
+            MovementClassifier.observation(reading(360, cadence: 2.8, speed: 3), since: at(300))
         )
-        // Speed clamps to zero, so a running cadence is vetoed rather than
-        // believed at an impossible pace.
+        #expect(observation.began == at(360 - MovementClassifier.maximumLookback))
+    }
+
+    @Test("The first update dates itself")
+    func theFirstUpdateHasNoWindow() throws {
+        let observation = try #require(
+            MovementClassifier.observation(reading(5, cadence: 1.8, speed: 1.4), since: nil)
+        )
+        #expect(observation.began == at(5))
+        #expect(observation.reading == .activity(.walking))
+    }
+
+    @Test("An update without a cadence is not an observation")
+    func noCadenceNoObservation() {
+        // `nil`, not `.noEvidence`: nothing was measured, so nothing — not
+        // even a stale candidate — should move.
+        #expect(MovementClassifier.observation(reading(6, cadence: nil, speed: 3), since: at(3)) == nil)
+    }
+
+    @Test("A running cadence without a pace is not believed")
+    func aMissingPaceVetoesARun() throws {
+        let observation = try #require(
+            MovementClassifier.observation(reading(6, cadence: 2.9, speed: nil), since: at(3))
+        )
         #expect(observation.reading == .noEvidence)
+    }
+
+    @Test("A non-positive pace has no speed")
+    func aZeroPaceIsNotInfinitelyFast() {
+        #expect(PedometerReading(date: start, cadence: 2.8, pace: 0).speed == nil)
+        #expect(PedometerReading(date: start, cadence: 2.8, pace: -1).speed == nil)
+        #expect(PedometerReading(date: start, cadence: 2.8, pace: 0.5).speed == 2)
     }
 
     // MARK: - Both sources speak the same words
@@ -119,19 +148,17 @@ struct MovementClassifierTests {
     func bothSourcesFeedOneDetector() throws {
         var detector = ActivitySwitchDetector(startedAs: .walking, at: start)
 
-        // What the cadence classifier produces, six seconds in.
+        // What the pedometer says, six seconds in.
         let fast = try #require(
-            MovementClassifier.observation(
-                from: sample(0, steps: 100, metres: 80),
-                to: sample(6, steps: 118, metres: 98)
-            )
+            MovementClassifier.observation(reading(6, cadence: 3, speed: 3), since: at(0))
         )
         let switched = detector.observe(fast)
 
         #expect(switched?.activity == .running)
-        // Dated from the start of the window — so the segment boundary lands
-        // where the running began, not where it was noticed.
+        // Dated from the previous update — so the segment boundary lands where
+        // the running began, not where it was noticed.
         #expect(switched?.date == start)
+        #expect(switched?.confirmedAt == at(6))
         #expect(detector.current == .running)
     }
 }

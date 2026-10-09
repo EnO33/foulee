@@ -1,37 +1,20 @@
 import Foundation
 
-/// What the session's counters say about how fast the wearer is going
-/// (issues #267, #300).
+/// What the session's distance says about how fast the wearer is going
+/// (issues #267, #300, #331).
 ///
-/// Two readers of one stream, and they want different things from it. The
-/// **classifier** wants the sharpest possible window — three seconds is enough
-/// to tell a walk from a run, and waiting longer would put running inside the
-/// walk. The **pace** wants the longest window it can afford, because a figure
-/// on screen is read as a measurement and the underlying distance is estimated
-/// from wrist motion, not measured by GPS.
-///
-/// So they are fed the same samples and left to disagree about the window.
+/// Only the **pace** reads it now. The walk / run classifier used to read the
+/// same stream, and that was the bug of issue #331: HealthKit delivers steps in
+/// uneven batches, and a three-second window cut across one read a run as a
+/// walk. It listens to `CMPedometer` instead (`WatchActivityDetection`). The
+/// pace keeps this stream because it wants the opposite of a sharp window —
+/// the longest one it can afford — and averages the batching out.
 extension WatchWorkoutStore {
-    /// Hand one batch of counters to both readers.
-    func classifyMovement(steps: Int, distanceMeters: Double, at now: Date) {
-        let sample = MovementSample(date: now, steps: steps, distanceMeters: distanceMeters)
+    /// Hand one batch's distance to the pace estimator.
+    func recordMovement(distanceMeters: Double, at now: Date) {
         // Every sample, unconditionally: the estimator keeps its own window and
-        // its own idea of what standing still looks like, and skipping the ones
-        // the classifier cannot read would hide exactly the intervals where the
-        // wearer stopped.
-        paceEstimator.record(sample)
-
-        guard let previous = lastMovementSample else {
-            lastMovementSample = sample
-            return
-        }
-        guard let observation = MovementClassifier.observation(from: previous, to: sample) else {
-            // Not enough of a change to read. Keep the older sample so the
-            // window keeps widening rather than restarting on every batch.
-            return
-        }
-        lastMovementSample = sample
-        detection.ingest(observation)
+        // its own idea of what standing still looks like.
+        paceEstimator.record(MovementSample(date: now, distanceMeters: distanceMeters))
     }
 
     /// « 5'25"/km », or nothing (issue #300).

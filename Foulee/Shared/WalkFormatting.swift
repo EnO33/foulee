@@ -68,12 +68,19 @@ func paceText(secondsPerKm: TimeInterval, roundedTo step: TimeInterval) -> Strin
 /// only road.
 func cadenceText(steps: Int, over elapsed: TimeInterval) -> String? {
     guard elapsed >= 10, steps > 0 else { return nil }
-    let perMinute = Double(steps) / elapsed * 60
+    return cadenceText(stepsPerSecond: Double(steps) / elapsed)
+}
+
+/// « 165 pas/min » from a cadence already measured — the pedometer's live one
+/// (issue #331) — or `nil` for no rhythm at all. Rounded to five like the
+/// average: the pedometer is a better source, not a finer one.
+func cadenceText(stepsPerSecond: Double) -> String? {
+    guard stepsPerSecond > 0 else { return nil }
     // A **non-breaking** space: « 165 » stranded at the end of a line with
     // « pas/min » on the next reads as badly as the « pa/s » of issue #261. The
     // line still wraps on a 40 mm — it just wraps before the number rather than
     // between the number and what it counts.
-    return "\(Int((perMinute / 5).rounded()) * 5)\u{00A0}pas/min"
+    return "\(Int((stepsPerSecond * 60 / 5).rounded()) * 5)\u{00A0}pas/min"
 }
 
 extension Double {

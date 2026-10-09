@@ -38,4 +38,10 @@ enum FouleeLog {
     /// GPS route recording (issue #312). Whether the stream keeps delivering
     /// with the wrist down is only answerable outdoors, from this log.
     static let route = Logger(subsystem: subsystem, category: "route")
+
+    /// Walk / run detection on the wrist (issue #331): every observation, from
+    /// which source, and every switch. A segment of walking inside a run is
+    /// only explainable from the readings that produced it, on the outing that
+    /// produced it.
+    static let detection = Logger(subsystem: subsystem, category: "detection")
 }

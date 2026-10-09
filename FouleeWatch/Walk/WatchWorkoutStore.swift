@@ -66,14 +66,6 @@ final class WatchWorkoutStore: NSObject {
     @ObservationIgnored private var pendingSplit: ActivitySwitchDetector.Switch?
     /// When a snapshot last went to the phone; nil until the first (issue #278).
     @ObservationIgnored var lastMirrorSendAt: Date?
-    /// The last counters the classifier of issue #267 was able to read. Kept
-    /// rather than replaced on every batch: HealthKit delivers far more often
-    /// than there is movement to measure, and a window of half a second divides
-    /// into a meaningless cadence.
-    ///
-    /// Internal, like `detection` above, because `WatchWorkoutStore+Pace` reads
-    /// the same stream (issue #300).
-    @ObservationIgnored var lastMovementSample: MovementSample?
     /// The wearer's recent speed, smoothed (issue #300).
     @ObservationIgnored var paceEstimator = PaceEstimator()
     /// Kilometre boundaries, kept on the **outing** (issue #301): a kilometre
@@ -253,7 +245,6 @@ final class WatchWorkoutStore: NSObject {
         legIdentity = UUID()
         currentLeg = .zero
         pendingSplit = nil
-        lastMovementSample = nil
         state = .active(.empty(for: activity))
         beginActivityDetection(from: activity)
         route.start()
@@ -283,7 +274,7 @@ final class WatchWorkoutStore: NSObject {
         applyOutingTotals(to: &metrics, at: now)
         metrics.heartRate = builder.mostRecent(of: .heartRate, in: HKUnit(from: "count/min")).map(Int.init)
         state = .active(metrics)
-        classifyMovement(steps: metrics.steps, distanceMeters: metrics.distanceMeters, at: now)
+        recordMovement(distanceMeters: metrics.distanceMeters, at: now)
         Task {
             await self.splitIfDue(at: now)
             await self.mirrorIfDue(at: now)
@@ -365,7 +356,7 @@ extension WatchWorkoutStore {
     /// Name the sport being done and total the **outing** — every leg, not the
     /// one in flight (issue #265).
     private func applyOutingTotals(to metrics: inout WatchWorkoutMetrics, at now: Date) {
-        let legs = allLegs()
+        let legs = allLegs(at: now)
         metrics.activity = currentActivity
         metrics.legs = legs
         let outing = WatchActivityTotals.of(legs, at: now)
@@ -391,9 +382,12 @@ extension WatchWorkoutStore {
         state = .active(metrics)
     }
 
-    /// Every leg of the outing: those already saved, plus the one in flight.
-    private func allLegs() -> [WatchWorkoutSegment] {
-        finishedLegs + [legInFlight(endingAt: nil)]
+    /// Every leg of the outing: those already saved, plus the one in flight —
+    /// which alone carries the pedometer's live cadence (issue #331).
+    private func allLegs(at now: Date) -> [WatchWorkoutSegment] {
+        var inFlight = legInFlight(endingAt: nil)
+        inFlight.liveCadence = detection.cadence(at: now)
+        return finishedLegs + [inFlight]
     }
 
     private func legInFlight(endingAt end: Date?) -> WatchWorkoutSegment {
@@ -497,6 +491,5 @@ extension WatchWorkoutStore {
         legActivity = activity
         legIdentity = UUID()
         currentLeg = .zero
-        lastMovementSample = nil
     }
 }
