@@ -183,6 +183,13 @@ runs the `FouleeScreenshots` UI-test target and exports the ten PNGs into
 `appstore-screenshots/raw/iphone-6.9/`. About two minutes, unsupervised, no
 Health data to enter by hand.
 
+The set follows the app, not the other way round: when a screen changes, its
+capture step in `FouleeScreenshots/ScreenshotCaptureTests.swift` and its
+caption in the composer's `shots` table change in the same PR (issue #378).
+`07_hydration` is the Hydratation screen opened from its card, and
+`08_summary` the Bilan on the current week. Both are sheets, so their boards
+trim the dimmed band above them.
+
 What makes it repeatable is the **capture mode** (issue #235): the target
 launches the app with `-FouleeScreenshotMode`, which swaps every `@Dependency`
 client for a deterministic double and freezes the clock at Thursday 14 May

@@ -112,8 +112,8 @@ let shots: [Shot] = [
     Shot(family: .iphone, file: "04_streak", lines: ["Garde ta", "série vivante"], scrolls: true, trimTop: sheetDimBand),
     Shot(family: .iphone, file: "05_stats", lines: ["Visualise", "tes progrès"], scrolls: true),
     Shot(family: .iphone, file: "06_minutes", lines: ["Chaque métrique", "compte"], scrolls: true),
-    Shot(family: .iphone, file: "07_hydration", lines: ["N'oublie plus", "de boire"], scrolls: true),
-    Shot(family: .iphone, file: "08_summary", lines: ["Tout ton", "historique"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "07_hydration", lines: ["Ton eau,", "verre après verre"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "08_summary", lines: ["Ta semaine,", "jour par jour"], scrolls: true, trimTop: sheetDimBand),
     Shot(family: .iphone, file: "09_settings", lines: ["Tes objectifs,", "ton rythme"], scrolls: true),
     Shot(family: .iphone, file: "10_weather", lines: ["La météo,", "avant de sortir"], trimTop: sheetDimBand),
 
@@ -124,7 +124,7 @@ let shots: [Shot] = [
     Shot(family: .ipad, sourceFamily: .iphone, file: "03_session", lines: ["Suis ta sortie", "en direct"]),
     Shot(family: .ipad, sourceFamily: .iphone, file: "04_streak", lines: ["Garde ta", "série vivante"], scrolls: true, trimTop: sheetDimBand),
     Shot(family: .ipad, sourceFamily: .iphone, file: "05_stats", lines: ["Visualise", "tes progrès"], scrolls: true),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "07_hydration", lines: ["N'oublie plus", "de boire"], scrolls: true),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "07_hydration", lines: ["Ton eau,", "verre après verre"], scrolls: true, trimTop: sheetDimBand),
 
     // Apple Watch
     Shot(family: .watch, file: "watch-01-today", lines: ["Ta série", "au poignet"], scrolls: true),
