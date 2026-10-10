@@ -129,9 +129,7 @@ extension HealthKitClient {
                 try await store.save(sample)
                 return sample.uuid
             },
-            deleteWater: { id in
-                try await deleteObjects(store: store, type: waterType, id: id)
-            },
+            deleteWater: { try await deleteWaterSample(store: store, id: $0) },
             todayWaterML: {
                 let milliliters = try await sumToday(store: store, type: waterType, unit: .literUnit(with: .milli))
                 return Int(milliliters)
@@ -139,6 +137,8 @@ extension HealthKitClient {
             waterWriteDenied: {
                 store.authorizationStatus(for: waterType) == .sharingDenied
             },
+            waterToday: { try await waterSamplesToday(store: store) },
+            waterSeries: { try await dailyWater(store: store, daysBack: $0) },
             garminStatus: {
                 await garminDetector.status(store: store)
             },
@@ -147,10 +147,10 @@ extension HealthKitClient {
     }()
 }
 
-/// HealthKit quantity type, unit and scale factor for a `WalkMetric`. The
-/// scale converts the raw HK unit into the metric's display unit (distance:
-/// metres → km).
-private struct HKMetricMapping {
+/// HealthKit quantity type, unit and scale factor for a `WalkMetric` — or for
+/// water (`HealthKitClient+Water`). The scale converts the raw HK unit into the
+/// display unit (distance: metres → km).
+struct HKMetricMapping {
     let type: HKQuantityType
     let unit: HKUnit
     let scale: Double
@@ -185,7 +185,7 @@ private func metricCollection(
         byAdding: .day, value: -(daysBack - 1), to: calendar.startOfDay(for: .now)
     ) else { return [] }
     return try await statisticsCollection(
-        store: store, metric: metric, start: start, end: endOfToday,
+        store: store, mapping: hkMapping(for: metric), start: start, end: endOfToday,
         interval: DateComponents(day: 1)
     )
 }
@@ -205,22 +205,21 @@ private func metricHourlyToday(
     let calendar = Calendar.current
     let start = calendar.startOfDay(for: .now)
     return try await statisticsCollection(
-        store: store, metric: metric, start: start, end: .now,
+        store: store, mapping: hkMapping(for: metric), start: start, end: .now,
         interval: DateComponents(hour: 1)
     )
 }
 
 /// Shared `HKStatisticsCollectionQuery` bridge: cumulative-sum buckets of
-/// `metric` from `start` to `end` at `interval`, mapped to the metric's
-/// display unit and zero-filled for empty buckets.
-private func statisticsCollection(
+/// `mapping`'s type from `start` to `end` at `interval`, in its display unit
+/// and zero-filled for empty buckets.
+func statisticsCollection(
     store: HKHealthStore,
-    metric: WalkMetric,
+    mapping: HKMetricMapping,
     start: Date,
     end: Date,
     interval: DateComponents
 ) async throws -> [MetricPoint] {
-    let mapping = hkMapping(for: metric)
     let predicate = HKQuery.predicateForSamples(
         withStart: start, end: end, options: .strictStartDate
     )
@@ -445,20 +444,6 @@ private func recentWorkoutSummaries(
 
 /// Continuation-based bridge to `HKStatisticsQuery`. Sums the cumulative
 /// quantity between midnight today and now.
-/// Delete the one sample `id` of `type`. A sample that is already gone
-/// deletes nothing and is not an error: the glass is not there either way.
-private func deleteObjects(store: HKHealthStore, type: HKObjectType, id: UUID) async throws {
-    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-        store.deleteObjects(of: type, predicate: HKQuery.predicateForObject(with: id)) { _, _, error in
-            if let error {
-                continuation.resume(throwing: error)
-            } else {
-                continuation.resume()
-            }
-        }
-    }
-}
-
 private func sumToday(
     store: HKHealthStore,
     type: HKQuantityType,

@@ -11,7 +11,9 @@ struct HydrationHomeCard: View {
     let store: HydrationStore
 
     @Environment(\.openURL) private var openURL
+    @Environment(\.colorScheme) private var colorScheme
     @Dependency(\.date) private var date
+    @State private var isShowingDetail = false
 
     var body: some View {
         if preferences.hydrationEnabled {
@@ -28,11 +30,15 @@ struct HydrationHomeCard: View {
                         intakeML: store.intakeML,
                         goalML: preferences.hydrationGoalML,
                         glassML: preferences.hydrationGlassML,
-                        pace: pace
-                    ) {
-                        Task { await store.logGlass(ml: preferences.hydrationGlassML) }
-                    }
+                        pace: pace,
+                        onDrink: { milliliters in Task { await store.logGlass(ml: milliliters) } },
+                        onOpen: { isShowingDetail = true }
+                    )
                 }
+            }
+            .sheet(isPresented: $isShowingDetail) {
+                HydrationScreen(preferences: preferences, store: store) { isShowingDetail = false }
+                    .preferredColorScheme(colorScheme)
             }
         }
     }

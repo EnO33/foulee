@@ -1,14 +1,17 @@
 import SwiftUI
 
-/// Home hydration card (issues #329, #353): a row of glasses filling up toward
-/// the goal, where the day stands against its rhythm, and the one-tap
-/// « J'ai bu ». No manual amount entry — one tap = one glass.
+/// Home hydration card (issues #329, #353, #355): a row of glasses filling up
+/// toward the goal, where the day stands against its rhythm, and the one-tap
+/// « J'ai bu » — one tap = one glass, a long press for another amount. A tap
+/// anywhere else opens the Hydratation screen.
 struct HydrationCard: View {
     let intakeML: Int
     let goalML: Int
     let glassML: Int
     let pace: HydrationPace
-    var onDrink: () -> Void
+    /// Logs this many millilitres.
+    var onDrink: (Int) -> Void
+    var onOpen: () -> Void = {}
 
     static let water = Color.teal
 
@@ -51,7 +54,7 @@ struct HydrationCard: View {
                     .labelStyle(.titleAndIcon)
                     .contentTransition(.opacity)
                 Spacer(minLength: 8)
-                Button(action: onDrink) {
+                Button { onDrink(glassML) } label: {
                     Label("J'ai bu", systemImage: "drop.fill")
                         .font(FouleeFont.footnote.weight(.semibold))
                         .foregroundStyle(.white)
@@ -60,11 +63,22 @@ struct HydrationCard: View {
                         .background(Self.water, in: Capsule())
                 }
                 .buttonStyle(.pressable)
+                .contextMenu {
+                    ForEach(HydrationServing.presets(glassML: glassML)) { serving in
+                        Button { onDrink(serving.milliliters) } label: {
+                            Label("\(serving.label) · \(serving.milliliters) mL", systemImage: serving.systemImage)
+                        }
+                    }
+                }
                 .accessibilityLabel("J'ai bu un verre")
+                .accessibilityHint("Appui long pour choisir une autre quantité")
             }
         }
         .padding(16)
         .fouleeGlass(cornerRadius: 24)
+        .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .onTapGesture(perform: onOpen)
+        .accessibilityAction(named: "Voir le détail de l'hydratation", onOpen)
         .animation(.spring(duration: 0.6, bounce: 0.25), value: intakeML)
         .sensoryFeedback(.increase, trigger: intakeML)
     }
@@ -105,8 +119,8 @@ private struct GlassShape: Shape {
 
 #Preview {
     VStack(spacing: 16) {
-        HydrationCard(intakeML: 875, goalML: 2_000, glassML: 250, pace: .behind(glasses: 2)) {}
-        HydrationCard(intakeML: 2_100, goalML: 2_000, glassML: 250, pace: .reached) {}
+        HydrationCard(intakeML: 875, goalML: 2_000, glassML: 250, pace: .behind(glasses: 2)) { _ in }
+        HydrationCard(intakeML: 2_100, goalML: 2_000, glassML: 250, pace: .reached) { _ in }
     }
     .padding()
     .background(Color.black)

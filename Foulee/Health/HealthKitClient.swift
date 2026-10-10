@@ -93,6 +93,17 @@ struct HealthKitClient: Sendable {
     var waterWriteDenied: @Sendable () async -> Bool
         = { false }
 
+    /// Today's `dietaryWater` samples, oldest first — the Hydratation screen's
+    /// glass-by-glass timeline (issue #355). Defaulted to none.
+    var waterToday: @Sendable () async throws -> [WaterSample]
+        = { [] }
+
+    /// Daily `dietaryWater` totals in millilitres over the last `daysBack`
+    /// days, today included, oldest first and zero-filled (issue #355).
+    /// Defaulted to none.
+    var waterSeries: @Sendable (_ daysBack: Int) async throws -> [MetricPoint]
+        = { _ in [] }
+
     /// Soft detection of the watch behind the user's Health data (issue #185):
     /// is a Garmin source writing into Santé, is there any Apple Watch data,
     /// and when did Garmin last push something today. Never throws — a missing
@@ -123,8 +134,33 @@ extension HealthKitClient: DependencyKey {
         workoutDetail: { summary in previewWorkoutDetail(summary: summary) },
         metricSeries: { metric, daysBack in previewMetricSeries(metric: metric, daysBack: daysBack) },
         hourlyToday: { metric in previewHourlyToday(metric: metric) },
-        todayWaterML: { 1_000 }
+        todayWaterML: { 1_000 },
+        waterToday: { previewWaterToday() },
+        waterSeries: { daysBack in previewWaterSeries(daysBack: daysBack) }
     )
+
+    /// Four glasses this morning, two writers — the Hydratation screen's
+    /// timeline in `#Preview`.
+    private static func previewWaterToday() -> [WaterSample] {
+        let today = Calendar.current.startOfDay(for: .now)
+        return [(8, "Foulée"), (10, "Apple Watch"), (12, "Foulée"), (14, "Foulée")].map { hour, source in
+            WaterSample(
+                id: UUID(),
+                date: today.addingTimeInterval(TimeInterval(hour * 3_600)),
+                milliliters: 250,
+                sourceName: source
+            )
+        }
+    }
+
+    /// Deterministic daily water around a 2 L goal.
+    private static func previewWaterSeries(daysBack: Int) -> [MetricPoint] {
+        let today = Calendar.current.startOfDay(for: .now)
+        return (0..<daysBack).reversed().map { offset in
+            let date = Calendar.current.date(byAdding: .day, value: -offset, to: today) ?? today
+            return MetricPoint(date: date, value: offset == 0 ? 1_000 : Double(1_500 + (offset * 250) % 1_000))
+        }
+    }
 
     static let testValue = HealthKitClient(
         requestAuthorization: { false },
