@@ -41,6 +41,9 @@ struct TodayHeroCard: View {
     var onOpenNotificationSettings: () -> Void
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// Bumped each time a ring closes while the card is on screen (#368): it
+    /// replays the burst and the haptic, both keyed on it.
+    @State private var celebrations = 0
 
     /// Step-goal fill (outer ring), clamped so overshoot doesn't wrap.
     private var stepsProgress: Double {
@@ -73,6 +76,12 @@ struct TodayHeroCard: View {
         // and wrap.
         .padding(22)
         .fouleeGlass(cornerRadius: 28)
+        .sensoryFeedback(.success, trigger: celebrations)
+        // Only a change counts: a goal already met when the home opens was
+        // celebrated when it happened, not again on every launch.
+        .onChange(of: DailyGoals(snapshot)) { old, new in
+            if new.closesARing(since: old) { celebrations += 1 }
+        }
     }
 
     private var ring: some View {
@@ -80,6 +89,12 @@ struct TodayHeroCard: View {
             ringCenter
         }
         .frame(width: 128, height: 128)
+        .overlay {
+            if celebrations > 0 {
+                CelebrationBurst(radius: 100)
+                    .id(celebrations)
+            }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Progression du jour")
         .accessibilityValue(
