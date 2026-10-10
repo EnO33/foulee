@@ -72,12 +72,12 @@ struct WatchTodayView: View {
         return LazyVGrid(columns: columns, spacing: 8) {
             // Steps + minutes show progress toward the phone-synced goals,
             // like the hydration card does; distance/calories have no goal.
-            stat(icon: "shoeprints.fill", tint: .purple,
+            stat(icon: "shoeprints.fill", tint: MetricPalette.steps,
                  value: store.steps.formatted(), goal: store.stepsGoal.formatted(), label: "pas")
-            stat(icon: "timer", tint: .green,
+            stat(icon: "timer", tint: MetricPalette.minutes,
                  value: "\(store.minutes)", goal: "\(store.minutesGoal)", label: "min")
-            stat(icon: "ruler.fill", tint: .blue, value: kmText, label: "km")
-            stat(icon: "flame.fill", tint: .orange, value: "\(store.calories)", label: "kcal")
+            stat(icon: "ruler.fill", tint: MetricPalette.distance, value: kmText, label: "km")
+            stat(icon: "flame.fill", tint: MetricPalette.calories, value: "\(store.calories)", label: "kcal")
         }
     }
 
