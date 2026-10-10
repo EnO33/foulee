@@ -134,7 +134,7 @@ struct StreakCalendarSheet: View {
             HStack(spacing: 0) {
                 totalCell(value: "\(store.totalWalks)", label: store.totalWalks == 1 ? "sortie" : "sorties")
                 divider
-                totalCell(value: formattedDuration(store.totalMinutes), label: "d'activité")
+                totalCell(value: durationText(minutes: store.totalMinutes), label: "d'activité")
                 divider
                 totalCell(value: "\(store.overallRate) %", label: "réussite")
             }
@@ -161,13 +161,6 @@ struct StreakCalendarSheet: View {
 
     private var divider: some View {
         Rectangle().fill(Color.gray.opacity(0.25)).frame(width: 1, height: 34)
-    }
-
-    private func formattedDuration(_ minutes: Int) -> String {
-        if minutes < 60 { return "\(minutes) min" }
-        let hours = minutes / 60
-        let mins = minutes % 60
-        return mins == 0 ? "\(hours) h" : "\(hours) h \(mins)"
     }
 
     private var weekdayCard: some View {

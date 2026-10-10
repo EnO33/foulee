@@ -49,7 +49,7 @@ struct HydrationReminderSettings: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Fréquence").font(FouleeFont.headline)
                 Spacer()
-                Text("toutes les \(intervalLabel(preferences.hydrationIntervalMinutes))")
+                Text("toutes les \(durationText(minutes: preferences.hydrationIntervalMinutes))")
                     .scaledNumericFont(size: 18, weight: .semibold)
                     .foregroundStyle(.teal)
             }
@@ -70,14 +70,5 @@ struct HydrationReminderSettings: View {
             .labelsHidden()
             .datePickerStyle(.compact)
             .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
-    }
-
-    /// Minutes → "30 min" / "1 h" / "1 h 30".
-    private func intervalLabel(_ minutes: Int) -> String {
-        let hours = minutes / 60
-        let mins = minutes % 60
-        if hours == 0 { return "\(mins) min" }
-        if mins == 0 { return "\(hours) h" }
-        return "\(hours) h \(mins)"
     }
 }

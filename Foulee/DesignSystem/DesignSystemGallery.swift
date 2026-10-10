@@ -93,7 +93,7 @@ struct DesignSystemGallery: View {
                 StatBlock(systemIcon: FouleeIcon.footsteps, label: "Pas",
                           value: "4 218", sub: "/ 6 000", tint: FouleeColor.accentMid)
                 StatBlock(systemIcon: FouleeIcon.timer, label: "Minutes",
-                          value: "24", sub: "/ 20", tint: FouleeColor.accentSecondary)
+                          value: "24", sub: "/ 20", tint: WalkMetric.minutes.tint)
                 StatBlock(systemIcon: FouleeIcon.distance, label: "Distance",
                           value: "1,8 km", sub: nil, tint: Color(hex: 0x0A84FF))
                 StatBlock(systemIcon: FouleeIcon.flame, label: "Calories",

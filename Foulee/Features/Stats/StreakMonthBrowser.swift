@@ -149,7 +149,7 @@ struct StreakMonthBrowser: View {
     private func detailText(_ day: CalendarDay) -> String {
         let steps = "\(day.steps.formattedFR) pas"
         switch day.status {
-        case .done: return "\(day.minutes) min · \(steps)"
+        case .done: return "\(durationText(minutes: day.minutes)) · \(steps)"
         case .missed: return "\(day.minutes) / \(goalMinutes) min · \(steps)"
         case .rest: return day.steps > 0 ? "Repos · \(steps)" : "Jour de repos"
         case .future: return "À venir"

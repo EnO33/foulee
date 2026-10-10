@@ -290,26 +290,6 @@ struct MetricStatsScreen: View {
     }
 }
 
-private extension WalkMetric {
-    var icon: String {
-        switch self {
-        case .steps: FouleeIcon.footsteps
-        case .minutes: FouleeIcon.timer
-        case .distance: FouleeIcon.distance
-        case .calories: FouleeIcon.flame
-        }
-    }
-
-    var tint: Color {
-        switch self {
-        case .steps: FouleeColor.accentMid
-        case .minutes: FouleeColor.accentSecondary
-        case .distance: Color(hex: 0x0A84FF)
-        case .calories: FouleeColor.warning
-        }
-    }
-}
-
 private struct MetricStatsPreview: View {
     init() { prepareDependencies { $0.healthKit = .previewValue } }
     var body: some View {

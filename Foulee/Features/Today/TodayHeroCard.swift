@@ -115,7 +115,7 @@ struct TodayHeroCard: View {
                     tint: FouleeColor.success,
                     fill: FouleeColor.success.opacity(0.16)
                 )
-                Text("Bravo, \(Text("\(snapshot.minutes) min").foregroundStyle(FouleeColor.accentMid)) d'activité")
+                Text("Bravo, \(Text(durationText(minutes: snapshot.minutes)).foregroundStyle(WalkMetric.minutes.tint)) d'activité")
                     .font(FouleeFont.title3)
                 // The weather stays once the outing is done, in one line —
                 // where « Streak prolongée à N jours » used to be, which the
@@ -148,7 +148,7 @@ struct TodayHeroCard: View {
                 )
                 // Same shape as « Bravo » once done: what the day is at, then
                 // the weather on one line.
-                Text("Encore \(Text("\(minutesToGo) min").foregroundStyle(FouleeColor.accentMid)) d'activité")
+                Text("Encore \(Text(durationText(minutes: minutesToGo)).foregroundStyle(WalkMetric.minutes.tint)) d'activité")
                     .font(FouleeFont.title3)
                 windowDetail
             }
@@ -174,11 +174,7 @@ struct TodayHeroCard: View {
     private var countdownLabel: String {
         guard let minutes = minutesUntilWindow else { return "Ta fenêtre" }
         if minutes <= 0 { return "C'est l'heure de bouger" }
-        if minutes < 60 { return "Départ dans \(minutes) min" }
-        let hours = minutes / 60
-        let remaining = minutes % 60
-        if remaining == 0 { return "Départ dans \(hours) h" }
-        return "Départ dans \(hours) h \(remaining)"
+        return "Départ dans \(durationText(minutes: minutes))"
     }
 
     /// What is left of the day's activity goal — never below zero.

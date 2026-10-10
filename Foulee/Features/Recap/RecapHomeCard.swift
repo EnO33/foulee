@@ -61,7 +61,7 @@ struct RecapHomeCard: View {
                     }
                 }
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("\(recap.totals.minutes) min")
+                    Text(durationText(minutes: recap.totals.minutes))
                         .font(FouleeFont.callout.weight(.bold).monospacedDigit())
                         .foregroundStyle(.primary)
                     if recap.goalDaysPlanned > 0 {

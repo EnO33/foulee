@@ -31,12 +31,11 @@ struct RecapHero: View {
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text("\(isRevealed ? recap.totals.minutes : 0)")
-                        .scaledNumericFont(size: 40)
+                    Text(durationText(minutes: isRevealed ? recap.totals.minutes : 0))
+                        .scaledNumericFont(size: 34)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .contentTransition(.numericText())
-                    Text("min")
-                        .font(FouleeFont.callout.weight(.semibold))
-                        .foregroundStyle(.secondary)
                     RecapChangeChip(old: Double(recap.previous.minutes), new: Double(recap.totals.minutes))
                 }
                 Text(verdictText)
@@ -90,10 +89,10 @@ struct RecapComparison: View {
         let before = recap.previous
         return [
             Row(label: "Minutes", icon: FouleeIcon.timer, tint: AnyShapeStyle(FouleeColor.activityGradient),
-                now: Double(now.minutes), before: Double(before.minutes)) { "\(Int($0)) min" },
+                now: Double(now.minutes), before: Double(before.minutes)) { durationText(minutes: Int($0)) },
             Row(label: "Pas", icon: FouleeIcon.footsteps, tint: AnyShapeStyle(FouleeColor.accentGradient),
                 now: Double(now.steps), before: Double(before.steps)) { Int($0).formattedFR },
-            Row(label: "Distance", icon: FouleeIcon.distance, tint: AnyShapeStyle(FouleeColor.accentSecondary),
+            Row(label: "Distance", icon: FouleeIcon.distance, tint: AnyShapeStyle(WalkMetric.distance.tint),
                 now: now.distanceKm, before: before.distanceKm) { $0.kmText(fractionDigits: 1) },
             Row(label: "Sorties", icon: "figure.walk", tint: AnyShapeStyle(FouleeColor.accentMid),
                 now: Double(now.outings), before: Double(before.outings)) { "\(Int($0))" }
@@ -150,7 +149,7 @@ struct RecapHighlights: View {
                     icon: "trophy.fill",
                     tint: FouleeColor.warning,
                     title: "Meilleur jour",
-                    value: "\(best.minutes) min",
+                    value: durationText(minutes: best.minutes),
                     detail: Self.dayFormatter.string(from: best.date).capitalized(with: Locale(identifier: "fr_FR"))
                 )
             }

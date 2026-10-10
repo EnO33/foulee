@@ -53,48 +53,26 @@ struct TodayStatsGrid: View {
     private var tiles: some View {
         switch period {
         case .day:
-            stepsTile(snapshot.steps.formattedFR, sub: "/ \(snapshot.stepsGoal.formattedFR)")
-            minutesTile("\(snapshot.minutes)", sub: "/ \(snapshot.minutesGoal)")
-            distanceTile(snapshot.distanceKm.kmText(fractionDigits: 1))
-            caloriesTile(snapshot.calories.formattedFR)
+            tile(.steps, snapshot.steps.formattedFR, sub: "/ \(snapshot.stepsGoal.formattedFR)")
+            tile(.minutes, "\(snapshot.minutes)", sub: "/ \(snapshot.minutesGoal)")
+            tile(.distance, snapshot.distanceKm.kmText(fractionDigits: 1))
+            tile(.calories, snapshot.calories.formattedFR, sub: "kcal")
         case .week:
             // Minutes are known at once — the snapshot already holds the
-            // week's. The three others wait for HealthKit, and say « — »
-            // rather than a zero that would read as a real total.
-            stepsTile(weekTotals.map { $0.steps.formattedFR } ?? "—", sub: nil)
-            minutesTile("\(snapshot.weekMinutes.reduce(0, +))", sub: "min")
-            distanceTile(weekTotals.map { $0.distanceKm.kmText(fractionDigits: 1) } ?? "—")
-            caloriesTile(weekTotals.map { $0.calories.formattedFR } ?? "—")
+            // week's — and read as a duration, « 6 h » rather than
+            // « 360 min » (#366). The three others wait for HealthKit, and say
+            // « — » rather than a zero that would read as a real total.
+            tile(.steps, weekTotals.map { $0.steps.formattedFR } ?? "—")
+            tile(.minutes, durationText(minutes: snapshot.weekMinutes.reduce(0, +)))
+            tile(.distance, weekTotals.map { $0.distanceKm.kmText(fractionDigits: 1) } ?? "—")
+            tile(.calories, weekTotals.map { $0.calories.formattedFR } ?? "—", sub: "kcal")
         }
     }
 
-    private func stepsTile(_ value: String, sub: String?) -> some View {
-        metricButton(.steps) {
-            StatBlock(systemIcon: FouleeIcon.footsteps, label: "Pas", value: value, sub: sub, tint: FouleeColor.accentMid)
-        }
-    }
-
-    private func minutesTile(_ value: String, sub: String) -> some View {
-        metricButton(.minutes) {
-            StatBlock(
-                systemIcon: FouleeIcon.timer,
-                label: "Minutes",
-                value: value,
-                sub: sub,
-                tint: FouleeColor.accentSecondary
-            )
-        }
-    }
-
-    private func distanceTile(_ value: String) -> some View {
-        metricButton(.distance) {
-            StatBlock(systemIcon: FouleeIcon.distance, label: "Distance", value: value, sub: nil, tint: Color(hex: 0x0A84FF))
-        }
-    }
-
-    private func caloriesTile(_ value: String) -> some View {
-        metricButton(.calories) {
-            StatBlock(systemIcon: FouleeIcon.flame, label: "Calories", value: value, sub: "kcal", tint: FouleeColor.warning)
+    /// A metric's tile, in its ring's colour (#366).
+    private func tile(_ metric: WalkMetric, _ value: String, sub: String? = nil) -> some View {
+        metricButton(metric) {
+            StatBlock(systemIcon: metric.icon, label: metric.title, value: value, sub: sub, tint: metric.tint)
         }
     }
 

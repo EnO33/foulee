@@ -68,3 +68,28 @@ struct ISOWeekTests {
         #expect(calendar.component(.weekday, from: days[0]) == 2)
     }
 }
+
+/// Durations as the app says them (issue #366).
+@Suite("Duration text")
+struct DurationTextTests {
+    @Test("Under an hour, minutes")
+    func minutes() {
+        #expect(durationText(minutes: 0) == "0 min")
+        #expect(durationText(minutes: 45) == "45 min")
+        #expect(durationText(minutes: 59) == "59 min")
+    }
+
+    @Test("From an hour, hours — and the minutes on two digits")
+    func hours() {
+        #expect(durationText(minutes: 60) == "1 h")
+        #expect(durationText(minutes: 65) == "1 h 05")
+        #expect(durationText(minutes: 90) == "1 h 30")
+        #expect(durationText(minutes: 360) == "6 h")
+        #expect(durationText(minutes: 1_442) == "24 h 02")
+    }
+
+    @Test("A negative duration never reaches the screen")
+    func negative() {
+        #expect(durationText(minutes: -5) == "0 min")
+    }
+}
