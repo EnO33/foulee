@@ -129,9 +129,7 @@ extension HealthKitClient {
                 try await store.save(sample)
                 return sample.uuid
             },
-            deleteWater: { id in
-                try await deleteObjects(store: store, type: waterType, id: id)
-            },
+            deleteWater: { try await deleteWaterSample(store: store, id: $0) },
             todayWaterML: {
                 let milliliters = try await sumToday(store: store, type: waterType, unit: .literUnit(with: .milli))
                 return Int(milliliters)
@@ -446,20 +444,6 @@ private func recentWorkoutSummaries(
 
 /// Continuation-based bridge to `HKStatisticsQuery`. Sums the cumulative
 /// quantity between midnight today and now.
-/// Delete the one sample `id` of `type`. A sample that is already gone
-/// deletes nothing and is not an error: the glass is not there either way.
-private func deleteObjects(store: HKHealthStore, type: HKObjectType, id: UUID) async throws {
-    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-        store.deleteObjects(of: type, predicate: HKQuery.predicateForObject(with: id)) { _, _, error in
-            if let error {
-                continuation.resume(throwing: error)
-            } else {
-                continuation.resume()
-            }
-        }
-    }
-}
-
 private func sumToday(
     store: HKHealthStore,
     type: HKQuantityType,

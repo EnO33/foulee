@@ -1,8 +1,9 @@
 import Foundation
 import HealthKit
 
-/// The water reads behind the Hydratation screen (issue #355), apart from
-/// `HealthKitClient+Live` so that file stays one screen of wiring.
+/// The water reads behind the Hydratation screen (issue #355), and the delete
+/// behind « Annuler » (#354), apart from `HealthKitClient+Live` so that file
+/// stays one screen of wiring.
 
 private let waterType = HKQuantityType(.dietaryWater)
 private let milliliter = HKUnit.literUnit(with: .milli)
@@ -46,4 +47,18 @@ func dailyWater(store: HKHealthStore, daysBack: Int) async throws -> [MetricPoin
         end: end,
         interval: DateComponents(day: 1)
     )
+}
+
+/// Delete the one `dietaryWater` sample `id`. A sample that is already gone
+/// deletes nothing and is not an error: the glass is not there either way.
+func deleteWaterSample(store: HKHealthStore, id: UUID) async throws {
+    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        store.deleteObjects(of: waterType, predicate: HKQuery.predicateForObject(with: id)) { _, _, error in
+            if let error {
+                continuation.resume(throwing: error)
+            } else {
+                continuation.resume()
+            }
+        }
+    }
 }
