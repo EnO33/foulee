@@ -110,17 +110,21 @@ private struct RecapContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             RecapHero(recap: recap, isRevealed: isRevealed)
-            section(isWeek ? "Jour par jour" : "Le mois en un coup d'œil") {
-                RecapDaysView(recap: recap, selection: $selectedDay, isRevealed: isRevealed)
-                legend
-            }
-            if let day = outings.first(where: { $0.day == selectedDay }),
-               let ring = recap.days.first(where: { $0.date == day.day }) {
-                RecapDayTimeline(outings: day, ring: ring, goalMinutes: recap.goalMinutes)
-                    .id(day.day)
-                    .transition(.opacity)
-            }
-            if !recap.isEmpty {
+            if recap.isEmpty {
+                // Rings with nothing in them say nothing (#369): say what the
+                // period is waiting for instead.
+                emptyState
+            } else {
+                section(isWeek ? "Jour par jour" : "Le mois en un coup d'œil") {
+                    RecapDaysView(recap: recap, selection: $selectedDay, isRevealed: isRevealed)
+                    legend
+                }
+                if let day = outings.first(where: { $0.day == selectedDay }),
+                   let ring = recap.days.first(where: { $0.date == day.day }) {
+                    RecapDayTimeline(outings: day, ring: ring, goalMinutes: recap.goalMinutes)
+                        .id(day.day)
+                        .transition(.opacity)
+                }
                 section(isWeek ? "Par rapport à la semaine dernière" : "Par rapport au mois d'avant") {
                     RecapComparison(recap: recap, isRevealed: isRevealed)
                 }
@@ -138,6 +142,22 @@ private struct RecapContent: View {
             selectedDay = (outings.last { !$0.workouts.isEmpty } ?? outings.last)?.day
             withAnimation(.easeOut(duration: 0.8).delay(0.15)) { isRevealed = true }
         }
+    }
+
+    private var emptyState: some View {
+        ContentUnavailableView {
+            Label(
+                isWeek ? "Pas encore d'activité cette semaine" : "Pas d'activité ce mois-là",
+                systemImage: "figure.walk"
+            )
+        } description: {
+            Text(isWeek
+                ? "Une sortie, même courte, et ton bilan prend vie, jour après jour."
+                : "Rien n'a été enregistré dans Santé sur ce mois.")
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .fouleeGlass(cornerRadius: 22)
     }
 
     private var legend: some View {

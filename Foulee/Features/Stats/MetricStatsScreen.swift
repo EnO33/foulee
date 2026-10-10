@@ -265,14 +265,15 @@ struct MetricStatsScreen: View {
             .frame(width: 1, height: 34)
     }
 
+    /// Says why the chart is empty and what to try (#369), rather than a bare
+    /// « Aucune donnée ».
     private var emptyChart: some View {
-        VStack(spacing: 8) {
-            Image(systemName: metric.icon)
-                .scaledSystemFont(size: 32, weight: .semibold)
-                .foregroundStyle(.secondary)
-            Text("Aucune donnée sur cette période")
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
+        ContentUnavailableView {
+            Label("Pas encore de données", systemImage: metric.icon)
+        } description: {
+            Text(store.range == .today
+                ? "Rien n'est encore enregistré aujourd'hui. Choisis une autre période pour voir tes jours passés."
+                : "Rien n'est enregistré dans Santé sur cette période. Vérifie que Foulée peut lire tes données dans Santé.")
         }
         .frame(maxWidth: .infinity, minHeight: 200)
     }
