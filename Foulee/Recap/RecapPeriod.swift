@@ -1,10 +1,11 @@
 import Foundation
 
-/// A week or a month the recap looks back on (issues #344, #350).
+/// A week or a month the recap looks back on (issues #344, #350, #363).
 ///
-/// The week is the **last seven days**, today included: the Bilan is where the
-/// outings of the days just gone are read (#350). The month stays the last
-/// **finished** one: on the 1st, the month that just ended.
+/// The week is the **week in progress**, Monday through today: the Bilan is
+/// where the outings of the days just gone are read (#350), in the Monday-first
+/// week the rest of the app draws (#363). The month stays the last **finished**
+/// one: on the 1st, the month that just ended.
 struct RecapPeriod: Hashable, Sendable {
     enum Kind: String, CaseIterable, Identifiable, Sendable {
         case week
@@ -33,11 +34,11 @@ struct RecapPeriod: Hashable, Sendable {
     /// First instant **after** the period.
     var end: Date
 
-    /// The period the Bilan shows for `kind` at `now`: the last seven days for
-    /// the week, the last finished month for the month (issue #350).
+    /// The period the Bilan shows for `kind` at `now`: the week so far, and
+    /// the last finished month (issues #350, #363).
     static func current(_ kind: Kind, at now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
         switch kind {
-        case .week: lastDays(endingOn: now, calendar: calendar)
+        case .week: weekSoFar(at: now, calendar: calendar)
         case .month: lastCompleted(.month, before: now, calendar: calendar)
         }
     }
@@ -52,26 +53,40 @@ struct RecapPeriod: Hashable, Sendable {
         return period(kind, containing: current.start.addingTimeInterval(-1), calendar: calendar)
     }
 
-    /// The last `count` days, today included — the Bilan's week (issues #348,
-    /// #350). Rolling rather than calendar-aligned, so it is a `.week` that
-    /// need not start on a Monday.
-    static func lastDays(_ count: Int = 7, endingOn now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
-        let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
-        let start = calendar.date(byAdding: .day, value: -count, to: tomorrow) ?? now
-        return RecapPeriod(kind: .week, start: start, end: tomorrow)
+    /// The week in progress, Monday through today — the Bilan's week (issue
+    /// #363). Its totals are the days lived; `daysToCome` are the rest.
+    static func weekSoFar(at now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
+        let today = calendar.startOfDay(for: now)
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? now
+        let monday = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? today
+        return RecapPeriod(kind: .week, start: monday, end: tomorrow)
+    }
+
+    /// The days of a week in progress still to come, through Sunday: drawn,
+    /// never counted. Empty for a month, or a week already over.
+    func daysToCome(calendar: Calendar = .iso8601Monday) -> [Date] {
+        guard kind == .week, let week = calendar.dateInterval(of: .weekOfYear, for: start) else { return [] }
+        var days: [Date] = []
+        var cursor = calendar.startOfDay(for: end)
+        while cursor < week.end {
+            days.append(cursor)
+            guard let next = calendar.date(byAdding: .day, value: 1, to: cursor) else { break }
+            cursor = next
+        }
+        return days
     }
 
     /// The period just before this one — what the recap compares against.
     ///
-    /// For a week, the seven days before (issue #348): the same as the
-    /// previous ISO week for a calendar week, and the right answer for a
-    /// rolling one. For a month, the calendar month before.
+    /// For a week, the same days a week earlier (issues #348, #363): the
+    /// previous ISO week for a whole week, and Monday → Saturday against Monday
+    /// → Saturday for a week in progress — a fair comparison either way. For a
+    /// month, the calendar month before.
     func previous(calendar: Calendar = .iso8601Monday) -> RecapPeriod {
         switch kind {
         case .week:
-            let length = calendar.dateComponents([.day], from: start, to: end).day ?? 7
-            let earlier = calendar.date(byAdding: .day, value: -length, to: start) ?? start
-            return RecapPeriod(kind: kind, start: earlier, end: start)
+            let earlier: (Date) -> Date = { calendar.date(byAdding: .day, value: -7, to: $0) ?? $0 }
+            return RecapPeriod(kind: kind, start: earlier(start), end: earlier(end))
         case .month:
             return Self.period(kind, containing: start.addingTimeInterval(-1), calendar: calendar)
         }

@@ -3,7 +3,7 @@ import Foundation
 import Observation
 
 /// Loads the Hydratation screen (issue #355): today's glasses one by one, and
-/// the last seven days. The intake itself stays `HydrationStore`'s, shared
+/// the week so far. The intake itself stays `HydrationStore`'s, shared
 /// with the home card; this one only adds what the screen alone shows.
 @MainActor
 @Observable

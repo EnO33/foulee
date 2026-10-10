@@ -24,9 +24,10 @@ struct OutingDayTests {
         return calendar
     }
 
-    /// The Bilan's week: the seven days ending on `now`'s.
+    /// Seven days ending on `now`'s.
     private static var week: RecapPeriod {
-        RecapPeriod.lastDays(endingOn: now, calendar: calendar)
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
+        return RecapPeriod(kind: .week, start: calendar.date(byAdding: .day, value: -7, to: tomorrow)!, end: tomorrow)
     }
 
     private func days(_ workouts: [WorkoutSummary]) -> [OutingDay] {

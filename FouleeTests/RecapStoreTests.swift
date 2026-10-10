@@ -55,9 +55,10 @@ struct RecapStoreTests {
             await store.load(goalMinutes: 20, activeDays: Set(Weekday.allCases))
 
             #expect(asked.value == [71])
-            // The week is the last seven days, today included (#350).
+            // The week so far: Monday 5 → Saturday 10 October (#363).
             let week = store.recaps[.week]
-            #expect(week?.days.count == 7)
+            #expect(week?.days.count == 6)
+            #expect(week?.days.first?.date == calendar.date(from: DateComponents(year: 2026, month: 10, day: 5)))
             #expect(week?.days.last?.date == calendar.startOfDay(for: saturday))
             #expect(week?.totals.minutes == 30)
             #expect(week?.goalDaysMet == 1)
@@ -66,7 +67,7 @@ struct RecapStoreTests {
             // Outings line up with the recap's days, oldest first.
             let days = store.outings[.week] ?? []
             #expect(days.map(\.day) == week?.days.map(\.date))
-            #expect(days[4].workouts == [walk])
+            #expect(days[3].workouts == [walk])
             #expect(store.outings[.month]?.count == 30)
             #expect(store.outings[.month]?.allSatisfy(\.workouts.isEmpty) == true)
             #expect(store.lastError == nil)

@@ -6,8 +6,9 @@ import Testing
 /// The Hydratation screen (issue #355): its week, its quick amounts, its store.
 @Suite("Hydration detail")
 struct HydrationDetailTests {
+    /// ISO, Monday first, pinned to GMT.
     private var calendar: Calendar {
-        var calendar = Calendar(identifier: .gregorian)
+        var calendar = Calendar.iso8601Monday
         calendar.timeZone = .gmt
         return calendar
     }
@@ -22,7 +23,7 @@ struct HydrationDetailTests {
 
     // MARK: - Week
 
-    @Test("Seven days ending today, zero-filled, oldest first")
+    @Test("The week so far, Monday first and zero-filled, with Sunday still to come")
     func weekIsZeroFilled() {
         let history = HydrationHistory.make(
             series: [MetricPoint(date: day(0), value: 1_250), MetricPoint(date: day(2), value: 2_000)],
@@ -30,8 +31,10 @@ struct HydrationDetailTests {
             now: saturday,
             calendar: calendar
         )
-        #expect(history.days.map(\.date) == (0..<7).reversed().map { day($0) })
-        #expect(history.days.map(\.milliliters) == [0, 0, 0, 0, 2_000, 0, 1_250])
+        // Saturday 10 October: Monday 5 → Saturday 10, and Sunday 11 to come.
+        #expect(history.days.map(\.date) == (0..<6).reversed().map { day($0) })
+        #expect(history.days.map(\.milliliters) == [0, 0, 0, 2_000, 0, 1_250])
+        #expect(history.daysToCome == [calendar.date(byAdding: .day, value: 1, to: day(0))!])
     }
 
     @Test("The goal held and the mean")
@@ -103,7 +106,7 @@ struct HydrationDetailTests {
 
             #expect(store.samples == [glass])
             #expect(asked.value == [7])
-            #expect(store.history?.days.count == 7)
+            #expect((store.history?.days.count ?? 0) + (store.history?.daysToCome.count ?? 0) == 7)
             #expect(store.lastError == nil)
         }
     }
