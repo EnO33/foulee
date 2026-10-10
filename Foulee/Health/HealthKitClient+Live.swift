@@ -135,6 +135,8 @@ extension HealthKitClient {
             waterWriteDenied: {
                 store.authorizationStatus(for: waterType) == .sharingDenied
             },
+            waterToday: { try await waterSamplesToday(store: store) },
+            waterSeries: { try await dailyWater(store: store, daysBack: $0) },
             garminStatus: {
                 await garminDetector.status(store: store)
             },
@@ -143,10 +145,10 @@ extension HealthKitClient {
     }()
 }
 
-/// HealthKit quantity type, unit and scale factor for a `WalkMetric`. The
-/// scale converts the raw HK unit into the metric's display unit (distance:
-/// metres → km).
-private struct HKMetricMapping {
+/// HealthKit quantity type, unit and scale factor for a `WalkMetric` — or for
+/// water (`HealthKitClient+Water`). The scale converts the raw HK unit into the
+/// display unit (distance: metres → km).
+struct HKMetricMapping {
     let type: HKQuantityType
     let unit: HKUnit
     let scale: Double
@@ -181,7 +183,7 @@ private func metricCollection(
         byAdding: .day, value: -(daysBack - 1), to: calendar.startOfDay(for: .now)
     ) else { return [] }
     return try await statisticsCollection(
-        store: store, metric: metric, start: start, end: endOfToday,
+        store: store, mapping: hkMapping(for: metric), start: start, end: endOfToday,
         interval: DateComponents(day: 1)
     )
 }
@@ -201,22 +203,21 @@ private func metricHourlyToday(
     let calendar = Calendar.current
     let start = calendar.startOfDay(for: .now)
     return try await statisticsCollection(
-        store: store, metric: metric, start: start, end: .now,
+        store: store, mapping: hkMapping(for: metric), start: start, end: .now,
         interval: DateComponents(hour: 1)
     )
 }
 
 /// Shared `HKStatisticsCollectionQuery` bridge: cumulative-sum buckets of
-/// `metric` from `start` to `end` at `interval`, mapped to the metric's
-/// display unit and zero-filled for empty buckets.
-private func statisticsCollection(
+/// `mapping`'s type from `start` to `end` at `interval`, in its display unit
+/// and zero-filled for empty buckets.
+func statisticsCollection(
     store: HKHealthStore,
-    metric: WalkMetric,
+    mapping: HKMetricMapping,
     start: Date,
     end: Date,
     interval: DateComponents
 ) async throws -> [MetricPoint] {
-    let mapping = hkMapping(for: metric)
     let predicate = HKQuery.predicateForSamples(
         withStart: start, end: end, options: .strictStartDate
     )

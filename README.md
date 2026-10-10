@@ -25,9 +25,12 @@ of the week or month that just ended — minutes, steps, distance, outings, the
 days the goal was met, and the change from the period before: see
 [ADR 0004](docs/adr/0004-recap-semaine-mois.md) (French).
 
-**Hydration** is logged to Santé one glass per tap. The home card draws the
-goal as a row of glasses filling up, and says where the day stands against the
-hydration window set in Réglages — on track, a glass behind, ahead.
+**Hydration** is logged to Santé one glass per tap, or another amount with a
+long press. The home card draws the goal as a row of glasses filling up, and
+says where the day stands against the hydration window set in Réglages — on
+track, a glass behind, ahead. A tap on the card opens the day glass by glass
+and the last seven days: see
+[ADR 0005](docs/adr/0005-hydratation.md) (French).
 
 ## Compatible watches
 

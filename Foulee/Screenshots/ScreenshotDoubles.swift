@@ -34,6 +34,8 @@ enum ScreenshotDoubles {
         logWater: { _ in },
         todayWaterML: { ScreenshotSeed.waterML },
         waterWriteDenied: { false },
+        waterToday: { ScreenshotSeed.waterToday },
+        waterSeries: { ScreenshotSeed.waterSeries(daysBack: $0) },
         garminStatus: { ScreenshotSeed.garminStatus },
         enableBackgroundDelivery: {}
     )
