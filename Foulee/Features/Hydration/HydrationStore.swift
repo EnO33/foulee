@@ -62,18 +62,19 @@ final class HydrationStore {
     }
 
     /// Log one glass to Health, then re-read so the card reflects it. Surfaces
-    /// the same confirmation toast as the notification action, and shifts the
-    /// reminder grid so the next one lands a full interval after this glass.
-    /// A denied authorization or a failed save raises the card's banner
-    /// instead of silently dropping the glass.
+    /// the same confirmation toast as the notification action — with its
+    /// « Annuler » — and shifts the reminder grid so the next one lands a full
+    /// interval after this glass. A denied authorization or a failed save
+    /// raises the card's banner instead of silently dropping the glass.
     func logGlass(ml: Int) async {
         guard !(await healthKit.waterWriteDenied()) else {
             writeDenied = true
             return
         }
         writeDenied = false
+        let sample: UUID
         do {
-            try await healthKit.logWater(ml)
+            sample = try await healthKit.logWater(ml)
             lastError = nil
         } catch {
             lastError = error.localizedDescription
@@ -81,7 +82,26 @@ final class HydrationStore {
         }
         await refresh()
         WidgetCenter.shared.reloadAllTimelines()
-        HydrationNotification.confirm(kind: "drank", amount: ml)
-        await HydrationReminderScheduler().recordDrinkAndReschedule()
+        let previous = await HydrationReminderScheduler().recordDrinkAndReschedule()
+        HydrationNotification.confirm(
+            kind: "drank",
+            amount: ml,
+            undo: HydrationNotification.Undo(sample: sample, milliliters: ml, previousDrinkAt: previous)
+        )
+    }
+
+    /// Take a glass back (issue #354): delete the sample it wrote, then put
+    /// the reminder grid back where it was before it. `false` when Santé
+    /// refused — the glass is still there, and the toast says so.
+    func undo(_ glass: HydrationNotification.Undo) async -> Bool {
+        do {
+            try await healthKit.deleteWater(glass.sample)
+        } catch {
+            return false
+        }
+        await refresh()
+        WidgetCenter.shared.reloadAllTimelines()
+        await HydrationReminderScheduler().restoreDrinkAndReschedule(previous: glass.previousDrinkAt)
+        return true
     }
 }

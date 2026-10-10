@@ -65,7 +65,10 @@ struct TodayScreen: View {
             }
             .overlay(alignment: .top) {
                 // "C'est compté" feedback after a notification action tap.
-                HydrationActionToast { Task { await hydration.refresh() } }
+                HydrationActionToast(
+                    onLogged: { Task { await hydration.refresh() } },
+                    onUndo: { await hydration.undo($0) }
+                )
             }
             .onOpenURL { url in
                 // foulee://hydration — widget tap lands on the hydration card.
