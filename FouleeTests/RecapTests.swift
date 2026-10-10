@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import Foulee
 
-/// The week and the month in review (issue #344).
+/// The week and the month in review (issues #344, #350).
 @Suite("Recap")
 struct RecapTests {
     private let calendar = Calendar.iso8601Monday
@@ -22,7 +22,7 @@ struct RecapTests {
         #expect(period.days(calendar: calendar).count == 7)
     }
 
-    /// The notification lands on Monday morning: that week is not done.
+    /// The week in progress is never a finished one.
     @Test("On a Monday, the week recapped ended last night")
     func onMonday() {
         let period = RecapPeriod.lastCompleted(.week, before: day(2026, 10, 5, hour: 9), calendar: calendar)
@@ -48,7 +48,7 @@ struct RecapTests {
         #expect(previous.end == day(2026, 9, 28))
     }
 
-    /// The « 7 derniers jours » view (issue #348): today and the six before.
+    /// The Bilan's week (issues #348, #350): today and the six before.
     @Test("The last seven days end with today, and compare with the seven before")
     func lastSevenDays() {
         let period = RecapPeriod.lastDays(endingOn: day(2026, 10, 10, hour: 18), calendar: calendar)
@@ -58,6 +58,17 @@ struct RecapTests {
         let previous = period.previous(calendar: calendar)
         #expect(previous.start == day(2026, 9, 27))
         #expect(previous.end == day(2026, 10, 4))
+    }
+
+    /// What the Bilan opens on (issue #350).
+    @Test("The Bilan shows the last seven days and the last finished month")
+    func currentPeriods() {
+        let saturday = day(2026, 10, 10, hour: 18)
+        let week = RecapPeriod.current(.week, at: saturday, calendar: calendar)
+        #expect(week == RecapPeriod.lastDays(endingOn: saturday, calendar: calendar))
+        let month = RecapPeriod.current(.month, at: saturday, calendar: calendar)
+        #expect(month.start == day(2026, 9, 1))
+        #expect(month.end == day(2026, 10, 1))
     }
 
     // MARK: - Totals

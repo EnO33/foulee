@@ -69,7 +69,7 @@ struct TodayHeroCard: View {
             actionRow
         }
         // 22, not more: on an iPhone SE every extra point of margin comes out
-        // of « Sortie terminée » and « Voir le résumé », which then truncate
+        // of « Sortie terminée » and « Voir le bilan », which then truncate
         // and wrap.
         .padding(22)
         .fouleeGlass(cornerRadius: 28)
@@ -257,8 +257,8 @@ struct TodayHeroCard: View {
                 SecondaryButton(title: "Sur l'iPhone", systemIcon: FouleeIcon.play, action: onStart)
             } else if snapshot.hasWalkedToday {
                 // Goal already met: still let the user start another session —
-                // the single "Voir le résumé" button used to be the only option.
-                SecondaryButton(title: "Voir le résumé", systemIcon: FouleeIcon.sparkle, action: onSummary)
+                // the single summary button used to be the only option.
+                SecondaryButton(title: "Voir le bilan", systemIcon: FouleeIcon.sparkle, action: onSummary)
                 PrimaryButton(title: "Repartir", systemIcon: FouleeIcon.play, action: onStart)
             } else {
                 PrimaryButton(title: "Démarrer ta sortie", systemIcon: FouleeIcon.play, action: onStart)

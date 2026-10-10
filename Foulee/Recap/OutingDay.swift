@@ -1,21 +1,18 @@
 import Foundation
 
-/// One day of the last seven and the outings filed under it — the
-/// « 7 derniers jours » view (issues #218, #317, #348).
+/// One day of a recap and the outings filed under it — what the Bilan shows
+/// when a day is picked (issues #218, #317, #348, #350).
 struct OutingDay: Identifiable, Equatable, Sendable {
     let day: Date
     let workouts: [WorkoutSummary]
 
     var id: Date { day }
 
-    /// How many days the view lists, today included.
-    static let window = 7
-
-    /// The view's days: `window` day-starts ending on `now`'s, newest first,
-    /// each holding the deduplicated outings that began on it.
+    /// Every day of `period`, in order, each holding the deduplicated outings
+    /// that began on it.
     ///
-    /// Taking its calendar and clock as parameters, so a test can reach it
-    /// (#218). The order below is what the tests on `WorkoutDeduplication` and
+    /// Taking its calendar as a parameter, so a test can reach it (#218). The
+    /// order below is what the tests on `WorkoutDeduplication` and
     /// `OutingGrouping` cannot see on their own:
     ///
     /// - **Legs are rejoined first** (#317): an outing must meet a copy of
@@ -26,11 +23,9 @@ struct OutingDay: Identifiable, Equatable, Sendable {
     ///   session begun just before midnight can have its twin recorded just
     ///   after. Grouping first would file them under two days, where neither
     ///   bucket would ever see the overlap.
-    static func lastDays(from workouts: [WorkoutSummary], calendar: Calendar = .current, now: Date) -> [OutingDay] {
-        let today = calendar.startOfDay(for: now)
-        let dayStarts = (0..<window).compactMap { calendar.date(byAdding: .day, value: -$0, to: today) }
+    static func days(in period: RecapPeriod, from workouts: [WorkoutSummary], calendar: Calendar = .iso8601Monday) -> [OutingDay] {
         let outings = WorkoutDeduplication.collapsingOverlaps(OutingGrouping.groupingLegs(workouts))
         let byDay = Dictionary(grouping: outings) { calendar.startOfDay(for: $0.startedAt) }
-        return dayStarts.map { OutingDay(day: $0, workouts: byDay[$0] ?? []) }
+        return period.days(calendar: calendar).map { OutingDay(day: $0, workouts: byDay[$0] ?? []) }
     }
 }

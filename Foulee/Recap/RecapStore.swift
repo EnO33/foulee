@@ -2,7 +2,8 @@ import Dependencies
 import Foundation
 import Observation
 
-/// Loads the week and month recaps (issue #344).
+/// Loads the Bilan (issues #344, #350): the recap of the last seven days and
+/// of the last month, and their outings day by day.
 ///
 /// One read of Santé covers both periods and the two before them: the series
 /// reach back to the start of the month before last, whichever is earlier.
@@ -10,6 +11,8 @@ import Observation
 @Observable
 final class RecapStore {
     private(set) var recaps: [RecapPeriod.Kind: Recap] = [:]
+    /// Each period's days with their outings, in the order of its recap's days.
+    private(set) var outings: [RecapPeriod.Kind: [OutingDay]] = [:]
     private(set) var isLoading = false
     private(set) var lastError: String?
 
@@ -23,12 +26,15 @@ final class RecapStore {
         isLoading = true
         defer { isLoading = false }
         let now = date.now
-        let periods = RecapPeriod.Kind.allCases.map { RecapPeriod.lastCompleted($0, before: now) }
+        let periods = RecapPeriod.Kind.allCases.map { RecapPeriod.current($0, at: now) }
         let daysBack = Self.daysBack(covering: periods, from: now)
         do {
             let inputs = try await Self.readInputs(from: healthKit, daysBack: daysBack)
             recaps = Dictionary(uniqueKeysWithValues: periods.map {
                 ($0.kind, Recap.make(period: $0, from: inputs, goalMinutes: goalMinutes, activeDays: activeDays))
+            })
+            outings = Dictionary(uniqueKeysWithValues: periods.map {
+                ($0.kind, OutingDay.days(in: $0, from: inputs.workouts))
             })
             lastError = nil
         } catch {
@@ -36,9 +42,8 @@ final class RecapStore {
         }
     }
 
-    /// Everything a recap is made of, read from Santé in parallel. Shared with
-    /// the « 7 derniers jours » view (issue #348), so both read the same way.
-    static func readInputs(from healthKit: HealthKitClient, daysBack: Int) async throws -> Recap.Inputs {
+    /// Everything a recap is made of, read from Santé in parallel.
+    private static func readInputs(from healthKit: HealthKitClient, daysBack: Int) async throws -> Recap.Inputs {
         async let minutes = healthKit.dailyMinutes(daysBack)
         async let steps = healthKit.metricSeries(.steps, daysBack)
         async let distance = healthKit.metricSeries(.distance, daysBack)

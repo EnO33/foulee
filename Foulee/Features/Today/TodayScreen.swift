@@ -14,7 +14,6 @@ struct TodayScreen: View {
     /// mirror can arrive while no UI is mounted at all.
     @State private var isShowingMirroredWalk = false
     private let mirroredSession = MirroredSessionStore.shared
-    @State private var isShowingSummary = false
     @State private var isShowingSettings = false
     @State private var selectedMetric: WalkMetric?
     @State private var isShowingWeather = false
@@ -101,14 +100,6 @@ struct TodayScreen: View {
                 .preferredColorScheme(preferredScheme)
             }
             .sheet(
-                isPresented: $isShowingSummary,
-                onDismiss: { Task { await store.refresh() } },
-                content: {
-                    RecentActivitySheet(goalMinutes: store.minutesGoal, activeDays: preferences.activeDays)
-                        .preferredColorScheme(preferredScheme)
-                }
-            )
-            .sheet(
                 item: $selectedMetric,
                 onDismiss: { Task { await store.refresh() } },
                 content: { metric in
@@ -178,7 +169,7 @@ struct TodayScreen: View {
             notificationsEnabled: preferences.notificationsEnabled,
             notificationsDenied: store.notificationsAuthorizationStatus == .denied,
             onStart: { startWalk() },
-            onSummary: { isShowingSummary = true },
+            onSummary: { RecapRouter.shared.open(.week) },
             onWeatherTap: { isShowingWeather = true },
             onSnooze: { interval in
                 Task { await scheduler.snooze(after: interval) }
@@ -220,17 +211,14 @@ struct TodayScreen: View {
                     GarminSyncHintCard()
                 }
                 heroCard(snapshot: snapshot)
-                TodayStatsGrid(
-                    snapshot: snapshot,
-                    activeDays: preferences.activeDays,
-                    onSelectMetric: { selectedMetric = $0 },
-                    onShowHistory: { isShowingSummary = true }
-                )
+                TodayStatsGrid(snapshot: snapshot) { selectedMetric = $0 }
                 HydrationHomeCard(preferences: preferences, store: hydration)
                     .id("hydrationCard")
-                RecapHomeCard(goalMinutes: store.minutesGoal, activeDays: preferences.activeDays) {
-                    RecapRouter.shared.open($0)
-                }
+                RecapHomeCard(
+                    goalMinutes: store.minutesGoal,
+                    activeDays: preferences.activeDays,
+                    todayMinutes: snapshot.minutes
+                ) { RecapRouter.shared.open($0) }
                 if snapshot.weather.isAvailable {
                     // Guideline 5.2.5: WeatherKit data on screen needs Apple
                     // Weather's attribution on the same screen.
@@ -302,7 +290,7 @@ struct TodayScreen: View {
     }
 
     /// Push the active walk sheet. Available from the hero even once today's
-    /// goal is met (the card then also offers "Voir le résumé"), so a second
+    /// goal is met (the card then also offers "Voir le bilan"), so a second
     /// walk can always be started.
     /// Start on the phone — unless the wrist is already recording (issue #279).
     ///

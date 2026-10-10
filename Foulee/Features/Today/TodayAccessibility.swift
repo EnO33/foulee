@@ -7,7 +7,7 @@ import Foundation
 /// cards. None of them can be found by label: a card is read out by its
 /// contents ("SÉRIE 34 jours Record : 41 jours"), which is exactly the text
 /// the captures exist to change. The cards that *do* hold a stable label — the
-/// hydration button, « Voir le résumé », the profile button — are left alone.
+/// hydration button, « Voir le bilan », the profile button — are left alone.
 ///
 /// An identifier is inert: VoiceOver never speaks it, it is not localized, and
 /// it changes nothing on screen.
