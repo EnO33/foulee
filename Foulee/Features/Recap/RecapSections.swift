@@ -190,3 +190,52 @@ struct RecapHighlights: View {
         return formatter
     }()
 }
+
+/// The period's water (issue #356): the daily mean against the period before,
+/// and the days the goal held, in the colour of water.
+struct RecapHydration: View {
+    let water: RecapWater
+    var isRevealed = true
+
+    private var goalText: String {
+        let days = "\(water.goalDaysMet) jour\(water.goalDaysMet > 1 ? "s" : "")"
+        return "Objectif de \(litres(water.goalML)) L tenu \(days) sur \(water.dayCount)"
+    }
+
+    private var goalRate: Double {
+        water.dayCount > 0 ? Double(water.goalDaysMet) / Double(water.dayCount) : 0
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Image(systemName: "drop.fill")
+                    .foregroundStyle(HydrationCard.water)
+                Text("\(litres(water.averageML)) L")
+                    .scaledNumericFont(size: 26)
+                Text("par jour en moyenne")
+                    .font(FouleeFont.footnote)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                RecapChangeChip(old: Double(water.previousAverageML), new: Double(water.averageML))
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.gray.opacity(0.18))
+                    Capsule()
+                        .fill(HydrationCard.water.gradient)
+                        .frame(width: geo.size.width * (isRevealed ? goalRate : 0))
+                }
+            }
+            .frame(height: 8)
+            Text(goalText)
+                .font(FouleeFont.caption)
+                .foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Hydratation")
+        .accessibilityValue(
+            "\(litres(water.averageML)) litre par jour en moyenne, objectif tenu \(water.goalDaysMet) jours sur \(water.dayCount)"
+        )
+    }
+}

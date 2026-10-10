@@ -38,6 +38,6 @@ Deux lectures Santé s'ajoutent : `waterToday` (les échantillons du jour) et `w
 
 **Écarté** : la saisie libre d'une quantité. Quatre tailles couvrent l'usage, et un champ numérique coûte plus de gestes qu'il n'en fait gagner.
 
-## Ce qui reste ouvert
+## Suite
 
-- **L'hydratation dans le Bilan** (#356) : moyenne, jours tenus et écart avec la période d'avant.
+- **L'hydratation dans le Bilan** (#356) : voir ADR 0004, D7.
