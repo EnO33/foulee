@@ -73,8 +73,9 @@ private struct DropShape: Shape {
     }
 }
 
-/// The day glass by glass (issue #355), each at its hour, with its amount and
-/// the app that logged it — the outings timeline's layout, in water.
+/// The day glass by glass (issues #355, #361), newest on top, each at its
+/// hour, with its amount and the app that logged it — the outings timeline's
+/// layout, in water.
 struct HydrationTimeline: View {
     let samples: [WaterSample]
 

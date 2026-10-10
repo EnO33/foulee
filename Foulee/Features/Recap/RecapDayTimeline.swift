@@ -1,9 +1,9 @@
 import Dependencies
 import SwiftUI
 
-/// The day picked in the Bilan (issues #348, #350): how it went against the
-/// goal, then its outings on a timeline, each at its hour, in its sport's
-/// colour, opening its detail.
+/// The day picked in the Bilan (issues #348, #350, #361): how it went against
+/// the goal, then its outings on a timeline, newest on top, each at its hour,
+/// in its sport's colour, opening its detail.
 struct RecapDayTimeline: View {
     let outings: OutingDay
     let ring: Recap.Day
@@ -11,14 +11,13 @@ struct RecapDayTimeline: View {
 
     @Dependency(\.date) private var date
 
-    private var sorted: [WorkoutSummary] {
-        outings.workouts.sorted { $0.startedAt < $1.startedAt }
-    }
+    /// Newest first, as `OutingDay` files them (issue #361).
+    private var workouts: [WorkoutSummary] { outings.workouts }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
-            if sorted.isEmpty {
+            if workouts.isEmpty {
                 HStack(spacing: 12) {
                     Image(systemName: ring.isPlanned ? "moon.zzz" : "cup.and.saucer")
                         .scaledSystemFont(size: 18)
@@ -32,8 +31,8 @@ struct RecapDayTimeline: View {
                 .fouleeGlass(cornerRadius: 18)
             } else {
                 VStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(sorted.enumerated()), id: \.element.id) { index, workout in
-                        row(workout, isLast: index == sorted.count - 1)
+                    ForEach(Array(workouts.enumerated()), id: \.element.id) { index, workout in
+                        row(workout, isLast: index == workouts.count - 1)
                     }
                 }
             }

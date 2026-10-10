@@ -8,6 +8,8 @@ import Observation
 @MainActor
 @Observable
 final class HydrationDetailStore {
+    /// Today's glasses, newest first: the one just drunk is the one looked
+    /// for (issue #361).
     private(set) var samples: [WaterSample] = []
     private(set) var history: HydrationHistory?
     private(set) var lastError: String?
@@ -23,7 +25,7 @@ final class HydrationDetailStore {
             async let samples = healthKit.waterToday()
             async let series = healthKit.waterSeries(HydrationHistory.window)
             let (today, days) = try await (samples, series)
-            self.samples = today
+            self.samples = today.sorted { $0.date > $1.date }
             history = HydrationHistory.make(series: days, goalML: goalML, now: date.now)
             lastError = nil
         } catch {
