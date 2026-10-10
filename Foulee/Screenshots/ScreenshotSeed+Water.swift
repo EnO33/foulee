@@ -4,14 +4,20 @@ import Foundation
 /// The seeded water (issue #355): today's glasses, which add up to `waterML`,
 /// and the six days before for the Hydratation screen's week.
 extension ScreenshotSeed {
-    /// Minutes after midnight, amount, writer — oldest first, all before the
-    /// pinned 14:35.
-    private static let glasses: [(minutes: Int, milliliters: Int, source: String)] = [
-        (8 * 60 + 10, 250, "Foulée"),
-        (10 * 60 + 5, 250, "Apple Watch"),
-        (11 * 60 + 40, 500, "Foulée"),
-        (13 * 60 + 15, 250, "Foulée"),
-        (14 * 60 + 20, 250, "Apple Watch")
+    private struct Glass {
+        /// Minutes after midnight.
+        var minutes: Int
+        var milliliters: Int
+        var source: String
+    }
+
+    /// Oldest first, all before the pinned 14:35.
+    private static let glasses = [
+        Glass(minutes: 8 * 60 + 10, milliliters: 250, source: "Foulée"),
+        Glass(minutes: 10 * 60 + 5, milliliters: 250, source: "Apple Watch"),
+        Glass(minutes: 11 * 60 + 40, milliliters: 500, source: "Foulée"),
+        Glass(minutes: 13 * 60 + 15, milliliters: 250, source: "Foulée"),
+        Glass(minutes: 14 * 60 + 20, milliliters: 250, source: "Apple Watch")
     ]
 
     /// The six days before today, oldest first: four that held the 2 L goal.
