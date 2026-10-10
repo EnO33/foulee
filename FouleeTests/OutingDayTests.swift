@@ -73,7 +73,8 @@ struct OutingDayTests {
         ])
         let today = sections.last
         #expect(today?.workouts.count == 2)
-        #expect(Set(today?.workouts.map(\.durationSeconds) ?? []) == [TimeInterval(20 * 60), TimeInterval(45 * 60)])
+        // Newest first, the order the Bilan's timeline shows them in (#361).
+        #expect(today?.workouts.map(\.durationSeconds) == [TimeInterval(20 * 60), TimeInterval(45 * 60)])
     }
 
     @Test("Every day of the period is there, in order, even without sessions")

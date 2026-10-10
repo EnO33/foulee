@@ -9,7 +9,7 @@ struct OutingDay: Identifiable, Equatable, Sendable {
     var id: Date { day }
 
     /// Every day of `period`, in order, each holding the deduplicated outings
-    /// that began on it.
+    /// that began on it, newest first (issue #361).
     ///
     /// Taking its calendar as a parameter, so a test can reach it (#218). The
     /// order below is what the tests on `WorkoutDeduplication` and
@@ -26,6 +26,8 @@ struct OutingDay: Identifiable, Equatable, Sendable {
     static func days(in period: RecapPeriod, from workouts: [WorkoutSummary], calendar: Calendar = .iso8601Monday) -> [OutingDay] {
         let outings = WorkoutDeduplication.collapsingOverlaps(OutingGrouping.groupingLegs(workouts))
         let byDay = Dictionary(grouping: outings) { calendar.startOfDay(for: $0.startedAt) }
-        return period.days(calendar: calendar).map { OutingDay(day: $0, workouts: byDay[$0] ?? []) }
+        return period.days(calendar: calendar).map { day in
+            OutingDay(day: day, workouts: (byDay[day] ?? []).sorted { $0.startedAt > $1.startedAt })
+        }
     }
 }
