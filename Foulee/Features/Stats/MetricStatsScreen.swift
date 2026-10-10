@@ -268,7 +268,6 @@ struct MetricStatsScreen: View {
         .accessibilityLabel(label)
         .accessibilityValue(value)
     }
-
 }
 
 /// The screen's small pieces, apart from its body so the type stays within
