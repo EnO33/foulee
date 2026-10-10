@@ -17,11 +17,11 @@ struct RecapNotificationTests {
         #expect(RecapNotification.kind(fromIdentifier: "foulee.recap.year") == nil)
     }
 
-    @Test("Monday at 9 h for the week, the 1st at 9 h for the month")
+    @Test("Sunday at 19 h for the week, the 1st at 9 h for the month")
     func triggers() {
         let week = RecapNotification.trigger(for: .week)
-        #expect(week.weekday == 2)
-        #expect(week.hour == 9)
+        #expect(week.weekday == 1)
+        #expect(week.hour == 19)
         #expect(week.day == nil)
 
         let month = RecapNotification.trigger(for: .month)

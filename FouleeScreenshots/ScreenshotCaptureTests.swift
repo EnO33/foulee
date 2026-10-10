@@ -83,9 +83,9 @@ final class ScreenshotCaptureTests: XCTestCase {
     }
 
     private func captureSummary(_ app: XCUIApplication) {
-        tapWhenReady(app.buttons["Voir le résumé"], "Voir le résumé")
-        // The link only shows once the seven days have loaded (issue #348).
-        waitForScreen(app.buttons["Voir dans Santé"], "7 derniers jours")
+        tapWhenReady(app.buttons["Voir le bilan"], "Voir le bilan")
+        // The link only shows once the Bilan has loaded (issues #348, #350).
+        waitForScreen(app.buttons["Voir dans Santé"], "Bilan")
         capture("08_summary")
         close(app)
     }

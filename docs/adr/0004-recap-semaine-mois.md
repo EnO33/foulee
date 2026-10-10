@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348)
+- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350)
 
 ## Contexte
 
@@ -10,6 +10,8 @@ L'accueil suit la journée en cours et les 7 derniers jours, mais rien ne fait l
 ## Décisions
 
 ### D1 — Le récap porte sur la dernière période terminée
+
+> **Amendée par D6** pour la semaine : elle couvre désormais les 7 derniers jours glissants. Le mois reste le dernier mois terminé.
 
 Une semaine, du lundi au dimanche (calendrier ISO, comme toutes les semaines de l'app), ou un mois civil. Jamais la période en cours : un récap est un bilan, pas un suivi, et l'accueil fait déjà le suivi. Le lundi, le récap de la semaine est celui de la semaine qui s'est terminée la veille ; le 1er, celui du mois qui vient de finir.
 
@@ -29,7 +31,7 @@ Une seule lecture de Santé (`RecapStore`) couvre la semaine, le mois et les deu
 
 ### D3 — Une notification au texte fixe
 
-Chaque lundi et chaque 1er du mois à 9 h, une notification répétée (`UNCalendarNotificationTrigger`) annonce le récap. **Son texte ne cite aucun chiffre** : une notification est programmée à l'avance et ne peut pas lire Santé au moment où elle s'affiche. Elle annonce donc le récap au lieu de le citer, et les chiffres, toujours à jour, sont à un toucher.
+Chaque lundi (dimanche à 19 h depuis D6) et chaque 1er du mois à 9 h, une notification répétée (`UNCalendarNotificationTrigger`) annonce le récap. **Son texte ne cite aucun chiffre** : une notification est programmée à l'avance et ne peut pas lire Santé au moment où elle s'affiche. Elle annonce donc le récap au lieu de le citer, et les chiffres, toujours à jour, sont à un toucher.
 
 Toucher la notification ouvre le bon récap. Le délégué de notifications, qui s'exécute avant qu'un écran existe, passe la demande à `RecapRouter`. L'accueil la présente ensuite (`RecapPresentation`), que le toucher ait lancé l'app ou l'ait trouvée ouverte. La carte « Tes récaps » de l'accueil passe par le même routeur : une seule façon d'ouvrir un récap.
 
@@ -64,6 +66,25 @@ Après D4, deux écrans voisins parlaient encore l'ancien langage : les barres �
 La période qui précède une semaine devient « les 7 jours d'avant ». C'est identique à la semaine ISO précédente pour une semaine calendaire, et c'est la seule réponse juste pour une période glissante.
 
 Le regroupement des sorties par jour quitte la vue pour le modèle (`OutingDay.lastDays`). Son ordre reste celui de #218 et #317 : portions regroupées, puis doublons retirés, puis rangement par jour. Ses tests suivent.
+
+### D6 — Le Bilan absorbe les 7 derniers jours (#350)
+
+Après D5, la semaine se lisait à trois endroits : l'onglet Semaine de l'accueil, la feuille « 7 derniers jours » et le récap de la semaine écoulée. C'était trop pour un même sujet. Il n'en reste qu'un, le **Bilan**.
+
+- **L'onglet Semaine du Bilan couvre les 7 derniers jours glissants**, aujourd'hui compris (`RecapPeriod.current`). Il reprend tout ce que montrait la feuille, qui disparaît :
+  - l'en-tête et le verdict ;
+  - un anneau par jour, qu'on touche pour choisir un jour ;
+  - la chronologie des sorties de ce jour, chacune ouvrant son détail par un *push* (`NavigationStack`) ;
+  - la comparaison avec les 7 jours d'avant.
+- **Le mois reste le dernier mois terminé.** Ses jours se touchent aussi : le calendrier donne accès aux sorties de chacun.
+- **Les sorties par jour viennent de la même lecture** que les récaps (`RecapStore.outings`, construites par `OutingDay.days(in:)`). L'ordre de #218 et #317 ne change pas.
+- **L'accueil** :
+  - l'onglet Semaine ne garde que ses quatre tuiles, et la rangée d'anneaux est retirée ;
+  - « Voir le bilan » ouvre le Bilan sur la semaine, en passant par `RecapRouter` ;
+  - la carte Récap montre les 7 derniers jours et se relit quand les minutes du jour bougent.
+- **La notification de la semaine passe au dimanche à 19 h.** Une fenêtre glissante ne couvre du lundi au dimanche que le dimanche. Le lundi à 9 h, elle aurait couvert du mardi au lundi matin, presque vide. La notification du mois ne bouge pas.
+
+**Écarté** : garder trois onglets (7 jours, semaine terminée, mois). La semaine terminée et les 7 derniers jours se recouvrent presque entièrement. Deux onglets aussi proches disent la même chose deux fois.
 
 ## Ce qui reste ouvert
 

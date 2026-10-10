@@ -1,8 +1,8 @@
 import Foundation
 import Observation
 
-/// The recap notifications (issue #344): one every Monday for the week that
-/// ended, one every 1st for the month that ended. Identifiers and content in
+/// The recap notifications (issues #344, #350): one every Sunday evening for
+/// the seven days that end, one every 1st for the month that ended. Identifiers and content in
 /// one place, read by the client that schedules them and by the delegate that
 /// opens the recap on a tap.
 ///
@@ -11,8 +11,6 @@ import Observation
 /// figures are one tap away, and always the current ones.
 enum RecapNotification {
     static let prefix = "foulee.recap."
-    /// When a recap is announced: 9 h, out of the night and before the day.
-    static let hour = 9
 
     static func identifier(for kind: RecapPeriod.Kind) -> String {
         prefix + kind.rawValue
@@ -24,14 +22,19 @@ enum RecapNotification {
         return RecapPeriod.Kind(rawValue: String(identifier.dropFirst(prefix.count)))
     }
 
-    /// Monday for the week, the 1st for the month, at `hour`.
+    /// Sunday at 19 h for the week: the Bilan's seven days are the rolling
+    /// ones (#350), so they cover Monday to Sunday only on a Sunday, once the
+    /// day is mostly behind. The 1st at 9 h for the month, which has ended.
     static func trigger(for kind: RecapPeriod.Kind) -> DateComponents {
         var components = DateComponents()
-        components.hour = hour
         components.minute = 0
         switch kind {
-        case .week: components.weekday = 2 // Calendar numbering: Monday.
-        case .month: components.day = 1
+        case .week:
+            components.weekday = 1 // Calendar numbering: Sunday.
+            components.hour = 19
+        case .month:
+            components.day = 1
+            components.hour = 9
         }
         return components
     }
