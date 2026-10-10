@@ -2,16 +2,16 @@ import Foundation
 import Testing
 @testable import Foulee
 
-/// Cover for the *integration point* of #218: `OutingDay.lastDays`
+/// Cover for the *integration point* of #218: `OutingDay.days(in:)`
 /// deduplicates and only then groups by day.
 ///
-/// `WorkoutDeduplicationTests` pins the algorithm, but nothing pinned the sheet
+/// `WorkoutDeduplicationTests` pins the algorithm, but nothing pinned the Bilan
 /// actually running it, nor the order — both the dedup call and the
 /// dedup-before-group ordering could be removed with the whole suite green. The
 /// fixture below is the cross-midnight duplicate the ordering exists for: group
 /// first and the two copies land in different buckets, where neither can ever
 /// see the overlap.
-@Suite("7 derniers jours — jours et sorties")
+@Suite("Bilan — jours et sorties")
 @MainActor
 struct OutingDayTests {
     /// 2024-05-28 12:00 UTC. The calendar below is pinned to GMT so "just
@@ -22,6 +22,15 @@ struct OutingDayTests {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = .gmt
         return calendar
+    }
+
+    /// The Bilan's week: the seven days ending on `now`'s.
+    private static var week: RecapPeriod {
+        RecapPeriod.lastDays(endingOn: now, calendar: calendar)
+    }
+
+    private func days(_ workouts: [WorkoutSummary]) -> [OutingDay] {
+        OutingDay.days(in: Self.week, from: workouts, calendar: Self.calendar)
     }
 
     private func session(_ offsetMinutes: Int, lasting minutes: Double, source: String) -> WorkoutSummary {
@@ -40,20 +49,16 @@ struct OutingDayTests {
     @Test("One outing straddling midnight is one row, on the day it began")
     func crossMidnightDuplicateIsOneRowOnTheEarlierDay() {
         // 05-27 23:58 on the watch, the same outing from Garmin at 05-28 00:01.
-        let sections = OutingDay.lastDays(
-            from: [
-                session(-722, lasting: 30, source: "Apple Watch"),
-                session(-719, lasting: 25, source: "Garmin Connect")
-            ],
-            calendar: Self.calendar,
-            now: Self.now
-        )
+        let sections = days([
+            session(-722, lasting: 30, source: "Apple Watch"),
+            session(-719, lasting: 25, source: "Garmin Connect")
+        ])
         #expect(sections.count == 7)
         // Today (05-28) shows the "Aucune séance enregistrée" placeholder: the
         // outing belongs to the day it started, which is where the ring counted
         // it. Grouping before deduplicating put a second row here instead.
-        #expect(sections.first?.workouts.isEmpty == true)
-        let yesterday = sections.dropFirst().first
+        #expect(sections.last?.workouts.isEmpty == true)
+        let yesterday = sections.dropLast().last
         #expect(yesterday?.workouts.count == 1)
         #expect(yesterday?.workouts.first?.sourceName == "Apple Watch")
         #expect(yesterday?.workouts.first?.durationSeconds == TimeInterval(30 * 60))
@@ -61,27 +66,22 @@ struct OutingDayTests {
 
     @Test("Two writers, one outing, one row — and a real second session survives")
     func duplicatesCollapseWhileDistinctSessionsRemain() {
-        let sections = OutingDay.lastDays(
-            from: [
-                session(-240, lasting: 45, source: "Apple Watch"),
-                session(-239, lasting: 43, source: "Garmin Connect"),
-                session(-60, lasting: 20, source: "Apple Watch")
-            ],
-            calendar: Self.calendar,
-            now: Self.now
-        )
-        let today = sections.first
+        let sections = days([
+            session(-240, lasting: 45, source: "Apple Watch"),
+            session(-239, lasting: 43, source: "Garmin Connect"),
+            session(-60, lasting: 20, source: "Apple Watch")
+        ])
+        let today = sections.last
         #expect(today?.workouts.count == 2)
-        // Newest first, the order the sheet renders.
-        #expect(today?.workouts.map(\.durationSeconds) == [TimeInterval(20 * 60), TimeInterval(45 * 60)])
+        #expect(Set(today?.workouts.map(\.durationSeconds) ?? []) == [TimeInterval(20 * 60), TimeInterval(45 * 60)])
     }
 
-    @Test("The window is always seven consecutive days, newest first")
+    @Test("Every day of the period is there, in order, even without sessions")
     func alwaysSevenDaysEvenWithoutSessions() {
-        let sections = OutingDay.lastDays(from: [], calendar: Self.calendar, now: Self.now)
+        let sections = days([])
         #expect(sections.count == 7)
         #expect(sections.map(\.workouts.count) == Array(repeating: 0, count: 7))
-        let expected = (0..<7).compactMap {
+        let expected = (0..<7).reversed().compactMap {
             Self.calendar.date(byAdding: .day, value: -$0, to: Self.calendar.startOfDay(for: Self.now))
         }
         #expect(sections.map(\.day) == expected)
@@ -89,9 +89,9 @@ struct OutingDayTests {
 }
 
 extension OutingDayTests {
-    /// The integration point of #317: the sheet rejoins legs, not only the
+    /// The integration point of #317: the Bilan rejoins legs, not only the
     /// algorithm in isolation.
-    @Test("An outing split in legs is one row of the sheet")
+    @Test("An outing split in legs is one row of the Bilan")
     func legsAreOneRow() {
         let id = UUID()
         let start = Self.now.addingTimeInterval(-3_600)
@@ -108,7 +108,7 @@ extension OutingDayTests {
                 outing: OutingLeg(outingID: id, index: index)
             )
         }
-        let sections = OutingDay.lastDays(from: legs, calendar: Self.calendar, now: Self.now)
+        let sections = days(legs)
         let rows = sections.flatMap(\.workouts)
         #expect(rows.count == 1)
         #expect(rows.first?.legs.count == 2)

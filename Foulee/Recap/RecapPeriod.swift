@@ -1,11 +1,10 @@
 import Foundation
 
-/// A week or a month the recap looks back on (issue #344).
+/// A week or a month the recap looks back on (issues #344, #350).
 ///
-/// Always a **finished** period: a recap is a review, not a progress report —
-/// the home already follows the week in progress. On a Monday the week recap
-/// is the one that ended last night; on the 1st, the month recap is the month
-/// that just ended.
+/// The week is the **last seven days**, today included: the Bilan is where the
+/// outings of the days just gone are read (#350). The month stays the last
+/// **finished** one: on the 1st, the month that just ended.
 struct RecapPeriod: Hashable, Sendable {
     enum Kind: String, CaseIterable, Identifiable, Sendable {
         case week
@@ -34,6 +33,15 @@ struct RecapPeriod: Hashable, Sendable {
     /// First instant **after** the period.
     var end: Date
 
+    /// The period the Bilan shows for `kind` at `now`: the last seven days for
+    /// the week, the last finished month for the month (issue #350).
+    static func current(_ kind: Kind, at now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
+        switch kind {
+        case .week: lastDays(endingOn: now, calendar: calendar)
+        case .month: lastCompleted(.month, before: now, calendar: calendar)
+        }
+    }
+
     /// The last period of `kind` to have ended before `now`.
     ///
     /// The calendar is ISO, Monday first, like every week the app draws: a
@@ -44,9 +52,9 @@ struct RecapPeriod: Hashable, Sendable {
         return period(kind, containing: current.start.addingTimeInterval(-1), calendar: calendar)
     }
 
-    /// The last `count` days, today included — the « 7 derniers jours » view
-    /// (issue #348). Rolling rather than calendar-aligned, so it is a `.week`
-    /// that need not start on a Monday.
+    /// The last `count` days, today included — the Bilan's week (issues #348,
+    /// #350). Rolling rather than calendar-aligned, so it is a `.week` that
+    /// need not start on a Monday.
     static func lastDays(_ count: Int = 7, endingOn now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
         let start = calendar.date(byAdding: .day, value: -count, to: tomorrow) ?? now

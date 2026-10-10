@@ -109,7 +109,7 @@ struct DesignSystemGallery: View {
             VStack(spacing: 12) {
                 PrimaryButton(title: "Démarrer ta sortie",
                               systemIcon: FouleeIcon.play) {}
-                SecondaryButton(title: "Voir le résumé",
+                SecondaryButton(title: "Voir le bilan",
                                 systemIcon: FouleeIcon.sparkle) {}
             }
         }

@@ -15,7 +15,6 @@ struct TodaySnapshot: Equatable {
     var bestStreak: Int
     var weather: WeatherSnapshot
     var weekMinutes: [Int]
-    var weekGoal: Int
     var walkWindowStart: DateComponents
     var hasWalkedToday: Bool
     /// True when today isn't one of the user's active days — no walk planned,

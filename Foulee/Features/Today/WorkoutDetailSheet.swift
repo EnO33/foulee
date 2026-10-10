@@ -1,7 +1,7 @@
 import Dependencies
 import SwiftUI
 
-/// Detail view for a single workout — pushed onto `RecentActivitySheet`'s
+/// Detail view for a single workout — pushed onto `RecapScreen`'s
 /// NavigationStack via `NavigationLink(value:)`. Sheet-on-sheet was
 /// painful to animate (iOS 26 has to composite two stacked sheet
 /// containers per frame); a native push is hardware-accelerated and
@@ -20,7 +20,7 @@ struct WorkoutDetailSheet: View {
 
     var body: some View {
         // No background here on purpose: this view is pushed inside the
-        // summary sheet's NavigationStack, which already provides the opaque
+        // Bilan's NavigationStack, which already provides the opaque
         // `SheetBackground` via `.presentationBackground`. Drawing a second
         // full-screen gradient here just doubled the work each frame.
         content
