@@ -137,7 +137,17 @@ struct MetricStatsScreen: View {
             }
         }
         .chartYAxis {
-            AxisMarks(position: .leading)
+            // Minutes read as durations on the axis too (#370): « 2 h », not
+            // « 120 ». The other metrics keep the chart's own labels.
+            AxisMarks(position: .leading) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel {
+                    if let amount = value.as(Double.self) {
+                        Text(metric.axisText(amount))
+                    }
+                }
+            }
             // The daily goal as a tinted reference line on the Y axis: it sits
             // behind the bars (like the chart's own grid lines) with an
             // "Objectif" label on the trailing edge — no line slashing over

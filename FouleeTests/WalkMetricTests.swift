@@ -29,4 +29,11 @@ import Testing
         #expect(WalkMetric.minutes.formattedWithUnit(360) == "6 h")
         #expect(WalkMetric.minutes.formattedWithUnit(95.4) == "1 h 35")
     }
+
+    /// The stats chart's axis (issue #370).
+    @Test func axisGraduations() {
+        #expect(WalkMetric.minutes.axisText(120) == "2 h")
+        #expect(WalkMetric.minutes.axisText(30) == "30 min")
+        #expect(WalkMetric.steps.axisText(5_000) == WalkMetric.steps.formatted(5_000))
+    }
 }
