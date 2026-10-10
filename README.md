@@ -20,6 +20,11 @@ round, an outing started on the iPhone is **shown on the Watch** — figures,
 route, and pause / stop buttons — while the iPhone keeps recording it as one
 workout: see [ADR 0003](docs/adr/0003-seance-partagee-iphone-watch.md) (French).
 
+Every Monday and every 1st of the month, a notification announces the **recap**
+of the week or month that just ended — minutes, steps, distance, outings, the
+days the goal was met, and the change from the period before: see
+[ADR 0004](docs/adr/0004-recap-semaine-mois.md) (French).
+
 ## Compatible watches
 
 - **Apple Watch** — native support (companion app, complications, live workouts).
@@ -47,7 +52,7 @@ workout: see [ADR 0003](docs/adr/0003-seance-partagee-iphone-watch.md) (French).
 - **ActivityKit** — Live Activity for the active walk (Dynamic Island + Lock Screen)
 - **WeatherKit** — local weather card
 - **WidgetKit** — iPhone + Watch streak widgets and complications
-- **UserNotifications** — pre-walk reminder
+- **UserNotifications** — pre-walk reminder, weekly and monthly recap
 - **CoreLocation / MapKit** — walk route recording + map
 - **UserDefaults** — on-device preferences (goal, walk window, theme). Walk
   history isn't stored locally — it's read live from HealthKit.

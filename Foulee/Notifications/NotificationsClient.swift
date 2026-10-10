@@ -50,6 +50,11 @@ struct NotificationsClient: Sendable {
     /// "Rappelle-moi" notification action.
     var scheduleHydrationSnooze: @Sendable (_ after: TimeInterval) async throws -> Void
         = { _ in }
+
+    /// Replace the recap notifications (issue #344) with one repeating request
+    /// per kind. An empty array wipes them.
+    var replaceRecapReminders: @Sendable (_ kinds: [RecapPeriod.Kind]) async throws -> Void
+        = { _ in }
 }
 
 extension NotificationsClient: DependencyKey {

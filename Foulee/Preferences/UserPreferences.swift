@@ -68,6 +68,11 @@ final class UserPreferences {
     var activityMode: ActivityMode {
         didSet { defaults.set(activityMode.rawValue, forKey: Keys.activityMode) }
     }
+    /// The Monday and 1st-of-the-month recap notifications (issue #344). On
+    /// unless turned off: the recap is the point of having one.
+    var recapNotificationsEnabled: Bool {
+        didSet { defaults.set(recapNotificationsEnabled, forKey: Keys.recapNotificationsEnabled) }
+    }
 
     @ObservationIgnored
     private let defaults: UserDefaults
@@ -110,6 +115,7 @@ final class UserPreferences {
         self.hydrationSnoozeMinutes = (defaults.object(forKey: Keys.hydrationSnoozeMinutes) as? Int) ?? 15
         let rawActivity = defaults.string(forKey: Keys.activityMode)
         self.activityMode = rawActivity.flatMap(ActivityMode.init(rawValue:)) ?? .walking
+        self.recapNotificationsEnabled = (defaults.object(forKey: Keys.recapNotificationsEnabled) as? Bool) ?? true
     }
 }
 
@@ -131,4 +137,5 @@ private enum Keys {
     static let hydrationIntervalMinutes = "preferences.hydrationIntervalMinutes"
     static let hydrationSnoozeMinutes = "preferences.hydrationSnoozeMinutes"
     static let activityMode = "preferences.activityMode"
+    static let recapNotificationsEnabled = "preferences.recapNotificationsEnabled"
 }

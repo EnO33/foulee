@@ -124,6 +124,30 @@ extension NotificationsClient {
                     trigger: trigger
                 )
                 try await center.add(request)
+            },
+            replaceRecapReminders: { kinds in
+                let existing = await center.pendingNotificationRequests()
+                let toRemove = existing
+                    .map(\.identifier)
+                    .filter { $0.hasPrefix(RecapNotification.prefix) }
+                center.removePendingNotificationRequests(withIdentifiers: toRemove)
+
+                for kind in kinds {
+                    let content = UNMutableNotificationContent()
+                    content.title = RecapNotification.title(for: kind)
+                    content.body = RecapNotification.body(for: kind)
+                    content.sound = .default
+                    let trigger = UNCalendarNotificationTrigger(
+                        dateMatching: RecapNotification.trigger(for: kind),
+                        repeats: true
+                    )
+                    let request = UNNotificationRequest(
+                        identifier: RecapNotification.identifier(for: kind),
+                        content: content,
+                        trigger: trigger
+                    )
+                    try await center.add(request)
+                }
             }
         )
     }()

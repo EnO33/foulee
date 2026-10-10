@@ -220,6 +220,16 @@ struct SettingsScreen: View {
                 }
             }
             .tint(FouleeColor.success)
+            Toggle(isOn: $preferences.recapNotificationsEnabled) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Récap de la semaine et du mois")
+                        .font(FouleeFont.headline)
+                    Text("Le lundi et le 1er du mois, à 9 h.")
+                        .font(FouleeFont.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .tint(FouleeColor.success)
         }
     }
 
