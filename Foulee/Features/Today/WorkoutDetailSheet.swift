@@ -1,7 +1,7 @@
 import Dependencies
 import SwiftUI
 
-/// Detail view for a single workout — pushed onto `TodayWorkoutsSheet`'s
+/// Detail view for a single workout — pushed onto `RecentActivitySheet`'s
 /// NavigationStack via `NavigationLink(value:)`. Sheet-on-sheet was
 /// painful to animate (iOS 26 has to composite two stacked sheet
 /// containers per frame); a native push is hardware-accelerated and

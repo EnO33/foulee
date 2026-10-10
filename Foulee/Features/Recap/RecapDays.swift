@@ -12,6 +12,8 @@ struct RecapDayRing: View {
     var lineWidth: CGFloat = 4
     /// `false` draws the ring empty, so the reveal can fill it.
     var isRevealed = true
+    /// A day still to come (issue #348): a pale track, neither done nor missed.
+    var isUpcoming = false
 
     private var progress: Double {
         guard isRevealed, goalMinutes > 0 else { return 0 }
@@ -22,7 +24,10 @@ struct RecapDayRing: View {
 
     var body: some View {
         ZStack {
-            if day.isPlanned || day.minutes > 0 {
+            if isUpcoming {
+                Circle()
+                    .stroke(Color.gray.opacity(0.1), lineWidth: lineWidth)
+            } else if day.isPlanned || day.minutes > 0 {
                 Circle()
                     .stroke(Color.gray.opacity(0.18), lineWidth: lineWidth)
                 Circle()

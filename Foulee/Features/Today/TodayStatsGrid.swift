@@ -17,7 +17,7 @@ struct TodayStatsGrid: View {
     var snapshot: TodaySnapshot
     var activeDays: Set<Weekday>
     var onSelectMetric: (WalkMetric) -> Void
-    /// The week's bars open the outing history, as the old card did.
+    /// The week's rings open the outing history, as the old card did.
     var onShowHistory: () -> Void
 
     @Dependency(\.healthKit) private var healthKit
@@ -42,7 +42,7 @@ struct TodayStatsGrid: View {
             }
             if period == .week {
                 Button(action: onShowHistory) {
-                    TodayWeekBars(snapshot: snapshot, activeDays: activeDays)
+                    TodayWeekRings(snapshot: snapshot, activeDays: activeDays)
                 }
                 .buttonStyle(.pressable)
                 .accessibilityHint("Voir l'historique de tes sorties")

@@ -101,7 +101,7 @@ struct TodayScreen: View {
                 isPresented: $isShowingSummary,
                 onDismiss: { Task { await store.refresh() } },
                 content: {
-                    TodayWorkoutsSheet()
+                    RecentActivitySheet(goalMinutes: store.minutesGoal, activeDays: preferences.activeDays)
                         .preferredColorScheme(preferredScheme)
                 }
             )

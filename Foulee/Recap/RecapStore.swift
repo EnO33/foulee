@@ -26,18 +26,7 @@ final class RecapStore {
         let periods = RecapPeriod.Kind.allCases.map { RecapPeriod.lastCompleted($0, before: now) }
         let daysBack = Self.daysBack(covering: periods, from: now)
         do {
-            async let minutes = healthKit.dailyMinutes(daysBack)
-            async let steps = healthKit.metricSeries(.steps, daysBack)
-            async let distance = healthKit.metricSeries(.distance, daysBack)
-            async let calories = healthKit.metricSeries(.calories, daysBack)
-            async let workouts = healthKit.recentWorkouts(daysBack)
-            let inputs = try await Recap.Inputs(
-                minutes: minutes,
-                steps: steps,
-                distance: distance,
-                calories: calories,
-                workouts: workouts
-            )
+            let inputs = try await Self.readInputs(from: healthKit, daysBack: daysBack)
             recaps = Dictionary(uniqueKeysWithValues: periods.map {
                 ($0.kind, Recap.make(period: $0, from: inputs, goalMinutes: goalMinutes, activeDays: activeDays))
             })
@@ -45,6 +34,23 @@ final class RecapStore {
         } catch {
             lastError = error.localizedDescription
         }
+    }
+
+    /// Everything a recap is made of, read from Santé in parallel. Shared with
+    /// the « 7 derniers jours » view (issue #348), so both read the same way.
+    static func readInputs(from healthKit: HealthKitClient, daysBack: Int) async throws -> Recap.Inputs {
+        async let minutes = healthKit.dailyMinutes(daysBack)
+        async let steps = healthKit.metricSeries(.steps, daysBack)
+        async let distance = healthKit.metricSeries(.distance, daysBack)
+        async let calories = healthKit.metricSeries(.calories, daysBack)
+        async let workouts = healthKit.recentWorkouts(daysBack)
+        return try await Recap.Inputs(
+            minutes: minutes,
+            steps: steps,
+            distance: distance,
+            calories: calories,
+            workouts: workouts
+        )
     }
 
     /// Days of history to read, today included, so the earliest period before

@@ -44,9 +44,29 @@ struct RecapPeriod: Hashable, Sendable {
         return period(kind, containing: current.start.addingTimeInterval(-1), calendar: calendar)
     }
 
+    /// The last `count` days, today included — the « 7 derniers jours » view
+    /// (issue #348). Rolling rather than calendar-aligned, so it is a `.week`
+    /// that need not start on a Monday.
+    static func lastDays(_ count: Int = 7, endingOn now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
+        let start = calendar.date(byAdding: .day, value: -count, to: tomorrow) ?? now
+        return RecapPeriod(kind: .week, start: start, end: tomorrow)
+    }
+
     /// The period just before this one — what the recap compares against.
+    ///
+    /// For a week, the seven days before (issue #348): the same as the
+    /// previous ISO week for a calendar week, and the right answer for a
+    /// rolling one. For a month, the calendar month before.
     func previous(calendar: Calendar = .iso8601Monday) -> RecapPeriod {
-        Self.period(kind, containing: start.addingTimeInterval(-1), calendar: calendar)
+        switch kind {
+        case .week:
+            let length = calendar.dateComponents([.day], from: start, to: end).day ?? 7
+            let earlier = calendar.date(byAdding: .day, value: -length, to: start) ?? start
+            return RecapPeriod(kind: kind, start: earlier, end: start)
+        case .month:
+            return Self.period(kind, containing: start.addingTimeInterval(-1), calendar: calendar)
+        }
     }
 
     func contains(_ date: Date) -> Bool {
