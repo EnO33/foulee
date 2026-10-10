@@ -137,7 +137,17 @@ struct MetricStatsScreen: View {
             }
         }
         .chartYAxis {
-            AxisMarks(position: .leading)
+            // Minutes read as durations on the axis too (#370): « 2 h », not
+            // « 120 ». The other metrics keep the chart's own labels.
+            AxisMarks(position: .leading) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel {
+                    if let amount = value.as(Double.self) {
+                        Text(metric.axisText(amount))
+                    }
+                }
+            }
             // The daily goal as a tinted reference line on the Y axis: it sits
             // behind the bars (like the chart's own grid lines) with an
             // "Objectif" label on the trailing edge — no line slashing over
@@ -258,8 +268,12 @@ struct MetricStatsScreen: View {
         .accessibilityLabel(label)
         .accessibilityValue(value)
     }
+}
 
-    private var divider: some View {
+/// The screen's small pieces, apart from its body so the type stays within
+/// its length budget.
+private extension MetricStatsScreen {
+    var divider: some View {
         Rectangle()
             .fill(Color.gray.opacity(0.25))
             .frame(width: 1, height: 34)
@@ -267,7 +281,7 @@ struct MetricStatsScreen: View {
 
     /// Says why the chart is empty and what to try (#369), rather than a bare
     /// « Aucune donnée ».
-    private var emptyChart: some View {
+    var emptyChart: some View {
         ContentUnavailableView {
             Label("Pas encore de données", systemImage: metric.icon)
         } description: {
@@ -278,7 +292,7 @@ struct MetricStatsScreen: View {
         .frame(maxWidth: .infinity, minHeight: 200)
     }
 
-    private var closeButton: some View {
+    var closeButton: some View {
         Button(action: onClose) {
             Image(systemName: "xmark")
                 .font(.system(size: 16, weight: .bold))

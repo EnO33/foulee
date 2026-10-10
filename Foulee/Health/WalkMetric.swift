@@ -43,6 +43,12 @@ enum WalkMetric: String, CaseIterable, Identifiable, Sendable {
         return value.decimalComma(fractionDigits: fractionDigits)
     }
 
+    /// A chart axis graduation (issue #370): the bare figure, but minutes as a
+    /// duration — `2 h` rather than `120`.
+    func axisText(_ value: Double) -> String {
+        self == .minutes ? durationText(minutes: Int(value.rounded())) : formatted(value)
+    }
+
     /// Same, with the unit appended (`5 391 pas`, `4,2 km`) — and minutes as
     /// a duration, `1 h 05` rather than `65 min` (issue #366).
     func formattedWithUnit(_ value: Double) -> String {
