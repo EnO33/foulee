@@ -67,18 +67,21 @@ final class ScreenshotCaptureTests: XCTestCase {
         close(app)
     }
 
-    /// The hydration card lives below the fold, so this one is the home
-    /// scrolled down — exactly what the current `07_hydration` shows.
+    /// The hydration screen, opened from its card below the fold: the
+    /// drop, the quick servings, the glass-by-glass timeline and the week.
     ///
-    /// Scrolled all the way to the *bottom* rather than to the card: the bottom
-    /// is a clamped position, identical on every run whatever the swipe
-    /// momentum did, and it frames the hydration card with the recap card under
-    /// it. Then back to the top, because the next captures start from there.
+    /// The card is a tap target, not a button, so the tap lands on its title.
+    /// The home is scrolled all the way down first — a clamped position, the
+    /// same on every run whatever the swipe momentum did — and back to the top
+    /// afterwards, because the next captures start from there.
     private func captureHydration(_ app: XCUIApplication) {
         for _ in 0..<Self.scrollSwipes { app.swipeUp(velocity: .fast) }
         waitForScreen(app.buttons["J'ai bu un verre"], "Hydration card")
         settleAfterScrolling()
+        tapWhenReady(app.staticTexts["Hydratation"].firstMatch, "Hydration card title")
+        waitForScreen(app.staticTexts["Verre par verre"], "Hydration screen")
         capture("07_hydration")
+        close(app)
         for _ in 0..<Self.scrollSwipes { app.swipeDown(velocity: .fast) }
     }
 
