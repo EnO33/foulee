@@ -64,6 +64,23 @@ struct HydrationDetailTests {
 
     // MARK: - Store
 
+    @Test("Today's glasses come newest first")
+    @MainActor
+    func samplesNewestFirst() async {
+        let morning = WaterSample(id: UUID(), date: day(0).addingTimeInterval(8 * 3_600), milliliters: 250, sourceName: "Foulée")
+        let noon = WaterSample(id: UUID(), date: day(0).addingTimeInterval(12 * 3_600), milliliters: 500, sourceName: "Apple Watch")
+        await withDependencies {
+            var client = HealthKitClient.testValue
+            client.waterToday = { [morning, noon] }
+            $0.healthKit = client
+        } operation: {
+            let store = HydrationDetailStore()
+            await store.load(goalML: 2_000)
+
+            #expect(store.samples == [noon, morning])
+        }
+    }
+
     @Test("The screen reads today's glasses and the week in one go")
     @MainActor
     func storeLoads() async {
