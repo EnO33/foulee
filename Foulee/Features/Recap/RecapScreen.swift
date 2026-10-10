@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The Bilan: the last seven days or the last month (issues #344, #346, #350).
+/// The Bilan: the week so far or the last month (issues #344, #346, #350, #363).
 ///
 /// Read top to bottom like a story: what the period meant (the verdict and
 /// the goal ring), how it went day by day — a tap on a day lays out its
@@ -121,7 +121,7 @@ private struct RecapContent: View {
                     .transition(.opacity)
             }
             if !recap.isEmpty {
-                section(isWeek ? "Par rapport aux 7 jours d'avant" : "Par rapport au mois d'avant") {
+                section(isWeek ? "Par rapport à la semaine dernière" : "Par rapport au mois d'avant") {
                     RecapComparison(recap: recap, isRevealed: isRevealed)
                 }
                 RecapHighlights(recap: recap)

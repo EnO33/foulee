@@ -131,8 +131,8 @@ struct HydrationTimeline: View {
     }
 }
 
-/// The last seven days (issue #355): a ring a day in the colour of water, the
-/// days the goal held, and the daily mean.
+/// The week (issues #355, #363): a ring a day in the colour of water, Monday
+/// first, the days still to come pale; the days the goal held, and the mean.
 struct HydrationWeekView: View {
     let history: HydrationHistory
 
@@ -153,6 +153,19 @@ struct HydrationWeekView: View {
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(Self.dayFormatter.string(from: day.date))
                     .accessibilityValue("\(litres(day.milliliters)) litre")
+                }
+                ForEach(history.daysToCome, id: \.self) { date in
+                    VStack(spacing: 6) {
+                        UpcomingDayRing(lineWidth: 4.5)
+                        Text(Self.letterFormatter.string(from: date).uppercased())
+                            .font(FouleeFont.caption.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                        Text(" ")
+                            .font(FouleeFont.caption)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(Self.dayFormatter.string(from: date)) : à venir")
                 }
             }
             HStack(spacing: 6) {

@@ -2,7 +2,7 @@ import Dependencies
 import Foundation
 import Observation
 
-/// Loads the Bilan (issues #344, #350): the recap of the last seven days and
+/// Loads the Bilan (issues #344, #350, #363): the recap of the week so far and
 /// of the last month, and their outings day by day.
 ///
 /// One read of Santé covers both periods and the two before them: the series
