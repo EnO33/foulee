@@ -96,8 +96,9 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
             HydrationNotification.confirm(kind: "failed", amount: glassML)
             return
         }
+        let sample: UUID
         do {
-            try await healthKit.logWater(glassML)
+            sample = try await healthKit.logWater(glassML)
         } catch {
             HydrationNotification.confirm(kind: "failed", amount: glassML)
             return
@@ -108,9 +109,13 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
             SharedStore.updateWater(intakeML: total)
         }
         WidgetCenter.shared.reloadAllTimelines()
-        HydrationNotification.confirm(kind: "drank", amount: glassML)
         // Shift today's reminder grid: next one a full interval from now,
         // not 3 minutes later because a fixed slot was coming up.
-        await HydrationReminderScheduler().recordDrinkAndReschedule(defaults: defaults)
+        let previous = await HydrationReminderScheduler().recordDrinkAndReschedule(defaults: defaults)
+        HydrationNotification.confirm(
+            kind: "drank",
+            amount: glassML,
+            undo: HydrationNotification.Undo(sample: sample, milliliters: glassML, previousDrinkAt: previous)
+        )
     }
 }

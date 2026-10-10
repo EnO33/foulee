@@ -98,7 +98,8 @@ struct ScreenshotModeTests {
     func doublesNeverWrite() async throws {
         let health = ScreenshotDoubles.healthKit
         try await health.saveWorkout(WalkSession(startedAt: ScreenshotSeed.instant))
-        try await health.logWater(500)
+        _ = try await health.logWater(500)
+        try await health.deleteWater(UUID())
         let water = try await health.todayWaterML()
         #expect(water == ScreenshotSeed.waterML)
     }

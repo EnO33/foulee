@@ -7,7 +7,7 @@ import Foundation
 /// untouched.
 ///
 /// **Read-only by construction.** Every closure that would write something —
-/// `saveWorkout`, `logWater`, `enableBackgroundDelivery`, the Connect IQ
+/// `saveWorkout`, `logWater`, `deleteWater`, `enableBackgroundDelivery`, the Connect IQ
 /// initializer, every notification scheduler — is `{}`. Capturing a session
 /// therefore records no `HKWorkout`, tapping « J'ai bu » stores no
 /// `dietaryWater` sample, and no observer is registered against the real
@@ -31,7 +31,8 @@ enum ScreenshotDoubles {
         // The other write. Tapping « J'ai bu » on camera logs nothing; the card
         // keeps showing the seeded intake, which is what makes the capture
         // reproducible anyway.
-        logWater: { _ in },
+        logWater: { _ in UUID() },
+        deleteWater: { _ in },
         todayWaterML: { ScreenshotSeed.waterML },
         waterWriteDenied: { false },
         garminStatus: { ScreenshotSeed.garminStatus },
