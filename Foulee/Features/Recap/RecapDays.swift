@@ -12,8 +12,6 @@ struct RecapDayRing: View {
     var lineWidth: CGFloat = 4
     /// `false` draws the ring empty, so the reveal can fill it.
     var isRevealed = true
-    /// A day still to come (issue #348): a pale track, neither done nor missed.
-    var isUpcoming = false
 
     private var progress: Double {
         guard isRevealed, goalMinutes > 0 else { return 0 }
@@ -24,10 +22,7 @@ struct RecapDayRing: View {
 
     var body: some View {
         ZStack {
-            if isUpcoming {
-                Circle()
-                    .stroke(Color.gray.opacity(0.1), lineWidth: lineWidth)
-            } else if day.isPlanned || day.minutes > 0 {
+            if day.isPlanned || day.minutes > 0 {
                 Circle()
                     .stroke(Color.gray.opacity(0.18), lineWidth: lineWidth)
                 Circle()
@@ -75,9 +70,12 @@ struct RecapChangeChip: View {
     }
 }
 
-/// The period day by day: seven rings for a week, a calendar for a month.
+/// The period day by day (issues #346, #350): seven rings for the week, a
+/// calendar for the month. Each day is a button that picks it, so the Bilan
+/// can show its outings.
 struct RecapDaysView: View {
     let recap: Recap
+    @Binding var selection: Date?
     var isRevealed = true
 
     private static let weekdayLetters = ["L", "M", "M", "J", "V", "S", "D"]
@@ -89,22 +87,29 @@ struct RecapDaysView: View {
         }
     }
 
+    /// Rolling, so the letters come from each date rather than from a Monday.
     private var week: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             ForEach(Array(recap.days.enumerated()), id: \.element.id) { index, day in
-                VStack(spacing: 6) {
-                    RecapDayRing(day: day, goalMinutes: recap.goalMinutes, lineWidth: 5, isRevealed: isRevealed)
-                        .animation(.easeOut(duration: 0.6).delay(Double(index) * 0.05), value: isRevealed)
-                    Text(Self.weekdayLetters[index % 7])
-                        .font(FouleeFont.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text(day.minutes > 0 ? "\(day.minutes)" : "–")
-                        .font(FouleeFont.caption.monospacedDigit())
-                        .foregroundStyle(day.minutes > 0 ? .primary : .tertiary)
+                let isSelected = day.date == selection
+                dayButton(day) {
+                    VStack(spacing: 6) {
+                        RecapDayRing(day: day, goalMinutes: recap.goalMinutes, lineWidth: 4.5, isRevealed: isRevealed)
+                            .animation(.easeOut(duration: 0.6).delay(Double(index) * 0.05), value: isRevealed)
+                        Text(Self.letterFormatter.string(from: day.date).uppercased())
+                            .font(FouleeFont.caption.weight(.semibold))
+                            .foregroundStyle(isSelected ? FouleeColor.accentMid : .secondary)
+                        Text(day.minutes > 0 ? "\(day.minutes)" : "–")
+                            .font(FouleeFont.caption.monospacedDigit())
+                            .foregroundStyle(day.minutes > 0 ? .primary : .tertiary)
+                    }
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(isSelected ? FouleeColor.accentMid.opacity(0.14) : .clear)
+                    }
                 }
-                .frame(maxWidth: .infinity)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(accessibilityText(for: day))
             }
         }
     }
@@ -112,27 +117,41 @@ struct RecapDaysView: View {
     private var month: some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
         let leading = recap.days.first.map { Self.mondayOffset(of: $0.date) } ?? 0
-        return VStack(spacing: 8) {
-            LazyVGrid(columns: columns, spacing: 6) {
-                ForEach(Array(Self.weekdayLetters.enumerated()), id: \.offset) { _, letter in
-                    Text(letter)
-                        .font(FouleeFont.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-                ForEach(0..<leading, id: \.self) { _ in Color.clear.aspectRatio(1, contentMode: .fit) }
-                ForEach(Array(recap.days.enumerated()), id: \.element.id) { index, day in
+        return LazyVGrid(columns: columns, spacing: 6) {
+            ForEach(Array(Self.weekdayLetters.enumerated()), id: \.offset) { _, letter in
+                Text(letter)
+                    .font(FouleeFont.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(0..<leading, id: \.self) { _ in Color.clear.aspectRatio(1, contentMode: .fit) }
+            ForEach(Array(recap.days.enumerated()), id: \.element.id) { index, day in
+                let isSelected = day.date == selection
+                dayButton(day) {
                     RecapDayRing(day: day, goalMinutes: recap.goalMinutes, lineWidth: 3, isRevealed: isRevealed)
                         .overlay {
                             Text("\(index + 1)")
                                 .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(isSelected ? FouleeColor.accentMid : .secondary)
+                        }
+                        .background {
+                            Circle().fill(isSelected ? FouleeColor.accentMid.opacity(0.16) : .clear)
                         }
                         .animation(.easeOut(duration: 0.6).delay(Double(index) * 0.012), value: isRevealed)
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel(accessibilityText(for: day))
                 }
             }
         }
+    }
+
+    private func dayButton<Content: View>(_ day: Recap.Day, @ViewBuilder label: () -> Content) -> some View {
+        Button {
+            withAnimation(.snappy) { selection = day.date }
+        } label: {
+            label().contentShape(Rectangle())
+        }
+        .buttonStyle(.pressable)
+        .accessibilityLabel(accessibilityText(for: day))
+        .accessibilityHint("Affiche les sorties de ce jour")
+        .accessibilityAddTraits(day.date == selection ? .isSelected : [])
     }
 
     private func accessibilityText(for day: Recap.Day) -> String {
@@ -147,9 +166,18 @@ struct RecapDaysView: View {
         (Calendar.iso8601Monday.component(.weekday, from: date) + 5) % 7
     }
 
+    private static let french = Locale(identifier: "fr_FR")
+
+    private static let letterFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = french
+        formatter.dateFormat = "EEEEE"
+        return formatter
+    }()
+
     private static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = french
         formatter.dateFormat = "EEEE d MMMM"
         return formatter
     }()

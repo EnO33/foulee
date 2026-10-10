@@ -458,8 +458,8 @@ final class TodayStore {
         return !activeDays.calendarWeekdays.contains(weekday)
     }
 
-    /// Minutes for Monday → Sunday of the **current** ISO week, aligned with
-    /// the labels `L M M J V S D` in `TodayWeekRings`. Days that haven't
+    /// Minutes for Monday → Sunday of the **current** ISO week — the « Semaine »
+    /// tab's minutes tile and the widgets. Days that haven't
     /// happened yet (and days missing from the history) come out as 0.
     private func currentWeekMinutes(history: [DailyMinutes]) -> [Int] {
         let calendar = Calendar.iso8601Monday

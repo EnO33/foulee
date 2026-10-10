@@ -123,7 +123,7 @@ elle-même.
 Tes réglages (objectif, activité, fenêtre, thème, rappels) sont enregistrés
 **localement** sur ton appareil. Désinstaller l'app les supprime.
 
-Le **récap** de la semaine et du mois est calculé sur ton iPhone, à partir des
+Le **bilan** des 7 derniers jours et du mois est calculé sur ton iPhone, à partir des
 données Santé que Foulée lit déjà. Sa notification est programmée localement :
 rien n'est envoyé nulle part pour la produire.
 

@@ -5,8 +5,8 @@ import SwiftUI
 /// distance / calories). Each block is a button that opens the metric's stats.
 ///
 /// **Two tabs, one card** (issue #327). « Semaine » took the place of the
-/// separate « Cette semaine » card: the same four tiles summed from Monday,
-/// then the week's bars. And the tabs are « Jour » / « Semaine » rather than
+/// separate « Cette semaine » card: the same four tiles summed from Monday.
+/// The day by day lives in the Bilan (#350), not under them. And the tabs are « Jour » / « Semaine » rather than
 /// « Aujourd'hui », which the screen's own title already says.
 struct TodayStatsGrid: View {
     enum Period: Hashable {
@@ -15,10 +15,7 @@ struct TodayStatsGrid: View {
     }
 
     var snapshot: TodaySnapshot
-    var activeDays: Set<Weekday>
     var onSelectMetric: (WalkMetric) -> Void
-    /// The week's rings open the outing history, as the old card did.
-    var onShowHistory: () -> Void
 
     @Dependency(\.healthKit) private var healthKit
     @State private var period: Period = .day
@@ -39,13 +36,6 @@ struct TodayStatsGrid: View {
             .pickerStyle(.segmented)
             LazyVGrid(columns: Self.columns, spacing: 18) {
                 tiles
-            }
-            if period == .week {
-                Button(action: onShowHistory) {
-                    TodayWeekRings(snapshot: snapshot, activeDays: activeDays)
-                }
-                .buttonStyle(.pressable)
-                .accessibilityHint("Voir l'historique de tes sorties")
             }
         }
         .padding(18)
@@ -68,8 +58,8 @@ struct TodayStatsGrid: View {
             distanceTile(snapshot.distanceKm.kmText(fractionDigits: 1))
             caloriesTile(snapshot.calories.formattedFR)
         case .week:
-            // Minutes are known at once — they are the week bars' own
-            // figures. The three others wait for HealthKit, and say « — »
+            // Minutes are known at once — the snapshot already holds the
+            // week's. The three others wait for HealthKit, and say « — »
             // rather than a zero that would read as a real total.
             stepsTile(weekTotals.map { $0.steps.formattedFR } ?? "—", sub: nil)
             minutesTile("\(snapshot.weekMinutes.reduce(0, +))", sub: "min")

@@ -1,12 +1,15 @@
 import SwiftUI
 
-/// The way into the recaps from the home (issues #344, #346): last week at a
-/// glance — a ring per day, the minutes, the goals held — so the card already
-/// tells something before it is tapped. A tap opens the week; the link under
-/// it, the month.
+/// The way into the Bilan from the home (issues #344, #346, #350): the last
+/// seven days at a glance — a ring per day, the minutes, the goals held — so
+/// the card already tells something before it is tapped. A tap opens the
+/// week and its outings; the link under it, the month.
 struct RecapHomeCard: View {
     let goalMinutes: Int
     let activeDays: Set<Weekday>
+    /// Today's minutes: today is one of the seven days, so the card reads
+    /// again whenever they move.
+    let todayMinutes: Int
     var onOpen: (RecapPeriod.Kind) -> Void
 
     @State private var store = RecapStore()
@@ -28,7 +31,7 @@ struct RecapHomeCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .fouleeGlass(cornerRadius: 22)
-        .task(id: "\(goalMinutes)-\(activeDays.bitmask)") {
+        .task(id: "\(goalMinutes)-\(activeDays.bitmask)-\(todayMinutes)") {
             await store.load(goalMinutes: goalMinutes, activeDays: activeDays)
         }
     }
@@ -36,7 +39,7 @@ struct RecapHomeCard: View {
     private var weekPreview: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label("Ta semaine passée", systemImage: "chart.bar.doc.horizontal")
+                Label("Tes 7 derniers jours", systemImage: "chart.bar.doc.horizontal")
                     .font(FouleeFont.headline)
                     .foregroundStyle(.primary)
                 Spacer()
@@ -65,14 +68,14 @@ struct RecapHomeCard: View {
                     RecapChangeChip(old: Double(recap.previous.minutes), new: Double(recap.totals.minutes))
                 }
             } else {
-                Text("Ton bilan de la semaine dernière, jour par jour.")
+                Text("Ton bilan des 7 derniers jours, jour par jour.")
                     .font(FouleeFont.footnote)
                     .foregroundStyle(.secondary)
             }
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityHint("Ouvre le récap de la semaine")
+        .accessibilityHint("Ouvre le bilan de la semaine et ses sorties")
     }
 }
 
