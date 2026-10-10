@@ -122,7 +122,12 @@ struct TodayScreen: View {
                 ) { isShowingStreak = false }
                 .preferredColorScheme(preferredScheme)
             }
-            .modifier(RecapPresentation(goalMinutes: store.minutesGoal, activeDays: preferences.activeDays, colorScheme: preferredScheme))
+            .modifier(RecapPresentation(
+                goalMinutes: store.minutesGoal,
+                activeDays: preferences.activeDays,
+                waterGoalML: preferences.hydrationEnabled ? preferences.hydrationGoalML : nil,
+                colorScheme: preferredScheme
+            ))
             .sheet(isPresented: $isShowingSettings) {
                 SettingsScreen(preferences: preferences)
                     .overlay(alignment: .topTrailing) {

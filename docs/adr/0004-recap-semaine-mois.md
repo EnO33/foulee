@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350)
+- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356)
 
 ## Contexte
 
@@ -85,6 +85,19 @@ Après D5, la semaine se lisait à trois endroits : l'onglet Semaine de l'accuei
 - **La notification de la semaine passe au dimanche à 19 h.** Une fenêtre glissante ne couvre du lundi au dimanche que le dimanche. Le lundi à 9 h, elle aurait couvert du mardi au lundi matin, presque vide. La notification du mois ne bouge pas.
 
 **Écarté** : garder trois onglets (7 jours, semaine terminée, mois). La semaine terminée et les 7 derniers jours se recouvrent presque entièrement. Deux onglets aussi proches disent la même chose deux fois.
+
+### D7 — L'hydratation dans le Bilan (#356)
+
+Quand l'hydratation est activée, chaque onglet du Bilan se termine par un bloc **Hydratation** :
+
+- la moyenne d'eau par jour sur toute la période, avec son écart sur la période d'avant (même puce que les autres mesures) ;
+- les jours où l'objectif d'eau est tenu, sur le nombre de jours de la période.
+
+Le calcul (`RecapWater.make`) est pur et testé. Il part des totaux quotidiens de `dietaryWater` (`waterSeries`, ADR 0005), lus en même temps que le reste du Bilan, sur la même profondeur.
+
+- **La moyenne porte sur tous les jours de la période**, aujourd'hui compris pour la semaine glissante. Un jour sans eau notée compte pour zéro, comme un jour sans minutes compte dans le total.
+- **Tous les jours comptent pour l'objectif d'eau**, pas seulement les jours actifs : on boit aussi les jours de repos.
+- **Une lecture d'eau refusée n'empêche pas le Bilan** : le bloc disparaît, le reste s'affiche. Hydratation coupée, l'eau n'est pas lue du tout.
 
 ## Ce qui reste ouvert
 
