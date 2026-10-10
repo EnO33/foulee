@@ -3,7 +3,7 @@ import SwiftUI
 
 /// The Hydratation screen (issue #355), opened from the home card: today as a
 /// drop filling up with its rhythm, quick amounts to log, the day glass by
-/// glass, and the last seven days — the Bilan's grammar, in water.
+/// glass, and the week so far — the Bilan's grammar, in water.
 struct HydrationScreen: View {
     let preferences: UserPreferences
     let store: HydrationStore
@@ -34,7 +34,7 @@ struct HydrationScreen: View {
                     HydrationTimeline(samples: detail.samples)
                 }
                 if let history = detail.history {
-                    section("7 derniers jours") {
+                    section("Cette semaine") {
                         HydrationWeekView(history: history)
                     }
                 } else if detail.lastError != nil {

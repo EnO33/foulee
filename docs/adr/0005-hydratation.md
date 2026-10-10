@@ -1,7 +1,7 @@
 # ADR 0005 — Hydratation : la carte, l'annulation et l'écran dédié
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#353](https://github.com/EnO33/foulee/issues/353), [#354](https://github.com/EnO33/foulee/issues/354), [#355](https://github.com/EnO33/foulee/issues/355)
+- **Issues** : [#353](https://github.com/EnO33/foulee/issues/353), [#354](https://github.com/EnO33/foulee/issues/354), [#355](https://github.com/EnO33/foulee/issues/355), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363)
 
 ## Contexte
 
@@ -31,8 +31,8 @@ Toucher la carte ouvre un écran, dans le langage du Bilan :
 
 - **Aujourd'hui** : une goutte qui se remplit, les litres et le rythme.
 - **Les quantités rapides**, toutes visibles sur l'écran : petit verre, verre réglé, grand verre, bouteille (`HydrationServing`). Ce sont des tailles fixes, dérivées du verre réglé et arrondies à 10 mL, et la bouteille reste la plus grande. Sur l'accueil, un toucher reste un verre, et les autres tailles sont à un appui long.
-- **Verre par verre** : chaque échantillon du jour à son heure, avec sa quantité et l'app qui l'a écrit. Comme la chronologie des sorties, elle lit toutes les sources : un verre noté sur la montre ou dans une autre app y figure.
-- **7 derniers jours** : un anneau par jour à la couleur de l'eau, les jours où l'objectif est tenu, et la moyenne (`HydrationHistory`, pur et testé).
+- **Verre par verre** : chaque échantillon du jour à son heure, du plus récent au plus ancien (#361), avec sa quantité et l'app qui l'a écrit. Comme la chronologie des sorties, elle lit toutes les sources : un verre noté sur la montre ou dans une autre app y figure.
+- **Cette semaine** (#363) : un anneau par jour à la couleur de l'eau, du lundi au dimanche, les jours à venir en piste pâle ; les jours où l'objectif est tenu et la moyenne portent sur les jours écoulés (`HydrationHistory`, pur et testé). C'est la semaine du Bilan (ADR 0004, D8).
 
 Deux lectures Santé s'ajoutent : `waterToday` (les échantillons du jour) et `waterSeries` (les totaux quotidiens). Elles vivent dans `HealthKitClient+Water`, à côté de la requête de statistiques partagée (`statisticsCollection`, généralisée à un type quelconque). L'écran se relit chaque fois que l'apport du jour bouge : un verre ici, un verre de la montre, un verre annulé.
 

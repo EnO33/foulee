@@ -1,10 +1,10 @@
 import Foundation
 import Observation
 
-/// The recap notifications (issues #344, #350): one every Sunday evening for
-/// the seven days that end, one every 1st for the month that ended. Identifiers and content in
-/// one place, read by the client that schedules them and by the delegate that
-/// opens the recap on a tap.
+/// The recap notifications (issues #344, #350, #363): one every Sunday evening
+/// for the week that ends, one every 1st for the month that ended. Identifiers
+/// and content in one place, read by the client that schedules them and by
+/// the delegate that opens the recap on a tap.
 ///
 /// **Fixed text.** A notification is scheduled ahead and cannot read Santé
 /// when it fires, so it announces the recap rather than quoting it — the
@@ -22,9 +22,9 @@ enum RecapNotification {
         return RecapPeriod.Kind(rawValue: String(identifier.dropFirst(prefix.count)))
     }
 
-    /// Sunday at 19 h for the week: the Bilan's seven days are the rolling
-    /// ones (#350), so they cover Monday to Sunday only on a Sunday, once the
-    /// day is mostly behind. The 1st at 9 h for the month, which has ended.
+    /// Sunday at 19 h for the week: the Bilan's week is the one in progress
+    /// (#363), whole only on a Sunday, once the day is mostly behind. The 1st
+    /// at 9 h for the month, which has ended.
     static func trigger(for kind: RecapPeriod.Kind) -> DateComponents {
         var components = DateComponents()
         components.minute = 0

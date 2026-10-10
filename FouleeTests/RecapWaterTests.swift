@@ -14,11 +14,11 @@ struct RecapWaterTests {
         calendar.date(from: DateComponents(year: 2026, month: month, day: day, hour: hour))!
     }
 
-    /// Saturday 10 October: the week is 4 → 10 October, the one before 27
-    /// September → 3 October.
+    /// Saturday 10 October.
     private var saturday: Date { day(10, 10, hour: 18) }
 
-    private var week: RecapPeriod { RecapPeriod.lastDays(endingOn: saturday, calendar: calendar) }
+    /// Seven days, 4 → 10 October; the period before is 27 September → 3 October.
+    private var week: RecapPeriod { RecapPeriod(kind: .week, start: day(10, 4), end: day(10, 11)) }
 
     @Test("A day's mean over the whole period, the days held, and the period before")
     func makesTheWater() {
@@ -61,8 +61,10 @@ struct RecapWaterTests {
             let store = RecapStore()
             await store.load(goalMinutes: 20, activeDays: [], waterGoalML: 2_000)
 
+            // The week so far: Monday 5 → Saturday 10, six days.
             #expect(store.water[.week]?.goalDaysMet == 1)
-            #expect(store.water[.week]?.averageML == 300)
+            #expect(store.water[.week]?.dayCount == 6)
+            #expect(store.water[.week]?.averageML == 350)
             #expect(store.water[.month]?.averageML == 0)
         }
     }

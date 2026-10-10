@@ -48,24 +48,44 @@ struct RecapTests {
         #expect(previous.end == day(2026, 9, 28))
     }
 
-    /// The Bilan's week (issues #348, #350): today and the six before.
-    @Test("The last seven days end with today, and compare with the seven before")
-    func lastSevenDays() {
-        let period = RecapPeriod.lastDays(endingOn: day(2026, 10, 10, hour: 18), calendar: calendar)
-        #expect(period.start == day(2026, 10, 4))
+    /// The Bilan's week (issue #363): Monday through today, compared with the
+    /// same days a week earlier.
+    @Test("The week so far starts on Monday, and compares with the same days last week")
+    func weekSoFar() {
+        let period = RecapPeriod.weekSoFar(at: day(2026, 10, 10, hour: 18), calendar: calendar)
+        #expect(period.start == day(2026, 10, 5))
         #expect(period.end == day(2026, 10, 11))
-        #expect(period.days(calendar: calendar).count == 7)
+        #expect(period.days(calendar: calendar).count == 6)
         let previous = period.previous(calendar: calendar)
-        #expect(previous.start == day(2026, 9, 27))
+        #expect(previous.start == day(2026, 9, 28))
         #expect(previous.end == day(2026, 10, 4))
     }
 
-    /// What the Bilan opens on (issue #350).
-    @Test("The Bilan shows the last seven days and the last finished month")
+    @Test("Sunday is the only day still to come on a Saturday")
+    func daysToCome() {
+        let saturday = RecapPeriod.weekSoFar(at: day(2026, 10, 10, hour: 18), calendar: calendar)
+        #expect(saturday.daysToCome(calendar: calendar) == [day(2026, 10, 11)])
+        let monday = RecapPeriod.weekSoFar(at: day(2026, 10, 5, hour: 8), calendar: calendar)
+        #expect(monday.days(calendar: calendar) == [day(2026, 10, 5)])
+        #expect(monday.daysToCome(calendar: calendar).count == 6)
+        let sunday = RecapPeriod.weekSoFar(at: day(2026, 10, 11, hour: 20), calendar: calendar)
+        #expect(sunday.daysToCome(calendar: calendar).isEmpty)
+        #expect(sunday.days(calendar: calendar).count == 7)
+    }
+
+    @Test("A whole week compares with the whole week before; a month has no days to come")
+    func wholePeriods() {
+        let week = RecapPeriod.lastCompleted(.week, before: day(2026, 10, 10, hour: 12), calendar: calendar)
+        #expect(week.daysToCome(calendar: calendar).isEmpty)
+        #expect(september.daysToCome(calendar: calendar).isEmpty)
+    }
+
+    /// What the Bilan opens on (issues #350, #363).
+    @Test("The Bilan shows the week so far and the last finished month")
     func currentPeriods() {
         let saturday = day(2026, 10, 10, hour: 18)
         let week = RecapPeriod.current(.week, at: saturday, calendar: calendar)
-        #expect(week == RecapPeriod.lastDays(endingOn: saturday, calendar: calendar))
+        #expect(week == RecapPeriod.weekSoFar(at: saturday, calendar: calendar))
         let month = RecapPeriod.current(.month, at: saturday, calendar: calendar)
         #expect(month.start == day(2026, 9, 1))
         #expect(month.end == day(2026, 10, 1))

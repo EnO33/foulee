@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356)
+- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363)
 
 ## Contexte
 
@@ -69,6 +69,8 @@ Le regroupement des sorties par jour quitte la vue pour le modèle (`OutingDay.l
 
 ### D6 — Le Bilan absorbe les 7 derniers jours (#350)
 
+> **Amendée par D8** : la semaine du Bilan est désormais la semaine en cours, du lundi au dimanche, et non plus une fenêtre glissante.
+
 Après D5, la semaine se lisait à trois endroits : l'onglet Semaine de l'accueil, la feuille « 7 derniers jours » et le récap de la semaine écoulée. C'était trop pour un même sujet. Il n'en reste qu'un, le **Bilan**.
 
 - **L'onglet Semaine du Bilan couvre les 7 derniers jours glissants**, aujourd'hui compris (`RecapPeriod.current`). Il reprend tout ce que montrait la feuille, qui disparaît :
@@ -98,6 +100,19 @@ Le calcul (`RecapWater.make`) est pur et testé. Il part des totaux quotidiens d
 - **La moyenne porte sur tous les jours de la période**, aujourd'hui compris pour la semaine glissante. Un jour sans eau notée compte pour zéro, comme un jour sans minutes compte dans le total.
 - **Tous les jours comptent pour l'objectif d'eau**, pas seulement les jours actifs : on boit aussi les jours de repos.
 - **Une lecture d'eau refusée n'empêche pas le Bilan** : le bloc disparaît, le reste s'affiche. Hydratation coupée, l'eau n'est pas lue du tout.
+
+### D8 — La semaine en cours, du lundi au dimanche (#361, #363)
+
+La fenêtre glissante de D6 faisait commencer la rangée un dimanche le samedi, un mardi le lundi. Ce n'est pas la semaine telle qu'on la vit, et ça ne correspond pas aux autres semaines de l'app, qui sont ISO et commencent le lundi.
+
+- **L'onglet Semaine est la semaine en cours** (`RecapPeriod.weekSoFar`), du lundi à aujourd'hui. Les jours à venir sont dessinés en piste pâle (`daysToCome`, `UpcomingDayRing`) : ni faits, ni manqués, et on ne peut pas les sélectionner. La carte de l'accueil devient « Ta semaine ».
+- **Les totaux et les objectifs portent sur les jours écoulés.**
+- **La comparaison se fait sur les mêmes jours** : la période d'avant d'une semaine est la même plage décalée de sept jours (`previous`). Un samedi, on compare lundi→samedi à lundi→samedi, et une semaine entière à la semaine entière d'avant. Comparer six jours à sept aurait toujours fait baisser la semaine en cours.
+- **La notification du dimanche à 19 h** (D6) tombe sur une semaine presque complète.
+- **Le lundi matin**, la semaine ne compte qu'un jour. C'est assumé : c'est la semaine qui commence. La semaine écoulée a eu son bilan la veille au soir.
+- **Les chronologies listent le plus récent en premier** (#361) : la dernière sortie du jour en haut, comme le dernier verre (ADR 0005).
+
+L'hydratation (D7 et ADR 0005, D3) suit la même semaine : la moyenne et les jours tenus portent sur les jours écoulés.
 
 ## Ce qui reste ouvert
 

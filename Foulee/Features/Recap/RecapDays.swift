@@ -44,6 +44,20 @@ struct RecapDayRing: View {
     }
 }
 
+/// A day of the week still to come (issue #363): a pale track, neither done
+/// nor missed — shared by the Bilan, its home card and the water week.
+struct UpcomingDayRing: View {
+    var lineWidth: CGFloat = 4
+
+    var body: some View {
+        Circle()
+            .stroke(Color.gray.opacity(0.1), lineWidth: lineWidth)
+            .padding(lineWidth / 2)
+            .aspectRatio(1, contentMode: .fit)
+            .accessibilityHidden(true)
+    }
+}
+
 /// « ↑ 12 % » — the change from the period before, or nothing when there was
 /// nothing before. An arrow as well as a colour, so the sign never rests on
 /// colour alone.
@@ -70,9 +84,9 @@ struct RecapChangeChip: View {
     }
 }
 
-/// The period day by day (issues #346, #350): seven rings for the week, a
-/// calendar for the month. Each day is a button that picks it, so the Bilan
-/// can show its outings.
+/// The period day by day (issues #346, #350, #363): the week's seven rings,
+/// Monday first, those still to come pale; a calendar for the month. Each day
+/// lived is a button that picks it, so the Bilan can show its outings.
 struct RecapDaysView: View {
     let recap: Recap
     @Binding var selection: Date?
@@ -87,7 +101,6 @@ struct RecapDaysView: View {
         }
     }
 
-    /// Rolling, so the letters come from each date rather than from a Monday.
     private var week: some View {
         HStack(spacing: 6) {
             ForEach(Array(recap.days.enumerated()), id: \.element.id) { index, day in
@@ -110,6 +123,20 @@ struct RecapDaysView: View {
                             .fill(isSelected ? FouleeColor.accentMid.opacity(0.14) : .clear)
                     }
                 }
+            }
+            ForEach(recap.period.daysToCome(), id: \.self) { date in
+                VStack(spacing: 6) {
+                    UpcomingDayRing(lineWidth: 4.5)
+                    Text(Self.letterFormatter.string(from: date).uppercased())
+                        .font(FouleeFont.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                    Text(" ")
+                        .font(FouleeFont.caption)
+                }
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(Self.dayFormatter.string(from: date)) : à venir")
             }
         }
     }
