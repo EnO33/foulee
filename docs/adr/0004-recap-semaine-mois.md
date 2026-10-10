@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346)
+- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348)
 
 ## Contexte
 
@@ -49,6 +49,21 @@ La première version (#344) alignait des chiffres, un graphique en barres et qua
 Les anneaux et les barres se remplissent à l'ouverture. Changer de période rejoue l'animation.
 
 **Sur l'accueil**, la carte passe sous l'hydratation et devient un aperçu de la semaine passée : un anneau par jour, les minutes, les objectifs tenus et l'écart. Elle dit déjà quelque chose avant d'être touchée.
+
+### D5 — Une seule grammaire pour la semaine et les 7 derniers jours (#348)
+
+Après D4, deux écrans voisins parlaient encore l'ancien langage : les barres « Minutes par jour » de l'onglet Semaine et la liste du Résumé 7 jours. Tous deux passent aux anneaux du récap.
+
+- **Onglet Semaine** : une rangée d'anneaux, du lundi à aujourd'hui. Un jour de repos est pointillé, un jour à venir est une piste pâle, aujourd'hui est mis en avant.
+- **« 7 derniers jours »**, qui remplace le Résumé 7 jours :
+  - l'en-tête du récap sur une **période glissante** (`RecapPeriod.lastDays`) ;
+  - une frise d'anneaux pour choisir un jour ;
+  - la **chronologie** de ses sorties, chacune à son heure et à la couleur de son sport, qui ouvre son détail ;
+  - la comparaison avec les 7 jours d'avant.
+
+La période qui précède une semaine devient « les 7 jours d'avant ». C'est identique à la semaine ISO précédente pour une semaine calendaire, et c'est la seule réponse juste pour une période glissante.
+
+Le regroupement des sorties par jour quitte la vue pour le modèle (`OutingDay.lastDays`). Son ordre reste celui de #218 et #317 : portions regroupées, puis doublons retirés, puis rangement par jour. Ses tests suivent.
 
 ## Ce qui reste ouvert
 
