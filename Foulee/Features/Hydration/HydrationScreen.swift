@@ -10,6 +10,7 @@ struct HydrationScreen: View {
     var onClose: () -> Void
 
     @State private var detail = HydrationDetailStore()
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Dependency(\.date) private var date
 
     private var goalML: Int { preferences.hydrationGoalML }
@@ -68,7 +69,11 @@ struct HydrationScreen: View {
 
     /// Every quick amount on view, rather than behind the home's long press.
     private var servings: some View {
-        HStack(spacing: 8) {
+        // Four across, or two by two at the accessibility sizes (#371).
+        LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: dynamicTypeSize.isAccessibilitySize ? 2 : 4),
+            spacing: 8
+        ) {
             ForEach(HydrationServing.presets(glassML: preferences.hydrationGlassML)) { serving in
                 Button {
                     Task { await store.logGlass(ml: serving.milliliters) }

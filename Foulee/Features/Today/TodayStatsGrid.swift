@@ -21,11 +21,13 @@ struct TodayStatsGrid: View {
     @State private var period: Period = .day
     /// Pas, distance and calories since Monday; `nil` until read.
     @State private var weekTotals: WeekTotals?
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    private static let columns = [
-        GridItem(.flexible(), spacing: 18),
-        GridItem(.flexible(), spacing: 18)
-    ]
+    /// Two tiles a row, one at the accessibility text sizes (#371), where two
+    /// side by side would shrink their figures past reading.
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: 18), count: dynamicTypeSize.isAccessibilitySize ? 1 : 2)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -34,7 +36,7 @@ struct TodayStatsGrid: View {
                 Text("Semaine").tag(Period.week)
             }
             .pickerStyle(.segmented)
-            LazyVGrid(columns: Self.columns, spacing: 18) {
+            LazyVGrid(columns: columns, spacing: 18) {
                 tiles
             }
         }
