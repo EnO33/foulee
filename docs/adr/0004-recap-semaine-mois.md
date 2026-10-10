@@ -1,11 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-<<<<<<< HEAD
 - **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356)
-=======
-- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350)
->>>>>>> origin/main
 
 ## Contexte
 
@@ -90,7 +86,6 @@ Après D5, la semaine se lisait à trois endroits : l'onglet Semaine de l'accuei
 
 **Écarté** : garder trois onglets (7 jours, semaine terminée, mois). La semaine terminée et les 7 derniers jours se recouvrent presque entièrement. Deux onglets aussi proches disent la même chose deux fois.
 
-<<<<<<< HEAD
 ### D7 — L'hydratation dans le Bilan (#356)
 
 Quand l'hydratation est activée, chaque onglet du Bilan se termine par un bloc **Hydratation** :
@@ -104,8 +99,6 @@ Le calcul (`RecapWater.make`) est pur et testé. Il part des totaux quotidiens d
 - **Tous les jours comptent pour l'objectif d'eau**, pas seulement les jours actifs : on boit aussi les jours de repos.
 - **Une lecture d'eau refusée n'empêche pas le Bilan** : le bloc disparaît, le reste s'affiche. Hydratation coupée, l'eau n'est pas lue du tout.
 
-=======
->>>>>>> origin/main
 ## Ce qui reste ouvert
 
 - **Un récap sur la montre**, en complication ou à l'ouverture le lundi, si la version iPhone est adoptée.
