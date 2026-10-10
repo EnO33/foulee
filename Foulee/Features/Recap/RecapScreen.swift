@@ -9,15 +9,24 @@ import SwiftUI
 struct RecapScreen: View {
     let goalMinutes: Int
     let activeDays: Set<Weekday>
+    /// The hydration goal, `nil` while hydration is off (issue #356).
+    let waterGoalML: Int?
     var onClose: () -> Void
 
     @State private var kind: RecapPeriod.Kind
     @State private var store = RecapStore()
 
-    init(kind: RecapPeriod.Kind, goalMinutes: Int, activeDays: Set<Weekday>, onClose: @escaping () -> Void) {
+    init(
+        kind: RecapPeriod.Kind,
+        goalMinutes: Int,
+        activeDays: Set<Weekday>,
+        waterGoalML: Int?,
+        onClose: @escaping () -> Void
+    ) {
         _kind = State(initialValue: kind)
         self.goalMinutes = goalMinutes
         self.activeDays = activeDays
+        self.waterGoalML = waterGoalML
         self.onClose = onClose
     }
 
@@ -36,7 +45,7 @@ struct RecapScreen: View {
                     if let recap = store.recaps[kind] {
                         // Keyed on the period, so switching replays the reveal
                         // and starts again from its own day.
-                        RecapContent(recap: recap, outings: store.outings[kind] ?? [])
+                        RecapContent(recap: recap, outings: store.outings[kind] ?? [], water: store.water[kind])
                             .id(kind)
                             .transition(.opacity)
                     } else if store.isLoading {
@@ -58,7 +67,7 @@ struct RecapScreen: View {
             .navigationDestination(for: WorkoutSummary.self) { WorkoutDetailSheet(summary: $0) }
         }
         .presentationBackground { SheetBackground() }
-        .task { await store.load(goalMinutes: goalMinutes, activeDays: activeDays) }
+        .task { await store.load(goalMinutes: goalMinutes, activeDays: activeDays, waterGoalML: waterGoalML) }
     }
 
     private var header: some View {
@@ -90,6 +99,7 @@ struct RecapScreen: View {
 private struct RecapContent: View {
     let recap: Recap
     let outings: [OutingDay]
+    let water: RecapWater?
 
     @State private var isRevealed = false
     /// The day whose outings are laid out: the latest with one, else the last.
@@ -115,6 +125,11 @@ private struct RecapContent: View {
                     RecapComparison(recap: recap, isRevealed: isRevealed)
                 }
                 RecapHighlights(recap: recap)
+            }
+            if let water {
+                section("Hydratation") {
+                    RecapHydration(water: water, isRevealed: isRevealed)
+                }
             }
             healthAppLink
                 .frame(maxWidth: .infinity)
