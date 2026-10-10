@@ -3,6 +3,13 @@ import Foundation
 /// Pure hydration arithmetic — extracted so the card stays declarative and the
 /// rounding rules are unit-tested.
 enum HydrationMath {
+    /// Progress toward the goal, clamped to 0…1 — the screen's drop and the
+    /// week's rings (issue #355).
+    static func progress(intakeML: Int, goalML: Int) -> Double {
+        guard goalML > 0 else { return 0 }
+        return min(Double(intakeML) / Double(goalML), 1)
+    }
+
     static func reachedGoal(intakeML: Int, goalML: Int) -> Bool {
         goalML > 0 && intakeML >= goalML
     }

@@ -2,6 +2,16 @@ import Testing
 @testable import Foulee
 
 @Suite struct HydrationMathTests {
+    @Test func progressClampsToOne() {
+        #expect(HydrationMath.progress(intakeML: 1_000, goalML: 2_000) == 0.5)
+        #expect(HydrationMath.progress(intakeML: 3_000, goalML: 2_000) == 1)
+        #expect(HydrationMath.progress(intakeML: 0, goalML: 2_000) == 0)
+    }
+
+    @Test func progressGuardsZeroGoal() {
+        #expect(HydrationMath.progress(intakeML: 1_000, goalML: 0) == 0)
+    }
+
     @Test func reachedGoal() {
         #expect(HydrationMath.reachedGoal(intakeML: 2_000, goalML: 2_000))
         #expect(HydrationMath.reachedGoal(intakeML: 2_500, goalML: 2_000))
