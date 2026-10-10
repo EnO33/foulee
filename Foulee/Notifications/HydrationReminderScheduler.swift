@@ -112,8 +112,28 @@ struct HydrationReminderScheduler {
     /// lands a full interval later — instead of firing minutes after the
     /// drink. Reads the prefs straight from UserDefaults so it's callable from
     /// the background notification handler too (keys mirror `UserPreferences`).
-    func recordDrinkAndReschedule(defaults: UserDefaults = .standard, now: Date = .now) async {
+    ///
+    /// Returns the drink it replaced, so an undone glass can put it back.
+    @discardableResult
+    func recordDrinkAndReschedule(defaults: UserDefaults = .standard, now: Date = .now) async -> TimeInterval? {
+        let previous = defaults.object(forKey: Self.lastDrinkKey) as? TimeInterval
         defaults.set(now.timeIntervalSince1970, forKey: Self.lastDrinkKey)
+        await reschedule(defaults: defaults, now: now)
+        return previous
+    }
+
+    /// An undone glass (issue #354): the last drink is the one before it
+    /// again, or none, and the grid follows as if the glass was never drunk.
+    func restoreDrinkAndReschedule(previous: TimeInterval?, defaults: UserDefaults = .standard, now: Date = .now) async {
+        if let previous {
+            defaults.set(previous, forKey: Self.lastDrinkKey)
+        } else {
+            defaults.removeObject(forKey: Self.lastDrinkKey)
+        }
+        await reschedule(defaults: defaults, now: now)
+    }
+
+    private func reschedule(defaults: UserDefaults, now: Date) async {
         let enabled = defaults.bool(forKey: "preferences.hydrationEnabled")
             && defaults.bool(forKey: "preferences.hydrationRemindersEnabled")
         guard enabled else { return }

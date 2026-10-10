@@ -69,8 +69,17 @@ struct HealthKitClient: Sendable {
         = { AsyncStream { $0.finish() } }
 
     /// Log one drink to Apple Health as a `dietaryWater` sample of
-    /// `milliliters`. Defaulted to a no-op so existing test stubs compile.
-    var logWater: @Sendable (_ milliliters: Int) async throws -> Void
+    /// `milliliters`, returning the sample's identifier so the glass can be
+    /// taken back (issue #354). Defaulted to a no-op so existing test stubs
+    /// compile.
+    var logWater: @Sendable (_ milliliters: Int) async throws -> UUID
+        = { _ in UUID() }
+
+    /// Delete a `dietaryWater` sample this app wrote — the « Annuler » of a
+    /// glass (issue #354). HealthKit only lets an app delete its own samples,
+    /// so this can never take back water another app logged. Defaulted to a
+    /// no-op.
+    var deleteWater: @Sendable (_ sample: UUID) async throws -> Void
         = { _ in }
 
     /// Total `dietaryWater` logged today, in millilitres. Defaulted to 0.

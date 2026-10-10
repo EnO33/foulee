@@ -20,6 +20,9 @@ l'a enregistré dans Santé.
 Foulée **écrit** aussi dans l'app Santé, si tu le souhaites : tes sorties
 (sous forme de séances, avec leur parcours quand elles sont enregistrées sur
 l'Apple Watch) et l'eau que tu enregistres dans le suivi d'hydratation.
+Quand tu **annules un verre**, Foulée supprime de Santé l'enregistrement
+qu'elle vient d'écrire, et seulement celui-là : Santé ne permet pas à une app
+de supprimer les données écrites par une autre.
 
 Ces données de santé **ne quittent jamais ton appareil** : elles ne sont ni
 transmises à un tiers, ni stockées ailleurs que dans l'app Santé d'Apple, que tu
