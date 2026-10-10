@@ -26,6 +26,10 @@ before. A tap on a day lays out its outings on a timeline. A notification
 announces it every Sunday evening and every 1st of the month: see
 [ADR 0004](docs/adr/0004-recap-semaine-mois.md) (French).
 
+**Hydration** is logged to Santé one glass per tap. The home card draws the
+goal as a row of glasses filling up, and says where the day stands against the
+hydration window set in Réglages — on track, a glass behind, ahead.
+
 ## Compatible watches
 
 - **Apple Watch** — native support (companion app, complications, live workouts).
