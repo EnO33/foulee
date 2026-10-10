@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import Foulee
 
-/// Cover for the *integration point* of #218: `TodayWorkoutsSheet.sections`
+/// Cover for the *integration point* of #218: `OutingDay.lastDays`
 /// deduplicates and only then groups by day.
 ///
 /// `WorkoutDeduplicationTests` pins the algorithm, but nothing pinned the sheet
@@ -11,9 +11,9 @@ import Testing
 /// fixture below is the cross-midnight duplicate the ordering exists for: group
 /// first and the two copies land in different buckets, where neither can ever
 /// see the overlap.
-@Suite("Résumé 7 jours — sections")
+@Suite("7 derniers jours — jours et sorties")
 @MainActor
-struct TodayWorkoutsSheetSectionsTests {
+struct OutingDayTests {
     /// 2024-05-28 12:00 UTC. The calendar below is pinned to GMT so "just
     /// before midnight" means the same thing on CI as on a developer's machine.
     private static let now = Date(timeIntervalSince1970: 1_716_897_600)
@@ -40,7 +40,7 @@ struct TodayWorkoutsSheetSectionsTests {
     @Test("One outing straddling midnight is one row, on the day it began")
     func crossMidnightDuplicateIsOneRowOnTheEarlierDay() {
         // 05-27 23:58 on the watch, the same outing from Garmin at 05-28 00:01.
-        let sections = TodayWorkoutsSheet.sections(
+        let sections = OutingDay.lastDays(
             from: [
                 session(-722, lasting: 30, source: "Apple Watch"),
                 session(-719, lasting: 25, source: "Garmin Connect")
@@ -61,7 +61,7 @@ struct TodayWorkoutsSheetSectionsTests {
 
     @Test("Two writers, one outing, one row — and a real second session survives")
     func duplicatesCollapseWhileDistinctSessionsRemain() {
-        let sections = TodayWorkoutsSheet.sections(
+        let sections = OutingDay.lastDays(
             from: [
                 session(-240, lasting: 45, source: "Apple Watch"),
                 session(-239, lasting: 43, source: "Garmin Connect"),
@@ -78,7 +78,7 @@ struct TodayWorkoutsSheetSectionsTests {
 
     @Test("The window is always seven consecutive days, newest first")
     func alwaysSevenDaysEvenWithoutSessions() {
-        let sections = TodayWorkoutsSheet.sections(from: [], calendar: Self.calendar, now: Self.now)
+        let sections = OutingDay.lastDays(from: [], calendar: Self.calendar, now: Self.now)
         #expect(sections.count == 7)
         #expect(sections.map(\.workouts.count) == Array(repeating: 0, count: 7))
         let expected = (0..<7).compactMap {
@@ -88,7 +88,7 @@ struct TodayWorkoutsSheetSectionsTests {
     }
 }
 
-extension TodayWorkoutsSheetSectionsTests {
+extension OutingDayTests {
     /// The integration point of #317: the sheet rejoins legs, not only the
     /// algorithm in isolation.
     @Test("An outing split in legs is one row of the sheet")
@@ -108,7 +108,7 @@ extension TodayWorkoutsSheetSectionsTests {
                 outing: OutingLeg(outingID: id, index: index)
             )
         }
-        let sections = TodayWorkoutsSheet.sections(from: legs, calendar: Self.calendar, now: Self.now)
+        let sections = OutingDay.lastDays(from: legs, calendar: Self.calendar, now: Self.now)
         let rows = sections.flatMap(\.workouts)
         #expect(rows.count == 1)
         #expect(rows.first?.legs.count == 2)

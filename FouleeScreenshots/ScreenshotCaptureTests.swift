@@ -72,7 +72,7 @@ final class ScreenshotCaptureTests: XCTestCase {
     ///
     /// Scrolled all the way to the *bottom* rather than to the card: the bottom
     /// is a clamped position, identical on every run whatever the swipe
-    /// momentum did, and it frames the hydration card with the week bars under
+    /// momentum did, and it frames the hydration card with the recap card under
     /// it. Then back to the top, because the next captures start from there.
     private func captureHydration(_ app: XCUIApplication) {
         for _ in 0..<Self.scrollSwipes { app.swipeUp(velocity: .fast) }
@@ -84,7 +84,8 @@ final class ScreenshotCaptureTests: XCTestCase {
 
     private func captureSummary(_ app: XCUIApplication) {
         tapWhenReady(app.buttons["Voir le résumé"], "Voir le résumé")
-        waitForScreen(app.staticTexts["AUJOURD'HUI"], "Résumé 7 jours")
+        // The link only shows once the seven days have loaded (issue #348).
+        waitForScreen(app.buttons["Voir dans Santé"], "7 derniers jours")
         capture("08_summary")
         close(app)
     }

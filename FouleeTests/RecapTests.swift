@@ -40,6 +40,26 @@ struct RecapTests {
         #expect(period.previous(calendar: calendar).start == day(2026, 8, 1))
     }
 
+    @Test("A calendar week's previous is the week before")
+    func previousWeek() {
+        let period = RecapPeriod.lastCompleted(.week, before: day(2026, 10, 10, hour: 12), calendar: calendar)
+        let previous = period.previous(calendar: calendar)
+        #expect(previous.start == day(2026, 9, 21))
+        #expect(previous.end == day(2026, 9, 28))
+    }
+
+    /// The « 7 derniers jours » view (issue #348): today and the six before.
+    @Test("The last seven days end with today, and compare with the seven before")
+    func lastSevenDays() {
+        let period = RecapPeriod.lastDays(endingOn: day(2026, 10, 10, hour: 18), calendar: calendar)
+        #expect(period.start == day(2026, 10, 4))
+        #expect(period.end == day(2026, 10, 11))
+        #expect(period.days(calendar: calendar).count == 7)
+        let previous = period.previous(calendar: calendar)
+        #expect(previous.start == day(2026, 9, 27))
+        #expect(previous.end == day(2026, 10, 4))
+    }
+
     // MARK: - Totals
 
     private var september: RecapPeriod {

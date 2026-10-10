@@ -459,7 +459,7 @@ final class TodayStore {
     }
 
     /// Minutes for Monday → Sunday of the **current** ISO week, aligned with
-    /// the labels `L M M J V S D` in `TodayWeekBars`. Days that haven't
+    /// the labels `L M M J V S D` in `TodayWeekRings`. Days that haven't
     /// happened yet (and days missing from the history) come out as 0.
     private func currentWeekMinutes(history: [DailyMinutes]) -> [Int] {
         let calendar = Calendar.iso8601Monday
