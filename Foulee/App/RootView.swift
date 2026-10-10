@@ -3,12 +3,14 @@ import SwiftUI
 /// Top-level container. Gates onboarding, shows the home screen once the user
 /// has set their goals, and applies the chosen theme to the whole app.
 /// Also keeps the walk-reminder schedule in sync with the prefs that
-/// drive it (active days + window start + notifications toggle).
+/// drive it (active days + window start + notifications toggle), and the
+/// recap notifications with theirs (issue #344).
 struct RootView: View {
     @State private var preferences: UserPreferences
     @Environment(\.scenePhase) private var scenePhase
     private let scheduler = WalkReminderScheduler()
     private let hydrationScheduler = HydrationReminderScheduler()
+    private let recapScheduler = RecapReminderScheduler()
 
     /// Injectable defaults for the same reason `UserPreferences` takes them:
     /// a test can seed an install — one that finished the pre-#221 flow, say —
@@ -57,7 +59,8 @@ struct RootView: View {
         let days = preferences.activeDays.bitmask
         let start = preferences.walkWindowStart.rawMinutes
         let on = preferences.notificationsEnabled ? 1 : 0
-        return "\(preferences.hasCompletedOnboarding):\(days):\(start):\(on):\(hydrationKey)"
+        let recap = preferences.recapNotificationsEnabled ? 1 : 0
+        return "\(preferences.hasCompletedOnboarding):\(days):\(start):\(on):\(recap):\(hydrationKey)"
     }
 
     /// Hydration inputs that change the reminder schedule.
@@ -74,6 +77,7 @@ struct RootView: View {
         guard preferences.hasCompletedOnboarding else { return }
         await scheduler.sync(with: preferences)
         await hydrationScheduler.sync(with: preferences)
+        await recapScheduler.sync(with: preferences)
     }
 
     private func syncHydration() async {

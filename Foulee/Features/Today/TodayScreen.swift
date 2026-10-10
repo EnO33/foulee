@@ -131,6 +131,7 @@ struct TodayScreen: View {
                 ) { isShowingStreak = false }
                 .preferredColorScheme(preferredScheme)
             }
+            .modifier(RecapPresentation(goalMinutes: store.minutesGoal, activeDays: preferences.activeDays, colorScheme: preferredScheme))
             .sheet(isPresented: $isShowingSettings) {
                 SettingsScreen(preferences: preferences)
                     .overlay(alignment: .topTrailing) {
@@ -222,6 +223,7 @@ struct TodayScreen: View {
                     onSelectMetric: { selectedMetric = $0 },
                     onShowHistory: { isShowingSummary = true }
                 )
+                RecapHomeCard { RecapRouter.shared.open($0) }
                 HydrationHomeCard(preferences: preferences, store: hydration)
                     .id("hydrationCard")
                 if snapshot.weather.isAvailable {

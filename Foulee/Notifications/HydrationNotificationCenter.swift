@@ -1,9 +1,10 @@
 @preconcurrency import UserNotifications
 import WidgetKit
 
-/// Handles taps on the hydration reminder's actions. iOS launches the app in
-/// the background to run these, so we read the live prefs and write straight to
-/// Health / reschedule — no UI needed. Set as the notification-center delegate
+/// Handles taps on the hydration reminder's actions — and, as the app's one
+/// notification delegate, routes a tap on a recap notification (issue #344).
+/// iOS launches the app in the background to run the hydration actions, so we
+/// read the live prefs and write straight to Health / reschedule — no UI needed. Set as the notification-center delegate
 /// once at launch (`FouleeApp.init`).
 ///
 /// Uses the completion-handler delegate methods (not the `async` variants):
@@ -42,6 +43,16 @@ final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDeleg
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
+        // A recap notification (issue #344) opens its recap. The tap itself
+        // brings the app to the foreground; the home presents the sheet.
+        if let kind = RecapNotification.kind(fromIdentifier: response.notification.request.identifier) {
+            let completion = UncheckedSendableBox(completionHandler)
+            Task { @MainActor in
+                RecapRouter.shared.open(kind)
+                completion.value()
+            }
+            return
+        }
         let action = response.actionIdentifier
         // The completion handler isn't Sendable; box it so it can cross into
         // the Task. Safe — it's invoked exactly once when the work finishes.
