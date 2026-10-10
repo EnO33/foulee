@@ -20,10 +20,12 @@ round, an outing started on the iPhone is **shown on the Watch** — figures,
 route, and pause / stop buttons — while the iPhone keeps recording it as one
 workout: see [ADR 0003](docs/adr/0003-seance-partagee-iphone-watch.md) (French).
 
-Every Monday and every 1st of the month, a notification announces the **recap**
-of the week or month that just ended — minutes, steps, distance, outings, the
-days the goal was met, and the change from the period before: see
-[ADR 0004](docs/adr/0004-recap-semaine-mois.md) (French).
+The **Bilan** reviews the last seven days and the last month — minutes, steps,
+distance, outings, the days the goal was met, the change from the period
+before, and the water drunk when hydration is on. A tap on a day lays out its
+outings on a timeline. A notification announces it every Sunday evening and
+every 1st of the month: see [ADR 0004](docs/adr/0004-recap-semaine-mois.md)
+(French).
 
 **Hydration** is logged to Santé one glass per tap, or another amount with a
 long press. The home card draws the goal as a row of glasses filling up, and

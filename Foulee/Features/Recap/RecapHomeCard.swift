@@ -86,6 +86,8 @@ struct RecapHomeCard: View {
 struct RecapPresentation: ViewModifier {
     let goalMinutes: Int
     let activeDays: Set<Weekday>
+    /// The hydration goal, `nil` while hydration is off (issue #356).
+    let waterGoalML: Int?
     let colorScheme: ColorScheme?
     var router: RecapRouter = .shared
 
@@ -94,7 +96,7 @@ struct RecapPresentation: ViewModifier {
     func body(content: Content) -> some View {
         content
             .sheet(item: $selection) { kind in
-                RecapScreen(kind: kind, goalMinutes: goalMinutes, activeDays: activeDays) {
+                RecapScreen(kind: kind, goalMinutes: goalMinutes, activeDays: activeDays, waterGoalML: waterGoalML) {
                     selection = nil
                 }
                 .preferredColorScheme(colorScheme)
