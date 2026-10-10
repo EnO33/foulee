@@ -45,7 +45,7 @@ struct RecapDayTimeline: View {
                 .font(FouleeFont.title3)
             HStack(spacing: 8) {
                 if ring.minutes > 0 {
-                    Text("\(ring.minutes) min d'activité")
+                    Text("\(durationText(minutes: ring.minutes)) d'activité")
                         .font(FouleeFont.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -104,7 +104,7 @@ struct RecapDayTimeline: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 4)
-            Text("\(Int(workout.durationSeconds / 60)) min")
+            Text(durationText(minutes: Int(workout.durationSeconds / 60)))
                 .scaledNumericFont(size: 18, weight: .semibold)
                 .foregroundStyle(.primary)
             Image(systemName: "chevron.right")

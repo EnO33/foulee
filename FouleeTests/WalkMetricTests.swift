@@ -22,4 +22,11 @@ import Testing
         #expect(!WalkMetric.steps.formatted(5_391).contains(","))
         #expect(WalkMetric.steps.formattedWithUnit(25) == "25 pas")
     }
+
+    /// Minutes are a duration once totalled (issue #366).
+    @Test func minutesWithUnitReadAsADuration() {
+        #expect(WalkMetric.minutes.formattedWithUnit(42) == "42 min")
+        #expect(WalkMetric.minutes.formattedWithUnit(360) == "6 h")
+        #expect(WalkMetric.minutes.formattedWithUnit(95.4) == "1 h 35")
+    }
 }

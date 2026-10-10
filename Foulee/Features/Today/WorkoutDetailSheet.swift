@@ -107,20 +107,20 @@ struct WorkoutDetailSheet: View {
                 spacing: 12
             ) {
                 metricCard(
-                    icon: FouleeIcon.distance,
-                    tint: Color(hex: 0x0A84FF),
+                    icon: WalkMetric.distance.icon,
+                    tint: WalkMetric.distance.tint,
                     label: "Distance",
                     value: detail.summary.distanceKm.kmText()
                 )
                 metricCard(
-                    icon: FouleeIcon.footsteps,
-                    tint: FouleeColor.accentMid,
+                    icon: WalkMetric.steps.icon,
+                    tint: WalkMetric.steps.tint,
                     label: "Pas",
                     value: detail.stepsCount.formattedFR
                 )
                 metricCard(
-                    icon: FouleeIcon.flame,
-                    tint: FouleeColor.warning,
+                    icon: WalkMetric.calories.icon,
+                    tint: WalkMetric.calories.tint,
                     label: "Calories",
                     value: "\(detail.summary.activeCalories) kcal"
                 )

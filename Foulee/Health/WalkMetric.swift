@@ -43,8 +43,10 @@ enum WalkMetric: String, CaseIterable, Identifiable, Sendable {
         return value.decimalComma(fractionDigits: fractionDigits)
     }
 
-    /// Same, with the unit appended (`5 391 pas`, `4,2 km`).
+    /// Same, with the unit appended (`5 391 pas`, `4,2 km`) — and minutes as
+    /// a duration, `1 h 05` rather than `65 min` (issue #366).
     func formattedWithUnit(_ value: Double) -> String {
-        "\(formatted(value)) \(unit)"
+        guard self != .minutes else { return durationText(minutes: Int(value.rounded())) }
+        return "\(formatted(value)) \(unit)"
     }
 }
