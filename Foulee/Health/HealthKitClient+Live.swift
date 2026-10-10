@@ -127,7 +127,9 @@ extension HealthKitClient {
                     end: .now
                 )
                 try await store.save(sample)
+                return sample.uuid
             },
+            deleteWater: { try await deleteWaterSample(store: store, id: $0) },
             todayWaterML: {
                 let milliliters = try await sumToday(store: store, type: waterType, unit: .literUnit(with: .milli))
                 return Int(milliliters)

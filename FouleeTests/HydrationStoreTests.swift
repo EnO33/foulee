@@ -32,7 +32,7 @@ struct HydrationStoreTests {
         await withDependencies {
             var client = HealthKitClient.testValue
             client.waterWriteDenied = { true }
-            client.logWater = { _ in didAttemptSave.set(true) }
+            client.logWater = { _ in didAttemptSave.set(true); return UUID() }
             $0.healthKit = client
         } operation: {
             let store = HydrationStore()
@@ -75,7 +75,7 @@ struct HydrationNotificationCenterTests {
         let didAttemptSave = LockedRef(false)
         var client = HealthKitClient.testValue
         client.waterWriteDenied = { true }
-        client.logWater = { _ in didAttemptSave.set(true) }
+        client.logWater = { _ in didAttemptSave.set(true); return UUID() }
         let center = HydrationNotificationCenter(healthKit: client, defaults: defaults)
 
         // The confirmation stamp lands in the standard defaults (shared with
