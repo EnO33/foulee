@@ -1,33 +1,78 @@
 import SwiftUI
 
-/// The way into the recaps from the home (issue #344): last week, last month.
+/// The way into the recaps from the home (issues #344, #346): last week at a
+/// glance — a ring per day, the minutes, the goals held — so the card already
+/// tells something before it is tapped. A tap opens the week; the link under
+/// it, the month.
 struct RecapHomeCard: View {
+    let goalMinutes: Int
+    let activeDays: Set<Weekday>
     var onOpen: (RecapPeriod.Kind) -> Void
 
+    @State private var store = RecapStore()
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Tes récaps", systemImage: "chart.bar.doc.horizontal")
-                .font(FouleeFont.headline)
-            HStack(spacing: 10) {
-                button("Semaine dernière", kind: .week)
-                button("Mois dernier", kind: .month)
+        VStack(alignment: .leading, spacing: 14) {
+            Button { onOpen(.week) } label: { weekPreview }
+                .buttonStyle(.pressable)
+            Button { onOpen(.month) } label: {
+                HStack(spacing: 4) {
+                    Text("Voir le récap du mois")
+                    Image(systemName: "chevron.right")
+                }
+                .font(FouleeFont.footnote.weight(.semibold))
+                .foregroundStyle(FouleeColor.accentMid)
             }
+            .buttonStyle(.pressable)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .fouleeGlass(cornerRadius: 22)
+        .task(id: "\(goalMinutes)-\(activeDays.bitmask)") {
+            await store.load(goalMinutes: goalMinutes, activeDays: activeDays)
+        }
     }
 
-    private func button(_ title: String, kind: RecapPeriod.Kind) -> some View {
-        Button { onOpen(kind) } label: {
-            Text(title)
-                .font(FouleeFont.callout.weight(.semibold))
-                .foregroundStyle(FouleeColor.accentMid)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(FouleeColor.accentMid.opacity(0.14), in: Capsule())
+    private var weekPreview: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Ta semaine passée", systemImage: "chart.bar.doc.horizontal")
+                    .font(FouleeFont.headline)
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(FouleeFont.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            if let recap = store.recaps[.week] {
+                HStack(spacing: 6) {
+                    ForEach(recap.days) { day in
+                        RecapDayRing(day: day, goalMinutes: recap.goalMinutes, lineWidth: 3.5)
+                            .frame(maxWidth: 34)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("\(recap.totals.minutes) min")
+                        .font(FouleeFont.callout.weight(.bold).monospacedDigit())
+                        .foregroundStyle(.primary)
+                    if recap.goalDaysPlanned > 0 {
+                        Text("· objectif tenu \(recap.goalDaysMet)/\(recap.goalDaysPlanned)")
+                            .font(FouleeFont.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    RecapChangeChip(old: Double(recap.previous.minutes), new: Double(recap.totals.minutes))
+                }
+            } else {
+                Text("Ton bilan de la semaine dernière, jour par jour.")
+                    .font(FouleeFont.footnote)
+                    .foregroundStyle(.secondary)
+            }
         }
-        .buttonStyle(.pressable)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Ouvre le récap de la semaine")
     }
 }
 

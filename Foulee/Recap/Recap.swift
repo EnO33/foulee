@@ -16,12 +16,37 @@ struct Recap: Equatable, Sendable {
         var outings = 0
     }
 
+    /// One day of the period.
+    struct Day: Equatable, Sendable, Identifiable {
+        var date: Date
+        var minutes: Int
+        /// An active day — one the user planned to move on. The others are
+        /// rest days: drawn as such, and never counted as missed.
+        var isPlanned: Bool
+
+        var id: Date { date }
+    }
+
+    /// What the period says, in one sentence — the first thing read.
+    enum Verdict: Equatable, Sendable {
+        /// Nothing recorded.
+        case quiet
+        /// The goal held on every planned day.
+        case perfect
+        /// The goal held on most planned days.
+        case steady
+        /// More minutes than the period before.
+        case improving
+        /// Something was done; next time, a day more.
+        case started
+    }
+
     var period: RecapPeriod
     var totals: Totals
     /// The period before, for the comparison.
     var previous: Totals
     /// Every day of the period, zero-filled, in order.
-    var days: [DailyMinutes]
+    var days: [Day]
     var goalMinutes: Int
     /// Active days of the period on which the minutes goal was reached.
     var goalDaysMet: Int
@@ -29,9 +54,30 @@ struct Recap: Equatable, Sendable {
     var goalDaysPlanned: Int
 
     /// The day with the most minutes; `nil` for a period without any.
-    var bestDay: DailyMinutes? {
+    var bestDay: Day? {
         days.filter { $0.minutes > 0 }.max { $0.minutes < $1.minutes }
     }
+
+    /// Share of the planned days on which the goal held, `0...1`.
+    var goalRate: Double {
+        goalDaysPlanned > 0 ? Double(goalDaysMet) / Double(goalDaysPlanned) : 0
+    }
+
+    /// Most telling first: a perfect period says so even if it did fewer
+    /// minutes than the one before; regularity outranks volume, because the
+    /// streak is what the app is about.
+    var verdict: Verdict {
+        if isEmpty { return .quiet }
+        if goalDaysPlanned > 0, goalDaysMet == goalDaysPlanned { return .perfect }
+        if goalRate >= Self.steadyRate { return .steady }
+        if let change = Self.change(from: Double(previous.minutes), to: Double(totals.minutes)), change > 0 {
+            return .improving
+        }
+        return .started
+    }
+
+    /// From this share of planned days held, a period reads as regular.
+    static let steadyRate = 0.7
 
     var isEmpty: Bool {
         totals.minutes == 0 && totals.steps == 0 && totals.outings == 0
@@ -55,10 +101,12 @@ struct Recap: Equatable, Sendable {
     ) -> Recap {
         let minutes = inputs.minutes
         let byDay = Dictionary(minutes.map { (calendar.startOfDay(for: $0.date), $0.minutes) }) { first, _ in first }
-        let days = period.days(calendar: calendar).map { DailyMinutes(date: $0, minutes: byDay[$0] ?? 0) }
         // No active day chosen means every day, as for the streak.
         let weekdays = activeDays.isEmpty ? Set(1...7) : activeDays.calendarWeekdays
-        let planned = days.filter { weekdays.contains(calendar.component(.weekday, from: $0.date)) }
+        let days = period.days(calendar: calendar).map {
+            Day(date: $0, minutes: byDay[$0] ?? 0, isPlanned: weekdays.contains(calendar.component(.weekday, from: $0)))
+        }
+        let planned = days.filter(\.isPlanned)
         // Grouped before deduplicated, the résumé's order (`OutingGrouping`).
         let outings = WorkoutDeduplication.collapsingOverlaps(OutingGrouping.groupingLegs(inputs.workouts))
 

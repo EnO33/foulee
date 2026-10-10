@@ -223,9 +223,11 @@ struct TodayScreen: View {
                     onSelectMetric: { selectedMetric = $0 },
                     onShowHistory: { isShowingSummary = true }
                 )
-                RecapHomeCard { RecapRouter.shared.open($0) }
                 HydrationHomeCard(preferences: preferences, store: hydration)
                     .id("hydrationCard")
+                RecapHomeCard(goalMinutes: store.minutesGoal, activeDays: preferences.activeDays) {
+                    RecapRouter.shared.open($0)
+                }
                 if snapshot.weather.isAvailable {
                     // Guideline 5.2.5: WeatherKit data on screen needs Apple
                     // Weather's attribution on the same screen.

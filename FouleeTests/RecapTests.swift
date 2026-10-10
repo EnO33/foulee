@@ -129,7 +129,7 @@ struct RecapTests {
 
     @Test("The best day is the one with the most minutes")
     func bestDay() {
-        #expect(recap().bestDay == DailyMinutes(date: day(2026, 9, 15), minutes: 45))
+        #expect(recap().bestDay == Recap.Day(date: day(2026, 9, 15), minutes: 45, isPlanned: true))
     }
 
     @Test("A period without anything is empty")
@@ -137,6 +137,37 @@ struct RecapTests {
         let recap = Recap.make(period: september, from: Recap.Inputs(), goalMinutes: 20, activeDays: [], calendar: calendar)
         #expect(recap.isEmpty)
         #expect(recap.bestDay == nil)
+    }
+
+    @Test("Rest days are marked as such")
+    func restDays() {
+        let tuesdays = recap(activeDays: [.tuesday])
+        #expect(tuesdays.days[0].isPlanned)      // Tuesday 1st
+        #expect(!tuesdays.days[1].isPlanned)     // Wednesday 2nd
+    }
+
+    // MARK: - Verdict
+
+    private func recap(met: Int, planned: Int, minutes: Int, before: Int) -> Recap {
+        Recap(
+            period: september,
+            totals: Recap.Totals(minutes: minutes),
+            previous: Recap.Totals(minutes: before),
+            days: [],
+            goalMinutes: 20,
+            goalDaysMet: met,
+            goalDaysPlanned: planned
+        )
+    }
+
+    @Test("The verdict says what the period means, most telling first")
+    func verdicts() {
+        #expect(recap(met: 0, planned: 5, minutes: 0, before: 50).verdict == .quiet)
+        #expect(recap(met: 5, planned: 5, minutes: 100, before: 300).verdict == .perfect)
+        #expect(recap(met: 4, planned: 5, minutes: 100, before: 300).verdict == .steady)
+        #expect(recap(met: 1, planned: 5, minutes: 100, before: 50).verdict == .improving)
+        #expect(recap(met: 1, planned: 5, minutes: 40, before: 50).verdict == .started)
+        #expect(recap(met: 1, planned: 5, minutes: 40, before: 0).verdict == .started)
     }
 
     // MARK: - Change

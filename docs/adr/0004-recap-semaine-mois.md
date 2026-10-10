@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344)
+- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346)
 
 ## Contexte
 
@@ -36,6 +36,19 @@ Toucher la notification ouvre le bon récap. Le délégué de notifications, qui
 La notification est **activée par défaut** et se coupe dans Réglages → Notifications.
 
 **Écarté** : recalculer le texte de la notification en arrière-plan (`BGAppRefreshTask`) pour y mettre les chiffres. iOS ne garantit ni l'heure ni l'exécution d'une tâche de fond. Une notification qui affiche des chiffres faux, ou qui n'arrive pas, coûte plus cher qu'un texte fixe.
+
+### D4 — Un récap qui se lit comme un bilan, pas comme un tableau (#346)
+
+La première version (#344) alignait des chiffres, un graphique en barres et quatre tuiles. Juste, mais rien ne disait ce que la période **signifiait**. L'écran se lit désormais de haut en bas, comme une histoire.
+
+1. **Le sens d'abord.** Un grand anneau « objectifs tenus », le total de minutes et une phrase de bilan (`Recap.Verdict`, pur et testé). L'ordre de priorité est : période vide, puis parfaite, puis régulière (70 % des jours prévus), puis en progrès. La régularité passe avant le volume, parce que la série est ce dont l'app parle.
+2. **Le jour par jour en anneaux** : sept pour une semaine, un calendrier pour un mois. C'est le même langage que l'anneau d'activité de l'accueil et l'anneau intérieur du calendrier de série : un même jour se lit pareil partout. Un jour de repos sans activité est un cercle pointillé, jamais un anneau vide, car il n'a pas été manqué.
+3. **La comparaison en barres** : deux barres par mesure, sur une échelle commune. Cette période prend la couleur de la mesure, la précédente est en gris neutre, avec l'écart chiffré. L'écart a une flèche en plus de sa couleur, pour que le sens ne repose jamais sur la couleur seule.
+4. **Les temps forts** : le meilleur jour et l'énergie dépensée.
+
+Les anneaux et les barres se remplissent à l'ouverture. Changer de période rejoue l'animation.
+
+**Sur l'accueil**, la carte passe sous l'hydratation et devient un aperçu de la semaine passée : un anneau par jour, les minutes, les objectifs tenus et l'écart. Elle dit déjà quelque chose avant d'être touchée.
 
 ## Ce qui reste ouvert
 
