@@ -196,7 +196,6 @@ final class TodayStore {
                 ),
                 weather: snapshot.weather,
                 weekMinutes: snapshot.weekMinutes,
-                weekGoal: minutesGoal,
                 walkWindowStart: walkWindowStart,
                 hasWalkedToday: snapshot.minutes >= minutesGoal,
                 isRestDay: isTodayRestDay
@@ -445,7 +444,6 @@ final class TodayStore {
             bestStreak: bestStreak,
             weather: weather ?? snapshot?.weather ?? fallbackWeather,
             weekMinutes: currentWeekMinutes(history: history),
-            weekGoal: minutesGoal,
             walkWindowStart: walkWindowStart,
             hasWalkedToday: metrics.activeMinutes >= minutesGoal,
             isRestDay: isTodayRestDay
