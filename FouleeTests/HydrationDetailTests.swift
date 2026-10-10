@@ -106,7 +106,10 @@ struct HydrationDetailTests {
 
             #expect(store.samples == [glass])
             #expect(asked.value == [7])
-            #expect((store.history?.days.count ?? 0) + (store.history?.daysToCome.count ?? 0) == 7)
+            // The whole week is drawn: the days lived and those still to come.
+            let lived = store.history?.days.count ?? 0
+            let toCome = store.history?.daysToCome.count ?? 0
+            #expect(lived + toCome == 7)
             #expect(store.lastError == nil)
         }
     }
