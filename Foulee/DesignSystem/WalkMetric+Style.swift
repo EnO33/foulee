@@ -14,12 +14,13 @@ extension WalkMetric {
         }
     }
 
+    /// From `MetricPalette`, which the watch shares (#372).
     var tint: Color {
         switch self {
-        case .steps: FouleeColor.accentMid
-        case .minutes: FouleeColor.success
-        case .distance: Color(hex: 0x0A84FF)
-        case .calories: FouleeColor.warning
+        case .steps: MetricPalette.steps
+        case .minutes: MetricPalette.minutes
+        case .distance: MetricPalette.distance
+        case .calories: MetricPalette.calories
         }
     }
 }

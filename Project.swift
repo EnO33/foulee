@@ -238,6 +238,8 @@ let project = Project(
                 // phone's detail (issue #320).
                 "Foulee/Shared/ActivityPalette.swift",
                 "Foulee/Shared/SessionActivity+Tint.swift",
+                // The colour of each daily metric, the phone's rings' (#372).
+                "Foulee/Shared/MetricPalette.swift",
                 // The route a mirrored outing sends to the phone (issue #334).
                 "Foulee/Shared/MirroredRoute.swift",
                 "Foulee/Shared/MirroredRoute+Thinning.swift",
