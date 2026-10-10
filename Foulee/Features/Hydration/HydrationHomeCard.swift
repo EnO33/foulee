@@ -1,3 +1,4 @@
+import Dependencies
 import SwiftUI
 
 /// Gates the hydration card on the home behind the user's preference and wires
@@ -10,6 +11,7 @@ struct HydrationHomeCard: View {
     let store: HydrationStore
 
     @Environment(\.openURL) private var openURL
+    @Dependency(\.date) private var date
 
     var body: some View {
         if preferences.hydrationEnabled {
@@ -19,15 +21,32 @@ struct HydrationHomeCard: View {
                 } else if store.lastError != nil {
                     failureBanner
                 }
-                HydrationCard(
-                    intakeML: store.intakeML,
-                    goalML: preferences.hydrationGoalML,
-                    glassML: preferences.hydrationGlassML
-                ) {
-                    Task { await store.logGlass(ml: preferences.hydrationGlassML) }
+                // Re-read every minute: the rhythm moves with the clock even
+                // when nothing is drunk (#353).
+                TimelineView(.everyMinute) { _ in
+                    HydrationCard(
+                        intakeML: store.intakeML,
+                        goalML: preferences.hydrationGoalML,
+                        glassML: preferences.hydrationGlassML,
+                        pace: pace
+                    ) {
+                        Task { await store.logGlass(ml: preferences.hydrationGlassML) }
+                    }
                 }
             }
         }
+    }
+
+    /// Read from the app's clock rather than the timeline's, so a pinned clock
+    /// (tests, captures) is the one the rhythm follows.
+    private var pace: HydrationPace {
+        HydrationPace.evaluate(
+            intakeML: store.intakeML,
+            goalML: preferences.hydrationGoalML,
+            glassML: preferences.hydrationGlassML,
+            window: HydrationPace.Window(start: preferences.hydrationWindowStart, end: preferences.hydrationWindowEnd),
+            now: date.now
+        )
     }
 
     /// Writing water was explicitly denied — "J'ai bu" can't work until the
