@@ -26,14 +26,14 @@ struct WatchSessionDayPage: View {
                 goal(
                     label: "pas",
                     icon: "shoeprints.fill",
-                    tint: .purple,
+                    tint: MetricPalette.steps,
                     value: today.steps,
                     goal: today.stepsGoal
                 )
                 goal(
                     label: "min",
                     icon: "timer",
-                    tint: .green,
+                    tint: MetricPalette.minutes,
                     value: today.minutes,
                     goal: today.minutesGoal
                 )
