@@ -8,7 +8,7 @@ import Testing
 @Suite("Recap store")
 struct RecapStoreTests {
     private let calendar = Calendar.iso8601Monday
-    private nonisolated struct Denied: Error {}
+    nonisolated private struct Denied: Error {}
 
     private var saturday: Date {
         calendar.date(from: DateComponents(year: 2026, month: 10, day: 10, hour: 12))!

@@ -14,7 +14,8 @@ import Foundation
 /// once or a hundred times (the pedometer stream re-yields until cancelled)
 /// produces the same instant. That idempotence is what keeps the capture
 /// byte-identical from run to run.
-// nonisolated: read from the `@Sendable` closures of `DateGenerator` and the pedometer double.
+///
+/// nonisolated: read from the `@Sendable` closures of `DateGenerator` and the pedometer double.
 nonisolated final class ScreenshotClock: @unchecked Sendable {
     static let shared = ScreenshotClock()
 

@@ -17,7 +17,7 @@ import Testing
 /// reading it back would race with every other suite running in parallel.
 @Suite("TodayStore metrics failure")
 struct TodayStoreMetricsFailureTests {
-    private nonisolated struct MetricsDown: Error, LocalizedError {
+    nonisolated private struct MetricsDown: Error, LocalizedError {
         var errorDescription: String? { "Santé verrouillée" }
     }
 

@@ -12,12 +12,12 @@ import Testing
 /// reading it back would race every other suite running in parallel.
 @Suite("TodayStore Garmin overlay")
 struct TodayStoreGarminOverlayTests {
-    private nonisolated struct MetricsDown: Error, LocalizedError {
+    nonisolated private struct MetricsDown: Error, LocalizedError {
         var errorDescription: String? { "Santé verrouillée" }
     }
 
     // nonisolated: read from the `@Sendable` overlay closure `watchOverlay` returns.
-    private nonisolated static let calendar = Calendar.current
+    nonisolated private static let calendar = Calendar.current
 
     /// Local noon today — the fixed clock every case runs against, so the
     /// day-stamp assertions can't flake near midnight.

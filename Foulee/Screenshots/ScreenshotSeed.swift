@@ -30,7 +30,8 @@ nonisolated extension ScreenshotSeed {
     /// `.both` is likewise deliberate (#222/#224): it is the mode that names no
     /// activity in Réglages, and it makes « Démarrer ta sortie » open the
     /// marche/course picker, which is a screen worth showing.
-    // Main actor: `UserPreferences` is main-actor state.
+    ///
+    /// Main actor: `UserPreferences` is main-actor state.
     @MainActor
     static func seed(_ preferences: UserPreferences, hasCompletedOnboarding: Bool) {
         preferences.hasCompletedOnboarding = hasCompletedOnboarding

@@ -11,7 +11,7 @@ import Testing
 @Suite("Today weather follows the window")
 struct TodayStoreWeatherTimeTests {
     /// Every hour the store asked the forecast for, in order.
-    private nonisolated final class AskedTimes: @unchecked Sendable {
+    nonisolated private final class AskedTimes: @unchecked Sendable {
         private let lock = NSLock()
         private var values: [Date] = []
         func append(_ date: Date) { lock.withLock { values.append(date) } }

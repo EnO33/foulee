@@ -334,14 +334,15 @@ struct TodayHeroCard: View {
     }
 }
 
-private let frenchDecimalFormatter: NumberFormatter = {
+nonisolated private let frenchDecimalFormatter: NumberFormatter = {
     let formatter = NumberFormatter()
     formatter.locale = Locale(identifier: "fr_FR")
     formatter.numberStyle = .decimal
     return formatter
 }()
 
-extension Int {
+// Pure formatting, read by data types off the main actor (issue #407).
+nonisolated extension Int {
     /// French-locale thousands grouping (`4218` → `"4 218"`). Uses a shared
     /// cached formatter — allocating a `NumberFormatter` per call is costly and
     /// this runs on every render of the step counters.

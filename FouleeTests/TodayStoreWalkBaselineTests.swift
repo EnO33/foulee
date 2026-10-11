@@ -15,7 +15,7 @@ import Testing
 /// from yesterday expires whatever HealthKit answers.
 @Suite("TodayStore walk baseline")
 struct TodayStoreWalkBaselineTests {
-    private nonisolated struct MetricsDown: Error, LocalizedError {
+    nonisolated private struct MetricsDown: Error, LocalizedError {
         var errorDescription: String? { "Santé verrouillée" }
     }
 

@@ -20,7 +20,7 @@ import Testing
 /// — the store answers from the history knowledge its own `refresh()` recorded.
 @Suite("TodayStore history failure")
 struct TodayStoreHistoryFailureTests {
-    private nonisolated struct HistoryDown: Error, LocalizedError {
+    nonisolated private struct HistoryDown: Error, LocalizedError {
         var errorDescription: String? { "Santé verrouillée" }
     }
 

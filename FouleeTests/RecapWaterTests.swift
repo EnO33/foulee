@@ -7,7 +7,7 @@ import Testing
 @Suite("Recap water")
 struct RecapWaterTests {
     private let calendar = Calendar.iso8601Monday
-    private nonisolated struct Refused: Error {}
+    nonisolated private struct Refused: Error {}
 
     private func day(_ month: Int, _ day: Int, hour: Int = 0) -> Date {
         calendar.date(from: DateComponents(year: 2026, month: month, day: day, hour: hour))!
