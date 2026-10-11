@@ -260,13 +260,13 @@ struct TodayScreen: View {
                 isShowingStreak = true
             }
             Button { isShowingSettings = true } label: {
-                Image(systemName: "person.crop.circle")
+                Image(systemName: "gearshape.fill")
                     .scaledSystemFont(size: 32)
                     .foregroundStyle(FouleeColor.accentMid)
                     .symbolRenderingMode(.hierarchical)
             }
             .buttonStyle(.pressable)
-            .accessibilityLabel("Profil et réglages")
+            .accessibilityLabel("Réglages")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

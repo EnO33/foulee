@@ -33,6 +33,10 @@ says where the day stands against the hydration window set in Réglages — on
 track, a glass behind, ahead. A tap on the card opens the day glass by glass
 and the week so far: see [ADR 0005](docs/adr/0005-hydratation.md) (French).
 
+**Réglages** opens from the gear on the home screen: one row per theme —
+goals, planning, hydration, notifications, appearance, the Garmin guide and
+*À propos* — each showing its current value, and a tap away from its page.
+
 ## Compatible watches
 
 - **Apple Watch** — native support (companion app, complications, live workouts).

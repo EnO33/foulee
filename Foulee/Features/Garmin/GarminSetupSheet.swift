@@ -176,8 +176,8 @@ struct GarminSetupSheet: View {
     }
 }
 
-/// Row that opens the guide — same wording in onboarding and in Réglages, so
-/// the entry point reads the same wherever the user finds it.
+/// Row that opens the guide from the onboarding permissions step. Réglages
+/// opens the same sheet from its own `SettingsRow`.
 struct GarminSetupLink: View {
     var action: () -> Void
 

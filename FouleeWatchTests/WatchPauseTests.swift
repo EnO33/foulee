@@ -43,17 +43,29 @@ struct WatchPauseTests {
         return metrics.elapsed
     }
 
+    /// `value` is `expected`, or later by at most `slack`: the leg started no
+    /// earlier than the bracket's start and no later than its end.
+    private func isWithin(_ value: TimeInterval?, _ expected: TimeInterval, slack: TimeInterval) -> Bool {
+        guard let value else { return false }
+        return value >= expected - 0.01 && value <= expected + slack + 0.01
+    }
+
     @Test("Pause and resume reach HealthKit, and the outing's clock skips the pause")
     func pauseAndResume() async {
         let stub = WorkoutHealthKitStub()
         let store = stub.makeStore()
+        // The leg is dated inside `start`, somewhere between these two reads:
+        // a slow runner can take over a second there, so the clock is checked
+        // against that bracket rather than a fixed tolerance.
+        let before = Date()
         await store.start(activity: .walking)
         let start = Date()
+        let slack = start.timeIntervalSince(before)
 
         store.pause(at: start.addingTimeInterval(10))
         store.refreshActivityTotals(at: start.addingTimeInterval(70))
         #expect(store.isPaused)
-        #expect(abs((elapsed(of: store) ?? 0) - 10) < 1)
+        #expect(isWithin(elapsed(of: store), 10, slack: slack))
         if case .active(let metrics) = store.state {
             #expect(metrics.isPaused)
             #expect(metrics.timerBasis == nil)
@@ -62,7 +74,7 @@ struct WatchPauseTests {
         store.resume(at: start.addingTimeInterval(70))
         store.refreshActivityTotals(at: start.addingTimeInterval(100))
         #expect(!store.isPaused)
-        #expect(abs((elapsed(of: store) ?? 0) - 40) < 1)
+        #expect(isWithin(elapsed(of: store), 40, slack: slack))
         #expect(stub.pauseCalls == 1)
         #expect(stub.resumeCalls == 1)
     }

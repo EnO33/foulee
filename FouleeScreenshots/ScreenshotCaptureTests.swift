@@ -94,8 +94,8 @@ final class ScreenshotCaptureTests: XCTestCase {
     }
 
     private func captureSettings(_ app: XCUIApplication) {
-        tapWhenReady(app.buttons["Profil et réglages"], "Profile button")
-        waitForScreen(app.staticTexts["Préférences"], "Settings")
+        tapWhenReady(app.buttons["Réglages"], "Settings button")
+        waitForScreen(app.staticTexts["Réglages"], "Settings")
         capture("09_settings")
         close(app)
     }
