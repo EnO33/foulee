@@ -364,7 +364,7 @@ extension WatchWorkoutStore {
         metrics.isPaused = pausedSince != nil
         metrics.activityTotals = WatchActivityTotals.of(currentActivity, in: legs, at: now)
         metrics.recentPace = recentPaceText(at: now)
-        splitRecorder.record(distanceMeters: outing.distanceMeters, elapsed: outing.elapsed)
+        splitRecorder.record(distanceMeters: outing.distanceMeters, elapsed: outing.elapsed, steps: outing.steps, activity: currentActivity)
         metrics.splits = splitRecorder.splits
     }
 

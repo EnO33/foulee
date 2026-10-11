@@ -7,8 +7,34 @@ struct WalkSplit: Equatable, Sendable, Identifiable {
     var kilometre: Int
     /// This kilometre's own time. What « temps intermédiaire » means.
     var duration: TimeInterval
+    /// The steps taken over this kilometre, interpolated at both ends like its
+    /// time (issue #382).
+    var steps = 0
+    /// Every sport recorded while this kilometre was run — both, when it
+    /// straddles a change (issue #382).
+    var activities: Set<SessionActivity> = []
 
     var id: Int { kilometre }
+
+    /// « 6'12"/km ». A kilometre's pace is its own time, said the way runners
+    /// read it.
+    var paceText: String? { duration.paceText(overKm: 1) }
+
+    /// « 160 pas/min », or `nil` when no step was counted.
+    var cadenceText: String? { FouleeWatch.cadenceText(steps: steps, over: duration) }
+
+    /// « Course », « Marche », or « Marche et course » for a kilometre that
+    /// changed sport on the way.
+    var activityText: String {
+        switch activities.count {
+        case 0: ""
+        case 1: activities.first?.label ?? ""
+        default: "Marche et course"
+        }
+    }
+
+    /// The sport's figure, or `nil` for a mixed kilometre.
+    var activity: SessionActivity? { activities.count == 1 ? activities.first : nil }
 }
 
 /// Notes each kilometre as the outing's distance grows past it (issue #301).
@@ -22,11 +48,22 @@ struct WalkSplit: Equatable, Sendable, Identifiable {
 /// over the two numbers `applyOutingTotals` already computes.
 struct SplitRecorder: Equatable, Sendable {
     private(set) var splits: [WalkSplit] = []
+    /// One reading of the outing's counters.
+    private struct Reading: Equatable, Sendable {
+        var distanceMeters: Double
+        var elapsed: TimeInterval
+        var steps: Int
+    }
+
     /// The last reading, kept to interpolate across the boundary.
-    private var previous: (distanceMeters: Double, elapsed: TimeInterval)?
+    private var previous: Reading?
     /// When the last recorded kilometre was reached — the base of the next
     /// one's duration.
     private var lastBoundaryElapsed: TimeInterval = 0
+    /// The step count at that same instant (issue #382).
+    private var lastBoundarySteps: Double = 0
+    /// The sports seen since that boundary.
+    private var activitiesSinceBoundary: Set<SessionActivity> = []
 
     static func == (lhs: SplitRecorder, rhs: SplitRecorder) -> Bool {
         lhs.splits == rhs.splits && lhs.lastBoundaryElapsed == rhs.lastBoundaryElapsed
@@ -39,8 +76,19 @@ struct SplitRecorder: Equatable, Sendable {
     /// kilometre marked at the next delivery carries that delivery's lateness
     /// into its duration, and the error lands on two kilometres at once — one
     /// too long, the next too short.
-    mutating func record(distanceMeters: Double, elapsed: TimeInterval) {
-        defer { previous = (distanceMeters, elapsed) }
+    ///
+    /// `steps` and `activity` are what the outing has counted and what it is
+    /// doing at this reading (issue #382): a kilometre's steps come from the
+    /// same interpolation as its time, and its sport is every sport seen
+    /// between its two boundaries.
+    mutating func record(
+        distanceMeters: Double,
+        elapsed: TimeInterval,
+        steps: Int = 0,
+        activity: SessionActivity? = nil
+    ) {
+        defer { previous = Reading(distanceMeters: distanceMeters, elapsed: elapsed, steps: steps) }
+        if let activity { activitiesSinceBoundary.insert(activity) }
         guard let previous else { return }
         let covered = distanceMeters - previous.distanceMeters
         let took = elapsed - previous.elapsed
@@ -50,13 +98,24 @@ struct SplitRecorder: Equatable, Sendable {
 
         // The count of recorded kilometres *is* the high-water mark: a distance
         // that dips and climbs again cannot re-cross a boundary already noted.
+        let stepped = Double(steps - previous.steps)
         while distanceMeters >= Double(splits.count + 1) * 1_000 {
             let boundary = Double(splits.count + 1) * 1_000
-            let reached = previous.elapsed + (boundary - previous.distanceMeters) * took / covered
+            let fraction = (boundary - previous.distanceMeters) / covered
+            let reached = previous.elapsed + fraction * took
+            let stepsAtBoundary = Double(previous.steps) + fraction * stepped
             splits.append(
-                WalkSplit(kilometre: splits.count + 1, duration: reached - lastBoundaryElapsed)
+                WalkSplit(
+                    kilometre: splits.count + 1,
+                    duration: reached - lastBoundaryElapsed,
+                    steps: max(Int((stepsAtBoundary - lastBoundarySteps).rounded()), 0),
+                    activities: activitiesSinceBoundary
+                )
             )
             lastBoundaryElapsed = reached
+            lastBoundarySteps = stepsAtBoundary
+            // The reading that crossed the line is already in the next one.
+            activitiesSinceBoundary = activity.map { [$0] } ?? []
         }
     }
 }

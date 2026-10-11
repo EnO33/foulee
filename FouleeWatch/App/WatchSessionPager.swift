@@ -110,6 +110,8 @@ struct WatchSessionPager: View {
             }
         }
         .tabViewStyle(.page)
+        // Each kilometre, over whatever page is up (issue #382).
+        .kilometreAlert(metrics.splits)
         // Over every page, not only « Contrôles »: the summary takes seconds to
         // come, and whatever page is on screen has to say the tap was heard.
         .overlay {

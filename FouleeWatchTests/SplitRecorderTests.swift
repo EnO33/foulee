@@ -116,4 +116,54 @@ struct SplitRecorderTests {
         recorder.record(distanceMeters: 1_200, elapsed: 0)
         #expect(recorder.splits.isEmpty)
     }
+
+    // MARK: - What each kilometre was (issue #382)
+
+    /// 2 m/s at 3 steps a second: 1 500 steps a kilometre, 180 a minute. The
+    /// boundary falls between readings, so the steps are interpolated with it.
+    @Test("A kilometre counts its own steps, interpolated at the boundary")
+    func aKilometreCountsItsSteps() {
+        var recorder = SplitRecorder()
+        recorder.record(distanceMeters: 0, elapsed: 0, steps: 0, activity: .running)
+        recorder.record(distanceMeters: 1_400, elapsed: 700, steps: 2_100, activity: .running)
+        recorder.record(distanceMeters: 2_100, elapsed: 1_050, steps: 3_150, activity: .running)
+
+        #expect(recorder.splits.map(\.steps) == [1_500, 1_500])
+        #expect(recorder.splits.first?.cadenceText == "180\u{00A0}pas/min")
+    }
+
+    @Test("A kilometre run in one sport names it")
+    func aKilometreNamesItsSport() {
+        var recorder = SplitRecorder()
+        recorder.record(distanceMeters: 0, elapsed: 0, activity: .walking)
+        recorder.record(distanceMeters: 1_100, elapsed: 700, activity: .walking)
+
+        let split = recorder.splits.first
+        #expect(split?.activity == .walking)
+        #expect(split?.activityText == "Marche")
+    }
+
+    /// The change of sport happens inside km 1; km 2 is all running, including
+    /// the reading that crossed the first boundary.
+    @Test("A kilometre that changes sport says both, and the next starts clean")
+    func aKilometreAcrossAChangeSaysBoth() {
+        var recorder = SplitRecorder()
+        recorder.record(distanceMeters: 0, elapsed: 0, activity: .walking)
+        recorder.record(distanceMeters: 600, elapsed: 400, activity: .walking)
+        recorder.record(distanceMeters: 1_200, elapsed: 600, activity: .running)
+        recorder.record(distanceMeters: 2_100, elapsed: 900, activity: .running)
+
+        let first = recorder.splits.first
+        let second = recorder.splits.last
+        #expect(first?.activities == [.walking, .running])
+        #expect(first?.activity == nil)
+        #expect(first?.activityText == "Marche et course")
+        #expect(second?.activities == [.running])
+    }
+
+    @Test("A kilometre's pace is its own time")
+    func aKilometresPaceIsItsTime() {
+        let split = WalkSplit(kilometre: 3, duration: 372)
+        #expect(split.paceText == "6'12\"/km")
+    }
 }
