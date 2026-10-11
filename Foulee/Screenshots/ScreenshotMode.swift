@@ -49,6 +49,11 @@ enum ScreenshotMode {
     /// install has finished onboarding and the app opens on Aujourd'hui.
     static let onboardingArgument = "-FouleeScreenshotOnboarding"
 
+    /// Third, optional argument: seed the dark theme instead of the light one.
+    /// The store boards stay light; this is for the visual review of a new SDK
+    /// (issue #408), where every screen has to be seen in both.
+    static let darkArgument = "-FouleeScreenshotDark"
+
     /// The throwaway suite the seeded preferences live in.
     static let preferencesSuite = "com.eno33.foulee.screenshots"
 
@@ -90,7 +95,8 @@ enum ScreenshotMode {
         isActive = true
         preferencesDefaults = seededDefaults(
             defaults,
-            hasCompletedOnboarding: !arguments.contains(onboardingArgument)
+            hasCompletedOnboarding: !arguments.contains(onboardingArgument),
+            themeMode: arguments.contains(darkArgument) ? .dark : .light
         )
         divertSharedWrites()
         prepareDependencies { values in
@@ -137,12 +143,14 @@ enum ScreenshotMode {
     /// defaults keys stay spelled in exactly one place.
     private static func seededDefaults(
         _ defaults: UserDefaults,
-        hasCompletedOnboarding: Bool
+        hasCompletedOnboarding: Bool,
+        themeMode: ThemeMode
     ) -> UserDefaults {
         defaults.removePersistentDomain(forName: preferencesSuite)
         ScreenshotSeed.seed(
             UserPreferences(defaults: defaults),
-            hasCompletedOnboarding: hasCompletedOnboarding
+            hasCompletedOnboarding: hasCompletedOnboarding,
+            themeMode: themeMode
         )
         return defaults
     }

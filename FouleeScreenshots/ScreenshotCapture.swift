@@ -3,7 +3,7 @@ import XCTest
 /// Shared plumbing for the App Store capture run (issue #235).
 ///
 /// This target is a **UI test bundle**: it drives the shipped app from another
-/// process, so it cannot import app code. The three strings below are therefore
+/// process, so it cannot import app code. The strings below are therefore
 /// duplicated from `ScreenshotMode` / `TodayAccessibility`, and
 /// `ScreenshotModeTests` (in `FouleeTests`, which *can* import them) pins the
 /// spellings so a rename can't silently detach the two halves.
@@ -12,6 +12,15 @@ enum ScreenshotCapture {
     static let launchArgument = "-FouleeScreenshotMode"
     /// Must equal `ScreenshotMode.onboardingArgument`.
     static let onboardingArgument = "-FouleeScreenshotOnboarding"
+    /// Must equal `ScreenshotMode.darkArgument`.
+    static let darkArgument = "-FouleeScreenshotDark"
+
+    /// Set by `tools/capture_screenshots.sh --dark`. xcodebuild hands the test
+    /// runner every `TEST_RUNNER_`-prefixed variable without the prefix, which
+    /// is the only channel from the script into this process.
+    static var isDark: Bool {
+        ProcessInfo.processInfo.environment["FOULEE_CAPTURE_DARK"] == "1"
+    }
 
     /// Must equal the `TodayAccessibility` constants.
     enum Card {
@@ -35,6 +44,7 @@ extension XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = [ScreenshotCapture.launchArgument]
         if onboarding { app.launchArguments.append(ScreenshotCapture.onboardingArgument) }
+        if ScreenshotCapture.isDark { app.launchArguments.append(ScreenshotCapture.darkArgument) }
         app.launch()
         return app
     }

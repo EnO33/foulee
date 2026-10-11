@@ -231,6 +231,38 @@ Four things worth knowing:
 - `appstore-screenshots/` is **not tracked by git** (issue #72) and must stay
   that way. `raw/` is the capture output; the boards are composed from it.
 
+#### On GitHub — no simulator to install
+
+The **Screenshots** workflow (`.github/workflows/screenshots.yml`, run it from
+the Actions tab) takes every set on the `xcode-27` image, the same image and
+Xcode as CI and the release, so its runtime is the one the shipped build was
+tested on. It also runs on a pull request that touches the capture tooling.
+
+- The **store sets** land under their usual names (`iphone-6.9`, `watch`), in
+  the `screenshots` artifact (30 days). Unzip it into `appstore-screenshots/raw/`
+  and compose as below.
+- The **review sets** sit next to them, for checking a new SDK or a redesign
+  (issue #408): `review-dark` (the dark theme), `review-a11y` (iPhone at
+  `accessibility-large`), `probe-40mm` (the smallest wrist) and
+  `review-watch-xxxl` (the watch at its largest standard text size). They are
+  never composed.
+- Every set, downsized to JPEG, is also pushed to the orphan **`captures`**
+  branch, which each run overwrites: browse it on GitHub without unzipping
+  anything. It shares no history with `main`, so the rule that captures are not
+  versioned (#72) still holds for the code.
+
+Locally, the same review sets come from two options of the script, which refuse
+the default set name so they can never overwrite a store set:
+
+```bash
+tools/capture_screenshots.sh --dark "" review-dark
+tools/capture_screenshots.sh --text-size accessibility-large "" review-a11y
+```
+
+`--dark` seeds the dark theme through a third launch argument
+(`-FouleeScreenshotDark`); `--text-size` sets the simulator's text size for the
+run and puts it back afterwards.
+
 #### Apple Watch — one command
 
 ```bash

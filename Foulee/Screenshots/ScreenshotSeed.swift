@@ -25,15 +25,21 @@ extension ScreenshotSeed {
     /// on, reminders on, light theme, « les deux » as the activity mode.
     ///
     /// The theme is pinned rather than left on `.system` on purpose — otherwise
-    /// the whole set flips to dark the day the simulator is in dark mode.
+    /// the whole set flips to dark the day the simulator is in dark mode. The
+    /// review of a new SDK pins `.dark` instead (issue #408); the store boards
+    /// never do.
     ///
     /// `.both` is likewise deliberate (#222/#224): it is the mode that names no
     /// activity in Réglages, and it makes « Démarrer ta sortie » open the
     /// marche/course picker, which is a screen worth showing.
     @MainActor
-    static func seed(_ preferences: UserPreferences, hasCompletedOnboarding: Bool) {
+    static func seed(
+        _ preferences: UserPreferences,
+        hasCompletedOnboarding: Bool,
+        themeMode: ThemeMode = .light
+    ) {
         preferences.hasCompletedOnboarding = hasCompletedOnboarding
-        preferences.themeMode = .light
+        preferences.themeMode = themeMode
         preferences.activityMode = .both
         preferences.activeDays = Weekday.workWeek
         preferences.walkWindowStart = TimeOfDay(hour: 12, minute: 0)

@@ -52,6 +52,7 @@ struct ScreenshotModeTests {
     func launchArgumentSpelling() {
         #expect(ScreenshotMode.launchArgument == "-FouleeScreenshotMode")
         #expect(ScreenshotMode.onboardingArgument == "-FouleeScreenshotOnboarding")
+        #expect(ScreenshotMode.darkArgument == "-FouleeScreenshotDark")
     }
 
     // MARK: - Deterministic
