@@ -32,9 +32,17 @@ enum SettingsSummary {
         return remindersEnabled ? "\(goal) · rappel toutes les \(durationText(minutes: intervalMinutes))" : goal
     }
 
-    /// « Aucun rappel », « 1 rappel actif », « 3 rappels actifs ».
-    static func notifications(activeCount: Int) -> String {
-        switch activeCount {
+    /// « Toutes les 2 h, de 09:00 à 21:00 ».
+    static func hydrationReminders(start: TimeOfDay, end: TimeOfDay, intervalMinutes: Int) -> String {
+        "Toutes les \(durationText(minutes: intervalMinutes)), de \(start.clockText) à \(end.clockText)."
+    }
+
+    /// « Aucun rappel », « 1 rappel actif », « 3 rappels actifs » — or
+    /// « Coupées dans iOS » when no reminder can arrive whatever the toggles
+    /// say (#394).
+    static func notifications(activeCount: Int, blockedByIOS: Bool = false) -> String {
+        if blockedByIOS { return "Coupées dans iOS" }
+        return switch activeCount {
         case ...0: "Aucun rappel"
         case 1: "1 rappel actif"
         default: "\(activeCount) rappels actifs"

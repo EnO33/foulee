@@ -48,6 +48,7 @@ enum SettingsPage: Hashable {
 struct SettingsPageView: View {
     let page: SettingsPage
     @Bindable var preferences: UserPreferences
+    let permission: NotificationPermissionStore
 
     var body: some View {
         ScrollView {
@@ -71,7 +72,7 @@ struct SettingsPageView: View {
         case .goals: SettingsGoalsPage(preferences: preferences)
         case .schedule: SettingsSchedulePage(preferences: preferences)
         case .hydration: GlassSection { HydrationSettingsContent(preferences: preferences) }
-        case .notifications: SettingsNotificationsPage(preferences: preferences)
+        case .notifications: SettingsNotificationsPage(preferences: preferences, store: permission)
         case .appearance: SettingsAppearancePage(preferences: preferences)
         case .about: SettingsAboutPage()
         }
