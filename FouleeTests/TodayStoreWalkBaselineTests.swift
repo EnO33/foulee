@@ -106,15 +106,12 @@ struct TodayStoreWalkBaselineTests {
 
     @Test("An overlay from yesterday expires even when today's read fails")
     @MainActor
-    func overlayExpiresAcrossMidnightWithoutMetrics() async {
+    func overlayExpiresAcrossMidnightWithoutMetrics() async throws {
         let calendar = Calendar.current
         let midnight = calendar.startOfDay(for: .now)
-        guard let nextMidnight = calendar.date(byAdding: .day, value: 1, to: midnight),
-              let evening = calendar.date(byAdding: .minute, value: -10, to: nextMidnight),
-              let morning = calendar.date(byAdding: .minute, value: 10, to: nextMidnight) else {
-            Issue.record("could not derive dates around midnight")
-            return
-        }
+        let nextMidnight = try #require(calendar.date(byAdding: .day, value: 1, to: midnight))
+        let evening = try #require(calendar.date(byAdding: .minute, value: -10, to: nextMidnight))
+        let morning = try #require(calendar.date(byAdding: .minute, value: 10, to: nextMidnight))
         let now = LockedRef(evening)
         let failing = LockedRef(false)
         let hkSteps = LockedRef(6_000)
@@ -183,14 +180,11 @@ struct TodayStoreWalkBaselineTests {
     @MainActor
     func staleBaselineNeverSeedsTodaysWalk() async throws {
         let calendar = Calendar.current
-        guard let nextMidnight = calendar.date(
+        let nextMidnight = try #require(calendar.date(
             byAdding: .day, value: 1, to: calendar.startOfDay(for: .now)
-        ),
-            let evening = calendar.date(byAdding: .minute, value: -10, to: nextMidnight),
-            let morning = calendar.date(byAdding: .minute, value: 10, to: nextMidnight) else {
-            Issue.record("could not derive dates around midnight")
-            return
-        }
+        ))
+        let evening = try #require(calendar.date(byAdding: .minute, value: -10, to: nextMidnight))
+        let morning = try #require(calendar.date(byAdding: .minute, value: 10, to: nextMidnight))
         let now = LockedRef(evening)
         let failing = LockedRef(false)
         let hk = LockedRef(HealthMetrics(

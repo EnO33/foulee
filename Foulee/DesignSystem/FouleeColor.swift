@@ -15,6 +15,12 @@ enum FouleeColor {
     static let warning = Color(hex: 0xFF9F0A)
     static let danger = Color(hex: 0xFF453A)
 
+    /// Water — the hydration card, screen, settings and Bilan block. A token
+    /// here rather than on a view: a static on a `View` is main-actor
+    /// isolated, and the Réglages page model reads it from a nonisolated
+    /// context (issue #405).
+    static let water = Color.teal
+
     static let accentGradient = LinearGradient(
         colors: [accentStart, accentMid, accentEnd],
         startPoint: .topLeading,

@@ -16,7 +16,7 @@ struct HydrationSettingsContent: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .tint(HydrationCard.water)
+            .tint(FouleeColor.water)
             if preferences.hydrationEnabled {
                 SettingsField("Objectif quotidien") {
                     SettingsSlider(
@@ -24,7 +24,7 @@ struct HydrationSettingsContent: View {
                         value: $preferences.hydrationGoalML,
                         range: 1_000...4_000,
                         step: 200,
-                        tint: HydrationCard.water
+                        tint: FouleeColor.water
                     ) { "\(litres($0)) L" }
                 }
                 SettingsField("Taille d'un verre", footer: "Chaque « J'ai bu » ajoute un verre.") {
@@ -33,7 +33,7 @@ struct HydrationSettingsContent: View {
                         value: $preferences.hydrationGlassML,
                         range: 50...500,
                         step: 10,
-                        tint: HydrationCard.water
+                        tint: FouleeColor.water
                     ) { "\($0) mL" }
                 }
                 Divider()
