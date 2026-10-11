@@ -97,10 +97,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Select Xcode 27
+      # 27.1, not 27.0: Swift 6.4.0 (Xcode 27.0) miscompiles key paths
+      # instantiated in a generic context with a captured subscript argument
+      # (swiftlang/swift#91477, fixed after 6.4.0 shipped). swift-dependencies
+      # forms exactly those at launch, and the test host crashed in
+      # `swift_retain` under `KeyPath._projectReadOnly` (issue #404).
+      - name: Select Xcode 27.1
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
-          xcode-version: '27.0'
+          xcode-version: '27.1'
 
       - name: Show Xcode version
         run: xcodebuild -version
