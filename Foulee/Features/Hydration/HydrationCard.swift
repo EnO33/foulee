@@ -13,8 +13,6 @@ struct HydrationCard: View {
     var onDrink: (Int) -> Void
     var onOpen: () -> Void = {}
 
-    static let water = Color.teal
-
     private var fills: [Double] {
         HydrationMath.glassFills(intakeML: intakeML, goalML: goalML, glassML: glassML)
     }
@@ -91,13 +89,13 @@ struct HydrationGlass: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             GlassShape()
-                .fill(HydrationCard.water.opacity(0.1))
+                .fill(FouleeColor.water.opacity(0.1))
             Rectangle()
-                .fill(HydrationCard.water.gradient)
+                .fill(FouleeColor.water.gradient)
                 .scaleEffect(x: 1, y: fill, anchor: .bottom)
                 .mask(GlassShape())
             GlassShape()
-                .stroke(HydrationCard.water.opacity(fill > 0 ? 0.7 : 0.35), lineWidth: 1.5)
+                .stroke(FouleeColor.water.opacity(fill > 0 ? 0.7 : 0.35), lineWidth: 1.5)
         }
         .aspectRatio(0.75, contentMode: .fit)
     }

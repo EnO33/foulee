@@ -36,7 +36,7 @@ enum SettingsPage: Hashable {
         switch self {
         case .goals: FouleeColor.success
         case .schedule: FouleeColor.accentSecondary
-        case .hydration: HydrationCard.water
+        case .hydration: FouleeColor.water
         case .notifications: FouleeColor.danger
         case .appearance: FouleeColor.accentMid
         case .about: .gray
