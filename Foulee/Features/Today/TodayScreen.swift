@@ -132,19 +132,7 @@ struct TodayScreen: View {
                 colorScheme: preferredScheme
             ))
             .sheet(isPresented: $isShowingSettings) {
-                SettingsScreen(preferences: preferences)
-                    .overlay(alignment: .topTrailing) {
-                        Button { isShowingSettings = false } label: {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundStyle(.primary)
-                                .frame(width: 40, height: 40)
-                                .background(.ultraThinMaterial, in: Circle())
-                        }
-                        .buttonStyle(.pressable)
-                        .padding(20)
-                        .accessibilityLabel("Fermer")
-                    }
+                SettingsScreen(preferences: preferences) { isShowingSettings = false }
                     .presentationBackground { SheetBackground() }
                     .preferredColorScheme(preferredScheme)
             }

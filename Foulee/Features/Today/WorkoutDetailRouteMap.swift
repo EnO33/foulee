@@ -168,17 +168,7 @@ struct WorkoutDetailRouteMap: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 24)
             }
-            Button { isExpanded = false } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
-                    .background(.ultraThinMaterial, in: Circle())
-                    .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
-            }
-            .buttonStyle(.pressable)
-            .accessibilityLabel("Fermer la carte")
-            .padding(20)
+            SheetCloseButton(accessibilityLabel: "Fermer la carte") { isExpanded = false }
         }
     }
 }

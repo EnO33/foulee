@@ -43,8 +43,7 @@ struct WalkRouteMapView: View {
             } else {
                 emptyState
             }
-            closeButton
-                .padding(20)
+            SheetCloseButton(accessibilityLabel: "Fermer la carte", action: onClose)
         }
     }
 
@@ -83,19 +82,6 @@ struct WalkRouteMapView: View {
                     .padding(.horizontal, 40)
             }
         }
-    }
-
-    private var closeButton: some View {
-        Button(action: onClose) {
-            Image(systemName: "xmark")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(.primary)
-                .frame(width: 40, height: 40)
-                .background(.ultraThinMaterial, in: Circle())
-                .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
-        }
-        .buttonStyle(.pressable)
-        .accessibilityLabel("Fermer la carte")
     }
 }
 
