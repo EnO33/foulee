@@ -231,16 +231,14 @@ jobs:
     # Keep this name "Build & Test": it's a required status check in main's
     # branch protection. The work now happens in the two jobs above; this one
     # only reports their outcome, so the protection rule needs no change.
-    # `always()`: a skipped aggregator would count as passing.
+    # `always()`: a skipped aggregator would count as passing — alls-green
+    # fails it unless every job it needs succeeded.
     name: Build & Test
     needs: [ios, watchos]
     if: always()
     runs-on: ubuntu-24.04
     steps:
       - name: Both platforms passed
-        env:
-          IOS: ${{ needs.ios.result }}
-          WATCHOS: ${{ needs.watchos.result }}
-        run: |
-          echo "iOS: $IOS, watchOS: $WATCHOS"
-          [ "$IOS" = "success" ] && [ "$WATCHOS" = "success" ]
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
