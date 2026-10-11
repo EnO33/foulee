@@ -27,6 +27,12 @@ struct WatchSessionMetricsPage: View {
 
                 if let errorMessage {
                     warning(errorMessage)
+                } else if metrics.isPaused {
+                    // The clock stands still above: say why, in the line that
+                    // otherwise names the sport (issue #384).
+                    Label("En pause", systemImage: "pause.fill")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.yellow)
                 } else {
                     currentActivity
                 }

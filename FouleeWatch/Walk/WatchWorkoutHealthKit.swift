@@ -83,6 +83,10 @@ struct WatchWorkoutSessionHandle: Sendable {
     /// `HKLiveWorkoutBuilder.endDate` — non-nil once collection has ended, so
     /// a retry knows not to end it twice.
     var collectionEndDate: @MainActor () -> Date?
+    /// `HKWorkoutSession.pause()` / `resume()` (issue #384). HealthKit leaves
+    /// the paused stretch out of the workout's duration on its own.
+    var pause: @MainActor () -> Void = {}
+    var resume: @MainActor () -> Void = {}
     // No way to open or close a nested activity, and there will not be one:
     // HealthKit refuses a subactivity whose sport differs from the session's
     // own (« Cannot add subactivity of type HKWorkoutActivityTypeRunning »,
@@ -237,7 +241,9 @@ extension WatchWorkoutHealthKit {
                         guard let workout = try await builder.finishWorkout() else { return }
                         await saveRoute(route, for: workout, in: store)
                     },
-                    collectionEndDate: { builder.endDate }
+                    collectionEndDate: { builder.endDate },
+                    pause: { session.pause() },
+                    resume: { session.resume() }
                 )
             }
         )

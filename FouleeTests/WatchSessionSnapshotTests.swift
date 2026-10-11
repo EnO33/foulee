@@ -115,4 +115,24 @@ struct WatchSessionSnapshotTests {
         // Never negative, whatever the two clocks think of each other.
         #expect(snapshot().age(at: base.addingTimeInterval(-90)) == 0)
     }
+
+    // MARK: - Pause (issue #384)
+
+    @Test("A watch that never sends a pause is never paused")
+    func pauseDefaultsToRunning() throws {
+        let json = #"{"sentAt": 0, "outingStartedAt": 0, "activity": "walking"}"#
+        let decoded = try JSONDecoder().decode(WatchSessionSnapshot.self, from: Data(json.utf8))
+        #expect(decoded.isPaused == false)
+    }
+
+    /// The start is a virtual one, pushed back by every pause: it only holds
+    /// while the clock runs, so a paused snapshot reads at `sentAt`.
+    @Test("A paused outing's clock stands still on what the wrist stated")
+    func aPausedClockStandsStill() {
+        var paused = snapshot()
+        paused.isPaused = true
+        #expect(paused.elapsed(at: base.addingTimeInterval(300)) == 600)
+        #expect(snapshot().elapsed(at: base.addingTimeInterval(300)) == 900)
+    }
 }
+

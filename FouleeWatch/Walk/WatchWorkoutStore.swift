@@ -48,7 +48,7 @@ final class WatchWorkoutStore: NSObject {
     /// Not always what the screen says: the display follows detection at once,
     /// the recording waits for `minimumLegDuration`. That gap is deliberate —
     /// see `applySwitch`.
-    @ObservationIgnored private var legActivity: SessionActivity = .walking
+    @ObservationIgnored var legActivity: SessionActivity = .walking
     /// Distinguishes the leg in flight from the finished ones when they are
     /// folded into one list.
     @ObservationIgnored private var legIdentity = UUID()
@@ -63,7 +63,11 @@ final class WatchWorkoutStore: NSObject {
     /// and every leg costs a permanent workout in Santé. Dated from the
     /// boundary, so waiting costs no accuracy; timed from the decision, so a
     /// late-noticed change still has to hold (issue #331).
-    @ObservationIgnored private var pendingSplit: ActivitySwitchDetector.Switch?
+    @ObservationIgnored var pendingSplit: ActivitySwitchDetector.Switch?
+    /// The leg in flight's time spent paused and resumed, and the pause in
+    /// progress — both left out of its clock (issue #384).
+    @ObservationIgnored var legPausedDuration: TimeInterval = 0
+    @ObservationIgnored var pausedSince: Date?
     /// When a snapshot last went to the phone; nil until the first (issue #278).
     @ObservationIgnored var lastMirrorSendAt: Date?
     /// The wearer's recent speed, smoothed (issue #300).
@@ -208,6 +212,7 @@ final class WatchWorkoutStore: NSObject {
         sessionHandle = nil
         finishedLegs = []
         pendingSplit = nil
+        resetPause()
         state = .idle
         lastError = nil
     }
@@ -245,6 +250,7 @@ final class WatchWorkoutStore: NSObject {
         legIdentity = UUID()
         currentLeg = .zero
         pendingSplit = nil
+        resetPause()
         state = .active(.empty(for: activity))
         beginActivityDetection(from: activity)
         route.start()
@@ -335,24 +341,6 @@ final class WatchWorkoutStore: NSObject {
 }
 
 extension WatchWorkoutStore {
-    /// Start classifying. **Records nothing into the session** — see
-    /// `applySwitch`.
-    /// Read the session's own counters as a second, much faster opinion on
-    /// what the wearer is doing (issue #267).
-    ///
-    /// CoreMotion takes around thirty seconds to change its mind — its
-    /// smoothing is its purpose. Cadence and speed change within one window,
-    /// and they cost nothing new: these are the counters already driving the
-    /// screen. Both feed the same detector, so nothing about the decision
-    /// depends on which noticed first.
-    private func beginActivityDetection(from activity: SessionActivity) {
-        let now = Date.now
-        currentActivity = activity
-        detection.start(from: activity, at: now) { [weak self] confirmed in
-            self?.applySwitch(confirmed)
-        }
-    }
-
     /// Name the sport being done and total the **outing** — every leg, not the
     /// one in flight (issue #265).
     private func applyOutingTotals(to metrics: inout WatchWorkoutMetrics, at now: Date) {
@@ -366,7 +354,9 @@ extension WatchWorkoutStore {
         metrics.activeCalories = outing.activeCalories
         // The instant the clock would have read zero, so the screen can run it
         // on its own between batches (issue #266).
-        metrics.timerBasis = now.addingTimeInterval(-outing.elapsed)
+        // None while paused: the clock stands still on `elapsed` (issue #384).
+        metrics.timerBasis = pausedSince == nil ? now.addingTimeInterval(-outing.elapsed) : nil
+        metrics.isPaused = pausedSince != nil
         metrics.activityTotals = WatchActivityTotals.of(currentActivity, in: legs, at: now)
         metrics.recentPace = recentPaceText(at: now)
         splitRecorder.record(distanceMeters: outing.distanceMeters, elapsed: outing.elapsed)
@@ -398,29 +388,10 @@ extension WatchWorkoutStore {
             end: end,
             steps: currentLeg.steps,
             distanceMeters: currentLeg.distanceMeters,
-            activeCalories: currentLeg.activeCalories
+            activeCalories: currentLeg.activeCalories,
+            pausedDuration: legPausedDuration,
+            pausedSince: pausedSince
         )
-    }
-
-    /// Note the change on screen at once, and queue the recording.
-    ///
-    /// **The two halves move at different speeds on purpose.** Renaming cannot
-    /// fail and cannot be wrong for long — the next reading corrects it. Cutting
-    /// the outing in two writes a permanent workout into Santé, so it waits
-    /// until the new sport has held for `minimumLegDuration` — counted from
-    /// `confirmed.confirmedAt`, the moment it was decided (issue #331).
-    ///
-    /// Waiting costs no accuracy: the split carries `confirmed.date`, the
-    /// instant the sport actually changed, and both HealthKit calls accept a
-    /// past date.
-    private func applySwitch(_ confirmed: ActivitySwitchDetector.Switch) {
-        guard case .active = state else { return }
-        currentActivity = confirmed.activity
-        refreshActivityTotals()
-        // Back to what the leg is already recording: whatever was queued is
-        // moot, and no workout was created — which is the whole point of
-        // waiting.
-        pendingSplit = confirmed.activity == legActivity ? nil : confirmed
     }
 
     /// Cut the outing here, if a queued change has held long enough.
@@ -491,5 +462,6 @@ extension WatchWorkoutStore {
         legActivity = activity
         legIdentity = UUID()
         currentLeg = .zero
+        resetPause()
     }
 }

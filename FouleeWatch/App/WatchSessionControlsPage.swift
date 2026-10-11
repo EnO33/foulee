@@ -9,14 +9,12 @@ import SwiftUI
 /// bottom of the old scroll view. Keeping the elapsed time in view keeps the
 /// two continuous.
 ///
-/// There is no pause here, and adding one is not a matter of drawing a second
-/// button: `splitIfDue` compares 15 s of *wall* time and back-dates the
-/// boundary, `MovementClassifier` divides by wall time, and
-/// `WatchWorkoutSegment.elapsed(at:)` is wall time throughout. Pausing means
-/// reworking all three, which is why it lives in its own issue rather than
-/// riding along here.
+/// « Pause » sits above « Arrêter » (issue #384): the one is reached for far
+/// more often than the other, and a stop is the move that cannot be undone, so
+/// it stays the second thing on the page, not the first.
 struct WatchSessionControlsPage: View {
     let metrics: WatchWorkoutMetrics
+    var onTogglePause: () -> Void = {}
     var onStop: () -> Void
 
     var body: some View {
@@ -24,6 +22,16 @@ struct WatchSessionControlsPage: View {
             VStack(spacing: 10) {
                 WatchSessionClock(metrics: metrics, size: 22)
                     .foregroundStyle(.secondary)
+
+                Button(action: onTogglePause) {
+                    Label(
+                        metrics.isPaused ? "Reprendre" : "Pause",
+                        systemImage: metrics.isPaused ? "play.fill" : "pause.fill"
+                    )
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                }
+                .tint(metrics.isPaused ? .green : .yellow)
 
                 Button(role: .destructive, action: onStop) {
                     Label("Arrêter", systemImage: "stop.fill")

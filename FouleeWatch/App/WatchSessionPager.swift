@@ -78,6 +78,7 @@ struct WatchSessionPager: View {
     let today: WatchTodayStore
     let route: WatchRouteStore
     var errorMessage: String?
+    var onTogglePause: () -> Void = {}
     var onStop: () -> Void
 
     @State private var page: WatchSessionPage = .session
@@ -86,7 +87,7 @@ struct WatchSessionPager: View {
         TabView(selection: $page) {
             WatchSessionMetricsPage(metrics: metrics, errorMessage: errorMessage)
                 .tag(WatchSessionPage.session)
-            WatchSessionControlsPage(metrics: metrics, onStop: onStop)
+            WatchSessionControlsPage(metrics: metrics, onTogglePause: onTogglePause, onStop: onStop)
                 .tag(WatchSessionPage.controls)
             WatchSessionRoutePage(route: route, metrics: metrics)
                 .tag(WatchSessionPage.route)
@@ -102,6 +103,7 @@ struct WatchSessionPager: View {
             }
         }
         .tabViewStyle(.page)
+        .sensoryFeedback(trigger: metrics.isPaused) { _, paused in paused ? .stop : .start }
         // Only while « Journée » is the page on screen (issue #280). Attached
         // to the pager rather than to the page, and keyed on the selection, so
         // arriving starts the loop and leaving cancels it: nothing guarantees a
