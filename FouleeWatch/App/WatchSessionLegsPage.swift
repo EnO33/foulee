@@ -35,6 +35,9 @@ struct WatchSessionLegsPage: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 8)
             .padding(.top, 4)
+            // Room for watchOS 27's page dots, which sit over the bottom of
+            // the page: on a 40 mm the last line ended under them (#408).
+            .padding(.bottom, 20)
         }
         .accessibilityLabel("Portions de la sortie")
     }
