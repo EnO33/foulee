@@ -48,8 +48,15 @@ struct WalkSplit: Equatable, Sendable, Identifiable {
 /// over the two numbers `applyOutingTotals` already computes.
 struct SplitRecorder: Equatable, Sendable {
     private(set) var splits: [WalkSplit] = []
+    /// One reading of the outing's counters.
+    private struct Reading: Equatable, Sendable {
+        var distanceMeters: Double
+        var elapsed: TimeInterval
+        var steps: Int
+    }
+
     /// The last reading, kept to interpolate across the boundary.
-    private var previous: (distanceMeters: Double, elapsed: TimeInterval, steps: Int)?
+    private var previous: Reading?
     /// When the last recorded kilometre was reached — the base of the next
     /// one's duration.
     private var lastBoundaryElapsed: TimeInterval = 0
@@ -80,7 +87,7 @@ struct SplitRecorder: Equatable, Sendable {
         steps: Int = 0,
         activity: SessionActivity? = nil
     ) {
-        defer { previous = (distanceMeters, elapsed, steps) }
+        defer { previous = Reading(distanceMeters: distanceMeters, elapsed: elapsed, steps: steps) }
         if let activity { activitiesSinceBoundary.insert(activity) }
         guard let previous else { return }
         let covered = distanceMeters - previous.distanceMeters
