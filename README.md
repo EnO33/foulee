@@ -118,8 +118,17 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 │   └── Resources/         # Assets, Info.plist
 ├── FouleeTests/           # Unit tests
 ├── FouleeConnectIQ/       # Garmin Connect IQ app (Monkey C) — not part of the Tuist build
+├── .github/actions/       # Shared CI steps (Xcode, Tuist, workspace)
 └── .github/workflows/     # CI (lint + build)
 ```
+
+## CI
+
+Every PR runs four jobs: **Lint**, **Connect IQ**, **iOS** and **watchOS**.
+The two platform jobs run in parallel and compile once each
+(`build-for-testing`, then `test-without-building`). The iOS job also runs the
+Periphery dead-code scan on the build's index. **Build & Test** waits for both
+and is the required check on `main`.
 
 ## App icon
 
@@ -189,6 +198,7 @@ the GitHub secrets the workflow needs.
 - **PRs** — small, focused, one PR per task
 - **Style** — SwiftLint + `swift-format` (CI-enforced)
 - **Errors** — no `try`/`catch` blocks; use `throws` + propagation, `Result`, or `do { try await … }` at the highest sensible boundary only
+- **Tests** — never read the real clock: inject it (`@Dependency(\.date)` on the phone, `clock:` on the watch's workout store)
 - **Positive code** — guard-based early returns, declarative SwiftUI, no flag-based branches when a value-based one will do
 
 ## License

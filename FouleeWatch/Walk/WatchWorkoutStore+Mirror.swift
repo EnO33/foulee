@@ -69,7 +69,7 @@ extension WatchWorkoutStore {
     /// newest-wins rule — the send would look done and change nothing.
     func mirrorSwitch() async {
         guard case .active(let metrics) = state else { return }
-        await mirrorNow(metrics, at: .now, isEnded: false)
+        await mirrorNow(metrics, at: clock(), isEnded: false)
     }
 
     /// Send regardless of the interval — for the moments that carry something a

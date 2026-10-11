@@ -11,7 +11,7 @@ import Testing
 @MainActor
 @Suite("Watch pause")
 struct WatchPauseTests {
-    private let base = Date(timeIntervalSince1970: 1_754_000_000)
+    private let base = ManualClock.origin
 
     // MARK: - The leg's clock
 
@@ -43,38 +43,29 @@ struct WatchPauseTests {
         return metrics.elapsed
     }
 
-    /// `value` is `expected`, or later by at most `slack`: the leg started no
-    /// earlier than the bracket's start and no later than its end.
-    private func isWithin(_ value: TimeInterval?, _ expected: TimeInterval, slack: TimeInterval) -> Bool {
-        guard let value else { return false }
-        return value >= expected - 0.01 && value <= expected + slack + 0.01
-    }
-
     @Test("Pause and resume reach HealthKit, and the outing's clock skips the pause")
     func pauseAndResume() async {
         let stub = WorkoutHealthKitStub()
+        let clock = stub.clock
         let store = stub.makeStore()
-        // The leg is dated inside `start`, somewhere between these two reads:
-        // a slow runner can take over a second there, so the clock is checked
-        // against that bracket rather than a fixed tolerance.
-        let before = Date()
         await store.start(activity: .walking)
-        let start = Date()
-        let slack = start.timeIntervalSince(before)
 
-        store.pause(at: start.addingTimeInterval(10))
-        store.refreshActivityTotals(at: start.addingTimeInterval(70))
+        clock.advance(by: 10)
+        store.pause()
+        clock.advance(by: 60)
+        store.refreshActivityTotals(at: clock.now)
         #expect(store.isPaused)
-        #expect(isWithin(elapsed(of: store), 10, slack: slack))
+        #expect(elapsed(of: store) == 10)
         if case .active(let metrics) = store.state {
             #expect(metrics.isPaused)
             #expect(metrics.timerBasis == nil)
         }
 
-        store.resume(at: start.addingTimeInterval(70))
-        store.refreshActivityTotals(at: start.addingTimeInterval(100))
+        store.resume()
+        clock.advance(by: 30)
+        store.refreshActivityTotals(at: clock.now)
         #expect(!store.isPaused)
-        #expect(isWithin(elapsed(of: store), 40, slack: slack))
+        #expect(elapsed(of: store) == 40)
         #expect(stub.pauseCalls == 1)
         #expect(stub.resumeCalls == 1)
     }
@@ -97,14 +88,17 @@ struct WatchPauseTests {
         let stub = WorkoutHealthKitStub()
         let motion = FakeMotionSource()
         motion.isAvailable = true
+        let clock = stub.clock
         let store = stub.makeStore(detection: WatchActivityDetection(source: motion.source, pedometer: .inert))
         await store.start(activity: .walking)
         await waitUntil { motion.isStreaming }
 
+        clock.advance(by: 120)
         motion.deliver(motionEstimate(startDate: base.addingTimeInterval(60), running: true))
         store.pause()
         #expect(!motion.isStreaming)
-        await store.splitIfDue(at: .now.addingTimeInterval(WatchWorkoutStore.minimumLegDuration * 4))
+        clock.advance(by: WatchWorkoutStore.minimumLegDuration * 4)
+        await store.splitIfDue(at: clock.now)
         #expect(stub.startCalls == 1, "a pause must not open a second leg")
 
         store.resume()
