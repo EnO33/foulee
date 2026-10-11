@@ -15,7 +15,7 @@ struct HydrationReminderSettings: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .tint(HydrationCard.water)
+            .tint(FouleeColor.water)
             if preferences.hydrationRemindersEnabled {
                 SettingsField("Plage horaire") {
                     TimeWindowPicker(start: $preferences.hydrationWindowStart, end: $preferences.hydrationWindowEnd)
@@ -26,7 +26,7 @@ struct HydrationReminderSettings: View {
                         value: $preferences.hydrationIntervalMinutes,
                         range: 20...240,
                         step: 10,
-                        tint: HydrationCard.water
+                        tint: FouleeColor.water
                     ) { "toutes les \(durationText(minutes: $0))" }
                 }
             }

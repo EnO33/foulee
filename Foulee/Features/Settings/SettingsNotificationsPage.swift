@@ -68,7 +68,7 @@ struct SettingsNotificationsPage: View {
             NavigationLink(value: SettingsPage.hydration) {
                 Label("Régler la plage et la fréquence", systemImage: "slider.horizontal.3")
                     .font(FouleeFont.footnote.weight(.semibold))
-                    .foregroundStyle(HydrationCard.water)
+                    .foregroundStyle(FouleeColor.water)
             }
             .buttonStyle(.pressable)
         }
