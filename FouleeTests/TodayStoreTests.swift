@@ -174,16 +174,13 @@ struct TodayStoreTests {
 
     @Test("Refresh aligns weekMinutes on the current ISO week (Mon → Sun)")
     @MainActor
-    func weekMinutesAlignedToCurrentWeek() async {
+    func weekMinutesAlignedToCurrentWeek() async throws {
         var calendar = Calendar(identifier: .iso8601)
         calendar.firstWeekday = 2
         let today = calendar.startOfDay(for: .now)
         let weekday = calendar.component(.weekday, from: today)
         let mondayOffset = -((weekday + 5) % 7)
-        guard let monday = calendar.date(byAdding: .day, value: mondayOffset, to: today) else {
-            Issue.record("could not derive Monday from current week")
-            return
-        }
+        let monday = try #require(calendar.date(byAdding: .day, value: mondayOffset, to: today))
         // Synthesise: 10 minutes on Monday, 20 on Tuesday, 30 on Wednesday.
         let crafted: [DailyMinutes] = [
             DailyMinutes(date: monday, minutes: 10),
