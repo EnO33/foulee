@@ -72,48 +72,12 @@ struct OnboardingGoalView: View {
     private var windowSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             sectionLabel("Fenêtre")
-            HStack(spacing: 16) {
-                timePicker(
-                    label: "Début",
-                    selection: Binding(
-                        get: { preferences.walkWindowStart.dateToday() },
-                        set: { preferences.walkWindowStart = TimeOfDay(date: $0) }
-                    )
-                )
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 60, height: 2)
-                    .clipShape(Capsule())
-                timePicker(
-                    label: "Fin",
-                    alignment: .trailing,
-                    selection: Binding(
-                        get: { preferences.walkWindowEnd.dateToday() },
-                        set: { preferences.walkWindowEnd = TimeOfDay(date: $0) }
-                    )
-                )
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 14)
-            .fouleeGlass(cornerRadius: 18)
-        }
-    }
-
-    private func timePicker(
-        label: String,
-        alignment: HorizontalAlignment = .leading,
-        selection: Binding<Date>
-    ) -> some View {
-        VStack(alignment: alignment, spacing: 4) {
-            Text(label)
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
-            DatePicker("", selection: selection, displayedComponents: .hourAndMinute)
-                .labelsHidden()
-                .datePickerStyle(.compact)
+            TimeWindowPicker(start: $preferences.walkWindowStart, end: $preferences.walkWindowEnd)
                 .scaledNumericFont(size: 22, weight: .semibold)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+                .fouleeGlass(cornerRadius: 18)
         }
-        .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
     }
 
     private var goalSection: some View {
@@ -134,8 +98,11 @@ struct OnboardingGoalView: View {
                     ),
                     in: 10...60,
                     step: 5
-                )
+                ) {
+                    Text("Objectif quotidien")
+                }
                 .tint(FouleeColor.accentMid)
+                .accessibilityValue("\(preferences.minutesGoal) minutes")
                 HStack {
                     Text("10 min").font(FouleeFont.caption).foregroundStyle(.secondary)
                     Spacer()
@@ -152,12 +119,5 @@ struct OnboardingGoalView: View {
             .font(FouleeFont.footnote.weight(.semibold))
             .foregroundStyle(.secondary)
             .tracking(1)
-    }
-}
-
-extension TimeOfDay {
-    init(date: Date, calendar: Calendar = .current) {
-        let components = calendar.dateComponents([.hour, .minute], from: date)
-        self.init(hour: components.hour ?? 0, minute: components.minute ?? 0)
     }
 }
