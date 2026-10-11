@@ -31,3 +31,8 @@ struct TimeOfDay: Equatable, Hashable, Sendable, Codable {
         return calendar.date(from: components) ?? now
     }
 }
+
+extension TimeOfDay {
+    /// « 11:30 » — the same 24-hour wall clock as `Date.clockText`.
+    var clockText: String { String(format: "%02d:%02d", hour, minute) }
+}

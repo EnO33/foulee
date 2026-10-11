@@ -1,8 +1,10 @@
-import Dependencies
 import SwiftUI
 
-/// Settings — édite les mêmes prefs qu'onboarding + thème + notifs.
-/// Présenté en sheet depuis le bouton profil de l'écran Aujourd'hui.
+/// Réglages (issue #393): a home of summarised rows, each opening the page for
+/// one theme. Presented as a sheet from the gear button of the Today screen.
+///
+/// A stack rather than one long scroll: every value reads at a glance on the
+/// home, and changing one is a tap away instead of a hunt through eight cards.
 struct SettingsScreen: View {
     @Bindable var preferences: UserPreferences
     var onClose: () -> Void
@@ -13,291 +15,78 @@ struct SettingsScreen: View {
     /// here, same as `TodayScreen` does for its own modals.
     @Environment(\.colorScheme) private var systemColorScheme
 
-    private let appVersion: String = Bundle.main
-        .object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
-
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                SheetHeader(eyebrow: "Réglages", title: "Préférences")
-                appearanceSection
-                activitySection
-                stepsSection
-                hydrationSection
-                notificationsSection
-                watchSection
-                aboutSection
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    SheetHeader(eyebrow: "Foulée", title: "Réglages")
+                    GlassSection {
+                        link(.goals, summary: SettingsSummary.goals(
+                            mode: preferences.activityMode,
+                            minutesGoal: preferences.minutesGoal,
+                            stepsGoal: preferences.stepsGoal
+                        ))
+                        Divider()
+                        link(.schedule, summary: SettingsSummary.schedule(
+                            days: preferences.activeDays,
+                            start: preferences.walkWindowStart,
+                            end: preferences.walkWindowEnd
+                        ))
+                        Divider()
+                        link(.hydration, summary: SettingsSummary.hydration(
+                            enabled: preferences.hydrationEnabled,
+                            goalML: preferences.hydrationGoalML,
+                            remindersEnabled: preferences.hydrationRemindersEnabled,
+                            intervalMinutes: preferences.hydrationIntervalMinutes
+                        ))
+                    }
+                    GlassSection {
+                        link(.notifications, summary: SettingsSummary.notifications(
+                            activeCount: preferences.activeReminderCount
+                        ))
+                        Divider()
+                        link(.appearance, summary: preferences.themeMode.label)
+                    }
+                    GlassSection {
+                        garminRow
+                        Divider()
+                        link(.about, summary: "Version, licence")
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 28)
+                .padding(.bottom, 40)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 28)
-            .padding(.bottom, 40)
+            .overlay(alignment: .topTrailing) { SheetCloseButton(action: onClose) }
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: SettingsPage.self) { page in
+                SettingsPageView(page: page, preferences: preferences)
+            }
         }
-        .overlay(alignment: .topTrailing) { SheetCloseButton(action: onClose) }
         .sheet(isPresented: $isShowingGarminGuide) {
             GarminSetupSheet { isShowingGarminGuide = false }
                 .preferredColorScheme(preferences.themeMode.colorScheme ?? systemColorScheme)
         }
     }
 
+    private func link(_ page: SettingsPage, summary: String) -> some View {
+        NavigationLink(value: page) {
+            SettingsRow(icon: page.icon, tint: page.tint, title: page.title, summary: summary)
+        }
+        .buttonStyle(.pressable)
+    }
+
     /// The Garmin guide again, for the (common) case where the watch arrives
-    /// long after the onboarding.
-    private var watchSection: some View {
-        GlassSection("Montre") {
-            GarminSetupLink { isShowingGarminGuide = true }
-        }
-    }
-
-    private var appearanceSection: some View {
-        GlassSection("Apparence") {
-            Picker("Thème", selection: $preferences.themeMode) {
-                ForEach(ThemeMode.allCases) { mode in
-                    Text(mode.label).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-        }
-    }
-
-    /// Was `section(title: "Marche")` until #220: it groups the days, the time
-    /// window and the minutes goal, which are the same three settings whatever
-    /// the user moves at — naming it after one activity was what made the
-    /// walk/run choice impossible to file anywhere.
-    private var activitySection: some View {
-        GlassSection("Activité") {
-            VStack(alignment: .leading, spacing: 20) {
-                modeRow
-                daysRow
-                windowRow
-                minutesGoalRow
-            }
-        }
-    }
-
-    /// The walk/run choice (#220). Segmented like the theme picker — three
-    /// short labels, one tap, no drill-down; the layout below it is identical
-    /// in all three modes, so nothing is disclosed conditionally.
-    ///
-    /// The footnote states the project's contract to the user, and it is the
-    /// literal truth rather than reassurance: the streak, the record and the
-    /// calendar count exercise minutes across every activity type and never
-    /// read this preference, so switching here moves no history.
-    private var modeRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Picker("Activité", selection: $preferences.activityMode) {
-                ForEach(ActivityMode.allCases) { mode in
-                    Text(mode.label).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            Text("Ta série compte toutes tes activités, quel que soit ce choix.")
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    /// Daily step goal — independent from the activity goal: it's tracked all
-    /// day (a session just contributes to it), so it stands on its own.
-    private var stepsSection: some View {
-        GlassSection("Objectif de pas") {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .firstTextBaseline) {
-                    rowLabel("Objectif quotidien")
-                    Spacer()
-                    Text("\(preferences.stepsGoal.formattedFR) pas")
-                        .scaledNumericFont(size: 20, weight: .semibold)
-                        .foregroundStyle(FouleeColor.accentMid)
-                }
-                Slider(
-                    value: Binding(
-                        get: { Double(preferences.stepsGoal) },
-                        set: { preferences.stepsGoal = Int($0) }
-                    ),
-                    in: 2_000...15_000,
-                    step: 500
-                )
-                .tint(FouleeColor.accentMid)
-                Text("Compté toute la journée, ta sortie incluse.")
-                    .font(FouleeFont.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private var daysRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            rowLabel("Jours actifs")
-            HStack(spacing: 8) {
-                ForEach(Weekday.allCases) { day in
-                    DayChip(
-                        day: day,
-                        active: preferences.activeDays.contains(day),
-                        toggle: { toggle(day: day) }
-                    )
-                }
-            }
-        }
-    }
-
-    /// "Fenêtre horaire", not "Fenêtre de marche": this row sits directly under
-    /// a picker that can say "Course", and the old label would contradict it on
-    /// screen. It stays a single window for all three modes — #222 dropped the
-    /// "midi" framing around it, not the window itself.
-    private var windowRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            rowLabel("Fenêtre horaire")
-            HStack(spacing: 16) {
-                timePicker(
-                    label: "Début",
-                    selection: Binding(
-                        get: { preferences.walkWindowStart.dateToday() },
-                        set: { preferences.walkWindowStart = TimeOfDay(date: $0) }
-                    )
-                )
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 40, height: 2)
-                    .clipShape(Capsule())
-                timePicker(
-                    label: "Fin",
-                    alignment: .trailing,
-                    selection: Binding(
-                        get: { preferences.walkWindowEnd.dateToday() },
-                        set: { preferences.walkWindowEnd = TimeOfDay(date: $0) }
-                    )
-                )
-            }
-        }
-    }
-
-    /// Activity goal — the session duration that drives the ring + the
-    /// "démarrer ta sortie" flow. Distinct from the all-day step goal below.
-    private var minutesGoalRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                rowLabel("Objectif d'activité")
-                Spacer()
-                Text("\(preferences.minutesGoal) min")
-                    .scaledNumericFont(size: 20, weight: .semibold)
-                    .foregroundStyle(FouleeColor.accentMid)
-            }
-            Slider(
-                value: Binding(
-                    get: { Double(preferences.minutesGoal) },
-                    set: { preferences.minutesGoal = Int($0) }
-                ),
-                in: 10...60,
-                step: 5
+    /// long after the onboarding. A sheet straight away: a page holding a
+    /// single link would only add a tap.
+    private var garminRow: some View {
+        Button { isShowingGarminGuide = true } label: {
+            SettingsRow(
+                icon: FouleeIcon.watch,
+                tint: FouleeColor.accentEnd,
+                title: "Montre Garmin",
+                summary: "Activer la synchro vers Santé"
             )
-            .tint(FouleeColor.accentMid)
-        }
-    }
-
-    private var hydrationSection: some View {
-        GlassSection("Hydratation") {
-            HydrationSettingsContent(preferences: preferences)
-        }
-    }
-
-    private var notificationsSection: some View {
-        GlassSection("Notifications") {
-            Toggle(isOn: $preferences.notificationsEnabled) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Rappel avant ta sortie")
-                        .font(FouleeFont.headline)
-                    Text("10 minutes avant ta fenêtre, sur les jours actifs.")
-                        .font(FouleeFont.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .tint(FouleeColor.success)
-            Toggle(isOn: $preferences.recapNotificationsEnabled) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Récap de la semaine et du mois")
-                        .font(FouleeFont.headline)
-                    Text("Le lundi et le 1er du mois, à 9 h.")
-                        .font(FouleeFont.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .tint(FouleeColor.success)
-        }
-    }
-
-    private var aboutSection: some View {
-        GlassSection("À propos") {
-            VStack(alignment: .leading, spacing: 12) {
-                aboutRow(label: "Version", value: appVersion)
-                aboutRow(label: "Auteur", value: "EnO33")
-                aboutRow(label: "Licence", value: "MIT")
-            }
-        }
-    }
-
-    private func aboutRow(label: String, value: String) -> some View {
-        HStack {
-            Text(label).font(FouleeFont.body)
-            Spacer()
-            Text(value).font(FouleeFont.body).foregroundStyle(.secondary)
-        }
-    }
-
-    private func rowLabel(_ text: String) -> some View {
-        Text(text)
-            .font(FouleeFont.headline)
-    }
-
-    private func timePicker(
-        label: String,
-        alignment: HorizontalAlignment = .leading,
-        selection: Binding<Date>
-    ) -> some View {
-        VStack(alignment: alignment, spacing: 4) {
-            Text(label)
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
-            DatePicker("", selection: selection, displayedComponents: .hourAndMinute)
-                .labelsHidden()
-                .datePickerStyle(.compact)
-        }
-        .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
-    }
-
-    private func toggle(day: Weekday) {
-        if preferences.activeDays.contains(day) {
-            preferences.activeDays.remove(day)
-        } else {
-            preferences.activeDays.insert(day)
-        }
-    }
-}
-
-/// Round day chip used by the days row. Lifted out so the look stays
-/// consistent with `OnboardingGoalView` without duplicating the gradient
-/// styling inline.
-struct DayChip: View {
-    var day: Weekday
-    var active: Bool
-    var toggle: () -> Void
-
-    var body: some View {
-        Button(action: toggle) {
-            // The circle stays 40 pt (7 chips must fit one row), so the label
-            // scales with Dynamic Type until it hits the circle, then shrinks.
-            Text(day.shortLabel)
-                .font(.system(.subheadline, weight: .semibold))
-                .minimumScaleFactor(0.6)
-                .lineLimit(1)
-                .foregroundStyle(active ? AnyShapeStyle(Color.white) : AnyShapeStyle(Color.primary))
-                .frame(width: 40, height: 40)
-                .background(
-                    Circle()
-                        .fill(active ? AnyShapeStyle(FouleeColor.accentGradient) : AnyShapeStyle(Color.clear))
-                )
-                .overlay(
-                    Circle()
-                        .stroke(Color.gray.opacity(active ? 0 : 0.25), lineWidth: 1)
-                )
-                .shadow(color: FouleeColor.accentMid.opacity(active ? 0.35 : 0), radius: 10, x: 0, y: 4)
         }
         .buttonStyle(.pressable)
     }
