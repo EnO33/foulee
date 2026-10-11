@@ -114,6 +114,15 @@ La fenêtre glissante de D6 faisait commencer la rangée un dimanche le samedi, 
 
 L'hydratation (D7 et ADR 0005, D3) suit la même semaine : la moyenne et les jours tenus portent sur les jours écoulés.
 
+### D9 — Partager son bilan en image (#410)
+
+- **Une image, pas un lien** : Foulée n'a ni compte ni serveur. Le bilan part en PNG par la feuille de partage d'iOS (`ShareLink`), accompagné d'une phrase (« Ma semaine sur Foulée : 8 h 30 d'activité, objectif tenu 4 jours sur 5. »).
+- **Deux formats au choix** : carré 4:5 (1080 × 1350) pour Messages, WhatsApp et un fil, story 9:16 (1080 × 1920) pour les stories. Un aperçu précède l'envoi.
+- **Les chiffres du Bilan, rien de plus** : minutes et évolution, jours où l'objectif a été tenu, anneaux des jours, distance, pas, sorties, meilleur jour. `RecapShareCard` les rédige à partir du `Recap`, sans nouveau calcul.
+- **Ce qui ne part jamais** : ni carte ni parcours, ni heure de sortie, ni fréquence cardiaque, ni hydratation. Une image envoyée à des amis dit comment s'est passée la période, pas où ni quand on sort.
+- **Le même rendu pour tous** : clair, taille de texte par défaut, échelle ×3, fond opaque, sans matériau ni animation (`RecapShareRenderer`). Les réglages de l'appareil de la personne qui partage ne changent pas l'image.
+- **Le bouton n'apparaît que si la période contient de l'activité** : une période vide n'a rien à montrer.
+
 ## Ce qui reste ouvert
 
 - **Un récap sur la montre**, en complication ou à l'ouverture le lundi, si la version iPhone est adoptée.

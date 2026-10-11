@@ -1,15 +1,17 @@
 import SwiftUI
 
-/// The round « × » every sheet closes with (issue #392). One definition so
-/// the nine sheets stop drifting apart — the shadow keeps it readable over a
-/// map as well as over the sheet gradient.
-struct SheetCloseButton: View {
-    var accessibilityLabel = "Fermer"
+/// A round glass button for a sheet's top corner (issues #392, #410): the
+/// « × » every sheet closes with, and the actions that sit beside it. One
+/// definition so the sheets stop drifting apart — the shadow keeps it readable
+/// over a map as well as over the sheet gradient.
+struct SheetRoundButton: View {
+    var systemImage: String
+    var accessibilityLabel: String
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: "xmark")
+            Image(systemName: systemImage)
                 .font(.system(size: 16, weight: .bold))
                 .foregroundStyle(.primary)
                 .frame(width: 40, height: 40)
@@ -17,8 +19,18 @@ struct SheetCloseButton: View {
                 .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
         }
         .buttonStyle(.pressable)
-        .padding(20)
         .accessibilityLabel(accessibilityLabel)
+    }
+}
+
+/// The round « × », inset from the sheet's corner.
+struct SheetCloseButton: View {
+    var accessibilityLabel = "Fermer"
+    var action: () -> Void
+
+    var body: some View {
+        SheetRoundButton(systemImage: "xmark", accessibilityLabel: accessibilityLabel, action: action)
+            .padding(20)
     }
 }
 
