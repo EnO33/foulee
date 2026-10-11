@@ -8,6 +8,10 @@ extension Notification.Name {
 
 /// Receives the phone's streak prefs and persists them so the watch computes
 /// the same streak. Activate once at app launch.
+///
+/// `@unchecked Sendable` because an `NSObject` subclass can never be checked
+/// `Sendable` (issue #405); it stores nothing — every callback
+/// decodes and persists what it receives.
 final class WatchSyncReceiver: NSObject, WCSessionDelegate, @unchecked Sendable {
     static let shared = WatchSyncReceiver()
 

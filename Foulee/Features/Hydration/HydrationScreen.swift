@@ -70,7 +70,7 @@ struct HydrationScreen: View {
                     VStack(spacing: 6) {
                         Image(systemName: serving.systemImage)
                             .font(.system(size: 20, weight: .semibold))
-                            .foregroundStyle(HydrationCard.water)
+                            .foregroundStyle(FouleeColor.water)
                         Text("\(serving.milliliters) mL")
                             .font(FouleeFont.footnote.weight(.semibold).monospacedDigit())
                             .foregroundStyle(.primary)

@@ -219,7 +219,7 @@ struct RecapHydration: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Image(systemName: "drop.fill")
-                    .foregroundStyle(HydrationCard.water)
+                    .foregroundStyle(FouleeColor.water)
                 Text("\(litres(water.averageML)) L")
                     .scaledNumericFont(size: 26)
                 Text("par jour en moyenne")
@@ -232,7 +232,7 @@ struct RecapHydration: View {
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.gray.opacity(0.18))
                     Capsule()
-                        .fill(HydrationCard.water.gradient)
+                        .fill(FouleeColor.water.gradient)
                         .frame(width: geo.size.width * (isRevealed ? goalRate : 0))
                 }
             }
