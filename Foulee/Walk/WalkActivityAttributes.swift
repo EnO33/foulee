@@ -34,7 +34,9 @@ struct WalkActivityAttributes: ActivityAttributes {
     /// Deliberately *not* defaulted: `init(goalMinutes:activity:)` below
     /// replaces the memberwise initializer (which would have handed an
     /// optional an implicit `nil`) so no production call site can drop the
-    /// activity by omission. Only a legacy decode may produce `nil`.
+    /// activity by omission. `nil` comes from a legacy decode, or from a
+    /// mirrored outing (#275), which may switch sport after the attributes —
+    /// fixed for the activity's life — are written.
     var activity: SessionActivity?
 
     init(goalMinutes: Int, activity: SessionActivity?) {
