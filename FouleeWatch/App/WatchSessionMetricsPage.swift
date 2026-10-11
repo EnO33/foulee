@@ -32,19 +32,21 @@ struct WatchSessionMetricsPage: View {
                 }
 
                 HStack(spacing: 10) {
-                    metric(value: "\(metrics.steps)", label: "pas", icon: "shoe")
-                    metric(value: metrics.distanceKm.kmValue(), label: "km", icon: "location.fill")
+                    metric(value: "\(metrics.steps)", label: "pas", icon: "shoe", tint: MetricPalette.steps)
+                    metric(value: metrics.distanceKm.kmValue(), label: "km", icon: "location.fill", tint: MetricPalette.distance)
                 }
                 HStack(spacing: 10) {
                     metric(
                         value: "\(metrics.activeCalories)",
                         label: "kcal",
-                        icon: "flame.fill"
+                        icon: "flame.fill",
+                        tint: MetricPalette.calories
                     )
                     metric(
                         value: metrics.heartRate.map { "\($0)" } ?? "—",
                         label: "bpm",
-                        icon: "heart.fill"
+                        icon: "heart.fill",
+                        tint: MetricPalette.heartRate
                     )
                 }
             }
@@ -90,7 +92,9 @@ struct WatchSessionMetricsPage: View {
             // the line that answers « est-ce que la montre a compris que je
             // cours ? ». Interpolated into the text rather than placed beside
             // it so the whole line wraps as one.
-            Text("\(Image(systemName: metrics.activity.icon)) \(metrics.activityHeadlineText)")
+            // The figure in its sport's colour (issue #381): the same orange
+            // or cyan as the legs, the map and the phone.
+            Text("\(activityIcon) \(metrics.activityHeadlineText)")
                 .font(.footnote.weight(.semibold))
                 .monospacedDigit()
 
@@ -99,6 +103,10 @@ struct WatchSessionMetricsPage: View {
         .foregroundStyle(.secondary)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(metrics.activitySummaryText)
+    }
+
+    private var activityIcon: Text {
+        Text(Image(systemName: metrics.activity.icon)).foregroundStyle(metrics.activity.tint)
     }
 
     /// Takes the activity line's place rather than adding to it: the sport and
@@ -123,14 +131,18 @@ struct WatchSessionMetricsPage: View {
     /// room above its content than a plain scroll view does. Measured on the
     /// board, not reasoned about: the icon moved down beside the label, which
     /// buys back the two lines and reads the same while moving.
-    private func metric(value: String, label: String, icon: String) -> some View {
+    ///
+    /// **In its metric's colour** (issue #381), like the tiles on the phone and
+    /// the watch's own home: the label carries the tint, the figure stays white
+    /// so it reads first.
+    private func metric(value: String, label: String, icon: String, tint: Color) -> some View {
         VStack(spacing: 1) {
             Text(value)
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .monospacedDigit()
             Label(label, systemImage: icon)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(tint)
         }
         .frame(maxWidth: .infinity)
     }

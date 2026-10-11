@@ -32,6 +32,7 @@ struct WatchRootView: View {
                     today: todayStore,
                     route: store.route,
                     errorMessage: store.lastError,
+                    isSaving: store.isSaving,
                     onStop: { Task { await store.stop() } }
                 )
             case .ended(let metrics, let saveFailed):
