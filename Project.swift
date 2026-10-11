@@ -42,7 +42,9 @@ let project = Project(
     ],
     settings: .settings(
         base: [
-            "SWIFT_VERSION": "6.2",
+            // Language mode, not compiler version: Swift 6.4 (Xcode 27) compiles
+            // in the Swift 6 mode, which has no minor versions.
+            "SWIFT_VERSION": "6",
             "SWIFT_STRICT_CONCURRENCY": "complete",
             "ENABLE_USER_SCRIPT_SANDBOXING": "YES",
             // Version + build number shared by every target. The release CI

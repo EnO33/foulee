@@ -20,19 +20,24 @@ permissions:
 jobs:
   testflight:
     name: Build & upload to TestFlight
-    runs-on: macos-15
+    # Same image and Xcode as CI (issue #404): what ships is what was tested.
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # full history so the build number (commit count) is stable
 
-      - name: Select Xcode 26
+      - name: Select Xcode 27
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
-          xcode-version: '26.0'
+          xcode-version: '27.0'
 
-      - name: Download watchOS platform (the iOS app embeds the Watch app)
+      - name: Ensure the watchOS platform is installed (the iOS app embeds the Watch app)
         run: |
+          if xcrun simctl list runtimes available | grep -q "watchOS"; then
+            echo "watchOS runtime present"
+            exit 0
+          fi
           for attempt in 1 2 3 4; do
             echo "Attempt $attempt — downloading watchOS platform"
             if sudo xcodebuild -downloadPlatform watchOS; then

@@ -56,7 +56,7 @@ goals, planning, hydration, notifications, appearance, the Garmin guide and
 
 ## Stack
 
-- **Swift 6.2**, **SwiftUI**, iOS 26 + watchOS 26
+- **Swift 6.4** (Swift 6 language mode, complete strict concurrency), **SwiftUI**, iOS 26 + watchOS 26
 - **HealthKit** — steps, distance, calories, workouts (walks and runs)
 - **CoreMotion** — pedometer during a session (live cadence and pace on the
   Watch), and activity recognition to tell a walk from a run (live on the
@@ -73,7 +73,7 @@ goals, planning, hydration, notifications, appearance, the Garmin guide and
 
 ## Prerequisites
 
-- macOS with Xcode 26+
+- macOS Tahoe 26.6+ on Apple silicon, with Xcode 27+ (Swift 6.4)
 - [Tuist](https://tuist.dev) (`brew install --cask tuist`)
 - [SwiftLint](https://github.com/realm/SwiftLint) (`brew install swiftlint`)
 

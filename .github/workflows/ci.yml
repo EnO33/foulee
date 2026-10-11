@@ -16,7 +16,9 @@ permissions:
 jobs:
   lint:
     name: Lint
-    runs-on: macos-15
+    # Same image as Build & Test: the release scripts are type-checked with
+    # this runner's swiftc, which must be the one that ships the app.
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -70,7 +72,7 @@ jobs:
     # per-device pixel size, no key material committed. Details and the
     # opt-in recipe if this trade-off is ever revisited: FouleeConnectIQ/README.md.
     name: Connect IQ
-    # Pinned to a version, like the macos-15 jobs around it: a floating label
+    # Pinned to a version, like the macOS jobs around it: a floating label
     # moves the runner image under us without a commit. This job only needs
     # python3, so bumping it is a one-line, deliberate change.
     runs-on: ubuntu-24.04
@@ -87,23 +89,32 @@ jobs:
     # branch protection. The job also runs the dead-code scan (a final step),
     # but renaming it would orphan the required check and block every merge.
     name: Build & Test
-    runs-on: macos-15
+    # GitHub's Xcode 27 image (issue #404): macOS 27, Xcode 27.0 by default,
+    # iOS 27 and watchOS 27 simulators preinstalled. The general-purpose
+    # macos-26 image tops out at Xcode 26.6, and Xcode 27 does not run on
+    # macos-15 at all (it needs macOS Tahoe 26.6).
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Select Xcode 26
+      - name: Select Xcode 27
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
-          xcode-version: '26.0'
+          xcode-version: '27.0'
 
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Download watchOS platform (not pre-installed on the runner)
+      # The Xcode 27 image ships the watchOS runtime, unlike macos-15 did. Kept
+      # as a guard rather than dropped: if an image update ever ships without
+      # it, the download runs here instead of the build failing on a missing
+      # destination.
+      - name: Ensure the watchOS platform is installed
         run: |
-          # GitHub macos-15 runners are flaky on first `downloadPlatform`:
-          # the CoreSimulator service can come up late and Xcode errors with
-          # 'Unable to connect to simulator'. Retry a few times with backoff.
+          if xcrun simctl list runtimes available | grep -q "watchOS"; then
+            echo "watchOS runtime present"
+            exit 0
+          fi
           for attempt in 1 2 3 4; do
             echo "Attempt $attempt — downloading watchOS platform"
             if sudo xcodebuild -downloadPlatform watchOS; then
@@ -219,17 +230,17 @@ jobs:
       # the baseline (.periphery.baseline.json) freezes today's findings, so
       # only NEW unused code fails the check. Refresh after clearing a finding:
       # `periphery scan --write-baseline .periphery.baseline.json`.
-      - name: Install Periphery 3.7.4
+      - name: Install Periphery 3.8.0
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p "$HOME/periphery"
-          gh release download 3.7.4 \
+          gh release download 3.8.0 \
             --repo peripheryapp/periphery \
-            --pattern 'periphery-3.7.4.zip' \
+            --pattern 'periphery-3.8.0.zip' \
             --dir "$HOME/periphery"
-          (cd "$HOME/periphery" && unzip -o periphery-3.7.4.zip)
+          (cd "$HOME/periphery" && unzip -o periphery-3.8.0.zip)
           # The binary loads libIndexStore.dylib from alongside itself.
           echo "$HOME/periphery" >> "$GITHUB_PATH"
 
