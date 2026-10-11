@@ -94,15 +94,12 @@ struct TodayStoreErrorFreshnessTests {
 @Suite("TodayStore walk overlay staleness")
 struct TodayStoreWalkOverlayStalenessTests {
     @Test("The post-walk overlay is dropped when the day changes")
-    func overlayDroppedOnDayChange() async {
+    func overlayDroppedOnDayChange() async throws {
         let calendar = Calendar.current
         let midnight = calendar.startOfDay(for: .now)
-        guard let nextMidnight = calendar.date(byAdding: .day, value: 1, to: midnight),
-              let evening = calendar.date(byAdding: .minute, value: -10, to: nextMidnight),
-              let morning = calendar.date(byAdding: .minute, value: 10, to: nextMidnight) else {
-            Issue.record("could not derive dates around midnight")
-            return
-        }
+        let nextMidnight = try #require(calendar.date(byAdding: .day, value: 1, to: midnight))
+        let evening = try #require(calendar.date(byAdding: .minute, value: -10, to: nextMidnight))
+        let morning = try #require(calendar.date(byAdding: .minute, value: 10, to: nextMidnight))
         let now = LockedRef(evening)
         let hkSteps = LockedRef(6_000)
         await withDependencies {
