@@ -244,6 +244,25 @@ jobs:
             -resultBundlePath build/results/watchos.xcresult \
             test | xcbeautify
 
+      # The same reports, printed: an artifact is only as good as the reader's
+      # access to it, and the job log is what every reader of the check sees.
+      - name: Print crash reports
+        if: failure()
+        run: |
+          echo "::group::Host crash reports (simulator processes land here)"
+          find "$HOME/Library/Logs/DiagnosticReports" -type f \( -name 'Foulee*' -o -name 'xctest*' \) -mmin -90 \
+            -exec sh -c 'echo "=== $1"; head -c 30000 "$1"; echo' _ {} \; || true
+          echo "::endgroup::"
+          for bundle in build/results/*.xcresult; do
+            [ -d "$bundle" ] || continue
+            out="build/results/diagnostics-$(basename "$bundle" .xcresult)"
+            xcrun xcresulttool export diagnostics --path "$bundle" --output-path "$out" >/dev/null 2>&1 || continue
+            echo "::group::Diagnostics from $bundle"
+            find "$out" -type f \( -name '*.ips' -o -name '*.crash' -o -name 'StandardOutputAndStandardError*' \) \
+              -exec sh -c 'echo "=== $1"; head -c 30000 "$1"; echo' _ {} \; || true
+            echo "::endgroup::"
+          done
+
       # The result bundles hold the crash reports and logs a red run needs and
       # the console never shows. Kept a week, failures only.
       - name: Keep the test results
