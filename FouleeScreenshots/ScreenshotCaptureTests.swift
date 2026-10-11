@@ -109,15 +109,12 @@ final class ScreenshotCaptureTests: XCTestCase {
         close(app)
     }
 
-    /// « Les deux » is the seeded mode, so starting a session asks which one
-    /// first (#224). Answering « Marche » is what puts the timer on screen;
-    /// nothing is written to Santé — the capture doubles' `saveWorkout` is a
-    /// no-op, and this run never stops the session anyway.
+    /// « Repartir » puts the timer on screen straight away: the phone stopped
+    /// asking which activity in #246, even in « les deux » mode — detection
+    /// decides. Nothing is written to Santé: the capture doubles'
+    /// `saveWorkout` is a no-op, and this run never stops the session anyway.
     private func captureSession(_ app: XCUIApplication) {
         tapWhenReady(app.buttons["Repartir"], "Repartir")
-        // The picker's rows carry an explicit accessibility label
-        // ("Démarrer marche"), not the visible "Marche" of their `Text`.
-        tapWhenReady(app.buttons["Démarrer marche"], "Activity picker")
         waitForScreen(app.staticTexts["EN COURS"], "Session in progress")
         capture("03_session")
     }
