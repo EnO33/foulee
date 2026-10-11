@@ -23,7 +23,9 @@ workout: see [ADR 0003](docs/adr/0003-seance-partagee-iphone-watch.md) (French).
 The **Bilan** reviews the week so far, Monday first, and the last month —
 minutes, steps, distance, outings, the days the goal was met, the change from
 the period before, and the water drunk when hydration is on. A tap on a day
-lays out its outings on a timeline. A notification announces it every Sunday
+lays out its outings on a timeline. The Bilan can be shared as an image —
+square or story — with the period's headline figures and nothing that says
+where or when you go out. A notification announces it every Sunday
 evening and every 1st of the month: see
 [ADR 0004](docs/adr/0004-recap-semaine-mois.md) (French).
 
@@ -116,8 +118,17 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 │   └── Resources/         # Assets, Info.plist
 ├── FouleeTests/           # Unit tests
 ├── FouleeConnectIQ/       # Garmin Connect IQ app (Monkey C) — not part of the Tuist build
+├── .github/actions/       # Shared CI steps (project setup, failure reports)
 └── .github/workflows/     # CI (lint + build)
 ```
+
+## CI
+
+Every PR runs four jobs: **Lint**, **Connect IQ**, **iOS** and **watchOS**.
+The two platform jobs run in parallel and compile once each
+(`build-for-testing`, then `test-without-building`). The iOS job also runs the
+Periphery dead-code scan on the build's index. **Build & Test** waits for both
+and is the required check on `main`.
 
 ## App icon
 
@@ -187,6 +198,7 @@ the GitHub secrets the workflow needs.
 - **PRs** — small, focused, one PR per task
 - **Style** — SwiftLint + `swift-format` (CI-enforced)
 - **Errors** — no `try`/`catch` blocks; use `throws` + propagation, `Result`, or `do { try await … }` at the highest sensible boundary only
+- **Tests** — never read the real clock: inject it (`@Dependency(\.date)` on the phone, `clock:` on the watch's workout store)
 - **Positive code** — guard-based early returns, declarative SwiftUI, no flag-based branches when a value-based one will do
 
 ## License

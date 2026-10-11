@@ -29,6 +29,11 @@ final class WatchWorkoutStore: NSObject {
     private(set) var isSaving = false
 
     @ObservationIgnored private let healthKit: WatchWorkoutHealthKit
+    /// The time every pause, leg and batch is dated with. Injected so tests
+    /// drive it instead of racing the runner's clock (issue #406): a pause
+    /// test once failed because a slow machine took over a second to start a
+    /// session.
+    @ObservationIgnored let clock: @MainActor () -> Date
     /// Internal, not private, because `WatchWorkoutStore+Legs` answers « is
     /// this callback about the leg in flight? » from it (issue #290) — and that
     /// question belongs next to the delegates that ask it, not here.
@@ -45,7 +50,7 @@ final class WatchWorkoutStore: NSObject {
     /// HealthKit refuses to segment a single session (#256).
     @ObservationIgnored private var finishedLegs: [WatchWorkoutSegment] = []
     /// When the leg in flight began. Its own builder counts from here.
-    @ObservationIgnored private var legStartedAt = Date.now
+    @ObservationIgnored private var legStartedAt: Date
     /// The sport the leg in flight is **recorded** as.
     ///
     /// Not always what the screen says: the display follows detection at once,
@@ -88,11 +93,14 @@ final class WatchWorkoutStore: NSObject {
     init(
         healthKit: WatchWorkoutHealthKit = .live,
         detection: WatchActivityDetection = WatchActivityDetection(),
-        route: WatchRouteStore = WatchRouteStore()
+        route: WatchRouteStore = WatchRouteStore(),
+        clock: @escaping @MainActor () -> Date = { .now }
     ) {
         self.healthKit = healthKit
         self.detection = detection
         self.route = route
+        self.clock = clock
+        legStartedAt = clock()
         super.init()
     }
 
@@ -149,7 +157,7 @@ final class WatchWorkoutStore: NSObject {
         defer { isSaving = false }
         detection.stop()
         route.stop()
-        let end = Date.now
+        let end = clock()
         // Close the leg in flight so every leg of the outing has an end, and
         // the summary can give each sport its own figures (issue #265).
         finishedLegs.append(legInFlight(endingAt: end))
@@ -184,7 +192,7 @@ final class WatchWorkoutStore: NSObject {
         guard case .ended(let metrics, saveFailed: true) = state, let handle = sessionHandle else { return }
         let saved = await runOrTrap("nouvel essai d'enregistrement") {
             if handle.collectionEndDate() == nil {
-                try await handle.endCollection(.now)
+                try await handle.endCollection(clock())
             }
             try await handle.finishWorkout(route.locations)
             return true as Bool
@@ -222,7 +230,7 @@ final class WatchWorkoutStore: NSObject {
     #endif
 
     private func beginSession(activity: SessionActivity) async {
-        let now = Date.now
+        let now = clock()
         outingID = UUID()
         let leg = OutingLeg(outingID: outingID, index: 0)
         let handle = await runOrTrap("ouverture de la séance") {
@@ -257,7 +265,7 @@ final class WatchWorkoutStore: NSObject {
             return
         }
         guard case .active(var metrics) = state else { return }
-        let now = Date.now
+        let now = clock()
         // The builder counts **this leg**. Every leg before it is already a
         // saved workout with its own builder, so the outing's figures are the
         // sum — the screen must never fall back to the leg's own counters, or
@@ -304,7 +312,8 @@ final class WatchWorkoutStore: NSObject {
         guard case .active(let metrics) = state else { return }
         state = .ended(metrics, saveFailed: true)
         // Same debt again — a session that died on its own (issue #278).
-        Task { await mirrorNow(metrics, at: .now, isEnded: true) }
+        let now = clock()
+        Task { await mirrorNow(metrics, at: now, isEnded: true) }
     }
 
     /// The log line is the whole of issue #273. `lastError` reaches a screen,
@@ -357,7 +366,7 @@ extension WatchWorkoutStore {
     /// Refresh the totals on their own. Split out of `ingest(builder:)` and
     /// internal because that method takes an `HKLiveWorkoutBuilder`, a type no
     /// test can construct — while this half needs none of it.
-    func refreshActivityTotals(at now: Date = .now) {
+    func refreshActivityTotals(at now: Date) {
         guard case .active(var metrics) = state else { return }
         applyOutingTotals(to: &metrics, at: now)
         state = .active(metrics)

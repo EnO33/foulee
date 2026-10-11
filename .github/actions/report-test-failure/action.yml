@@ -1,0 +1,38 @@
+name: Report a test failure
+description: >
+  Print the crash reports and xcresult diagnostics of a red test run into the
+  job log, then keep the result bundles a week (issue #404). The log is what
+  every reader of the check sees; the artifact holds the rest.
+
+inputs:
+  name:
+    description: Platform the results belong to, used to name the artifact.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Print crash reports
+      shell: bash
+      run: |
+        echo "::group::Host crash reports (simulator processes land here)"
+        find "$HOME/Library/Logs/DiagnosticReports" -type f \( -name 'Foulee*' -o -name 'xctest*' \) -mmin -90 \
+          -exec sh -c 'echo "=== $1"; head -c 30000 "$1"; echo' _ {} \; || true
+        echo "::endgroup::"
+        for bundle in build/results/*.xcresult; do
+          [ -d "$bundle" ] || continue
+          out="build/results/diagnostics-$(basename "$bundle" .xcresult)"
+          xcrun xcresulttool export diagnostics --path "$bundle" --output-path "$out" >/dev/null 2>&1 || continue
+          echo "::group::Diagnostics from $bundle"
+          find "$out" -type f \( -name '*.ips' -o -name '*.crash' -o -name 'StandardOutputAndStandardError*' \) \
+            -exec sh -c 'echo "=== $1"; head -c 30000 "$1"; echo' _ {} \; || true
+          echo "::endgroup::"
+        done
+
+    - name: Keep the test results
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: test-results-${{ inputs.name }}
+        path: build/results
+        retention-days: 7
+        if-no-files-found: ignore

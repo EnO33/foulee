@@ -15,6 +15,14 @@ struct RecapScreen: View {
 
     @State private var kind: RecapPeriod.Kind
     @State private var store = RecapStore()
+    @State private var isSharing = false
+    /// A sheet presented from a sheet doesn't inherit the theme.
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// The recap on screen, when there is something in it to share.
+    private var shareable: Recap? {
+        store.recaps[kind].flatMap { $0.isEmpty ? nil : $0 }
+    }
 
     init(
         kind: RecapPeriod.Kind,
@@ -62,12 +70,33 @@ struct RecapScreen: View {
                 .padding(.top, 28)
                 .padding(.bottom, 40)
             }
-            .overlay(alignment: .topTrailing) { SheetCloseButton(action: onClose) }
+            .overlay(alignment: .topTrailing) { cornerButtons }
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: WorkoutSummary.self) { WorkoutDetailSheet(summary: $0) }
         }
         .presentationBackground { SheetBackground() }
         .task { await store.load(goalMinutes: goalMinutes, activeDays: activeDays, waterGoalML: waterGoalML) }
+        .sheet(isPresented: $isSharing) {
+            if let shareable {
+                RecapShareSheet(recap: shareable) { isSharing = false }
+                    .preferredColorScheme(colorScheme)
+            }
+        }
+    }
+
+    /// Share (issue #410) beside the close button — only once there is a
+    /// period with something in it to show.
+    private var cornerButtons: some View {
+        HStack(spacing: 12) {
+            if shareable != nil {
+                SheetRoundButton(systemImage: "square.and.arrow.up", accessibilityLabel: "Partager le bilan") {
+                    isSharing = true
+                }
+                .transition(.opacity)
+            }
+            SheetRoundButton(systemImage: "xmark", accessibilityLabel: "Fermer", action: onClose)
+        }
+        .padding(20)
     }
 }
 

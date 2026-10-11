@@ -16,8 +16,8 @@ permissions:
 jobs:
   lint:
     name: Lint
-    # Same image as Build & Test: the release scripts are type-checked with
-    # this runner's swiftc, which must be the one that ships the app.
+    # Same image as the platform jobs: the release scripts are type-checked
+    # with this runner's swiftc, which must be the one that ships the app.
     runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -84,53 +84,20 @@ jobs:
       - name: Validate the Connect IQ project (no SDK required)
         run: FouleeConnectIQ/build.sh validate
 
-  build:
-    # Keep this name "Build & Test": it's a required status check in main's
-    # branch protection. The job also runs the dead-code scan (a final step),
-    # but renaming it would orphan the required check and block every merge.
-    name: Build & Test
-    # GitHub's Xcode 27 image (issue #404): macOS 27, Xcode 27.0 by default,
-    # iOS 27 and watchOS 27 simulators preinstalled. The general-purpose
-    # macos-26 image tops out at Xcode 26.6, and Xcode 27 does not run on
-    # macos-15 at all (it needs macOS Tahoe 26.6).
+  # iOS and watchOS run side by side (issue #406). Each compiles once —
+  # `build-for-testing`, then `test-without-building` — instead of a `build`
+  # followed by a `test` that recompiled everything.
+  ios:
+    name: iOS
+    # GitHub's Xcode 27 image (issue #404): macOS 27, Xcode 27.0, iOS 27 and
+    # watchOS 27 simulators preinstalled. The general-purpose macos-26 image
+    # tops out at Xcode 26.6, and Xcode 27 does not run on macos-15 at all
+    # (it needs macOS Tahoe 26.6).
     runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Select Xcode 27
-        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
-        with:
-          xcode-version: '27.0'
-
-      - name: Show Xcode version
-        run: xcodebuild -version
-
-      # The Xcode 27 image ships the watchOS runtime, unlike macos-15 did. Kept
-      # as a guard rather than dropped: if an image update ever ships without
-      # it, the download runs here instead of the build failing on a missing
-      # destination.
-      - name: Ensure the watchOS platform is installed
-        run: |
-          if xcrun simctl list runtimes available | grep -q "watchOS"; then
-            echo "watchOS runtime present"
-            exit 0
-          fi
-          for attempt in 1 2 3 4; do
-            echo "Attempt $attempt — downloading watchOS platform"
-            if sudo xcodebuild -downloadPlatform watchOS; then
-              exit 0
-            fi
-            echo "Attempt $attempt failed, sleeping 30s before retry"
-            sleep 30
-          done
-          echo "watchOS platform download failed after 4 attempts"
-          exit 1
-
-      - name: Install toolchain (Tuist) from mise.toml
-        uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
-
-      - name: Install xcbeautify
-        run: brew install xcbeautify
+      - uses: ./.github/actions/prepare-project
 
       - name: Ensure iPhone 17 Pro simulator exists
         run: |
@@ -142,36 +109,9 @@ jobs:
           fi
           xcrun simctl list devices available | grep -E "iPhone 17"
 
-      - name: Ensure Apple Watch simulator exists
-        run: |
-          if ! xcrun simctl list devices available | grep -q "Apple Watch"; then
-            RUNTIME=$(xcrun simctl list runtimes available -j | jq -r '.runtimes[] | select(.platform == "watchOS") | .identifier' | sort -V | tail -1)
-            DEVICETYPE=$(xcrun simctl list devicetypes -j | jq -r '.devicetypes[] | select(.productFamily == "Apple Watch") | .identifier' | tail -1)
-            echo "Creating Apple Watch on runtime $RUNTIME (devicetype $DEVICETYPE)"
-            xcrun simctl create "Apple Watch" "$DEVICETYPE" "$RUNTIME"
-          fi
-          xcrun simctl list devices available | grep -E "Apple Watch"
-
-      - name: Cache Tuist + SPM artefacts
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/Library/Caches/tuist
-            ~/Library/Caches/org.tuist.Tuist
-            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
-          key: ${{ runner.os }}-tuist-${{ hashFiles('Tuist.swift', 'Project.swift', 'Tuist/**/*.swift') }}
-          restore-keys: |
-            ${{ runner.os }}-tuist-
-
-      - name: Tuist install (fetch SPM dependencies)
-        run: tuist install
-
-      - name: Tuist generate (Foulee.xcworkspace)
-        run: tuist generate --no-open
-
       # A fixed derivedDataPath lets the dead-code step below reuse this
       # build's index store instead of building the project a second time.
-      - name: Build (iOS)
+      - name: Build for testing (iOS)
         run: |
           set -o pipefail
           xcodebuild \
@@ -180,25 +120,13 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -configuration Debug \
             -derivedDataPath build/dd \
-            build | xcbeautify
+            build-for-testing | xcbeautify
 
-      - name: Build (watchOS)
-        run: |
-          set -o pipefail
-          xcodebuild \
-            -workspace Foulee.xcworkspace \
-            -scheme FouleeWatch \
-            -destination 'generic/platform=watchOS Simulator' \
-            -configuration Debug \
-            -derivedDataPath build/dd \
-            build | xcbeautify
-
-      # Booted explicitly, and waited for, before the first test run. A device
-      # created on a fresh runtime (iOS 27 on the Xcode 27 image) can take
-      # minutes to finish its first boot; left to xcodebuild, that wait counts
-      # against the test runner's launch, which then gives up with « crashed
-      # before establishing connection » and no crash log (issue #404). Booting
-      # here keeps a slow boot and a real launch crash apart.
+      # Booted explicitly, and waited for, before the tests. A device created
+      # on a fresh runtime can take minutes to finish its first boot; left to
+      # xcodebuild, that wait counts against the test runner's launch, which
+      # then gives up with « crashed before establishing connection » (issue
+      # #404). Booting here keeps a slow boot and a real launch crash apart.
       - name: Boot the iPhone simulator
         timeout-minutes: 10
         run: |
@@ -216,63 +144,28 @@ jobs:
             -configuration Debug \
             -derivedDataPath build/dd \
             -resultBundlePath build/results/ios.xcresult \
-            test | xcbeautify
+            test-without-building | xcbeautify
 
-      - name: Test (watchOS)
+      - uses: ./.github/actions/report-test-failure
+        if: failure()
+        with:
+          name: ios
+
+      # Periphery scans both schemes. The iPhone app embeds the watch app, so
+      # the build above already indexed FouleeWatch; only the watch's test
+      # target is left, and it compiles in seconds on top of that build. The
+      # watchOS job runs those tests — this step only fills in the index.
+      - name: Index the watch tests for the dead-code scan
+        if: github.event_name == 'pull_request'
         run: |
           set -o pipefail
-          # The ensure step above guarantees an Apple Watch simulator exists,
-          # but its exact name depends on the runtime's default devices —
-          # resolve it instead of hardcoding one.
-          WATCH_NAME=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("Apple Watch"))][0].name')
-          if [ -z "$WATCH_NAME" ] || [ "$WATCH_NAME" = "null" ]; then
-            echo "No Apple Watch simulator available"
-            xcrun simctl list devices
-            exit 1
-          fi
-          echo "Testing on simulator: $WATCH_NAME"
-          # Same reason as the iPhone above: finish the first boot before the
-          # test runner's launch clock starts.
-          WATCH_UDID=$(xcrun simctl list devices available -j | jq -r --arg name "$WATCH_NAME" '[.devices[][] | select(.name == $name)][0].udid')
-          xcrun simctl bootstatus "$WATCH_UDID" -b
           xcodebuild \
             -workspace Foulee.xcworkspace \
             -scheme FouleeWatch \
-            -destination "platform=watchOS Simulator,name=$WATCH_NAME" \
+            -destination 'generic/platform=watchOS Simulator' \
             -configuration Debug \
             -derivedDataPath build/dd \
-            -resultBundlePath build/results/watchos.xcresult \
-            test | xcbeautify
-
-      # The same reports, printed: an artifact is only as good as the reader's
-      # access to it, and the job log is what every reader of the check sees.
-      - name: Print crash reports
-        if: failure()
-        run: |
-          echo "::group::Host crash reports (simulator processes land here)"
-          find "$HOME/Library/Logs/DiagnosticReports" -type f \( -name 'Foulee*' -o -name 'xctest*' \) -mmin -90 \
-            -exec sh -c 'echo "=== $1"; head -c 30000 "$1"; echo' _ {} \; || true
-          echo "::endgroup::"
-          for bundle in build/results/*.xcresult; do
-            [ -d "$bundle" ] || continue
-            out="build/results/diagnostics-$(basename "$bundle" .xcresult)"
-            xcrun xcresulttool export diagnostics --path "$bundle" --output-path "$out" >/dev/null 2>&1 || continue
-            echo "::group::Diagnostics from $bundle"
-            find "$out" -type f \( -name '*.ips' -o -name '*.crash' -o -name 'StandardOutputAndStandardError*' \) \
-              -exec sh -c 'echo "=== $1"; head -c 30000 "$1"; echo' _ {} \; || true
-            echo "::endgroup::"
-          done
-
-      # The result bundles hold the crash reports and logs a red run needs and
-      # the console never shows. Kept a week, failures only.
-      - name: Keep the test results
-        if: failure()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: test-results
-          path: build/results
-          retention-days: 7
-          if-no-files-found: ignore
+            build-for-testing | xcbeautify
 
       # Dead-code scan reuses the index from the builds above (--skip-build via
       # --index-store-path), so it costs seconds, not a second build. PR-only:
@@ -303,3 +196,83 @@ jobs:
             --strict \
             --relative-results \
             --format github-actions
+
+  watchos:
+    name: watchOS
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare-project
+
+      - name: Ensure Apple Watch simulator exists
+        run: |
+          if ! xcrun simctl list devices available | grep -q "Apple Watch"; then
+            RUNTIME=$(xcrun simctl list runtimes available -j | jq -r '.runtimes[] | select(.platform == "watchOS") | .identifier' | sort -V | tail -1)
+            DEVICETYPE=$(xcrun simctl list devicetypes -j | jq -r '.devicetypes[] | select(.productFamily == "Apple Watch") | .identifier' | tail -1)
+            echo "Creating Apple Watch on runtime $RUNTIME (devicetype $DEVICETYPE)"
+            xcrun simctl create "Apple Watch" "$DEVICETYPE" "$RUNTIME"
+          fi
+          xcrun simctl list devices available | grep -E "Apple Watch"
+
+      # The ensure step above guarantees an Apple Watch simulator exists, but
+      # its exact name depends on the runtime's default devices — resolve it
+      # instead of hardcoding one.
+      - name: Pick the Apple Watch simulator
+        run: |
+          WATCH_NAME=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("Apple Watch"))][0].name')
+          if [ -z "$WATCH_NAME" ] || [ "$WATCH_NAME" = "null" ]; then
+            echo "No Apple Watch simulator available"
+            xcrun simctl list devices
+            exit 1
+          fi
+          echo "Testing on simulator: $WATCH_NAME"
+          echo "WATCH_DESTINATION=platform=watchOS Simulator,name=$WATCH_NAME" >> "$GITHUB_ENV"
+          # Same reason as the iPhone: finish the first boot before the test
+          # runner's launch clock starts.
+          WATCH_UDID=$(xcrun simctl list devices available -j | jq -r --arg name "$WATCH_NAME" '[.devices[][] | select(.name == $name)][0].udid')
+          xcrun simctl bootstatus "$WATCH_UDID" -b
+
+      - name: Build for testing (watchOS)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace Foulee.xcworkspace \
+            -scheme FouleeWatch \
+            -destination "$WATCH_DESTINATION" \
+            -configuration Debug \
+            -derivedDataPath build/dd \
+            build-for-testing | xcbeautify
+
+      - name: Test (watchOS)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace Foulee.xcworkspace \
+            -scheme FouleeWatch \
+            -destination "$WATCH_DESTINATION" \
+            -configuration Debug \
+            -derivedDataPath build/dd \
+            -resultBundlePath build/results/watchos.xcresult \
+            test-without-building | xcbeautify
+
+      - uses: ./.github/actions/report-test-failure
+        if: failure()
+        with:
+          name: watchos
+
+  build:
+    # Keep this name "Build & Test": it's a required status check in main's
+    # branch protection. The work now happens in the two jobs above; this one
+    # only reports their outcome, so the protection rule needs no change.
+    # `always()`: a skipped aggregator would count as passing — alls-green
+    # fails it unless every job it needs succeeded.
+    name: Build & Test
+    needs: [ios, watchos]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Both platforms passed
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}

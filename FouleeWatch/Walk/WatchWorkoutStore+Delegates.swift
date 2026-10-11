@@ -89,7 +89,7 @@ extension WatchWorkoutStore {
     /// screen. Both feed the same detector, so nothing about the decision
     /// depends on which noticed first.
     func beginActivityDetection(from activity: SessionActivity) {
-        let now = Date.now
+        let now = clock()
         currentActivity = activity
         detection.start(from: activity, at: now) { [weak self] confirmed in
             self?.applySwitch(confirmed)
@@ -110,7 +110,7 @@ extension WatchWorkoutStore {
     func applySwitch(_ confirmed: ActivitySwitchDetector.Switch) {
         guard case .active = state else { return }
         currentActivity = confirmed.activity
-        refreshActivityTotals()
+        refreshActivityTotals(at: clock())
         // Back to what the leg is already recording: whatever was queued is
         // moot, and no workout was created — which is the whole point of
         // waiting.

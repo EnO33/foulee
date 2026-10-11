@@ -17,7 +17,7 @@ import Testing
 @MainActor
 @Suite("Callbacks from an abandoned leg")
 struct WatchAbandonedLegCallbackTests {
-    private let base = Date()
+    private let base = ManualClock.origin
 
     private func estimate(_ activity: SessionActivity, at offset: TimeInterval) -> MotionActivityEstimate {
         motionEstimate(
