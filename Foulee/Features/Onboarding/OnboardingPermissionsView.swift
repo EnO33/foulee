@@ -13,8 +13,13 @@ struct OnboardingPermissionsView: View {
     @Dependency(\.healthKit) private var healthKit
     @Dependency(\.location) private var location
 
+    // periphery:ignore - read only through `$` bindings. Since Xcode 27,
+    // `@State` is a macro and Periphery 3.8 no longer counts the projected
+    // value as a use of the property (issue #404).
     @State private var healthGranted = false
+    // periphery:ignore - same as above.
     @State private var locationGranted = false
+    // periphery:ignore - same as above.
     @State private var notificationsGranted = false
     @State private var isShowingGarminGuide = false
 
