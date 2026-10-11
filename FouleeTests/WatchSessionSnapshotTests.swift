@@ -135,4 +135,3 @@ struct WatchSessionSnapshotTests {
         #expect(snapshot().elapsed(at: base.addingTimeInterval(300)) == 900)
     }
 }
-
