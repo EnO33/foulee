@@ -179,6 +179,9 @@ fi
 echo "==> Removing any previous install"
 xcrun simctl uninstall "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
 
+# No diagnostics collection at the end (issue #420): the iOS 27 simulator
+# never answers xcodebuild's request, which then waits out a 600 s timeout
+# after a two-minute capture. The PNGs are attachments, not diagnostics.
 echo "==> Running the capture"
 xcodebuild test \
   -workspace Foulee.xcworkspace \
@@ -186,6 +189,7 @@ xcodebuild test \
   -destination "platform=$SIMULATOR_PLATFORM,id=$UDID" \
   -configuration Debug \
   -resultBundlePath "$RESULT_BUNDLE" \
+  -collect-test-diagnostics never \
   | (xcbeautify 2>/dev/null || cat)
 
 echo "==> Exporting the attachments"
