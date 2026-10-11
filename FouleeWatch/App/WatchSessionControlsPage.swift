@@ -14,6 +14,7 @@ import SwiftUI
 /// it stays the second thing on the page, not the first.
 struct WatchSessionControlsPage: View {
     let metrics: WatchWorkoutMetrics
+    var isSaving = false
     var onTogglePause: () -> Void = {}
     var onStop: () -> Void
 
@@ -32,16 +33,41 @@ struct WatchSessionControlsPage: View {
                     .frame(maxWidth: .infinity)
                 }
                 .tint(metrics.isPaused ? .green : .yellow)
+                .disabled(isSaving)
 
                 Button(role: .destructive, action: onStop) {
                     Label("Arrêter", systemImage: "stop.fill")
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                 }
+                // A second tap while the outing saves would read as « it did
+                // not work » (issue #380): the store ignores it, and so does this.
+                .disabled(isSaving)
             }
             .padding(.horizontal, 6)
             .padding(.top, 8)
         }
         .accessibilityLabel("Contrôles")
+    }
+}
+
+/// Shown over the session from the tap on « Arrêter » until the summary
+/// (issue #380): ending the workout and writing it, route included, to Santé
+/// takes a few seconds, and a screen that does not move in the meantime reads
+/// as a tap that was missed.
+struct WatchSavingView: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            ProgressView()
+            Text("Enregistrement…")
+                .font(.headline)
+            Text("Ta sortie part dans Santé")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.black.opacity(0.85))
+        .accessibilityElement(children: .combine)
     }
 }

@@ -24,6 +24,9 @@ final class WatchWorkoutStore: NSObject {
 
     private(set) var state: State = .idle
     private(set) var lastError: String?
+    /// From the tap on « Arrêter » until the summary: saving takes seconds, and
+    /// the screen has to say so — and ignore a second tap (issue #380).
+    private(set) var isSaving = false
 
     @ObservationIgnored private let healthKit: WatchWorkoutHealthKit
     /// Internal, not private, because `WatchWorkoutStore+Legs` answers « is
@@ -156,7 +159,9 @@ final class WatchWorkoutStore: NSObject {
     /// « Réessayer » can finish it. A failed split used to end one too, and it
     /// cost a real sortie (see `splitLeg`).
     func stop() async {
-        guard case .active(var metrics) = state else { return }
+        guard case .active(var metrics) = state, !isSaving else { return }
+        isSaving = true
+        defer { isSaving = false }
         detection.stop()
         route.stop()
         let end = Date.now

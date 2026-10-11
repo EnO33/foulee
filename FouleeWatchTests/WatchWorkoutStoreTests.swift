@@ -66,6 +66,10 @@ final class WorkoutHealthKitStub {
     private(set) var outingLegs: [OutingLeg] = []
     /// The route handed to each `finishWorkout`, in call order (issue #312).
     private(set) var finishedRoutes: [[CLLocation]] = []
+    /// Called while `finishWorkout` runs — the moment the wearer waits on.
+    var onFinish: (() -> Void)?
+    /// Suspend inside `endCollection`, as HealthKit does.
+    var yieldsWhileSaving = false
     /// `HKWorkoutSession.pause()` and `resume()` calls (issue #384).
     private(set) var pauseCalls = 0
     private(set) var resumeCalls = 0
@@ -119,6 +123,9 @@ final class WorkoutHealthKitStub {
             },
             endCollection: { date in
                 self.endCollectionCalls += 1
+                // Like the real one, saving gives the main actor back: a second
+                // tap can land in between (issue #380).
+                if self.yieldsWhileSaving { await Task.yield() }
                 if let error = self.endCollectionError { throw error }
                 self.collectionEndDate = date
                 self.endCollectionDates.append(date)
@@ -126,6 +133,7 @@ final class WorkoutHealthKitStub {
             finishWorkout: { route in
                 self.finishCalls += 1
                 self.finishedRoutes.append(route)
+                self.onFinish?()
                 if let error = self.finishError { throw error }
             },
             collectionEndDate: { self.collectionEndDate },
@@ -237,6 +245,32 @@ struct WatchWorkoutStoreTests {
         #expect(stub.endCollectionCalls == 1)
         #expect(stub.finishCalls == 1)
         #expect(stub.handleToken == nil)
+    }
+
+    @Test("stop() says it is saving until the summary, and only then (#380)")
+    func stopFlagsTheSave() async {
+        let stub = WorkoutHealthKitStub()
+        let store = stub.makeStore()
+        await store.start(activity: .walking)
+        var savingWhileFinishing: Bool?
+        stub.onFinish = { savingWhileFinishing = store.isSaving }
+        await store.stop()
+        #expect(savingWhileFinishing == true)
+        #expect(store.isSaving == false)
+        #expect(ended(store) == false)
+    }
+
+    @Test("a second tap on « Arrêter » while saving does nothing (#380)")
+    func secondStopIsIgnored() async {
+        let stub = WorkoutHealthKitStub()
+        let store = stub.makeStore()
+        await store.start(activity: .walking)
+        stub.yieldsWhileSaving = true
+        async let first: Void = store.stop()
+        async let second: Void = store.stop()
+        _ = await (first, second)
+        #expect(stub.endCalls == 1)
+        #expect(stub.finishCalls == 1)
     }
 
     @Test("stop() with a failing save keeps the builder for a retry")

@@ -15,7 +15,8 @@ extension WatchWorkoutStore {
 
     /// Pause the outing in flight. No-op when it is not running.
     func pause(at now: Date = .now) {
-        guard case .active = state, pausedSince == nil else { return }
+        // Not while saving: the outing is already over (issue #380).
+        guard case .active = state, pausedSince == nil, !isSaving else { return }
         pausedSince = now
         sessionHandle?.pause()
         detection.stop()

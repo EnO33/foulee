@@ -78,6 +78,8 @@ struct WatchSessionPager: View {
     let today: WatchTodayStore
     let route: WatchRouteStore
     var errorMessage: String?
+    /// The outing is being saved after « Arrêter » (issue #380).
+    var isSaving = false
     var onTogglePause: () -> Void = {}
     var onStop: () -> Void
 
@@ -87,7 +89,7 @@ struct WatchSessionPager: View {
         TabView(selection: $page) {
             WatchSessionMetricsPage(metrics: metrics, errorMessage: errorMessage)
                 .tag(WatchSessionPage.session)
-            WatchSessionControlsPage(metrics: metrics, onTogglePause: onTogglePause, onStop: onStop)
+            WatchSessionControlsPage(metrics: metrics, isSaving: isSaving, onTogglePause: onTogglePause, onStop: onStop)
                 .tag(WatchSessionPage.controls)
             WatchSessionRoutePage(route: route, metrics: metrics)
                 .tag(WatchSessionPage.route)
@@ -103,6 +105,16 @@ struct WatchSessionPager: View {
             }
         }
         .tabViewStyle(.page)
+        // Over every page, not only « Contrôles »: the summary takes seconds to
+        // come, and whatever page is on screen has to say the tap was heard.
+        .overlay {
+            if isSaving {
+                WatchSavingView()
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.2), value: isSaving)
+        .sensoryFeedback(.stop, trigger: isSaving) { _, saving in saving }
         .sensoryFeedback(trigger: metrics.isPaused) { _, paused in paused ? .stop : .start }
         // Only while « Journée » is the page on screen (issue #280). Attached
         // to the pager rather than to the page, and keyed on the selection, so
