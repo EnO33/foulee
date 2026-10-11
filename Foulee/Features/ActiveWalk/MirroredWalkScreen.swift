@@ -78,7 +78,7 @@ struct MirroredWalkScreen: View {
                 Text(elapsed(at: context.date).walkClockText)
                     .font(.system(size: 56, weight: .semibold, design: .rounded))
                     .monospacedDigit()
-                Text(store.session?.activity.label ?? "Séance")
+                Text(store.figures?.isPaused == true ? "En pause" : store.session?.activity.label ?? "Séance")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -91,6 +91,9 @@ struct MirroredWalkScreen: View {
     }
 
     private func elapsed(at date: Date) -> TimeInterval {
+        // Paused on the wrist: the figures' own clock, which stands still
+        // (issue #384).
+        if let figures = store.figures, figures.isPaused { return figures.elapsed(at: date) }
         guard let start = store.outingStartedAt else { return 0 }
         return max(0, date.timeIntervalSince(start))
     }

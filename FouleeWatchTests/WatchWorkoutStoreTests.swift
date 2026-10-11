@@ -70,6 +70,9 @@ final class WorkoutHealthKitStub {
     var onFinish: (() -> Void)?
     /// Suspend inside `endCollection`, as HealthKit does.
     var yieldsWhileSaving = false
+    /// `HKWorkoutSession.pause()` and `resume()` calls (issue #384).
+    private(set) var pauseCalls = 0
+    private(set) var resumeCalls = 0
 
     func makeStore(
         detection: WatchActivityDetection = WatchActivityDetection(source: .inert, pedometer: .inert),
@@ -133,7 +136,9 @@ final class WorkoutHealthKitStub {
                 self.onFinish?()
                 if let error = self.finishError { throw error }
             },
-            collectionEndDate: { self.collectionEndDate }
+            collectionEndDate: { self.collectionEndDate },
+            pause: { self.pauseCalls += 1 },
+            resume: { self.resumeCalls += 1 }
         )
     }
 }

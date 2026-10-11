@@ -83,6 +83,7 @@ struct WatchSessionPager: View {
     var errorMessage: String?
     /// The outing is being saved after « Arrêter » (issue #380).
     var isSaving = false
+    var onTogglePause: () -> Void = {}
     var onStop: () -> Void
 
     @State private var page: WatchSessionPage = .session
@@ -91,7 +92,7 @@ struct WatchSessionPager: View {
         TabView(selection: $page) {
             WatchSessionMetricsPage(metrics: metrics, errorMessage: errorMessage)
                 .tag(WatchSessionPage.session)
-            WatchSessionControlsPage(metrics: metrics, isSaving: isSaving, onStop: onStop)
+            WatchSessionControlsPage(metrics: metrics, isSaving: isSaving, onTogglePause: onTogglePause, onStop: onStop)
                 .tag(WatchSessionPage.controls)
             WatchSessionMusicPage()
                 .tag(WatchSessionPage.music)
@@ -119,6 +120,7 @@ struct WatchSessionPager: View {
         }
         .animation(.easeOut(duration: 0.2), value: isSaving)
         .sensoryFeedback(.stop, trigger: isSaving) { _, saving in saving }
+        .sensoryFeedback(trigger: metrics.isPaused) { _, paused in paused ? .stop : .start }
         // Only while « Journée » is the page on screen (issue #280). Attached
         // to the pager rather than to the page, and keyed on the selection, so
         // arriving starts the loop and leaving cancels it: nothing guarantees a

@@ -50,6 +50,13 @@ Le pendant de D1 dans l'autre sens : pour une séance lancée sur l'iPhone, **l'
 
 **Écarté, après l'avoir livré (#335, #337, #341) :** reprendre la séance à la montre en la coupant en deux portions d'une même sortie. Le code regroupait bien les deux portions dans l'historique de Foulée, mais Santé et Forme montraient **deux entraînements** pour une seule sortie. Ce n'est pas ce qu'on attend d'une séance « reprise ». Aucune API ne permet de déplacer une séance d'un appareil à l'autre.
 
+### D5 — Une sortie de la montre se met en pause à la montre (#384)
+
+- **La pause est celle de HealthKit** : `HKWorkoutSession.pause()` / `resume()`. Santé exclut lui-même le temps de pause de la durée de la séance.
+- **Le chrono de chaque portion exclut aussi les pauses** (`WatchWorkoutSegment.pausedDuration`, `pausedSince`). Les totaux de la sortie, ses kilomètres et son allure en découlent.
+- **La détection marche/course s'arrête pendant la pause**, et un changement en attente est abandonné. S'arrêter à un passage piéton n'est pas un changement de sport, et une pause ne coupe jamais une portion.
+- **L'iPhone est prévenu** : `WatchSessionSnapshot.isPaused` part au moment de la pause et de la reprise. Pendant la pause, le chrono de l'écran miroir s'arrête sur la valeur annoncée, avec « En pause ». Le champ est absent chez une montre plus ancienne, ce qui vaut « jamais en pause ».
+
 ## Ce qui reste non mesuré
 
 - **La taille maximale d'un envoi** par `sendToRemoteWorkoutSession(data:)` n'est pas documentée. 1 500 points compacts font environ 30 Ko ; le plafond est le réglage à baisser si un envoi échoue (le journal `session` le dira : « snapshot non transmis »).
