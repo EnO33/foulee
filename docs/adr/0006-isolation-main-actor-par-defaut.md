@@ -27,6 +27,7 @@ Swift 6.2 permet d'inverser ce défaut module par module : `SWIFT_DEFAULT_ACTOR_
   - la logique pure : calculs, formats, allègement de parcours ;
   - les clients swift-dependencies et leurs conformances `DependencyKey`, dont les valeurs sont lues depuis n'importe quel thread ;
   - les délégués système appelés sur une file d'arrière-plan.
+  - les `Shape` SwiftUI : `path(in:)` est une exigence non isolée, que SwiftUI appelle hors du main actor.
 - **`@concurrent`** sur une fonction `async` dont le travail doit vraiment quitter l'acteur de l'appelant. Sans cette marque, elle reste sur l'acteur de l'appelant.
 - **Les types de `Foulee/Shared/`** compilés aussi dans la montre ou les extensions sont `nonisolated`, sauf ceux qui ne servent qu'à l'interface. Les deux compilations s'accordent ainsi sur leur isolation.
 

@@ -104,7 +104,7 @@ struct HydrationGlass: View {
 }
 
 /// A drinking glass, wider at the rim than at the base.
-private struct GlassShape: Shape {
+nonisolated private struct GlassShape: Shape {
     func path(in rect: CGRect) -> Path {
         let inset = rect.width * 0.14
         var path = Path()
