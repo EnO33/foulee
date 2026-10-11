@@ -198,7 +198,7 @@ the GitHub secrets the workflow needs.
 - **PRs** — small, focused, one PR per task
 - **Style** — SwiftLint + `swift-format` (CI-enforced)
 - **Errors** — no `try`/`catch` blocks; use `throws` + propagation, `Result`, or `do { try await … }` at the highest sensible boundary only
-- **Tests** — never read the real clock: inject it (`@Dependency(\.date)` on the phone, `clock:` on the watch's workout store)
+- **Tests** — never read the real clock: inject it (`@Dependency(\.date)` on the phone, `clock:` on the watch's workout store); a precondition is `try #require(…)`, not a `guard` that records an issue and returns
 - **Positive code** — guard-based early returns, declarative SwiftUI, no flag-based branches when a value-based one will do
 
 ## License
