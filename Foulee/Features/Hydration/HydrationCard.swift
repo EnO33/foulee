@@ -24,12 +24,12 @@ struct HydrationCard: View {
             HStack(spacing: 8) {
                 Image(systemName: "drop.fill")
                     .font(.system(.callout, weight: .semibold))
-                    .foregroundStyle(Self.water)
+                    .foregroundStyle(FouleeColor.water)
                 Text("Hydratation").font(FouleeFont.headline)
                 Spacer()
                 Text("\(litres(intakeML)) / \(litres(goalML)) L")
                     .scaledNumericFont(size: 16, weight: .semibold)
-                    .foregroundStyle(reached ? Self.water : .secondary)
+                    .foregroundStyle(reached ? FouleeColor.water : .secondary)
                     .contentTransition(.numericText())
             }
 
@@ -48,7 +48,7 @@ struct HydrationCard: View {
             HStack {
                 Label(pace.text, systemImage: pace.systemImage)
                     .font(FouleeFont.footnote.weight(reached ? .semibold : .regular))
-                    .foregroundStyle(reached ? Self.water : .secondary)
+                    .foregroundStyle(reached ? FouleeColor.water : .secondary)
                     .labelStyle(.titleAndIcon)
                     .contentTransition(.opacity)
                 Spacer(minLength: 8)
@@ -58,7 +58,7 @@ struct HydrationCard: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(Self.water, in: Capsule())
+                        .background(FouleeColor.water, in: Capsule())
                 }
                 .buttonStyle(.pressable)
                 .contextMenu {
