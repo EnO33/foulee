@@ -44,6 +44,16 @@ struct SettingsSummaryTests {
             == "2,4 L · rappel toutes les 1 h 30")
     }
 
+    @Test("Water reminders say their rhythm and window")
+    func hydrationReminders() {
+        let text = SettingsSummary.hydrationReminders(
+            start: TimeOfDay(hour: 9, minute: 0),
+            end: TimeOfDay(hour: 21, minute: 0),
+            intervalMinutes: 120
+        )
+        #expect(text == "Toutes les 2 h, de 09:00 à 21:00.")
+    }
+
     @Test("Notifications count with the right plural", arguments: [
         (0, "Aucun rappel"),
         (1, "1 rappel actif"),
@@ -51,6 +61,11 @@ struct SettingsSummaryTests {
     ] as [(Int, String)])
     func notifications(count: Int, expected: String) {
         #expect(SettingsSummary.notifications(activeCount: count) == expected)
+    }
+
+    @Test("Notifications blocked in iOS say so, whatever the toggles")
+    func notificationsBlocked() {
+        #expect(SettingsSummary.notifications(activeCount: 3, blockedByIOS: true) == "Coupées dans iOS")
     }
 
     /// Water reminders only fire while hydration tracking is on, so they only

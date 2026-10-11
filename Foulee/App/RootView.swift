@@ -40,13 +40,16 @@ struct RootView: View {
                 // while the app stays closed.
                 FouleeApp.scheduleAppRefresh()
             case .active:
-                // Re-sync hydration reminders on every foreground so the
-                // standard daily grid is restored once "today's" drink is
-                // stale — otherwise a glass logged yesterday leaves the
-                // shifted (repeating) grid in place and the morning
-                // reminders never come back. `scheduleKey` alone misses this
-                // because it doesn't change on a day boundary.
-                Task { await syncHydration() }
+                // Re-sync every reminder on each foreground. Hydration needs
+                // it so the standard daily grid is restored once "today's"
+                // drink is stale — otherwise a glass logged yesterday leaves
+                // the shifted (repeating) grid in place and the morning
+                // reminders never come back; `scheduleKey` alone misses this
+                // because it doesn't change on a day boundary. The others need
+                // it since #394: permission granted from Réglages, or in iOS
+                // Settings, changes no preference either, yet the schedule
+                // must follow. Every sync replaces its requests: idempotent.
+                Task { await syncReminders() }
             default:
                 break
             }
@@ -78,11 +81,6 @@ struct RootView: View {
         await scheduler.sync(with: preferences)
         await hydrationScheduler.sync(with: preferences)
         await recapScheduler.sync(with: preferences)
-    }
-
-    private func syncHydration() async {
-        guard preferences.hasCompletedOnboarding else { return }
-        await hydrationScheduler.sync(with: preferences)
     }
 }
 

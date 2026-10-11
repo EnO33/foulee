@@ -36,6 +36,8 @@ and the week so far: see [ADR 0005](docs/adr/0005-hydratation.md) (French).
 **Réglages** opens from the gear on the home screen: one row per theme —
 goals, planning, hydration, notifications, appearance, the Garmin guide and
 *À propos* — each showing its current value, and a tap away from its page.
+The notifications page gathers every reminder, and says so — with a way to
+fix it — when iOS blocks Foulée's notifications.
 
 ## Compatible watches
 

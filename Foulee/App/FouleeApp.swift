@@ -82,7 +82,10 @@ struct FouleeApp: App {
     // half of that story is verified and which is reasoned.
     private static let endOrphanedWalkActivitiesOnce: Void = {
         Task {
-            for activity in Activity<WalkActivityAttributes>.activities {
+            // A mirror wake is a launch too (#275): the activity it starts is
+            // not an orphan.
+            let startedHere = MirroredLiveActivity.startedHere.withLock { $0 }
+            for activity in Activity<WalkActivityAttributes>.activities where !startedHere.contains(activity.id) {
                 await activity.end(nil, dismissalPolicy: .immediate)
             }
         }
@@ -126,7 +129,11 @@ struct FouleeApp: App {
     // Once-gated: `FouleeApp` can be constructed more than once, and a second
     // observer would overwrite the handler slot the first one installed.
     private static let startMirrorObserverOnce: Void = {
-        Task { @MainActor in await MirroredSessionStore.shared.observe() }
+        Task { @MainActor in
+            await MirroredSessionStore.shared.observe { store in
+                await MirroredLiveActivity.shared.reflect(store)
+            }
+        }
     }()
 
     /// Ask iOS for a background refresh in ~2 h. Called when the app goes to

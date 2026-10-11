@@ -65,6 +65,11 @@ A **privacy policy URL** is mandatory because the app touches Health and
 Location data. Host a short policy somewhere stable (GitHub Pages works) and
 paste the URL in App Store Connect.
 
+The policy is [`docs/privacy.md`](privacy.md). The app already links to it on
+GitHub from **Réglages › À propos** (`AppLinks.privacyPolicy`): use that same
+URL, or update `AppLinks` if the policy moves, so the app and the store page
+never point to two different texts.
+
 ## 5. Distribution certificate (`.p12`)
 
 If you don't already have an **Apple Distribution** certificate, create one in
