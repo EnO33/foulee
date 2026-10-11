@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// The contents of the Settings "Hydratation" section — the on/off toggle and,
-/// when on, the daily goal + glass-size sliders. Split out of `SettingsScreen`
-/// to keep that view's body within bounds.
+/// The Hydratation settings page — the on/off toggle and, when on, the daily
+/// goal, the glass size and the reminders.
 struct HydrationSettingsContent: View {
     @Bindable var preferences: UserPreferences
 
@@ -17,58 +16,29 @@ struct HydrationSettingsContent: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .tint(.teal)
+            .tint(HydrationCard.water)
             if preferences.hydrationEnabled {
-                goalRow
-                glassRow
-                Divider().overlay(Color.white.opacity(0.08))
+                SettingsField("Objectif quotidien") {
+                    SettingsSlider(
+                        title: "Objectif quotidien",
+                        value: $preferences.hydrationGoalML,
+                        range: 1_000...4_000,
+                        step: 200,
+                        tint: HydrationCard.water
+                    ) { "\(litres($0)) L" }
+                }
+                SettingsField("Taille d'un verre", footer: "Chaque « J'ai bu » ajoute un verre.") {
+                    SettingsSlider(
+                        title: "Taille d'un verre",
+                        value: $preferences.hydrationGlassML,
+                        range: 50...500,
+                        step: 10,
+                        tint: HydrationCard.water
+                    ) { "\($0) mL" }
+                }
+                Divider()
                 HydrationReminderSettings(preferences: preferences)
             }
-        }
-    }
-
-    private var goalRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Objectif quotidien").font(FouleeFont.headline)
-                Spacer()
-                Text("\(litres(preferences.hydrationGoalML)) L")
-                    .scaledNumericFont(size: 20, weight: .semibold)
-                    .foregroundStyle(.teal)
-            }
-            Slider(
-                value: Binding(
-                    get: { Double(preferences.hydrationGoalML) },
-                    set: { preferences.hydrationGoalML = Int($0) }
-                ),
-                in: 1_000...4_000,
-                step: 200
-            )
-            .tint(.teal)
-        }
-    }
-
-    private var glassRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Taille d'un verre").font(FouleeFont.headline)
-                Spacer()
-                Text("\(preferences.hydrationGlassML) mL")
-                    .scaledNumericFont(size: 20, weight: .semibold)
-                    .foregroundStyle(.teal)
-            }
-            Slider(
-                value: Binding(
-                    get: { Double(preferences.hydrationGlassML) },
-                    set: { preferences.hydrationGlassML = Int($0) }
-                ),
-                in: 50...500,
-                step: 10
-            )
-            .tint(.teal)
-            Text("Chaque « J'ai bu » ajoute un verre.")
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
         }
     }
 }

@@ -13,7 +13,7 @@ Le suivi d'hydratation (#329) tenait en une carte : une barre de progression, de
 
 - **La carte dessine l'objectif en verres** (`HydrationMath.glassFills`). Il y a autant de verres que l'objectif en contient, arrondi au-dessus, avec un plafond de dix. Au-delà, chaque verre représente une part plus grande de l'objectif, pour qu'un objectif de 4 L ne déborde jamais de la carte. Le dernier verre peut être en partie rempli.
 - **Le rythme** (`HydrationPace`, pur et testé) compare l'apport à un objectif réparti uniformément sur la plage d'hydratation des réglages, celle des rappels. Un écart de moins d'un verre se lit « dans le rythme ». Au-delà, l'écart se compte en verres entiers : « 2 verres de retard », « en avance ». Avant la plage, sans rien bu, la journée « commence à 9 h ». Un objectif atteint l'emporte sur l'heure.
-- **La plage n'est pas un `ClosedRange`.** Rien n'empêche les réglages de la faire finir avant son début, et un `ClosedRange` inversé fait planter l'app. Une plage inversée compte comme terminée dès que son début est passé.
+- **La plage n'est pas un `ClosedRange`.** Rien n'empêche les réglages de la faire finir avant son début, et un `ClosedRange` inversé fait planter l'app. Une plage inversée compte comme terminée dès que son début est passé. Depuis #395, les sélecteurs d'heure se bornent l'un l'autre (5 minutes d'écart au moins) et `UserPreferences` corrige au chargement une plage déjà enregistrée à l'envers, en réécrivant la valeur pour les planificateurs de rappels. Cette tolérance reste en place comme garde-fou.
 - La carte relit le rythme chaque minute, à l'horloge de l'app (`@Dependency(\.date)`). Les captures et les tests le figent donc.
 
 ### D2 — Annuler un verre (#354)

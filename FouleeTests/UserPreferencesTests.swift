@@ -113,6 +113,33 @@ struct UserPreferencesTests {
         }
     }
 
+    /// Issue #395: a window saved before the pickers were bounded can end
+    /// before it starts. It is corrected on load, and the fix written back
+    /// for the schedulers that read the defaults directly.
+    @Test("An inverted window is corrected on load and written back")
+    func invertedWindowCorrected() {
+        let defaults = cleanDefaults()
+        defaults.set(TimeOfDay(hour: 14, minute: 0).rawMinutes, forKey: "preferences.walkWindowStart")
+        defaults.set(TimeOfDay(hour: 12, minute: 0).rawMinutes, forKey: "preferences.walkWindowEnd")
+        defaults.set(TimeOfDay(hour: 20, minute: 0).rawMinutes, forKey: "preferences.hydrationWindowStart")
+        defaults.set(TimeOfDay(hour: 20, minute: 0).rawMinutes, forKey: "preferences.hydrationWindowEnd")
+
+        let prefs = UserPreferences(defaults: defaults)
+
+        #expect(prefs.walkWindowEnd == TimeOfDay(hour: 15, minute: 0))
+        #expect(prefs.hydrationWindowEnd == TimeOfDay(hour: 21, minute: 0))
+        #expect(defaults.integer(forKey: "preferences.walkWindowEnd") == TimeOfDay(hour: 15, minute: 0).rawMinutes)
+    }
+
+    @Test("A valid window is left alone, a late one capped before midnight")
+    func validEnd() {
+        let start = TimeOfDay(hour: 11, minute: 30)
+        #expect(TimeOfDay.validEnd(TimeOfDay(hour: 11, minute: 35), after: start) == TimeOfDay(hour: 11, minute: 35))
+        #expect(TimeOfDay.validEnd(TimeOfDay(hour: 11, minute: 34), after: start) == TimeOfDay(hour: 12, minute: 30))
+        let late = TimeOfDay(hour: 23, minute: 30)
+        #expect(TimeOfDay.validEnd(TimeOfDay(hour: 8, minute: 0), after: late) == TimeOfDay(hour: 23, minute: 59))
+    }
+
     private func cleanDefaults() -> UserDefaults {
         let suiteName = "foulee-tests-\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

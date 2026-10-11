@@ -82,9 +82,15 @@ final class UserPreferences {
         let rawDays = defaults.object(forKey: Keys.activeDays) as? Int
         self.activeDays = rawDays.map(Set<Weekday>.init(bitmask:)) ?? Weekday.workWeek
         let rawStart = defaults.object(forKey: Keys.walkWindowStart) as? Int
-        self.walkWindowStart = rawStart.map(TimeOfDay.init(rawMinutes:)) ?? .middayWindowStart
+        let walkWindowStart = rawStart.map(TimeOfDay.init(rawMinutes:)) ?? .middayWindowStart
+        self.walkWindowStart = walkWindowStart
         let rawEnd = defaults.object(forKey: Keys.walkWindowEnd) as? Int
-        self.walkWindowEnd = rawEnd.map(TimeOfDay.init(rawMinutes:)) ?? .middayWindowEnd
+        self.walkWindowEnd = Self.validWindowEnd(
+            rawEnd.map(TimeOfDay.init(rawMinutes:)) ?? .middayWindowEnd,
+            after: walkWindowStart,
+            key: Keys.walkWindowEnd,
+            in: defaults
+        )
         self.minutesGoal = (defaults.object(forKey: Keys.minutesGoal) as? Int) ?? 20
         self.stepsGoal = (defaults.object(forKey: Keys.stepsGoal) as? Int) ?? 6_000
         let hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)
@@ -108,14 +114,37 @@ final class UserPreferences {
         self.hydrationGlassML = (defaults.object(forKey: Keys.hydrationGlassML) as? Int) ?? 250
         self.hydrationRemindersEnabled = defaults.bool(forKey: Keys.hydrationRemindersEnabled)
         let rawHydrationStart = defaults.object(forKey: Keys.hydrationWindowStart) as? Int
-        self.hydrationWindowStart = rawHydrationStart.map(TimeOfDay.init(rawMinutes:)) ?? TimeOfDay(rawMinutes: 9 * 60)
+        let hydrationWindowStart = rawHydrationStart.map(TimeOfDay.init(rawMinutes:)) ?? TimeOfDay(rawMinutes: 9 * 60)
+        self.hydrationWindowStart = hydrationWindowStart
         let rawHydrationEnd = defaults.object(forKey: Keys.hydrationWindowEnd) as? Int
-        self.hydrationWindowEnd = rawHydrationEnd.map(TimeOfDay.init(rawMinutes:)) ?? TimeOfDay(rawMinutes: 21 * 60)
+        self.hydrationWindowEnd = Self.validWindowEnd(
+            rawHydrationEnd.map(TimeOfDay.init(rawMinutes:)) ?? TimeOfDay(rawMinutes: 21 * 60),
+            after: hydrationWindowStart,
+            key: Keys.hydrationWindowEnd,
+            in: defaults
+        )
         self.hydrationIntervalMinutes = (defaults.object(forKey: Keys.hydrationIntervalMinutes) as? Int) ?? 120
         self.hydrationSnoozeMinutes = (defaults.object(forKey: Keys.hydrationSnoozeMinutes) as? Int) ?? 15
         let rawActivity = defaults.string(forKey: Keys.activityMode)
         self.activityMode = rawActivity.flatMap(ActivityMode.init(rawValue:)) ?? .walking
         self.recapNotificationsEnabled = (defaults.object(forKey: Keys.recapNotificationsEnabled) as? Bool) ?? true
+    }
+}
+
+extension UserPreferences {
+    /// A stored window end, corrected when it falls before its start (#395) —
+    /// a value written before the pickers were bounded. The fix is written
+    /// back, so the reminder schedulers, which read the defaults directly,
+    /// see the same window as the screens.
+    private static func validWindowEnd(
+        _ end: TimeOfDay,
+        after start: TimeOfDay,
+        key: String,
+        in defaults: UserDefaults
+    ) -> TimeOfDay {
+        let valid = TimeOfDay.validEnd(end, after: start)
+        if valid != end { defaults.set(valid.rawMinutes, forKey: key) }
+        return valid
     }
 }
 

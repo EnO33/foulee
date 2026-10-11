@@ -20,44 +20,8 @@ struct SettingsSchedulePage: View {
         // « Fenêtre horaire », not « Fenêtre de marche »: the same single
         // window serves walking, running or both (#222).
         GlassSection("Fenêtre horaire", footer: "Le rappel de sortie arrive 10 minutes avant son début.") {
-            HStack(spacing: 16) {
-                timePicker(
-                    label: "Début",
-                    selection: Binding(
-                        get: { preferences.walkWindowStart.dateToday() },
-                        set: { preferences.walkWindowStart = TimeOfDay(date: $0) }
-                    )
-                )
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 40, height: 2)
-                    .clipShape(Capsule())
-                timePicker(
-                    label: "Fin",
-                    alignment: .trailing,
-                    selection: Binding(
-                        get: { preferences.walkWindowEnd.dateToday() },
-                        set: { preferences.walkWindowEnd = TimeOfDay(date: $0) }
-                    )
-                )
-            }
+            TimeWindowPicker(start: $preferences.walkWindowStart, end: $preferences.walkWindowEnd)
         }
-    }
-
-    private func timePicker(
-        label: String,
-        alignment: HorizontalAlignment = .leading,
-        selection: Binding<Date>
-    ) -> some View {
-        VStack(alignment: alignment, spacing: 4) {
-            Text(label)
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
-            DatePicker("", selection: selection, displayedComponents: .hourAndMinute)
-                .labelsHidden()
-                .datePickerStyle(.compact)
-        }
-        .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
     }
 
     private func toggle(day: Weekday) {

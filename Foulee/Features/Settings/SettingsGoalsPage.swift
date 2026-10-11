@@ -20,43 +20,24 @@ struct SettingsGoalsPage: View {
         // The session duration that drives the ring and the « démarrer ta
         // sortie » flow.
         GlassSection("Objectif d'activité") {
-            goalSlider(
-                value: "\(preferences.minutesGoal) min",
-                binding: Binding(
-                    get: { Double(preferences.minutesGoal) },
-                    set: { preferences.minutesGoal = Int($0) }
-                ),
+            SettingsSlider(
+                title: "Objectif d'activité",
+                value: $preferences.minutesGoal,
                 range: 10...60,
-                step: 5
-            )
+                step: 5,
+                tint: FouleeColor.accentMid
+            ) { "\($0) min" }
         }
         // Tracked all day — a session only contributes to it — so it stands
         // apart from the activity goal.
         GlassSection("Objectif de pas", footer: "Compté toute la journée, ta sortie incluse.") {
-            goalSlider(
-                value: "\(preferences.stepsGoal.formattedFR) pas",
-                binding: Binding(
-                    get: { Double(preferences.stepsGoal) },
-                    set: { preferences.stepsGoal = Int($0) }
-                ),
+            SettingsSlider(
+                title: "Objectif de pas",
+                value: $preferences.stepsGoal,
                 range: 2_000...15_000,
-                step: 500
-            )
-        }
-    }
-
-    private func goalSlider(
-        value: String,
-        binding: Binding<Double>,
-        range: ClosedRange<Double>,
-        step: Double
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(value)
-                .scaledNumericFont(size: 20, weight: .semibold)
-                .foregroundStyle(FouleeColor.accentMid)
-            Slider(value: binding, in: range, step: step)
-                .tint(FouleeColor.accentMid)
+                step: 500,
+                tint: FouleeColor.accentMid
+            ) { "\($0.formattedFR) pas" }
         }
     }
 }
