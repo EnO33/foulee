@@ -91,7 +91,8 @@ final class MirroredLiveActivity {
                 content: ActivityContent(state: state, staleDate: Self.staleDate()),
                 pushType: nil
             )
-            _ = Self.startedHere.withLock { $0.insert(started.id) }
+            let id = started.id
+            _ = Self.startedHere.withLock { $0.insert(id) }
             activity = started
             FouleeLog.liveActivity.notice("miroir : Live Activity démarrée (app \(appState, privacy: .public))")
         } catch {
