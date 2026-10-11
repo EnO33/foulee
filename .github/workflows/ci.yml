@@ -134,6 +134,10 @@ jobs:
           echo "Booting iPhone 17 Pro ($UDID)"
           xcrun simctl bootstatus "$UDID" -b
 
+      # `-collect-test-diagnostics never` (issue #420): at the end of a run,
+      # xcodebuild asks the simulator for diagnostics, and the iOS 27 one never
+      # answers — every run waited out the full 600 s timeout after tests that
+      # take 15. A crash still reaches the log through report-test-failure.
       - name: Test (iOS)
         run: |
           set -o pipefail
@@ -144,6 +148,7 @@ jobs:
             -configuration Debug \
             -derivedDataPath build/dd \
             -resultBundlePath build/results/ios.xcresult \
+            -collect-test-diagnostics never \
             test-without-building | xcbeautify
 
       - uses: ./.github/actions/report-test-failure
@@ -254,6 +259,7 @@ jobs:
             -configuration Debug \
             -derivedDataPath build/dd \
             -resultBundlePath build/results/watchos.xcresult \
+            -collect-test-diagnostics never \
             test-without-building | xcbeautify
 
       - uses: ./.github/actions/report-test-failure
