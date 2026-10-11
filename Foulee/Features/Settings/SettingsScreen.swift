@@ -10,6 +10,8 @@ struct SettingsScreen: View {
     var onClose: () -> Void
 
     @State private var isShowingGarminGuide = false
+    @State private var permission = NotificationPermissionStore()
+    @Environment(\.scenePhase) private var scenePhase
 
     /// A sheet presented from a sheet doesn't inherit the theme — resolve it
     /// here, same as `TodayScreen` does for its own modals.
@@ -42,7 +44,8 @@ struct SettingsScreen: View {
                     }
                     GlassSection {
                         link(.notifications, summary: SettingsSummary.notifications(
-                            activeCount: preferences.activeReminderCount
+                            activeCount: preferences.activeReminderCount,
+                            blockedByIOS: permission.permission == .denied
                         ))
                         Divider()
                         link(.appearance, summary: preferences.themeMode.label)
@@ -60,8 +63,13 @@ struct SettingsScreen: View {
             .overlay(alignment: .topTrailing) { SheetCloseButton(action: onClose) }
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: SettingsPage.self) { page in
-                SettingsPageView(page: page, preferences: preferences)
+                SettingsPageView(page: page, preferences: preferences, permission: permission)
             }
+        }
+        .task { await permission.refresh() }
+        // Back from iOS Settings: show what the user just changed there.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await permission.refresh() } }
         }
         .sheet(isPresented: $isShowingGarminGuide) {
             GarminSetupSheet { isShowingGarminGuide = false }
