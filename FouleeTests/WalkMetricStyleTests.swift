@@ -26,5 +26,6 @@ struct WalkMetricStyleTests {
         #expect(MetricPalette.minutes == FouleeColor.success)
         #expect(MetricPalette.calories == FouleeColor.warning)
         #expect(MetricPalette.distance == Color(hex: 0x0A84FF))
+        #expect(MetricPalette.heartRate == FouleeColor.danger)
     }
 }
