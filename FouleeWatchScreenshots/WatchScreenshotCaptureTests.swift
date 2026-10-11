@@ -92,8 +92,9 @@ final class WatchScreenshotCaptureTests: XCTestCase {
 
     /// The fourth board: the same outing, split (issue #276).
     ///
-    /// **Three swipes**, not one — « Contrôles » and « Plan » sit between
-    /// « Séance » and « Jambes », which is deliberate (see `WatchSessionPage`).
+    /// **Four swipes**, not one — « Contrôles », « Musique » (#383) and « Plan »
+    /// sit between « Séance » and « Jambes », which is deliberate (see
+    /// `WatchSessionPage`).
     /// If that order ever changes, this step fails on a sentinel rather than
     /// photographing the wrong page — which is exactly how « Plan » (#312) was
     /// caught arriving: two swipes landed on it, not on « Jambes ».
@@ -114,6 +115,11 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     private func captureLegs(_ app: XCUIApplication) {
         app.swipeLeft()
         waitForWatchScreen(app.buttons["Arrêter"], "Controls page")
+        app.swipeLeft()
+        let music = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Musique"))
+            .firstMatch
+        waitForWatchScreen(music, "Music page")
         app.swipeLeft()
         let plan = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label == %@", "Plan du parcours"))
