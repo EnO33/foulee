@@ -7,7 +7,7 @@ import Testing
 @MainActor
 @Suite("Watch outing legs")
 struct WatchOutingLegTests {
-    private let base = Date()
+    private let base = ManualClock.origin
 
     private func estimate(_ activity: SessionActivity, at offset: TimeInterval) -> MotionActivityEstimate {
         motionEstimate(

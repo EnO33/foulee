@@ -10,7 +10,7 @@ import Testing
 @MainActor
 @Suite("Mirror snapshots")
 struct WatchMirrorSnapshotTests {
-    private let base = Date()
+    private let base = ManualClock.origin
 
     private func estimate(_ activity: SessionActivity, at offset: TimeInterval) -> MotionActivityEstimate {
         motionEstimate(

@@ -64,6 +64,12 @@ Le pendant de D1 dans l'autre sens : pour une séance lancée sur l'iPhone, **l'
 - **Pas de sport dans les attributs** : ils sont figés pour toute la vie de l'activité, alors qu'une sortie peut passer de la marche à la course. L'écran verrouillé dit « Ta sortie ».
 - **Le balayage des activités orphelines au lancement épargne celle-ci** : un réveil miroir est aussi un lancement de l'app.
 
+### D7 — La séance de la montre lit l'heure d'une horloge injectée (#406)
+
+- **`WatchWorkoutStore` reçoit son horloge** (`clock: () -> Date`) au lieu de lire `Date.now`. Le début d'une portion, la pause, la reprise, chaque relevé et la fin en dépendent.
+- **Une fermeture, pas swift-dependencies.** La cible montre n'embarque pas ce paquet, et la seule chose à injecter ici est l'heure. Le store reçoit déjà sa façade HealthKit, sa détection et son parcours de la même façon.
+- **Les tests l'arrêtent** (`ManualClock`) : chaque date que le store écrit est une date que le test peut nommer. Un test de pause a échoué une fois parce qu'un runner lent avait mis plus d'une seconde à démarrer une séance (#402).
+
 ## Ce qui reste non mesuré
 
 - **La taille maximale d'un envoi** par `sendToRemoteWorkoutSession(data:)` n'est pas documentée. 1 500 points compacts font environ 30 Ko ; le plafond est le réglage à baisser si un envoi échoue (le journal `session` le dira : « snapshot non transmis »).

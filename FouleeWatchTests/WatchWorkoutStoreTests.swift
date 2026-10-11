@@ -73,6 +73,9 @@ final class WorkoutHealthKitStub {
     /// `HKWorkoutSession.pause()` and `resume()` calls (issue #384).
     private(set) var pauseCalls = 0
     private(set) var resumeCalls = 0
+    /// The time the store reads (issue #406). It stands still until a test
+    /// moves it, so every date the store writes is one the test can name.
+    let clock = ManualClock()
 
     func makeStore(
         detection: WatchActivityDetection = WatchActivityDetection(source: .inert, pedometer: .inert),
@@ -93,7 +96,7 @@ final class WorkoutHealthKitStub {
                 if let error = self.startError { throw error }
                 return self.makeHandle()
             }
-        ), detection: detection, route: route)
+        ), detection: detection, route: route, clock: clock.read)
     }
 
     private func makeHandle() -> WatchWorkoutSessionHandle {
