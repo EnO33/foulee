@@ -1,7 +1,8 @@
 @preconcurrency import CoreMotion
 import Foundation
 
-extension Altimeter {
+// Read by swift-dependencies from any thread.
+nonisolated extension Altimeter {
     /// Real CoreMotion-backed implementation. `CMAltimeter` reports barometric
     /// relative altitude (metres since updates began); we accumulate the
     /// positive deltas into elevation gain. Needs `NSMotionUsageDescription`

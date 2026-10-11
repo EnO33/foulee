@@ -10,7 +10,7 @@ import Foundation
 /// from `appleExerciseTime` and workout minutes across every activity type,
 /// and nothing here reaches them. Switching modes therefore moves no history —
 /// that is the running work's contract, pinned by `ActivityModeNeutralityTests`.
-enum ActivityMode: String, CaseIterable, Codable, Sendable, Identifiable {
+nonisolated enum ActivityMode: String, CaseIterable, Codable, Sendable, Identifiable {
     case walking
     case running
     case both

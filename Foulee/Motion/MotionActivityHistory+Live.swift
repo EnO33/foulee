@@ -1,7 +1,8 @@
 @preconcurrency import CoreMotion
 import Foundation
 
-extension MotionActivityHistory {
+// Read by swift-dependencies from any thread; the handler runs on its own queue.
+nonisolated extension MotionActivityHistory {
     /// The real one.
     ///
     /// A fresh `CMMotionActivityManager` per query, captured by the
@@ -33,7 +34,7 @@ extension MotionActivityHistory {
     )
 }
 
-extension MotionHistorySample {
+nonisolated extension MotionHistorySample {
     /// The CoreMotion boundary, in full.
     ///
     /// The two flags are copied unreduced: they are not mutually exclusive and

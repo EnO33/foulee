@@ -6,8 +6,8 @@ import Foundation
 /// where the outings of the days just gone are read (#350), in the Monday-first
 /// week the rest of the app draws (#363). The month stays the last **finished**
 /// one: on the 1st, the month that just ended.
-struct RecapPeriod: Hashable, Sendable {
-    enum Kind: String, CaseIterable, Identifiable, Sendable {
+nonisolated struct RecapPeriod: Hashable, Sendable {
+    nonisolated enum Kind: String, CaseIterable, Identifiable, Sendable {
         case week
         case month
 

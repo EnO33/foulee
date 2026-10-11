@@ -13,7 +13,7 @@ import Foundation
 /// Which is also why the screen must date its figures rather than claim to be
 /// live. `sentAt` is not bookkeeping: it is the only honest thing the phone can
 /// print next to a step count.
-struct WatchSessionSnapshot: Codable, Equatable, Sendable {
+nonisolated struct WatchSessionSnapshot: Codable, Equatable, Sendable {
     /// When the wrist stated these figures. Two snapshots can arrive out of
     /// order — HealthKit promises delivery, not sequence — so the reader keeps
     /// the newest and drops the rest.

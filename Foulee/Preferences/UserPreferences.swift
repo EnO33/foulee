@@ -7,7 +7,6 @@ import Observation
 ///
 /// Initialiser takes an injectable `UserDefaults` so previews and tests
 /// can use a clean suite without polluting the real defaults database.
-@MainActor
 @Observable
 final class UserPreferences {
     var activeDays: Set<Weekday> {

@@ -2,7 +2,7 @@ import Foundation
 
 /// Hour+minute pair, calendar-agnostic. Encoded as `hour * 60 + minute` in
 /// UserDefaults so a single `Int` round-trips cleanly.
-struct TimeOfDay: Equatable, Hashable, Sendable, Codable {
+nonisolated struct TimeOfDay: Equatable, Hashable, Sendable, Codable {
     var hour: Int
     var minute: Int
 
@@ -37,12 +37,12 @@ struct TimeOfDay: Equatable, Hashable, Sendable, Codable {
     }
 }
 
-extension TimeOfDay {
+nonisolated extension TimeOfDay {
     /// « 11:30 » — the same 24-hour wall clock as `Date.clockText`.
     var clockText: String { String(format: "%02d:%02d", hour, minute) }
 }
 
-extension TimeOfDay {
+nonisolated extension TimeOfDay {
     /// The shortest window — outing or hydration — the app accepts (#395).
     static let minimumWindowMinutes = 5
 

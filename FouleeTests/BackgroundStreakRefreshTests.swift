@@ -170,7 +170,6 @@ import Testing
     /// would let a rename in `UserPreferences.Keys` pass while the background
     /// path silently fell back to 20 / workWeek for every user with custom
     /// settings — the app-vs-widget divergence this design exists to prevent.
-    @MainActor
     @Test func preferencesReadWhatUserPreferencesWrote() {
         let defaults = cleanDefaults()
         let prefs = UserPreferences(defaults: defaults)

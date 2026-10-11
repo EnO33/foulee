@@ -5,8 +5,8 @@ import Foundation
 /// Pure: built from what the home already reads from Santé — the merged daily
 /// minutes, the daily series, the workouts — so every figure here is one the
 /// rest of the app would give for the same days.
-struct Recap: Equatable, Sendable {
-    struct Totals: Equatable, Sendable {
+nonisolated struct Recap: Equatable, Sendable {
+    nonisolated struct Totals: Equatable, Sendable {
         var minutes = 0
         var steps = 0
         var distanceKm: Double = 0
@@ -17,7 +17,7 @@ struct Recap: Equatable, Sendable {
     }
 
     /// One day of the period.
-    struct Day: Equatable, Sendable, Identifiable {
+    nonisolated struct Day: Equatable, Sendable, Identifiable {
         var date: Date
         var minutes: Int
         /// An active day — one the user planned to move on. The others are
@@ -28,7 +28,7 @@ struct Recap: Equatable, Sendable {
     }
 
     /// What the period says, in one sentence — the first thing read.
-    enum Verdict: Equatable, Sendable {
+    nonisolated enum Verdict: Equatable, Sendable {
         /// Nothing recorded.
         case quiet
         /// The goal held on every planned day.
@@ -84,7 +84,7 @@ struct Recap: Equatable, Sendable {
     }
 
     /// What the recap is made of: Santé, read once for both periods.
-    struct Inputs: Sendable {
+    nonisolated struct Inputs: Sendable {
         var minutes: [DailyMinutes] = []
         var steps: [MetricPoint] = []
         var distance: [MetricPoint] = []

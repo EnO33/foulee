@@ -13,7 +13,7 @@ import Foundation
 /// It also opens **no second `CMPedometer`**: `Pedometer+Live` holds a single
 /// shared one, and a second `startUpdates` would replace the first's handler
 /// while `onTermination` killed both.
-struct MotionActivityHistory: Sendable {
+nonisolated struct MotionActivityHistory: Sendable {
     /// Every estimate the device kept for `[from, to]`, in no guaranteed order.
     ///
     /// Returns empty rather than throwing when the query fails or permission is
@@ -25,7 +25,7 @@ struct MotionActivityHistory: Sendable {
     var samples: @Sendable (_ from: Date, _ to: Date) async -> [MotionHistorySample]
 }
 
-extension MotionActivityHistory: DependencyKey {
+nonisolated extension MotionActivityHistory: DependencyKey {
     /// A mixed outing: walking, then a run in the middle, then walking again.
     /// Enough for a preview to show something other than a single block.
     static let previewValue = MotionActivityHistory(
@@ -54,7 +54,7 @@ extension MotionActivityHistory: DependencyKey {
     static let testValue = MotionActivityHistory(samples: { _, _ in [] })
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var motionActivityHistory: MotionActivityHistory {
         get { self[MotionActivityHistory.self] }
         set { self[MotionActivityHistory.self] = newValue }

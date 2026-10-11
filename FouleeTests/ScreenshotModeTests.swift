@@ -26,7 +26,6 @@ struct ScreenshotModeTests {
     /// left behind are checked, so neither a mis-spelled argument nor an
     /// accidental unconditional activation passes.
     @Test("A normal launch does not activate the capture mode")
-    @MainActor
     func normalLaunchDoesNotActivate() {
         #expect(ScreenshotMode.isRequested(arguments: ProcessInfo.processInfo.arguments) == false)
         #expect(ScreenshotMode.isActive == false)
@@ -34,7 +33,6 @@ struct ScreenshotModeTests {
     }
 
     @Test("Only the explicit launch argument requests the capture mode")
-    @MainActor
     func onlyTheExplicitArgumentActivates() {
         #expect(ScreenshotMode.isRequested(arguments: []) == false)
         #expect(ScreenshotMode.isRequested(arguments: ["/tmp/Foulee.app/Foulee"]) == false)
@@ -48,7 +46,6 @@ struct ScreenshotModeTests {
     /// exact strings here is what keeps a rename from silently turning every
     /// capture into a screenshot of the developer's own Health data.
     @Test("The launch arguments keep the spelling the capture target passes")
-    @MainActor
     func launchArgumentSpelling() {
         #expect(ScreenshotMode.launchArgument == "-FouleeScreenshotMode")
         #expect(ScreenshotMode.onboardingArgument == "-FouleeScreenshotOnboarding")
@@ -155,7 +152,6 @@ struct ScreenshotModeTests {
     /// the Watch push that rides the same refresh pass — both fabricated, and
     /// a widget cannot tell a seeded snapshot from a measured one.
     @Test("Activation diverts the app group and mutes the Watch")
-    @MainActor
     func activationDivertsEveryProcessGlobalStore() {
         defer { restoreSharedStore() }
         ScreenshotMode.divertSharedWrites()
@@ -176,7 +172,6 @@ struct ScreenshotModeTests {
     /// that is being looked for — a fixed one left in the real app group by a
     /// run that failed would keep failing every run after it.
     @Test("A write made while diverted never reaches the real app group")
-    @MainActor
     func divertedWritesLeaveTheRealAppGroupAlone() throws {
         let sentinel = Int.random(in: 100_000_000...999_999_999)
         let suite = "ScreenshotModeTests-\(UUID().uuidString)"
@@ -205,7 +200,6 @@ struct ScreenshotModeTests {
     /// Both process-globals this suite moves, put back. One helper because
     /// forgetting either would leave the rest of the test run writing into a
     /// capture suite.
-    @MainActor
     private func restoreSharedStore() {
         SharedStore.activeSuiteName = SharedStore.suiteName
         PhoneWatchSync.isMuted = false

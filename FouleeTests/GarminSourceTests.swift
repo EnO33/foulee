@@ -167,7 +167,6 @@ struct TodayStoreGarminHintTests {
     }
 
     @Test("A stale Garmin-only setup raises the hint")
-    @MainActor
     func garminOnlyRaisesHint() async {
         let status = GarminStatus(hasGarminSource: true, hasAppleWatchData: false, latestGarminSample: nil)
         await withDependencies {
@@ -181,7 +180,6 @@ struct TodayStoreGarminHintTests {
     }
 
     @Test("No detection, no hint — the default state stays silent")
-    @MainActor
     func noDetectionKeepsHintOff() async {
         await withDependencies {
             $0.date = .constant(earlyAfternoon)

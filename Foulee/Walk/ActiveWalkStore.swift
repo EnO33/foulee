@@ -11,10 +11,9 @@ import WidgetKit
 /// State is a simple four-case enum so the view binds against it
 /// declaratively (no flag soup). Errors funnel through a single
 /// `runOrTrap` boundary; the rest of the file is happy-path.
-@MainActor
 @Observable
 final class ActiveWalkStore {
-    enum State: Equatable {
+    nonisolated enum State: Equatable {
         case idle
         case active(WalkSession)
         case paused(WalkSession)

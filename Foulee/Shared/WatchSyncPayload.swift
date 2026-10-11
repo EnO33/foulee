@@ -5,7 +5,7 @@ import Foundation
 /// a few days of history, so recomputing there undercounts long streaks. The
 /// goals ride along for the watch UI. Sent via WatchConnectivity application
 /// context; persisted on the watch so it survives relaunches.
-struct WatchSyncPayload: Codable, Sendable {
+nonisolated struct WatchSyncPayload: Codable, Sendable {
     var streak: Int
     var minutesGoal: Int
     var stepsGoal: Int
@@ -62,7 +62,7 @@ struct WatchSyncPayload: Codable, Sendable {
 /// Watch-side persistence of the last payload received from the phone. Stored
 /// in the shared app group so both the watch app (which writes it on receipt)
 /// and the watch widget extension (a separate process) read the same value.
-enum WatchSyncStore {
+nonisolated enum WatchSyncStore {
     private static let key = "watch.sync.payload"
     private static let suiteName = "group.com.eno33.foulee"
 

@@ -8,7 +8,7 @@ import Foundation
 /// breaks the streak — only a *missed active day* breaks it. The default of
 /// every weekday keeps the "every single day" behaviour (used by the widgets,
 /// which don't know the user's chosen days).
-enum StreakCalculator {
+nonisolated enum StreakCalculator {
     /// Months of history every streak surface covers — the calendar sheet's
     /// browsable months (`StreakCalendarStore.monthsBack` mirrors this).
     static let historyMonths = 12

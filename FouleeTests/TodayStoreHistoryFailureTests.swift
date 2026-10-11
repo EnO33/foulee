@@ -20,7 +20,7 @@ import Testing
 /// — the store answers from the history knowledge its own `refresh()` recorded.
 @Suite("TodayStore history failure")
 struct TodayStoreHistoryFailureTests {
-    private struct HistoryDown: Error, LocalizedError {
+    private nonisolated struct HistoryDown: Error, LocalizedError {
         var errorDescription: String? { "Santé verrouillée" }
     }
 
@@ -38,7 +38,6 @@ struct TodayStoreHistoryFailureTests {
     }
 
     @Test("A failing history keeps the last known streak, record and week bars")
-    @MainActor
     func failedHistoryKeepsLastKnownValues() async throws {
         let failing = LockedRef(false)
         try await withDependencies {
@@ -63,7 +62,6 @@ struct TodayStoreHistoryFailureTests {
     }
 
     @Test("A failing history doesn't blank today's steps and minutes")
-    @MainActor
     func failedHistoryKeepsTodaysMetrics() async throws {
         let failing = LockedRef(false)
         try await withDependencies {
@@ -87,7 +85,6 @@ struct TodayStoreHistoryFailureTests {
     }
 
     @Test("A failing history doesn't destroy the cache apply(preferences:) re-derives from")
-    @MainActor
     func failedHistoryKeepsCacheForPreferenceChanges() async throws {
         let failing = LockedRef(false)
         try await withDependencies {
@@ -109,7 +106,6 @@ struct TodayStoreHistoryFailureTests {
     }
 
     @Test("First launch with no cache and a failing history yields an honest zero")
-    @MainActor
     func firstLaunchWithoutCacheYieldsZero() async throws {
         try await withDependencies {
             $0.date = .constant(.now)
@@ -128,7 +124,6 @@ struct TodayStoreHistoryFailureTests {
     }
 
     @Test("A cold launch with a failing history publishes no streak of its own")
-    @MainActor
     func coldLaunchWithFailingHistoryKeepsPublishedStreak() async throws {
         try await withDependencies {
             $0.date = .constant(.now)
@@ -156,7 +151,6 @@ struct TodayStoreHistoryFailureTests {
     }
 
     @Test("A read history publishes its own streak, over the stored one, and to the Watch")
-    @MainActor
     func readHistoryPublishesItsOwnStreak() async throws {
         try await withDependencies {
             $0.date = .constant(.now)
@@ -176,7 +170,6 @@ struct TodayStoreHistoryFailureTests {
     }
 
     @Test("A recovered history overrides the carried-forward one, downwards too")
-    @MainActor
     func recoveredHistoryOverridesCarriedValues() async throws {
         let history = LockedRef(StreakTestSupport.walkedDays(Array(0...10)))
         let failing = LockedRef(false)
@@ -206,7 +199,6 @@ struct TodayStoreHistoryFailureTests {
     }
 
     @Test("A successful but empty history still reads as zero")
-    @MainActor
     func successfulEmptyHistoryStillZeroes() async throws {
         let history = LockedRef(StreakTestSupport.walkedDays(Array(0...10)))
         try await withDependencies {
@@ -235,7 +227,6 @@ struct TodayStoreHistoryFailureTests {
         )
     }
 
-    @MainActor
     private static func everyDayPreferences(minutesGoal: Int) throws -> UserPreferences {
         let suiteName = "TodayStoreHistoryFailure-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))

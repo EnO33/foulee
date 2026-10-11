@@ -12,11 +12,11 @@ import Testing
 /// reading it back would race every other suite running in parallel.
 @Suite("TodayStore Garmin overlay")
 struct TodayStoreGarminOverlayTests {
-    private struct MetricsDown: Error, LocalizedError {
+    private nonisolated struct MetricsDown: Error, LocalizedError {
         var errorDescription: String? { "Santé verrouillée" }
     }
 
-    private static let calendar = Calendar.current
+    private nonisolated static let calendar = Calendar.current
 
     /// Local noon today — the fixed clock every case runs against, so the
     /// day-stamp assertions can't flake near midnight.
@@ -51,7 +51,6 @@ struct TodayStoreGarminOverlayTests {
     }
 
     @Test("A fresh watch snapshot lifts today's counters — without ever adding them")
-    @MainActor
     func freshSnapshotLiftsCountersWithoutAdding() async throws {
         try await withDependencies {
             $0.date = .constant(Self.noon)
@@ -78,7 +77,6 @@ struct TodayStoreGarminOverlayTests {
     }
 
     @Test("Santé catching up higher takes the display back — the overlay never latches")
-    @MainActor
     func healthKitCatchingUpWins() async throws {
         try await withDependencies {
             $0.date = .constant(Self.noon)
@@ -96,7 +94,6 @@ struct TodayStoreGarminOverlayTests {
     }
 
     @Test("A hybrid user's Apple Watch minutes are never replaced")
-    @MainActor
     func appleMinutesSurviveTheOverlay() async throws {
         try await withDependencies {
             $0.date = .constant(Self.noon)
@@ -115,7 +112,6 @@ struct TodayStoreGarminOverlayTests {
     }
 
     @Test("A watch snapshot from yesterday contributes nothing to today")
-    @MainActor
     func yesterdaysSnapshotContributesNothing() async throws {
         try await withDependencies {
             $0.date = .constant(Self.noon)
@@ -138,7 +134,6 @@ struct TodayStoreGarminOverlayTests {
     }
 
     @Test("Counters never count down when the snapshot behind them expires")
-    @MainActor
     func expiredOverlayStillFloorsTheCounters() async throws {
         try await withDependencies {
             $0.date = .constant(Self.noon)
@@ -163,7 +158,6 @@ struct TodayStoreGarminOverlayTests {
     }
 
     @Test("A watch-only value never reaches the app group when the Santé leg is unknown")
-    @MainActor
     func unknownMetricsLegPublishesNoWatchValue() async throws {
         try await withDependencies {
             $0.date = .constant(Self.noon)
@@ -192,7 +186,6 @@ struct TodayStoreGarminOverlayTests {
     }
 
     @Test("The floor travels to the app group, even when the Santé leg failed")
-    @MainActor
     func floorIsPublishedRegardlessOfTheMetricsLeg() async throws {
         try await withDependencies {
             $0.date = .constant(Self.noon)
@@ -223,7 +216,6 @@ struct TodayStoreGarminOverlayTests {
     }
 
     @Test("No watch and no walk: the published floor is a recorded zero, not an absent one")
-    @MainActor
     func noWatchPublishesAZeroFloor() async throws {
         try await withDependencies {
             $0.date = .constant(Self.noon)
@@ -246,7 +238,6 @@ struct TodayStoreGarminOverlayTests {
     }
 
     @Test("A pending walk travels in the floor beside the watch's day")
-    @MainActor
     func pendingWalkRidesTheFloor() async throws {
         // The post-walk overlay (#158) lifts the published counters above raw
         // HealthKit exactly like the watch does, and the widget process can see
@@ -282,7 +273,6 @@ struct TodayStoreGarminOverlayTests {
     }
 
     @Test("With nothing stored either, a refused leg publishes zeros, not the watch's day")
-    @MainActor
     func unknownMetricsLegOnFirstInstallPublishesZeros() async throws {
         try await withDependencies {
             $0.date = .constant(Self.noon)

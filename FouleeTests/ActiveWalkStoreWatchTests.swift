@@ -7,7 +7,6 @@ import Testing
 /// The phone's session, shown and steered from the wrist (issue #342): the
 /// phone stays the only recorder and tells the wrist where it stands.
 @Suite("ActiveWalkStore on the wrist")
-@MainActor
 struct ActiveWalkStoreWatchTests {
     private let frozen = Date(timeIntervalSince1970: 1_700_000_000)
 

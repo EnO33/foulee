@@ -14,7 +14,6 @@ import Testing
 struct ScreenshotSeedTests {
     private static let suiteName = "screenshot-seed-tests"
 
-    @MainActor
     private static func seededPreferences() -> UserPreferences {
         let defaults = UserDefaults(suiteName: suiteName) ?? .standard
         defaults.removePersistentDomain(forName: suiteName)
@@ -52,7 +51,6 @@ struct ScreenshotSeedTests {
     // MARK: - Today
 
     @Test("The seeded Today screen agrees with itself")
-    @MainActor
     func todayScreenIsConsistent() async {
         let preferences = Self.seededPreferences()
         await withDependencies {
@@ -91,7 +89,6 @@ struct ScreenshotSeedTests {
     /// The header prints `snapshot.date`, so it has to be the pinned day —
     /// this is what stops the capture from changing because today is Tuesday.
     @Test("The header date is the pinned day, not the real one")
-    @MainActor
     func headerDateIsPinned() async {
         let preferences = Self.seededPreferences()
         await withDependencies {
@@ -112,7 +109,6 @@ struct ScreenshotSeedTests {
     // MARK: - The other screens read the same history
 
     @Test("The calendar sheet answers the same streak as the home card")
-    @MainActor
     func calendarSheetAgreesWithHome() async {
         await withDependencies {
             $0.date = .constant(ScreenshotSeed.instant)

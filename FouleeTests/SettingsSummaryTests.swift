@@ -71,7 +71,6 @@ struct SettingsSummaryTests {
     /// Water reminders only fire while hydration tracking is on, so they only
     /// count then — the summary must not promise a reminder that never comes.
     @Test("Water reminders count only while hydration is on")
-    @MainActor
     func activeReminderCount() {
         let prefs = UserPreferences(defaults: UserDefaults(suiteName: "settings-summary-\(UUID())") ?? .standard)
         prefs.notificationsEnabled = true

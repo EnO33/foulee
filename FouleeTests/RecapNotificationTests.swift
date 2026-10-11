@@ -4,7 +4,6 @@ import Testing
 
 /// The recap notifications (issue #344).
 @Suite("Recap notification")
-@MainActor
 struct RecapNotificationTests {
     @Test("A recap notification names the recap it opens", arguments: RecapPeriod.Kind.allCases)
     func identifierRoundTrip(kind: RecapPeriod.Kind) {

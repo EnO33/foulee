@@ -5,7 +5,7 @@ import Foundation
 /// No `receivedAt`, unlike the watch's live estimate: a historical query
 /// reports what the device concluded and when the activity *began*, not when
 /// anyone was told. Freshness is not a question one can ask of the past.
-struct MotionHistorySample: Equatable, Sendable {
+nonisolated struct MotionHistorySample: Equatable, Sendable {
     /// When the device says this activity began.
     var startDate: Date
     var confidence: MotionActivityConfidence
@@ -14,7 +14,7 @@ struct MotionHistorySample: Equatable, Sendable {
 }
 
 /// A stretch of one activity inside a session.
-struct ActivitySegment: Equatable, Sendable {
+nonisolated struct ActivitySegment: Equatable, Sendable {
     var activity: SessionActivity
     var start: Date
     var end: Date
@@ -35,7 +35,7 @@ struct ActivitySegment: Equatable, Sendable {
 /// battery for the rest. The history query returns the complete list of
 /// transitions after the fact, so the segmentation is *more* exact than a live
 /// one, for no background work at all.
-enum ActivitySegmentation {
+nonisolated enum ActivitySegmentation {
     /// Readings below this are not evidence. Same floor as the watch.
     static let minimumConfidence: MotionActivityConfidence = .medium
 

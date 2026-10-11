@@ -9,7 +9,7 @@ import SwiftUI
 /// figure must not change colour between the wrist and the phone. The values
 /// are the brand's (`FouleeColor`), spelled out because the watch has no
 /// design system.
-enum MetricPalette {
+nonisolated enum MetricPalette {
     static let steps = Color(.sRGB, red: 191 / 255, green: 90 / 255, blue: 242 / 255)
     static let minutes = Color(.sRGB, red: 48 / 255, green: 209 / 255, blue: 88 / 255)
     static let distance = Color(.sRGB, red: 10 / 255, green: 132 / 255, blue: 255 / 255)

@@ -15,12 +15,11 @@ import Testing
 /// from yesterday expires whatever HealthKit answers.
 @Suite("TodayStore walk baseline")
 struct TodayStoreWalkBaselineTests {
-    private struct MetricsDown: Error, LocalizedError {
+    private nonisolated struct MetricsDown: Error, LocalizedError {
         var errorDescription: String? { "Santé verrouillée" }
     }
 
     @Test("A failed metrics read keeps the last known walk baseline")
-    @MainActor
     func failedReadKeepsWalkBaseline() async {
         let failing = LockedRef(false)
         await withDependencies {
@@ -63,7 +62,6 @@ struct TodayStoreWalkBaselineTests {
     }
 
     @Test("A successful read still moves the baseline, downwards too")
-    @MainActor
     func successfulReadMovesBaselineBothWays() async {
         let hkSteps = LockedRef(3_000)
         await withDependencies {
@@ -105,7 +103,6 @@ struct TodayStoreWalkBaselineTests {
     }
 
     @Test("An overlay from yesterday expires even when today's read fails")
-    @MainActor
     func overlayExpiresAcrossMidnightWithoutMetrics() async {
         let calendar = Calendar.current
         let midnight = calendar.startOfDay(for: .now)
@@ -157,7 +154,6 @@ struct TodayStoreWalkBaselineTests {
     }
 
     @Test("A refused read can't retire a short walk's overlay through the tolerance")
-    @MainActor
     func refusedReadKeepsShortWalkOverlay() async {
         await withDependencies {
             $0.date = .constant(.now)
@@ -180,7 +176,6 @@ struct TodayStoreWalkBaselineTests {
     }
 
     @Test("A baseline measured yesterday can't seed a walk taken after midnight")
-    @MainActor
     func staleBaselineNeverSeedsTodaysWalk() async throws {
         let calendar = Calendar.current
         guard let nextMidnight = calendar.date(
@@ -237,7 +232,6 @@ struct TodayStoreWalkBaselineTests {
     }
 
     @Test("A finished walk survives the widget's own lagging HealthKit read")
-    @MainActor
     func finishedWalkSurvivesTheWidgetRender() async throws {
         // End to end, in the order the app actually runs it: the walk ends,
         // `registerFinishedWalk` refreshes, `publishToWidgets` writes the app

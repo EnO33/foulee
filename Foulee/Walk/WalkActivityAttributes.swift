@@ -10,7 +10,7 @@ import Foundation
 /// app-group entitlement (`FouleeLiveActivity.entitlements` is empty), so the
 /// snapshot the Série and Aujourd'hui widgets read is out of reach and nothing
 /// else can tell it what the session in flight is (issue #225).
-struct WalkActivityAttributes: ActivityAttributes {
+nonisolated struct WalkActivityAttributes: ActivityAttributes {
     typealias ContentState = WalkActivityState
 
     var goalMinutes: Int
@@ -72,7 +72,7 @@ struct WalkActivityAttributes: ActivityAttributes {
 
     /// Pushed on walk events (start, pause, resume, pedometer samples) —
     /// the clock itself runs system-side off `timerBasis`.
-    struct WalkActivityState: Codable, Hashable, Sendable {
+    nonisolated struct WalkActivityState: Codable, Hashable, Sendable {
         /// Virtual start of the walk: now minus accumulated elapsed,
         /// recomputed on every push so `Text(timerInterval:)` keeps the
         /// clock running while the app is suspended.
@@ -90,7 +90,7 @@ struct WalkActivityAttributes: ActivityAttributes {
 
 // MARK: - Tolerant decoding
 
-extension WalkActivityAttributes {
+nonisolated extension WalkActivityAttributes {
     /// Never fails on the `activity` field, whatever is (or isn't) in the
     /// persisted payload — the same discipline #214 and #222 applied to the
     /// widget snapshot, and here it is load-bearing rather than defensive.

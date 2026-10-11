@@ -2,7 +2,7 @@ import Foundation
 
 /// Immutable-ish snapshot of an in-flight or finished walk. The store mutates
 /// a `var` of this; the view reads it directly.
-struct WalkSession: Equatable, Sendable {
+nonisolated struct WalkSession: Equatable, Sendable {
     var startedAt: Date
     var endedAt: Date?
     var elapsed: TimeInterval = 0

@@ -31,7 +31,6 @@ import Testing
 @Suite("TodayStore late-arriving data")
 struct TodayStoreLateDataTests {
     @Test("Yesterday's late minutes repair a streak already extended by today")
-    @MainActor
     func lateYesterdayRepairsStreakAfterTodaysWalk() async throws {
         // J-10…J-2 walked, today walked, J-1 still empty: Garmin hasn't
         // flushed it yet, so the streak reads as "today only".
@@ -54,7 +53,6 @@ struct TodayStoreLateDataTests {
     }
 
     @Test("The streak repairs even before today's own walk is recorded")
-    @MainActor
     func lateYesterdayRepairsStreakBeforeTodaysWalk() async throws {
         // Nothing today yet — the streak is read from J-1 backwards, and J-1
         // is the day Garmin hasn't synced.
@@ -75,7 +73,6 @@ struct TodayStoreLateDataTests {
     }
 
     @Test("A day repaired deep in the history repairs the record too")
-    @MainActor
     func lateMinutesRepairARecordRun() async throws {
         // Two 10-day runs separated by a single unsynced day at J-11.
         let history = LockedRef(StreakTestSupport.walkedDays(Array(0...10) + Array(12...21)))
@@ -97,7 +94,6 @@ struct TodayStoreLateDataTests {
     }
 
     @Test("A day that disappears from Santé shortens the streak — no upward latch")
-    @MainActor
     func deletedDayShortensStreak() async throws {
         // Mirror image of the repair above: the same 11-day run, then J-3 goes
         // away (a duplicate Garmin session deleted in Santé, or a workout
@@ -132,7 +128,6 @@ struct TodayStoreLateDataTests {
 @Suite("TodayStore day verdict revisability")
 struct TodayVerdictRevisabilityTests {
     @Test("hasWalkedToday flips true when today's minutes land late")
-    @MainActor
     func verdictFlipsWhenLateMinutesLand() async {
         let metrics = LockedRef(
             HealthMetrics(steps: 3_100, distanceKm: 2.1, activeMinutes: 4, activeCalories: 45)
@@ -153,7 +148,6 @@ struct TodayVerdictRevisabilityTests {
     }
 
     @Test("hasWalkedToday flips back when the samples behind it disappear")
-    @MainActor
     func verdictFollowsDownwardRevisions() async {
         // A duplicate Garmin session removed in Santé, or a workout re-attributed
         // to another day: the verdict must not stay pinned on "fait".
@@ -181,7 +175,6 @@ struct TodayVerdictRevisabilityTests {
 @Suite("Streak calendar late repair")
 struct StreakCalendarLateDataTests {
     @Test("Yesterday's cell flips from missed to done when its minutes land late")
-    @MainActor
     func yesterdayCellRepairs() async throws {
         let calendar = Calendar.current
         // One instant for the fixture and for the store, so "yesterday" means
@@ -212,7 +205,6 @@ struct StreakCalendarLateDataTests {
         }
     }
 
-    @MainActor
     private static func cell(for day: Date, in store: StreakCalendarStore) -> CalendarDay? {
         store.months
             .flatMap { month in month.cells.compactMap { $0 } }

@@ -14,7 +14,7 @@ import SwiftUI
 /// no `onAppear`, no `@State` updates. Anything a container stores as a
 /// closure — `ForEach`'s rows, most notably — is absent from the tree and has
 /// to be built by calling that closure (see `forEachRow`).
-enum ViewTreeProbe {
+nonisolated enum ViewTreeProbe {
     /// The first value of type `T` in `value`, itself included.
     ///
     /// Depth-capped rather than unbounded: SwiftUI trees hold environment

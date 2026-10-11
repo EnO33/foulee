@@ -11,6 +11,7 @@
 /// Kept apart from the phone's weather lookup so a walk's high-accuracy
 /// streaming never disturbs the kilometre-accuracy one-shot the weather card
 /// relies on.
+// Explicit: the watch target compiles this file without default MainActor isolation.
 @MainActor
 final class RouteRecorder: NSObject, CLLocationManagerDelegate {
     static let shared = RouteRecorder()

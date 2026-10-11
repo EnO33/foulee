@@ -16,7 +16,7 @@ import Foundation
 ///
 /// Shared with the watch target (see Project.swift): both platforms ask the
 /// same question and both write their own workouts.
-enum ActivityStartIntent: Equatable, Sendable {
+nonisolated enum ActivityStartIntent: Equatable, Sendable {
     /// The mode already answers the question — start, one gesture, no picker.
     /// Asking here would be a regression for a user who has said « marche »
     /// or « course » once and for all.

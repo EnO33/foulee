@@ -22,9 +22,8 @@ private func healthKitStub(
 @Suite("TodayStore error freshness")
 struct TodayStoreErrorFreshnessTests {
     @Test("A transient failure clears once the next refresh succeeds")
-    @MainActor
     func transientErrorClearsOnNextSuccess() async {
-        struct Boom: Error, LocalizedError {
+        nonisolated struct Boom: Error, LocalizedError {
             var errorDescription: String? { "Santé indisponible" }
         }
         let failing = LockedRef(true)
@@ -49,9 +48,8 @@ struct TodayStoreErrorFreshnessTests {
     }
 
     @Test("A stale refresh doesn't clobber a newer pass's outcome")
-    @MainActor
     func staleRefreshDoesNotClobberNewerPass() async {
-        struct Boom: Error, LocalizedError {
+        nonisolated struct Boom: Error, LocalizedError {
             var errorDescription: String? { "Santé indisponible" }
         }
         // The first todayMetrics call (the stale pass) parks on the gate;
@@ -96,7 +94,6 @@ struct TodayStoreErrorFreshnessTests {
 @Suite("TodayStore walk overlay staleness")
 struct TodayStoreWalkOverlayStalenessTests {
     @Test("The post-walk overlay is dropped when the day changes")
-    @MainActor
     func overlayDroppedOnDayChange() async {
         let calendar = Calendar.current
         let midnight = calendar.startOfDay(for: .now)
@@ -135,7 +132,6 @@ struct TodayStoreWalkOverlayStalenessTests {
     }
 
     @Test("The post-walk overlay expires after an hour even if the target is never reached")
-    @MainActor
     func overlayExpiresAfterAnHour() async {
         // 10:00 today, so a +61 min jump stays inside the same calendar day.
         let start = Calendar.current.startOfDay(for: .now).addingTimeInterval(10 * 3_600)
@@ -166,7 +162,6 @@ struct TodayStoreWalkOverlayStalenessTests {
     }
 
     @Test("The overlay dissolves when HealthKit lands just under the target")
-    @MainActor
     func overlayClearsWithinTolerance() async {
         // CMPedometer (which measured the walk) typically counts a bit more
         // than the coprocessor total HealthKit reports, so the exact target
@@ -198,7 +193,6 @@ struct TodayStoreWalkOverlayStalenessTests {
     }
 
     @Test("Two consecutive walks don't compound their overlays")
-    @MainActor
     func consecutiveWalksDoNotCompound() async {
         // HealthKit never flushes either walk during the test window.
         let hkSteps = LockedRef(1_000)

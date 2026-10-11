@@ -23,7 +23,7 @@ import os
 ///
 /// Subsystem matches the bundle identifier so `log stream --subsystem
 /// com.eno33.foulee` picks up phone and watch together.
-enum FouleeLog {
+nonisolated enum FouleeLog {
     private static let subsystem = "com.eno33.foulee"
 
     /// Starting, splitting, saving and losing a workout session. Watch side

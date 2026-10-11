@@ -6,9 +6,8 @@ import Testing
 @Suite("StreakCalendarStore error freshness")
 struct StreakCalendarStoreTests {
     @Test("A transient failure clears once the next load succeeds")
-    @MainActor
     func transientErrorClearsOnNextSuccess() async {
-        struct Boom: Error, LocalizedError {
+        nonisolated struct Boom: Error, LocalizedError {
             var errorDescription: String? { "Santé indisponible" }
         }
         let failing = LockedRef(true)

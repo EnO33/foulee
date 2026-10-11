@@ -8,7 +8,7 @@ import Foundation
 /// detail (#319). It rides in `WatchSessionSnapshot`, so it shares its rule:
 /// **a complete route, never a delta** — a delta lost between two HealthKit
 /// wakes could never be recovered, a complete route is corrected by the next.
-struct MirroredRoutePortion: Equatable, Sendable {
+nonisolated struct MirroredRoutePortion: Equatable, Sendable {
     var activity: SessionActivity
     var coordinates: [Coordinate]
 
@@ -17,7 +17,7 @@ struct MirroredRoutePortion: Equatable, Sendable {
     static let precision = 1e5
 }
 
-extension MirroredRoutePortion: Codable {
+nonisolated extension MirroredRoutePortion: Codable {
     private enum CodingKeys: String, CodingKey {
         case activity
         /// `[lat0, lon0, lat1, lon1, …]`, each rounded to `precision`.
@@ -52,7 +52,7 @@ extension MirroredRoutePortion: Codable {
     }
 }
 
-extension Array where Element == MirroredRoutePortion {
+nonisolated extension Array where Element == MirroredRoutePortion {
     /// Whether there is a line to draw: two points in at least one portion.
     /// The phone offers a map only then (issue #334).
     var isDrawable: Bool {

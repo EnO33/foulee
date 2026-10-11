@@ -7,12 +7,12 @@ import Foundation
 /// can never resurrect yesterday's totals after midnight. A legitimate zero
 /// is written like any other value — the fallback only applies when the query
 /// itself fails, never in place of a real zero.
-enum WatchComplicationCache {
+nonisolated enum WatchComplicationCache {
     /// Key for the hydration complication's water total, alongside the
     /// WatchStatMetric raw values used by the stat complication.
     static let waterKey = "waterML"
 
-    private struct Stamped: Codable {
+    nonisolated private struct Stamped: Codable {
         var value: Double
         var day: Date
     }
