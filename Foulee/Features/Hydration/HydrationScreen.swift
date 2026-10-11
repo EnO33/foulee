@@ -28,14 +28,14 @@ struct HydrationScreen: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                header
+                SheetHeader(eyebrow: "Hydratation", title: "Aujourd'hui")
                 HydrationTodayHero(intakeML: store.intakeML, goalML: goalML, pace: pace)
                 servings
-                section("Verre par verre") {
+                GlassSection("Verre par verre") {
                     HydrationTimeline(samples: detail.samples)
                 }
                 if let history = detail.history {
-                    section("Cette semaine") {
+                    GlassSection("Cette semaine") {
                         HydrationWeekView(history: history)
                     }
                 } else if detail.lastError != nil {
@@ -48,23 +48,12 @@ struct HydrationScreen: View {
             .padding(.top, 28)
             .padding(.bottom, 40)
         }
-        .overlay(alignment: .topTrailing) { closeButton }
+        .overlay(alignment: .topTrailing) { SheetCloseButton(action: onClose) }
         .presentationBackground { SheetBackground() }
         .sensoryFeedback(.increase, trigger: store.intakeML)
         // Any change to the day's water — a glass here, one from the watch, an
         // undone one — redraws the timeline and today's ring.
         .task(id: store.intakeML) { await detail.load(goalML: goalML) }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("HYDRATATION")
-                .font(FouleeFont.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .tracking(1.2)
-            Text("Aujourd'hui")
-                .font(FouleeFont.largeTitle)
-        }
     }
 
     /// Every quick amount on view, rather than behind the home's long press.
@@ -99,29 +88,5 @@ struct HydrationScreen: View {
                 .accessibilityLabel("J'ai bu : \(serving.label), \(serving.milliliters) millilitres")
             }
         }
-    }
-
-    private var closeButton: some View {
-        Button(action: onClose) {
-            Image(systemName: "xmark")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(.primary)
-                .frame(width: 40, height: 40)
-                .background(.ultraThinMaterial, in: Circle())
-        }
-        .buttonStyle(.pressable)
-        .padding(20)
-        .accessibilityLabel("Fermer")
-    }
-
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(title)
-                .font(FouleeFont.headline)
-            content()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .fouleeGlass(cornerRadius: 22)
     }
 }

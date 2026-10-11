@@ -37,8 +37,7 @@ struct MetricStatsScreen: View {
                 .padding(.top, 24)
                 .padding(.bottom, 40)
             }
-            closeButton
-                .padding(20)
+            SheetCloseButton(action: onClose)
         }
         .task(id: store.range) { await store.load() }
     }
@@ -290,18 +289,6 @@ private extension MetricStatsScreen {
                 : "Rien n'est enregistré dans Santé sur cette période. Vérifie que Foulée peut lire tes données dans Santé.")
         }
         .frame(maxWidth: .infinity, minHeight: 200)
-    }
-
-    var closeButton: some View {
-        Button(action: onClose) {
-            Image(systemName: "xmark")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(.primary)
-                .frame(width: 40, height: 40)
-                .background(.ultraThinMaterial, in: Circle())
-        }
-        .buttonStyle(.pressable)
-        .accessibilityLabel("Fermer")
     }
 }
 

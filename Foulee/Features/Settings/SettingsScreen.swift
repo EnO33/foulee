@@ -5,6 +5,7 @@ import SwiftUI
 /// Présenté en sheet depuis le bouton profil de l'écran Aujourd'hui.
 struct SettingsScreen: View {
     @Bindable var preferences: UserPreferences
+    var onClose: () -> Void
 
     @State private var isShowingGarminGuide = false
 
@@ -18,7 +19,7 @@ struct SettingsScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                header
+                SheetHeader(eyebrow: "Réglages", title: "Préférences")
                 appearanceSection
                 activitySection
                 stepsSection
@@ -31,6 +32,7 @@ struct SettingsScreen: View {
             .padding(.top, 28)
             .padding(.bottom, 40)
         }
+        .overlay(alignment: .topTrailing) { SheetCloseButton(action: onClose) }
         .sheet(isPresented: $isShowingGarminGuide) {
             GarminSetupSheet { isShowingGarminGuide = false }
                 .preferredColorScheme(preferences.themeMode.colorScheme ?? systemColorScheme)
@@ -40,25 +42,13 @@ struct SettingsScreen: View {
     /// The Garmin guide again, for the (common) case where the watch arrives
     /// long after the onboarding.
     private var watchSection: some View {
-        section(title: "Montre") {
+        GlassSection("Montre") {
             GarminSetupLink { isShowingGarminGuide = true }
         }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("RÉGLAGES")
-                .font(FouleeFont.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .tracking(1.2)
-            Text("Préférences")
-                .font(FouleeFont.largeTitle)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     private var appearanceSection: some View {
-        section(title: "Apparence") {
+        GlassSection("Apparence") {
             Picker("Thème", selection: $preferences.themeMode) {
                 ForEach(ThemeMode.allCases) { mode in
                     Text(mode.label).tag(mode)
@@ -73,7 +63,7 @@ struct SettingsScreen: View {
     /// the user moves at — naming it after one activity was what made the
     /// walk/run choice impossible to file anywhere.
     private var activitySection: some View {
-        section(title: "Activité") {
+        GlassSection("Activité") {
             VStack(alignment: .leading, spacing: 20) {
                 modeRow
                 daysRow
@@ -108,7 +98,7 @@ struct SettingsScreen: View {
     /// Daily step goal — independent from the activity goal: it's tracked all
     /// day (a session just contributes to it), so it stands on its own.
     private var stepsSection: some View {
-        section(title: "Objectif de pas") {
+        GlassSection("Objectif de pas") {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .firstTextBaseline) {
                     rowLabel("Objectif quotidien")
@@ -203,13 +193,13 @@ struct SettingsScreen: View {
     }
 
     private var hydrationSection: some View {
-        section(title: "Hydratation") {
+        GlassSection("Hydratation") {
             HydrationSettingsContent(preferences: preferences)
         }
     }
 
     private var notificationsSection: some View {
-        section(title: "Notifications") {
+        GlassSection("Notifications") {
             Toggle(isOn: $preferences.notificationsEnabled) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Rappel avant ta sortie")
@@ -234,7 +224,7 @@ struct SettingsScreen: View {
     }
 
     private var aboutSection: some View {
-        section(title: "À propos") {
+        GlassSection("À propos") {
             VStack(alignment: .leading, spacing: 12) {
                 aboutRow(label: "Version", value: appVersion)
                 aboutRow(label: "Auteur", value: "EnO33")
@@ -248,23 +238,6 @@ struct SettingsScreen: View {
             Text(label).font(FouleeFont.body)
             Spacer()
             Text(value).font(FouleeFont.body).foregroundStyle(.secondary)
-        }
-    }
-
-    private func section<Content: View>(
-        title: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(title.uppercased())
-                .font(FouleeFont.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .tracking(1)
-                .padding(.horizontal, 4)
-            content()
-                .padding(18)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fouleeGlass(cornerRadius: 22)
         }
     }
 
@@ -337,7 +310,7 @@ private struct SettingsPreview: View {
     var body: some View {
         ZStack {
             Wallpaper()
-            SettingsScreen(preferences: preferences)
+            SettingsScreen(preferences: preferences) {}
         }
     }
 }

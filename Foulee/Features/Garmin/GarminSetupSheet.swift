@@ -45,7 +45,7 @@ struct GarminSetupSheet: View {
                 .padding(.top, 24)
                 .padding(.bottom, 40)
             }
-            closeButton.padding(20)
+            SheetCloseButton(action: onClose)
         }
     }
 
@@ -173,18 +173,6 @@ struct GarminSetupSheet: View {
             .font(FouleeFont.caption)
             .foregroundStyle(.secondary)
             .padding(.horizontal, 4)
-    }
-
-    private var closeButton: some View {
-        Button(action: onClose) {
-            Image(systemName: "xmark")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(.primary)
-                .frame(width: 40, height: 40)
-                .background(.ultraThinMaterial, in: Circle())
-        }
-        .buttonStyle(.pressable)
-        .accessibilityLabel("Fermer")
     }
 }
 

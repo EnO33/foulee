@@ -17,6 +17,7 @@ struct DesignSystemGallery: View {
                 ring
                 stats
                 buttons
+                sheetChrome
             }
             .padding(20)
         }
@@ -111,6 +112,20 @@ struct DesignSystemGallery: View {
                               systemIcon: FouleeIcon.play) {}
                 SecondaryButton(title: "Voir le bilan",
                                 systemIcon: FouleeIcon.sparkle) {}
+            }
+        }
+    }
+
+    private var sheetChrome: some View {
+        section("Feuilles") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top) {
+                    SheetHeader(eyebrow: "Récap", title: "Ton bilan")
+                    SheetCloseButton {}
+                }
+                GlassSection("Cette semaine", footer: "Une note sous le contenu.") {
+                    Text("Le contenu de la section.").font(FouleeFont.body)
+                }
             }
         }
     }
