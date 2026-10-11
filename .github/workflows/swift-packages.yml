@@ -1,0 +1,110 @@
+name: Swift packages
+
+# Dependabot for the Swift packages (issue #414). Dependabot reads a root
+# Package.swift, and this project has none: its packages live in
+# Project.swift and their pins in `.package.resolved`, which Tuist links to
+# the generated workspace. This workflow resolves them afresh on the CI image,
+# within the requirements Project.swift sets, and opens a pull request when a
+# pin moves. The file is always written by Xcode, never by hand.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Monday morning, Paris, next to Dependabot's own run.
+    - cron: '30 4 * * 1'
+
+concurrency:
+  group: swift-packages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    name: Update the pins
+    runs-on: xcode-27
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Select Xcode 27
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+        with:
+          xcode-version: '27.0'
+
+      - name: Install toolchain (Tuist) from mise.toml
+        uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
+
+      # Without the old pins, Xcode resolves every package to the newest
+      # version Project.swift allows — which is what an update is.
+      - name: Resolve the packages afresh
+        run: |
+          cp .package.resolved "$RUNNER_TEMP/before.json"
+          rm .package.resolved
+          tuist generate --no-open
+          xcodebuild -resolvePackageDependencies \
+            -workspace Foulee.xcworkspace \
+            -scheme Foulee
+          resolved=Foulee.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          # Tuist links the workspace's file to `.package.resolved`; copy it
+          # if a future Tuist stops doing so, rather than lose the update.
+          if ! [ "$resolved" -ef .package.resolved ]; then cp -L "$resolved" .package.resolved; fi
+
+      - name: List what moved
+        id: diff
+        run: |
+          python3 - "$RUNNER_TEMP/before.json" .package.resolved > "$RUNNER_TEMP/body.md" <<'PY'
+          import json, sys
+
+          def pins(path):
+              with open(path) as handle:
+                  return {
+                      pin["identity"]: pin["state"].get("version") or pin["state"]["revision"][:7]
+                      for pin in json.load(handle)["pins"]
+                  }
+
+          before, after = pins(sys.argv[1]), pins(sys.argv[2])
+          rows = []
+          for name in sorted(before.keys() | after.keys()):
+              old, new = before.get(name, "—"), after.get(name, "—")
+              if old != new:
+                  rows.append(f"| `{name}` | {old} | {new} |")
+          if rows:
+              print("Pins resolved afresh by Xcode on the `xcode-27` image, within Project.swift's requirements.\n")
+              print("| Package | Before | After |")
+              print("| --- | --- | --- |")
+              print("\n".join(rows))
+          PY
+          if [ -s "$RUNNER_TEMP/body.md" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            cat "$RUNNER_TEMP/body.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No pin moved." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # One branch, rewritten by each run, and one pull request kept up to date.
+      # A pull request opened with the workflow token starts no CI of its own:
+      # push to it, or close and reopen it, to run the checks.
+      - name: Open or update the pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch=chore/swift-packages
+          git switch -C "$branch"
+          git add .package.resolved
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "chore(deps): mettre à jour les paquets Swift"
+          git push -q --force origin "$branch"
+          if gh pr view "$branch" --json state -q .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit "$branch" --body-file "$RUNNER_TEMP/body.md"
+          else
+            gh pr create --base main --head "$branch" \
+              --title "chore(deps): mettre à jour les paquets Swift" \
+              --body-file "$RUNNER_TEMP/body.md" \
+              --label dependencies
+          fi
