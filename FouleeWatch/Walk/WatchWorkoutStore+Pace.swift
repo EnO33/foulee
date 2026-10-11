@@ -15,6 +15,30 @@ extension WatchWorkoutStore {
         // Every sample, unconditionally: the estimator keeps its own window and
         // its own idea of what standing still looks like.
         paceEstimator.record(MovementSample(date: now, distanceMeters: distanceMeters))
+        distanceTrail.record(MovementSample(date: now, distanceMeters: distanceMeters))
+    }
+
+    /// Slower than this, a « run » is a walk — 6,5 km/h, 9'14"/km (issue #390).
+    ///
+    /// Below any run a wearer of this app would call one, and well above a
+    /// brisk walk. The phantom that prompted it measured 2,6 km/h.
+    static let runningSpeedFloor: Double = 1.8
+
+    /// Whether the stretch since `start` was covered at a running speed. `true`
+    /// when the trail cannot say: no distance is no evidence against a run, and
+    /// the pedometer has already vouched for it.
+    func isPlausibleRun(since start: Date, until now: Date) -> Bool {
+        guard let speed = distanceTrail.speed(from: start, to: now) else { return true }
+        return speed >= Self.runningSpeedFloor
+    }
+
+    /// Leave the leg whole and start detecting again from what it is recording
+    /// — the screen goes back to the walk it never stopped being.
+    func dropImplausibleRun(at now: Date) {
+        FouleeLog.detection.notice("course écartée : allure de marche")
+        currentActivity = legActivity
+        beginActivityDetection(from: legActivity)
+        refreshActivityTotals(at: now)
     }
 
     /// « 5'25"/km », or nothing (issue #300).

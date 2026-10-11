@@ -51,7 +51,7 @@ final class WatchWorkoutStore: NSObject {
     /// Not always what the screen says: the display follows detection at once,
     /// the recording waits for `minimumLegDuration`. That gap is deliberate —
     /// see `applySwitch`.
-    @ObservationIgnored private var legActivity: SessionActivity = .walking
+    @ObservationIgnored var legActivity: SessionActivity = .walking
     /// Distinguishes the leg in flight from the finished ones when they are
     /// folded into one list.
     @ObservationIgnored private var legIdentity = UUID()
@@ -71,6 +71,8 @@ final class WatchWorkoutStore: NSObject {
     @ObservationIgnored var lastMirrorSendAt: Date?
     /// The wearer's recent speed, smoothed (issue #300).
     @ObservationIgnored var paceEstimator = PaceEstimator()
+    /// The outing's distance over time, to check a run's pace (issue #390).
+    @ObservationIgnored var distanceTrail = DistanceTrail()
     /// Kilometre boundaries, kept on the **outing** (issue #301): a kilometre
     /// routinely spans a change of sport, and `splitLeg` clears what the leg
     /// carries.
@@ -89,23 +91,6 @@ final class WatchWorkoutStore: NSObject {
         self.route = route
         super.init()
     }
-
-    // The live workout builder saves the metrics its data source collects
-    // (heart rate, active energy, distance…) as part of the workout, so we must
-    // be authorized to *share* them — sharing only `workoutType` makes
-    // `finishWorkout()` fail with an authorization error. Unlike the phone, the
-    // watch is the authoritative source during a workout, so these don't
-    // double-count the daily totals.
-    //
-    // Derived from `collectedQuantityTypes` rather than spelled out again: the
-    // set that must be authorized *is* the set the data source collects, and
-    // the two drifting apart is precisely the authorization failure above.
-    // The route rides along (issue #312); refusing it costs the map, never the
-    // workout.
-    private static let writeTypes: Set<HKSampleType> = Set(
-        collectedQuantityTypes.map { $0 as HKSampleType }
-    ).union([HKWorkoutType.workoutType(), HKSeriesType.workoutRoute()])
-    private static let readTypes: Set<HKObjectType> = Set(writeTypes.map { $0 as HKObjectType })
 
     /// Begin a fresh session of `activity`. Idempotent: no-op when already
     /// active.
@@ -242,6 +227,7 @@ final class WatchWorkoutStore: NSObject {
         sessionHandle = handle
         lastMirrorSendAt = nil
         paceEstimator = PaceEstimator()
+        distanceTrail = DistanceTrail()
         splitRecorder = SplitRecorder()
         await offerMirror(handle)
         finishedLegs = []
@@ -350,7 +336,7 @@ extension WatchWorkoutStore {
     /// and they cost nothing new: these are the counters already driving the
     /// screen. Both feed the same detector, so nothing about the decision
     /// depends on which noticed first.
-    private func beginActivityDetection(from activity: SessionActivity) {
+    func beginActivityDetection(from activity: SessionActivity) {
         let now = Date.now
         currentActivity = activity
         detection.start(from: activity, at: now) { [weak self] confirmed in
@@ -440,9 +426,13 @@ extension WatchWorkoutStore {
               // From the decision, never from the back-dated boundary: a
               // switch noticed late would otherwise be cut on arrival, before
               // any reading could contradict it (issue #331).
-              now.timeIntervalSince(pending.confirmedAt) >= Self.minimumLegDuration
+              now.timeIntervalSince(pending.confirmedAt) >= Self.minimumLegDuration(becoming: pending.activity)
         else { return }
         pendingSplit = nil
+        // A run at a walking pace is not one (issue #390): the leg stays whole.
+        guard pending.activity != .running || isPlausibleRun(since: pending.date, until: now) else {
+            return dropImplausibleRun(at: now)
+        }
         await splitLeg(to: pending.activity, at: pending.date)
     }
 

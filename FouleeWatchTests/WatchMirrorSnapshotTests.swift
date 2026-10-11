@@ -141,7 +141,7 @@ struct WatchMirrorSnapshotTests {
             return metrics.activity == .running
         }
         stub.endCollectionError = StubError()
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration))
 
         #expect(stub.sentSnapshots.allSatisfy { $0.isEnded == false })
     }
@@ -177,7 +177,7 @@ struct WatchMirrorSnapshotTests {
             return metrics.activity == .running
         }
         let before = stub.sentSnapshots.count
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration))
 
         #expect(stub.sentSnapshots.count == before + 1)
         #expect(stub.sentSnapshots.last?.activity == .running)
@@ -230,7 +230,7 @@ struct WatchMirrorSnapshotTests {
             guard case .active(let metrics) = store.state else { return false }
             return metrics.activity == .running
         }
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration))
 
         await store.handle(.stop, from: stub.handleIDs[0])
 

@@ -71,7 +71,8 @@ enum MovementClassifier {
         return ActivityObservation(
             reading: self.reading(cadence: cadence, speed: reading.speed ?? 0),
             began: began,
-            observed: reading.date
+            observed: reading.date,
+            origin: .pedometer
         )
     }
 

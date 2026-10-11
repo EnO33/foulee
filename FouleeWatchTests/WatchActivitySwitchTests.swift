@@ -16,11 +16,17 @@ struct WatchActivitySwitchTests {
     /// Defaults to **two** confirmations, which is not what ships — the
     /// mechanism is worth keeping under test whatever the shipped number is,
     /// and `theShippedRuleSwitchesOnOneReading` is what pins the number.
+    ///
+    /// Without the pedometer gate too, for the same reason: the streak and
+    /// boundary mechanics are tested on CoreMotion alone, and the gate has its
+    /// own tests below (issue #390).
     private func detector(
         startedAs: SessionActivity = .walking,
         confirmations: Int = 2
     ) -> ActivitySwitchDetector {
-        ActivitySwitchDetector(startedAs: startedAs, at: start, confirmations: confirmations)
+        ActivitySwitchDetector(
+            startedAs: startedAs, at: start, confirmations: confirmations, runningNeedsPedometer: false
+        )
     }
 
     private func walk(at offset: TimeInterval) -> MotionActivityEstimate {
@@ -175,7 +181,7 @@ struct WatchActivitySwitchTests {
         // longer exists, at the cost of seconds on a feature already reported as
         // slow. The confidence floor still applies.
         var shipped = ActivitySwitchDetector(startedAs: .walking, at: start)
-        #expect(shipped.observe(run(at: 60))?.activity == .running)
+        #expect(shipped.observe(pedometerRun(at: 60))?.activity == .running)
 
         var weak = ActivitySwitchDetector(startedAs: .walking, at: start)
         #expect(weak.observe(motionEstimate(
@@ -233,5 +239,52 @@ struct WatchActivitySwitchTests {
         _ = detector.observe(run(began: 200, seen: 100))
         let switched = detector.observe(run(began: 200, seen: 130))
         #expect(switched?.date == start.addingTimeInterval(130))
+    }
+
+    // MARK: - A run needs the pedometer's word (issue #390)
+
+    private func pedometerRun(at offset: TimeInterval) -> ActivityObservation {
+        ActivityObservation(
+            reading: .activity(.running),
+            began: start.addingTimeInterval(offset),
+            observed: start.addingTimeInterval(offset),
+            origin: .pedometer
+        )
+    }
+
+    /// The case that shipped a 60 m « run » at 2,6 km/h in the middle of a walk:
+    /// CoreMotion said « course » and nothing contradicted it in time.
+    @Test("CoreMotion alone never confirms a run")
+    func coreMotionAloneIsNotARun() {
+        var shipped = ActivitySwitchDetector(startedAs: .walking, at: start)
+        #expect(shipped.observe(run(at: 60)) == nil)
+        #expect(shipped.observe(run(at: 70)) == nil)
+        #expect(shipped.current == .walking)
+    }
+
+    /// CoreMotion still counts: it opens the candidate, and its earlier `began`
+    /// dates the boundary once the pedometer agrees.
+    @Test("The pedometer confirms a run CoreMotion saw first, dated from CoreMotion")
+    func thePedometerConfirmsTheRun() {
+        var shipped = ActivitySwitchDetector(startedAs: .walking, at: start)
+        #expect(shipped.observe(run(at: 60)) == nil)
+        let switched = shipped.observe(pedometerRun(at: 75))
+        #expect(switched?.activity == .running)
+        #expect(switched?.date == start.addingTimeInterval(60))
+    }
+
+    @Test("Back to a walk needs no pedometer")
+    func aWalkNeedsNoCorroboration() {
+        var shipped = ActivitySwitchDetector(startedAs: .running, at: start)
+        #expect(shipped.observe(walk(at: 60))?.activity == .walking)
+    }
+
+    @Test("A walk in between drops the pedometer's word with the candidate")
+    func corroborationDoesNotOutliveItsCandidate() {
+        var shipped = ActivitySwitchDetector(startedAs: .walking, at: start, confirmations: 2)
+        _ = shipped.observe(pedometerRun(at: 60))
+        _ = shipped.observe(walk(at: 65))
+        #expect(shipped.observe(run(at: 70)) == nil)
+        #expect(shipped.observe(run(at: 80)) == nil, "CoreMotion alone, again")
     }
 }

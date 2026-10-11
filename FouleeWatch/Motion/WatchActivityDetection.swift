@@ -65,7 +65,14 @@ final class WatchActivityDetection {
         onSwitch: @escaping (ActivitySwitchDetector.Switch) -> Void
     ) {
         stop()
-        detector = ActivitySwitchDetector(startedAs: activity, at: date, confirmations: confirmations)
+        // A run waits for the pedometer's word (issue #390) — unless there is no
+        // pedometer to give it, where that rule would silence runs altogether.
+        detector = ActivitySwitchDetector(
+            startedAs: activity,
+            at: date,
+            confirmations: confirmations,
+            runningNeedsPedometer: pedometer.isAvailable()
+        )
         sessionStart = date
         self.onSwitch = onSwitch
         opening = Task { [weak self] in

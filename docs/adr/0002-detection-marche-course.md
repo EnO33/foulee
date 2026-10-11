@@ -97,6 +97,18 @@ D7 date la coupure de la **frontière** et D8 fait **attendre** l'enregistrement
 
 `ActivitySwitchDetector.Switch` porte désormais **deux dates** : `date`, la frontière (inchangée, D7), et `confirmedAt`, l'instant de la décision. L'attente se compte depuis `confirmedAt`. Aucune précision perdue — la coupure reste datée de la frontière — mais une erreur ponctuelle ne peut plus écrire un workout.
 
+### D11 — Une course doit être prouvée, pas seulement annoncée (#390)
+
+Constat : une marche de 57 min enregistrée avec une « course » de **60 m en 1'19"** au milieu, soit 22'41"/km ou 2,6 km/h. C'est deux fois plus lent que la marche elle-même. Un seul avis « course », de CoreMotion seul, a suffi. Rien n'est venu le contredire dans les 15 s, et rien ne vérifiait l'allure.
+
+Les deux erreurs ne coûtent pas la même chose. Une course manquée prolonge une marche. Une course fantôme laisse dans Santé une séance qui n'a pas eu lieu. Trois règles, chacune suffisante pour ce cas :
+
+- **Le podomètre doit confirmer une course.** `ActivitySwitchDetector.runningNeedsPedometer` : CoreMotion peut ouvrir le candidat, et son `began` plus précoce date toujours la frontière (D7), mais il ne le confirme plus seul. Revenir à la marche ne demande aucune preuve (D3). Sur une montre sans podomètre, la règle est levée, sinon aucune course ne serait jamais détectée.
+- **Une course attend 45 s avant d'être enregistrée**, contre 15 s pour une marche (`minimumRunDuration`). Une vraie course dure ; une traversée de rue au trot, non. Attendre ne coûte toujours aucune précision, puisque la coupure reste datée de la frontière.
+- **L'allure doit être celle d'une course.** Au moment de couper, `DistanceTrail` mesure la vitesse réelle de la portion, de sa frontière à maintenant. En dessous de **1,8 m/s** (6,5 km/h, 9'14"/km), la course est écartée : la portion reste une marche, l'écran y revient et la détection repart de la marche. Sans distance connue, pas de verdict, car le podomètre a déjà validé la course.
+
+Contrepartie assumée : les accélérations de moins de 45 s (les sprints d'un fractionné court) ne forment plus de portion de course.
+
 ### Journal de détection
 
 Chaque observation (source, verdict, début, réception) et chaque bascule s'écrivent dans `FouleeLog.detection` (catégorie `detection`, sous-système `com.eno33.foulee`). Pour suivre une sortie : Console.app avec la montre connectée, filtre `category:detection`, messages *Info* inclus. C'est la leçon de #256 appliquée d'avance : sur un chemin qu'aucun simulateur n'exerce, la trace précède le réglage.
@@ -146,7 +158,10 @@ Et la question qui a tout tranché — *Forme produit-il un multisport ou deux e
 | Réglage | Valeur | Raison |
 |---|---|---|
 | Seuil de confiance | `.medium` | Trop strict → la détection se tait et la séance reste ce qu'elle était (aucune donnée abîmée). Trop laxiste → un sport faux, définitif. |
-| Confirmations avant bascule (montre) | **1** | L'anti-bruit est assuré par le seuil de 15 s de D7, qui décide seul si une portion mérite une séance. Confirmer deux fois ajouterait des secondes à la latence sans rien protéger de plus. |
+| Confirmations avant bascule (montre) | **1** (une course exige en plus l'avis du podomètre, D11) | L'anti-bruit est assuré par le seuil de 15 s de D7, qui décide seul si une portion mérite une séance. Confirmer deux fois ajouterait des secondes à la latence sans rien protéger de plus. |
+| Durée minimale d'une portion de course | **45 s**, comptées depuis la décision | Une course fantôme laisse une séance dans Santé ; une course manquée ne coûte qu'une marche un peu longue (D11). |
+| Preuve d'une course | le **podomètre** doit l'avoir dite | CoreMotion seul a déjà annoncé une course à 2,6 km/h (D11). |
+| Plancher d'allure d'une course | **1,8 m/s** (6,5 km/h) | Sous un footing, au-dessus d'une marche rapide. Vérifié sur la portion entière avant de couper (D11). |
 | Durée minimale d'une portion | **15 s**, comptées depuis la décision | En dessous, une portion est plus courte que l'écart entre deux lectures : du bruit, pas une observation. Le chiffre à monter si un fractionné découpe trop. Comptées depuis la frontière, elles ne gardaient rien (D10). |
 | Source rapide de la détection | cadence + allure de `CMPedometer` | CoreMotion répond en ~30 s et son lissage *est* sa raison d'être (#248). Le podomètre donne une cadence en quelques secondes, sans permission de plus. Elle était dérivée des sommes HealthKit jusqu'à #331 — à tort (D9). |
 | Plancher de la marche | **1 pas/s** | En dessous, on s'arrête ou on piétine : « sans avis », pas « marche » (D9). |
@@ -163,11 +178,13 @@ Et la question qui a tout tranché — *Forme produit-il un multisport ou deux e
 | `v1.42` | ✅ « La détection fonctionne mieux en effet. » Chrono fluide. Une seule séance encore — attendu à ce stade. |
 | `v1.43` | ✅ **Le découpage fonctionne.** Une sortie qui change de sport laisse deux séances. |
 | `v1.49` | ⚠️ Des **segments de marche au milieu d'une course**, sur un tronçon couru — pas à un arrêt. Cadence affichée jugée fausse. Causes : D9 et D10 (#331). |
+| `v1.51` | ⚠️ Une **course de 60 m à 2,6 km/h au milieu d'une marche**. Causes : un seul avis CoreMotion suffisait, sans vérification d'allure (D11, #390). |
 
 ## Ce qui reste non mesuré
 
 - **La batterie** du flux au poignet, toujours pas mesurée depuis #248.
 - La latence des transitions côté **iPhone** dans les cas tordus : tapis, poussette, descente rapide.
-- Le comportement sur un **fractionné** : le seuil de 15 s de D7 est le réglage prévu pour ça, jamais éprouvé.
+- Le comportement sur un **fractionné** : depuis D11, une course de moins de 45 s n'est plus découpée. Le seuil est le réglage à baisser si un fractionné doit l'être.
+- **Le plancher de 1,8 m/s** contre un joggeur très lent : à lire dans le journal (`course écartée : allure de marche`).
 - **La qualité de `currentCadence` au poignet** (#331) : fréquence des mises à jour pendant une séance, comportement bras immobile (gourde, téléphone en main). À lire dans le journal de détection.
 - **Les seuils de cadence sont personnels** (`MovementClassifier`). Réglés pour une allure ordinaire ; un marcheur très rapide ou un joggeur très lent tombent dans la zone grise.

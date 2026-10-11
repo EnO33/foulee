@@ -42,7 +42,7 @@ struct WatchAbandonedLegCallbackTests {
             guard case .active(let metrics) = store.state else { return false }
             return metrics.activity == .running
         }
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration))
         #expect(stub.startedLegs.count == 2)
         return store
     }

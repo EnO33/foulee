@@ -86,6 +86,15 @@ struct ActivitySwitchDetector: Sendable {
     /// whenever the device asserts nothing, and quiet readings must not count
     /// as agreement.
     let staleAfter: TimeInterval
+    /// A run is only confirmed once the pedometer has said so too (issue #390).
+    ///
+    /// CoreMotion on its own called a 2,6 km/h stretch of a walk a run — an arm
+    /// swinging, a descent, a stop and a restart. The pedometer's cadence and
+    /// speed are what a run physically is. CoreMotion still counts: it can open
+    /// the candidate, and its earlier `began` still dates the boundary; it just
+    /// cannot close it alone. Back to a walk needs no such proof — a walk is
+    /// the safe default every ambiguity already falls back on (ADR 0002).
+    let runningNeedsPedometer: Bool
 
     /// What the session is recording right now.
     private(set) var current: SessionActivity
@@ -98,6 +107,8 @@ struct ActivitySwitchDetector: Sendable {
     private var candidateCount = 0
     private var candidateSince: Date?
     private var candidateLastSeen: Date?
+    /// The pedometer has backed the candidate at least once.
+    private var candidateCorroborated = false
 
     /// - Parameters:
     ///   - startedAs: what the session was started as — the wearer's choice, or
@@ -109,13 +120,15 @@ struct ActivitySwitchDetector: Sendable {
         at date: Date,
         confirmations: Int = defaultConfirmations,
         minimumConfidence: MotionActivityConfidence = .medium,
-        staleAfter: TimeInterval = 90
+        staleAfter: TimeInterval = 90,
+        runningNeedsPedometer: Bool = true
     ) {
         current = startedAs
         boundary = date
         self.confirmations = confirmations
         self.minimumConfidence = minimumConfidence
         self.staleAfter = staleAfter
+        self.runningNeedsPedometer = runningNeedsPedometer
     }
 
     /// Feed one estimate. Returns a switch only when one is confirmed.
@@ -145,6 +158,7 @@ struct ActivitySwitchDetector: Sendable {
         }
         advanceCandidate(to: seen, with: observation)
         guard candidateCount >= confirmations, let since = candidateSince else { return nil }
+        if seen == .running, runningNeedsPedometer, !candidateCorroborated { return nil }
 
         let date = min(max(since, boundary), observation.observed)
         current = seen
@@ -162,6 +176,7 @@ struct ActivitySwitchDetector: Sendable {
         } else {
             candidate = seen
             candidateCount = 1
+            candidateCorroborated = false
             // The *first* observation of the streak dates the boundary, not the
             // confirming one. `began` is when the source says the activity
             // started, so this is what claws back the detection latency instead
@@ -169,6 +184,7 @@ struct ActivitySwitchDetector: Sendable {
             candidateSince = observation.began
         }
         candidateLastSeen = observation.observed
+        if observation.origin == .pedometer { candidateCorroborated = true }
     }
 
     private mutating func forgetCandidate() {
@@ -176,5 +192,6 @@ struct ActivitySwitchDetector: Sendable {
         candidateCount = 0
         candidateSince = nil
         candidateLastSeen = nil
+        candidateCorroborated = false
     }
 }

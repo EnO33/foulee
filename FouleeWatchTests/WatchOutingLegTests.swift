@@ -33,7 +33,7 @@ struct WatchOutingLegTests {
                 guard case .active(let metrics) = store.state else { return false }
                 return metrics.activity == activity
             }
-            await store.splitIfDue(at: base.addingTimeInterval(offset + WatchWorkoutStore.minimumLegDuration))
+            await store.splitIfDue(at: base.addingTimeInterval(offset + WatchWorkoutStore.minimumRunDuration))
         }
 
         #expect(stub.outingLegs.map(\.index) == [0, 1, 2])
