@@ -102,6 +102,8 @@ struct WatchSessionPager: View {
             }
         }
         .tabViewStyle(.page)
+        // Each kilometre, over whatever page is up (issue #382).
+        .kilometreAlert(metrics.splits)
         // Only while « Journée » is the page on screen (issue #280). Attached
         // to the pager rather than to the page, and keyed on the selection, so
         // arriving starts the loop and leaving cancels it: nothing guarantees a
