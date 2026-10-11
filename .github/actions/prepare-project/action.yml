@@ -7,23 +7,26 @@ description: >
 runs:
   using: composite
   steps:
-    - name: Select Xcode 26
+    - name: Select Xcode 27
       uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
       with:
-        xcode-version: '26.0'
+        xcode-version: '27.0'
 
     - name: Show Xcode version
       shell: bash
       run: xcodebuild -version
 
     # Both jobs need it: the iPhone app embeds the watch app, so building
-    # Foulee builds FouleeWatch for the watchOS simulator too.
-    - name: Download watchOS platform (not pre-installed on the runner)
+    # Foulee builds FouleeWatch for the watchOS simulator too. The Xcode 27
+    # image ships the runtime, unlike macos-15 did; kept as a guard so an image
+    # without it downloads it here instead of failing on a missing destination.
+    - name: Ensure the watchOS platform is installed
       shell: bash
       run: |
-        # GitHub macos-15 runners are flaky on first `downloadPlatform`:
-        # the CoreSimulator service can come up late and Xcode errors with
-        # 'Unable to connect to simulator'. Retry a few times with backoff.
+        if xcrun simctl list runtimes available | grep -q "watchOS"; then
+          echo "watchOS runtime present"
+          exit 0
+        fi
         for attempt in 1 2 3 4; do
           echo "Attempt $attempt — downloading watchOS platform"
           if sudo xcodebuild -downloadPlatform watchOS; then

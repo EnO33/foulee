@@ -29,6 +29,11 @@ let project = Project(
         developmentRegion: "fr"
     ),
     packages: [
+        // Pulls in xctest-dynamic-overlay, whose IssueReporting reads Swift
+        // Testing's private type layout to find the running test. Swift 6.4
+        // (Xcode 27) changed that layout: below 1.10.0, any `@Dependency`
+        // read at app launch crashes the test host (issue #404). The pin in
+        // `.package.resolved` must stay at 1.10.0 or later.
         .remote(
             url: "https://github.com/pointfreeco/swift-dependencies",
             requirement: .upToNextMajor(from: "1.4.0")
@@ -42,7 +47,9 @@ let project = Project(
     ],
     settings: .settings(
         base: [
-            "SWIFT_VERSION": "6.2",
+            // Language mode, not compiler version: Swift 6.4 (Xcode 27) compiles
+            // in the Swift 6 mode, which has no minor versions.
+            "SWIFT_VERSION": "6",
             "SWIFT_STRICT_CONCURRENCY": "complete",
             "ENABLE_USER_SCRIPT_SANDBOXING": "YES",
             // Version + build number shared by every target. The release CI

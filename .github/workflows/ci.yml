@@ -16,7 +16,9 @@ permissions:
 jobs:
   lint:
     name: Lint
-    runs-on: macos-15
+    # Same image as the platform jobs: the release scripts are type-checked
+    # with this runner's swiftc, which must be the one that ships the app.
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -70,7 +72,7 @@ jobs:
     # per-device pixel size, no key material committed. Details and the
     # opt-in recipe if this trade-off is ever revisited: FouleeConnectIQ/README.md.
     name: Connect IQ
-    # Pinned to a version, like the macos-15 jobs around it: a floating label
+    # Pinned to a version, like the macOS jobs around it: a floating label
     # moves the runner image under us without a commit. This job only needs
     # python3, so bumping it is a one-line, deliberate change.
     runs-on: ubuntu-24.04
@@ -87,7 +89,11 @@ jobs:
   # followed by a `test` that recompiled everything.
   ios:
     name: iOS
-    runs-on: macos-15
+    # GitHub's Xcode 27 image (issue #404): macOS 27, Xcode 27.0, iOS 27 and
+    # watchOS 27 simulators preinstalled. The general-purpose macos-26 image
+    # tops out at Xcode 26.6, and Xcode 27 does not run on macos-15 at all
+    # (it needs macOS Tahoe 26.6).
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -116,6 +122,18 @@ jobs:
             -derivedDataPath build/dd \
             build-for-testing | xcbeautify
 
+      # Booted explicitly, and waited for, before the tests. A device created
+      # on a fresh runtime can take minutes to finish its first boot; left to
+      # xcodebuild, that wait counts against the test runner's launch, which
+      # then gives up with « crashed before establishing connection » (issue
+      # #404). Booting here keeps a slow boot and a real launch crash apart.
+      - name: Boot the iPhone simulator
+        timeout-minutes: 10
+        run: |
+          UDID=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name == "iPhone 17 Pro")][0].udid')
+          echo "Booting iPhone 17 Pro ($UDID)"
+          xcrun simctl bootstatus "$UDID" -b
+
       - name: Test (iOS)
         run: |
           set -o pipefail
@@ -125,7 +143,13 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -configuration Debug \
             -derivedDataPath build/dd \
+            -resultBundlePath build/results/ios.xcresult \
             test-without-building | xcbeautify
+
+      - uses: ./.github/actions/report-test-failure
+        if: failure()
+        with:
+          name: ios
 
       # Periphery scans both schemes. The iPhone app embeds the watch app, so
       # the build above already indexed FouleeWatch; only the watch's test
@@ -148,17 +172,17 @@ jobs:
       # the baseline (.periphery.baseline.json) freezes today's findings, so
       # only NEW unused code fails the check. Refresh after clearing a finding:
       # `periphery scan --write-baseline .periphery.baseline.json`.
-      - name: Install Periphery 3.7.4
+      - name: Install Periphery 3.8.0
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p "$HOME/periphery"
-          gh release download 3.7.4 \
+          gh release download 3.8.0 \
             --repo peripheryapp/periphery \
-            --pattern 'periphery-3.7.4.zip' \
+            --pattern 'periphery-3.8.0.zip' \
             --dir "$HOME/periphery"
-          (cd "$HOME/periphery" && unzip -o periphery-3.7.4.zip)
+          (cd "$HOME/periphery" && unzip -o periphery-3.8.0.zip)
           # The binary loads libIndexStore.dylib from alongside itself.
           echo "$HOME/periphery" >> "$GITHUB_PATH"
 
@@ -175,7 +199,7 @@ jobs:
 
   watchos:
     name: watchOS
-    runs-on: macos-15
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -204,6 +228,10 @@ jobs:
           fi
           echo "Testing on simulator: $WATCH_NAME"
           echo "WATCH_DESTINATION=platform=watchOS Simulator,name=$WATCH_NAME" >> "$GITHUB_ENV"
+          # Same reason as the iPhone: finish the first boot before the test
+          # runner's launch clock starts.
+          WATCH_UDID=$(xcrun simctl list devices available -j | jq -r --arg name "$WATCH_NAME" '[.devices[][] | select(.name == $name)][0].udid')
+          xcrun simctl bootstatus "$WATCH_UDID" -b
 
       - name: Build for testing (watchOS)
         run: |
@@ -225,7 +253,13 @@ jobs:
             -destination "$WATCH_DESTINATION" \
             -configuration Debug \
             -derivedDataPath build/dd \
+            -resultBundlePath build/results/watchos.xcresult \
             test-without-building | xcbeautify
+
+      - uses: ./.github/actions/report-test-failure
+        if: failure()
+        with:
+          name: watchos
 
   build:
     # Keep this name "Build & Test": it's a required status check in main's

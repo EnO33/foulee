@@ -13,6 +13,9 @@ struct WatchSessionRoutePage: View {
     /// For the legs the route is cut at, and the sport being done now (#320).
     let metrics: WatchWorkoutMetrics
 
+    // periphery:ignore - read only through `$` bindings. Since Xcode 27,
+    // `@State` is a macro and Periphery 3.8 no longer counts the projected
+    // value as a use of the property (issue #404).
     @State private var position: MapCameraPosition = .userLocation(fallback: .automatic)
 
     var body: some View {

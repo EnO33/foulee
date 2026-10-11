@@ -145,6 +145,13 @@ Watch **Actions → Release**. After it's green, the build shows up in
 **App Store Connect → TestFlight** within a few minutes (processing time).
 Add it to an internal testing group to install via the TestFlight app.
 
+The release runs on GitHub's `xcode-27` image with **Xcode 27.0** — the same
+image and Xcode as CI (issue #404), so the build that ships is the one the
+tests ran against. It therefore links the **iOS 27 / watchOS 27 SDK**: system
+controls take the iOS 27 look even where no code changed. Review the screens
+and recapture the screenshots on the iOS 27 runtime before promoting a build to
+the store (issue #408).
+
 ## 9. Screenshots
 
 The store boards live in `appstore-screenshots/` and are **not** versioned
