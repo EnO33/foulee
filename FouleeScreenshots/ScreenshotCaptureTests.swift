@@ -102,7 +102,9 @@ final class ScreenshotCaptureTests: XCTestCase {
 
     private func captureWeather(_ app: XCUIApplication) {
         tapWhenReady(app.buttons[ScreenshotCapture.Card.weather], "Weather card")
-        waitForScreen(app.staticTexts["Prévision à 12 h à ton emplacement"], "Weather sheet")
+        // The seeded walk window opens at 12:00, written the way the whole app
+        // writes a time since #395 (`TimeOfDay.clockText`).
+        waitForScreen(app.staticTexts["Prévision à 12:00 à ton emplacement"], "Weather sheet")
         capture("10_weather")
         close(app)
     }

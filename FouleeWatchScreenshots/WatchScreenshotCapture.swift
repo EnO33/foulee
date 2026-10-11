@@ -30,7 +30,12 @@ extension XCTestCase {
     @discardableResult
     func launchWatchInCaptureMode() -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = [WatchScreenshotCapture.launchArgument]
+        // French, whatever the host runs — see `ScreenshotCapture.localeArguments`
+        // on the phone side (issue #408).
+        app.launchArguments = [
+            WatchScreenshotCapture.launchArgument,
+            "-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"
+        ]
         app.launch()
         return app
     }

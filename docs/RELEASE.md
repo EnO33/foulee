@@ -243,9 +243,9 @@ tested on. It also runs on a pull request that touches the capture tooling.
   and compose as below.
 - The **review sets** sit next to them, for checking a new SDK or a redesign
   (issue #408): `review-dark` (the dark theme), `review-a11y` (iPhone at
-  `accessibility-large`), `probe-40mm` (the smallest wrist) and
-  `review-watch-xxxl` (the watch at its largest standard text size). They are
-  never composed.
+  `accessibility-large`) and `probe-40mm` (the smallest wrist). They are never
+  composed. There is no large-text set for the watch: `simctl` cannot set its
+  text size ("Runtime does not support dynamic text").
 - Every set, downsized to JPEG, is also pushed to the orphan **`captures`**
   branch, which each run overwrites: browse it on GitHub without unzipping
   anything. It shares no history with `main`, so the rule that captures are not
@@ -261,7 +261,9 @@ tools/capture_screenshots.sh --text-size accessibility-large "" review-a11y
 
 `--dark` seeds the dark theme through a third launch argument
 (`-FouleeScreenshotDark`); `--text-size` sets the simulator's text size for the
-run and puts it back afterwards.
+run and puts it back afterwards. Both capture targets launch the app in French
+(`-AppleLanguages (fr) -AppleLocale fr_FR`) whatever the host's language: a
+runner in English grouped thousands as « 8,240 » on the boards.
 
 #### Apple Watch — one command
 

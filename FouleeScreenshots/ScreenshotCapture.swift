@@ -15,6 +15,12 @@ enum ScreenshotCapture {
     /// Must equal `ScreenshotMode.darkArgument`.
     static let darkArgument = "-FouleeScreenshotDark"
 
+    /// French, whatever the host runs (issue #408): the boards are French, and
+    /// a simulator left in English groups thousands as « 8,240 ». CI runners
+    /// are in English; a developer's Mac usually is not, which is why the
+    /// difference went unseen until the captures moved to CI.
+    static let localeArguments = ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"]
+
     /// Set by `tools/capture_screenshots.sh --dark`. xcodebuild hands the test
     /// runner every `TEST_RUNNER_`-prefixed variable without the prefix, which
     /// is the only channel from the script into this process.
@@ -42,7 +48,7 @@ extension XCTestCase {
     @discardableResult
     func launchInCaptureMode(onboarding: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = [ScreenshotCapture.launchArgument]
+        app.launchArguments = [ScreenshotCapture.launchArgument] + ScreenshotCapture.localeArguments
         if onboarding { app.launchArguments.append(ScreenshotCapture.onboardingArgument) }
         if ScreenshotCapture.isDark { app.launchArguments.append(ScreenshotCapture.darkArgument) }
         app.launch()

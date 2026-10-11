@@ -56,7 +56,8 @@ jobs:
           ensure "Apple Watch SE 3 (40mm)" watchOS
 
       # The store sets first, under their default names, then the review sets:
-      # dark theme, the largest text sizes, and the smallest wrist. A set that
+      # dark theme, the largest text sizes (iPhone only: simctl cannot set the
+      # watch's), and the smallest wrist. A set that
       # fails does not stop the others; the step still fails at the end.
       - name: Capture
         run: |
@@ -67,7 +68,6 @@ jobs:
           run --text-size accessibility-large "" review-a11y
           run --watch
           run --watch "Apple Watch SE 3 (40mm)" probe-40mm
-          run --watch --text-size extra-extra-extra-large "" review-watch-xxxl
           if [ ${#failed[@]} -gt 0 ]; then
             printf '::error::Capture failed: %s\n' "${failed[@]}"
             exit 1
