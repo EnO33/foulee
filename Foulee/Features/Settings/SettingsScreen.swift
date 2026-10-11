@@ -53,7 +53,7 @@ struct SettingsScreen: View {
                     GlassSection {
                         garminRow
                         Divider()
-                        link(.about, summary: "Version, licence")
+                        link(.about, summary: "Version \(AppVersion.current)")
                     }
                 }
                 .padding(.horizontal, 20)
