@@ -5,7 +5,8 @@ import Testing
 
 @Suite("MetricStatsStore")
 struct MetricStatsStoreTests {
-    private func points(_ values: [Double]) -> [MetricPoint] {
+    // Nonisolated: the stubbed HealthKit closures call it.
+    nonisolated private func points(_ values: [Double]) -> [MetricPoint] {
         values.enumerated().map { index, value in
             MetricPoint(
                 date: Date(timeIntervalSince1970: 1_700_000_000 + Double(index) * 86_400),
