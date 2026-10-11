@@ -75,7 +75,7 @@ struct WatchWorkoutActivitySwitchingTests {
         detect(.running, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .running }
         // Long enough after the boundary for the leg to be worth recording.
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration))
 
         #expect(stub.startedLegs.count == 2)
         #expect(stub.startedLegs.last?.configuration.activityType == .running)
@@ -95,14 +95,14 @@ struct WatchWorkoutActivitySwitchingTests {
         await waitUntil { self.activity(of: store) == .running }
         // Still running, but only for a few seconds. Every leg costs a
         // permanent workout in Santé, so a stretch this short is noise.
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration - 1))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration - 1))
 
         #expect(stub.startedLegs.count == 1)
         #expect(stub.endCollectionCalls == 0)
 
         // One second later it has held long enough — and the boundary is still
         // where the sport changed, so waiting cost no accuracy.
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration))
         #expect(stub.startedLegs.count == 2)
         #expect(stub.startedLegs.last?.at == base.addingTimeInterval(60))
     }
@@ -129,7 +129,7 @@ struct WatchWorkoutActivitySwitchingTests {
 
         // Held long enough after the decision: now it is cut — at the
         // boundary, so the wait cost no accuracy.
-        await store.splitIfDue(at: base.addingTimeInterval(90 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(90 + WatchWorkoutStore.minimumRunDuration))
         #expect(stub.startedLegs.count == 2)
         #expect(stub.endCollectionDates == [base.addingTimeInterval(60)])
     }
@@ -179,7 +179,7 @@ struct WatchWorkoutActivitySwitchingTests {
         #expect(stub.startedLegs.first?.configuration.activityType == .running)
         detect(.walking, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .walking }
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration))
 
         #expect(stub.startedLegs.map(\.configuration.activityType) == [.running, .walking])
     }
@@ -200,7 +200,7 @@ struct WatchWorkoutActivitySwitchingTests {
         detect(.running, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .running }
         stub.startError = StubError()
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration))
 
         // The walk is saved — it was finished before the run was attempted —
         // and the outing carries on. Nothing more will be measured, which is a
@@ -224,7 +224,7 @@ struct WatchWorkoutActivitySwitchingTests {
         detect(.running, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .running }
         stub.startError = StubError()
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration))
         await store.stop()
 
         guard case .ended(_, let saveFailed) = store.state else {
@@ -243,7 +243,7 @@ struct WatchWorkoutActivitySwitchingTests {
         detect(.running, from: motion, at: 60)
         await waitUntil { self.activity(of: store) == .running }
         stub.finishError = StubError()
-        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumLegDuration))
+        await store.splitIfDue(at: base.addingTimeInterval(60 + WatchWorkoutStore.minimumRunDuration))
 
         guard case .active = store.state else {
             Issue.record("only « Terminer » may end an outing")

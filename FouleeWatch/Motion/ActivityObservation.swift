@@ -18,6 +18,12 @@ import Foundation
 ///
 /// So both speak, in the same words, into `ActivitySwitchDetector`.
 struct ActivityObservation: Equatable, Sendable {
+    /// Which of the two produced it (issue #390).
+    enum Origin: Equatable, Sendable {
+        case coreMotion
+        case pedometer
+    }
+
     var reading: MotionActivityReading
     /// When the source says the activity began.
     ///
@@ -29,6 +35,8 @@ struct ActivityObservation: Equatable, Sendable {
     /// When this process was handed the observation. Bounds the boundary above,
     /// and drives the staleness of a half-confirmed candidate.
     var observed: Date
+    /// A run needs the pedometer's word, not CoreMotion's alone (issue #390).
+    var origin: Origin = .coreMotion
 }
 
 extension MotionActivityEstimate {

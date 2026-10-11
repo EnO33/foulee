@@ -218,4 +218,29 @@ struct WatchActivityDetectionTests {
         #expect(!pedometer.isStreaming)
         #expect(detection.cadence(at: base.addingTimeInterval(60)) == nil)
     }
+
+    // MARK: - A run needs the pedometer's word (issue #390)
+
+    @Test("With a pedometer on the wrist, CoreMotion alone does not switch to a run")
+    func coreMotionAloneWaitsForThePedometer() async {
+        let motion = FakeMotionSource()
+        motion.isAvailable = true
+        let pedometer = FakePedometerSource()
+        pedometer.isAvailable = true
+        let detection = WatchActivityDetection(source: motion.source, pedometer: pedometer.source)
+        let log = SwitchLog()
+
+        detection.start(from: .walking, at: base, retryInterval: .milliseconds(10)) { log.record($0) }
+        await waitUntil { motion.isStreaming && pedometer.isStreaming }
+        motion.deliver(running(at: 60))
+        motion.deliver(running(at: 90))
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(log.switches.isEmpty)
+
+        // The pedometer agreeing is what makes it a run — dated from CoreMotion.
+        pedometer.deliver(pedometerReading(100, cadence: 2.8, speed: 3))
+        await waitUntil { log.switches.count == 1 }
+        #expect(log.switches.first?.activity == .running)
+        #expect(log.switches.first?.date == base.addingTimeInterval(60))
+    }
 }

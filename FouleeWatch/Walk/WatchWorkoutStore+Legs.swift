@@ -12,6 +12,23 @@
 /// long as a closed session takes to finish dying, which is the window a switch
 /// lives in. A real sortie ended there.
 extension WatchWorkoutStore {
+    // The live workout builder saves the metrics its data source collects
+    // (heart rate, active energy, distance…) as part of the workout, so we must
+    // be authorized to *share* them — sharing only `workoutType` makes
+    // `finishWorkout()` fail with an authorization error. Unlike the phone, the
+    // watch is the authoritative source during a workout, so these don't
+    // double-count the daily totals.
+    //
+    // Derived from `collectedQuantityTypes` rather than spelled out again: the
+    // set that must be authorized *is* the set the data source collects, and
+    // the two drifting apart is precisely the authorization failure above.
+    // The route rides along (issue #312); refusing it costs the map, never the
+    // workout.
+    static let writeTypes: Set<HKSampleType> = Set(
+        collectedQuantityTypes.map { $0 as HKSampleType }
+    ).union([HKWorkoutType.workoutType(), HKSeriesType.workoutRoute()])
+    static let readTypes: Set<HKObjectType> = Set(writeTypes.map { $0 as HKObjectType })
+
     /// The configuration HealthKit stamps a session — or one of its nested
     /// activities — with.
     ///
@@ -33,6 +50,21 @@ extension WatchWorkoutStore {
     /// this a leg is shorter than the gap between two readings — noise, not an
     /// observation.
     static let minimumLegDuration: TimeInterval = 15
+
+    /// The shortest **run** worth recording — three times the walk's
+    /// (issue #390).
+    ///
+    /// The two mistakes do not cost the same. A missed walk is a run that goes
+    /// on a little longer; a phantom run is a workout in Santé that never
+    /// happened, at a pace nobody runs — 60 m in 1'19" in the middle of a walk.
+    /// A real run lasts; crossing a street at a trot does not. Waiting costs no
+    /// accuracy: the cut is still dated from where the run began (ADR 0002, D7).
+    static let minimumRunDuration: TimeInterval = 45
+
+    /// How long a change to `activity` has to hold before it is recorded.
+    static func minimumLegDuration(becoming activity: SessionActivity) -> TimeInterval {
+        activity == .running ? minimumRunDuration : minimumLegDuration
+    }
 
     /// Offer the leg to the paired iPhone, and never lose a sortie over it
     /// (issue #277).
