@@ -26,17 +26,25 @@ struct WatchWorkoutSegment: Equatable, Sendable, Identifiable {
     /// Steps per second from the pedometer, for the leg in flight only
     /// (issue #331). `nil` on a closed leg, whose average is the honest figure.
     var liveCadence: Double?
+    /// Time spent paused and since resumed (issue #384).
+    var pausedDuration: TimeInterval = 0
+    /// When the pause in progress began; `nil` while the leg is running.
+    var pausedSince: Date?
 
     /// How long this segment has been recording.
     ///
     /// Derived from the two HealthKit dates rather than read from
     /// `HKWorkoutActivity.duration`, which is nothing to read at all while a
     /// segment is still running — and a clock that came from one formula during
-    /// a segment and another the instant it ended would jump on screen. The two
-    /// agree here anyway: `duration` differs from wall time only across paused
-    /// stretches, and a Foulée session has no pause control.
+    /// a segment and another the instant it ended would jump on screen.
+    ///
+    /// **Paused stretches are left out** (issue #384), as `duration` leaves
+    /// them out: the time already paused, and the pause still in progress up
+    /// to the instant read. A clock read during a pause therefore stands still.
     func elapsed(at now: Date) -> TimeInterval {
-        max(0, (end ?? now).timeIntervalSince(start))
+        let until = end ?? now
+        let pausing = pausedSince.map { max(0, until.timeIntervalSince($0)) } ?? 0
+        return max(0, until.timeIntervalSince(start) - pausedDuration - pausing)
     }
 
     var distanceKm: Double { distanceMeters / 1_000 }

@@ -34,6 +34,9 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
     /// is not one: since issue #265 it fires on *every* `finishWorkout()`, so
     /// it would announce the end of the outing at the first walk→run switch.
     var isEnded: Bool
+    /// The outing is paused on the wrist (issue #384): the phone's clock stands
+    /// still on the figure stated at `sentAt`.
+    var isPaused: Bool
     /// The outing's route so far, cut by portion and thinned by the wrist
     /// (issue #334). Empty when there is no fix — location refused, no GPS
     /// yet — and from a watch on a build that predates the map.
@@ -48,6 +51,7 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         activeCalories: Int,
         heartRate: Int?,
         isEnded: Bool,
+        isPaused: Bool = false,
         route: [MirroredRoutePortion] = []
     ) {
         self.sentAt = sentAt
@@ -58,6 +62,7 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         self.activeCalories = activeCalories
         self.heartRate = heartRate
         self.isEnded = isEnded
+        self.isPaused = isPaused
         self.route = route
     }
 
@@ -79,6 +84,8 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         activeCalories = try container.decodeIfPresent(Int.self, forKey: .activeCalories) ?? 0
         heartRate = try container.decodeIfPresent(Int.self, forKey: .heartRate)
         isEnded = try container.decodeIfPresent(Bool.self, forKey: .isEnded) ?? false
+        // A watch on a build without pause never sends it, and never pauses.
+        isPaused = try container.decodeIfPresent(Bool.self, forKey: .isPaused) ?? false
         // A malformed route costs the map, never the figures beside it.
         route = (try? container.decodeIfPresent([MirroredRoutePortion].self, forKey: .route)) ?? []
     }
@@ -93,8 +100,12 @@ struct WatchSessionSnapshot: Codable, Equatable, Sendable {
     /// keeps ticking between two wakes instead of freezing on the last figure
     /// it was told. Same construction as `WatchWorkoutMetrics.elapsed(at:)`
     /// (issue #266) and for the same reason.
+    ///
+    /// Frozen at `sentAt` while the outing is paused (issue #384): the start is
+    /// a virtual one, pushed back by every pause, so it only holds while the
+    /// clock runs.
     func elapsed(at date: Date) -> TimeInterval {
-        max(0, date.timeIntervalSince(outingStartedAt))
+        max(0, (isPaused ? sentAt : date).timeIntervalSince(outingStartedAt))
     }
 
     /// The outing's average pace at the instant the wrist stated these figures

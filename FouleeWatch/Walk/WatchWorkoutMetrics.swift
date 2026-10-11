@@ -41,6 +41,9 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// Each kilometre of the outing and what it cost (issue #301). Empty until
     /// the first is crossed.
     var splits: [WalkSplit] = []
+    /// The outing is paused: the clock stands still and « Reprendre » takes
+    /// the place of « Pause » (issue #384).
+    var isPaused = false
     /// Every leg of the outing, oldest first (issue #265).
     ///
     /// A change of sport ends one `HKWorkout` and opens another, so an outing
@@ -179,7 +182,8 @@ extension WatchWorkoutMetrics {
             distanceMeters: distanceMeters,
             activeCalories: activeCalories,
             heartRate: heartRate,
-            isEnded: isEnded
+            isEnded: isEnded,
+            isPaused: isPaused
         )
     }
 }
