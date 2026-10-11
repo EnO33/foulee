@@ -193,6 +193,19 @@ jobs:
             -derivedDataPath build/dd \
             build | xcbeautify
 
+      # Booted explicitly, and waited for, before the first test run. A device
+      # created on a fresh runtime (iOS 27 on the Xcode 27 image) can take
+      # minutes to finish its first boot; left to xcodebuild, that wait counts
+      # against the test runner's launch, which then gives up with « crashed
+      # before establishing connection » and no crash log (issue #404). Booting
+      # here keeps a slow boot and a real launch crash apart.
+      - name: Boot the iPhone simulator
+        timeout-minutes: 10
+        run: |
+          UDID=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name == "iPhone 17 Pro")][0].udid')
+          echo "Booting iPhone 17 Pro ($UDID)"
+          xcrun simctl bootstatus "$UDID" -b
+
       - name: Test (iOS)
         run: |
           set -o pipefail
@@ -202,6 +215,7 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -configuration Debug \
             -derivedDataPath build/dd \
+            -resultBundlePath build/results/ios.xcresult \
             test | xcbeautify
 
       - name: Test (watchOS)
@@ -217,13 +231,29 @@ jobs:
             exit 1
           fi
           echo "Testing on simulator: $WATCH_NAME"
+          # Same reason as the iPhone above: finish the first boot before the
+          # test runner's launch clock starts.
+          WATCH_UDID=$(xcrun simctl list devices available -j | jq -r --arg name "$WATCH_NAME" '[.devices[][] | select(.name == $name)][0].udid')
+          xcrun simctl bootstatus "$WATCH_UDID" -b
           xcodebuild \
             -workspace Foulee.xcworkspace \
             -scheme FouleeWatch \
             -destination "platform=watchOS Simulator,name=$WATCH_NAME" \
             -configuration Debug \
             -derivedDataPath build/dd \
+            -resultBundlePath build/results/watchos.xcresult \
             test | xcbeautify
+
+      # The result bundles hold the crash reports and logs a red run needs and
+      # the console never shows. Kept a week, failures only.
+      - name: Keep the test results
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-results
+          path: build/results
+          retention-days: 7
+          if-no-files-found: ignore
 
       # Dead-code scan reuses the index from the builds above (--skip-build via
       # --index-store-path), so it costs seconds, not a second build. PR-only:
