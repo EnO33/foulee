@@ -13,6 +13,7 @@ struct MetricStatsScreen: View {
 
     @State private var store: MetricStatsStore
     @State private var selectedDate: Date?
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     init(metric: WalkMetric, dailyGoal: Double?, onClose: @escaping () -> Void) {
         self.metric = metric
@@ -229,10 +230,14 @@ struct MetricStatsScreen: View {
         }
     }
 
+    /// Side by side, or stacked once text reaches the accessibility sizes:
+    /// three figures in a row ran into each other there (issue #408).
     private var summaryCard: some View {
-        HStack(spacing: 0) {
+        let stacked = dynamicTypeSize.isAccessibilitySize
+        let layout = stacked ? AnyLayout(VStackLayout(spacing: 14)) : AnyLayout(HStackLayout(spacing: 0))
+        return layout {
             ForEach(Array(summaryItems.enumerated()), id: \.offset) { index, item in
-                if index > 0 { divider }
+                if index > 0 && !stacked { divider }
                 summaryCell(label: item.label, value: item.value)
             }
         }

@@ -113,7 +113,10 @@ struct HydrationTimeline: View {
             Text(sample.date.clockText)
                 .font(FouleeFont.caption.weight(.semibold).monospacedDigit())
                 .foregroundStyle(.secondary)
-                .frame(width: 42, alignment: .trailing)
+                // A minimum, not a width: at the accessibility sizes a fixed
+                // 42 pt broke « 14:20 » over two lines (issue #408).
+                .fixedSize()
+                .frame(minWidth: 42, alignment: .trailing)
             VStack(spacing: 0) {
                 Circle()
                     .fill(FouleeColor.water)
