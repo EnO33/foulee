@@ -369,7 +369,6 @@ private struct HydrationDeepLinkScroll: ViewModifier {
 /// is: `.task(id:)` lives in a `View` and cannot be driven from a test
 /// process, so this key is the only assertable answer to "will a settings
 /// change be noticed in the session it was made?".
-@MainActor
 func todayPreferencesKey(_ preferences: UserPreferences) -> String {
     let goals = "\(preferences.stepsGoal)-\(preferences.minutesGoal)"
     let window = "\(preferences.walkWindowStart.rawMinutes)-\(preferences.activeDays.bitmask)"
@@ -428,7 +427,6 @@ private struct TodayPreviewDark: View {
     }
 }
 
-@MainActor
 private func previewDefaults(suite: String) -> UserDefaults {
     let defaults = UserDefaults(suiteName: suite) ?? .standard
     defaults.removePersistentDomain(forName: suite)

@@ -3,7 +3,7 @@ import Foundation
 /// A quick amount to log (issue #355): the set glass, and three fixed sizes
 /// around it. One tap still logs the set glass; these are a long press away
 /// on the home, and laid out on the Hydratation screen.
-struct HydrationServing: Identifiable, Equatable, Sendable {
+nonisolated struct HydrationServing: Identifiable, Equatable, Sendable {
     var label: String
     var systemImage: String
     var milliliters: Int

@@ -7,7 +7,8 @@ import SwiftUI
 /// Shared by the live walk's map and the detail's, so a route looks the same
 /// whether it is being walked or remembered.
 struct RouteLines: MapContent {
-    struct Stroke: Identifiable {
+    // nonisolated: plain data, built by `MirroredRoutePortion.strokes` off the main actor.
+    nonisolated struct Stroke: Identifiable {
         var id: UUID
         var coordinates: [CLLocationCoordinate2D]
         var tint: Color

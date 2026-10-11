@@ -8,7 +8,7 @@ import Foundation
 /// the hero card is arithmetically the same number the calendar sheet counts.
 /// Nothing is hard-coded twice, and nothing reads the wall clock — `offset` is
 /// counted from `ScreenshotSeed.instant`.
-extension ScreenshotSeed {
+nonisolated extension ScreenshotSeed {
     /// Days of history the seed answers for — the window every streak surface
     /// fetches, so the record shown on the home is computed over exactly the
     /// months the calendar sheet browses.

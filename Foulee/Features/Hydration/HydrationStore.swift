@@ -5,7 +5,6 @@ import WidgetKit
 /// Today's water intake, backed by Apple Health (`dietaryWater`). The app never
 /// asks for a typed amount: each "J'ai bu" logs one glass. Kept separate from
 /// `TodayStore` so the hydration card refreshes independently.
-@MainActor
 @Observable
 final class HydrationStore {
     @ObservationIgnored @Dependency(\.healthKit) private var healthKit

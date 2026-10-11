@@ -33,7 +33,6 @@ import Foundation
 ///   the phone.
 /// * The network — the weather, location and Connect IQ doubles talk to
 ///   nobody.
-@MainActor
 enum ScreenshotMode {
     /// The argument the capture target passes on launch. Distinctive on
     /// purpose: the `Foulee` prefix keeps it out of the way of Apple's own

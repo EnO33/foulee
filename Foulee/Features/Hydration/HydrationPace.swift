@@ -3,7 +3,7 @@ import Foundation
 /// Where today's intake stands against the hydration window (issue #353): the
 /// goal spread evenly from the window's start to its end, compared with what
 /// was drunk so far. Pure, so the card only has to say it.
-enum HydrationPace: Equatable, Sendable {
+nonisolated enum HydrationPace: Equatable, Sendable {
     /// Before the window, nothing drunk yet: the day has not started.
     case notStarted(TimeOfDay)
     /// Within a glass of the expected intake.

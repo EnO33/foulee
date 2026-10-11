@@ -12,7 +12,7 @@ import Foundation
 /// therefore records no `HKWorkout`, tapping « J'ai bu » stores no
 /// `dietaryWater` sample, and no observer is registered against the real
 /// HealthKit store. Nothing in this file imports HealthKit at all.
-enum ScreenshotDoubles {
+nonisolated enum ScreenshotDoubles {
     static let healthKit = HealthKitClient(
         requestAuthorization: { true },
         todayMetrics: { ScreenshotSeed.todayMetrics },
