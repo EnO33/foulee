@@ -23,7 +23,9 @@ workout: see [ADR 0003](docs/adr/0003-seance-partagee-iphone-watch.md) (French).
 The **Bilan** reviews the week so far, Monday first, and the last month —
 minutes, steps, distance, outings, the days the goal was met, the change from
 the period before, and the water drunk when hydration is on. A tap on a day
-lays out its outings on a timeline. A notification announces it every Sunday
+lays out its outings on a timeline. The Bilan can be shared as an image —
+square or story — with the period's headline figures and nothing that says
+where or when you go out. A notification announces it every Sunday
 evening and every 1st of the month: see
 [ADR 0004](docs/adr/0004-recap-semaine-mois.md) (French).
 
