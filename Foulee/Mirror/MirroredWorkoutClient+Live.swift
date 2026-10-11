@@ -4,7 +4,7 @@ import os
 
 /// Nothing is mirroring, so there is nobody to ask (issue #282). Ordinary, not
 /// exceptional: the wrist may have stopped a second before the tap landed.
-enum MirrorSendError: Error {
+nonisolated enum MirrorSendError: Error {
     case noSession
 }
 
@@ -15,7 +15,7 @@ enum MirrorSendError: Error {
 /// only `MirroredSessionStore`, which consumes the stream, is. That is why
 /// every branch below logs: the first outing on a wrist is the test, and it has
 /// to leave a trace whichever way it goes.
-extension MirroredWorkoutClient {
+nonisolated extension MirroredWorkoutClient {
     static let liveValue: MirroredWorkoutClient = {
         let store = HKHealthStore()
         // Shared by both closures: `send` has to reach the very session
@@ -61,7 +61,7 @@ extension MirroredWorkoutClient {
 /// A class because `HKWorkoutSession.delegate` is **weak** and the session
 /// handed to the handler is otherwise unowned: dropping it would end the mirror
 /// the instant the handler returned.
-private final class MirrorBridge: NSObject, HKWorkoutSessionDelegate, @unchecked Sendable {
+nonisolated private final class MirrorBridge: NSObject, HKWorkoutSessionDelegate, @unchecked Sendable {
     private let stream = OSAllocatedUnfairLock<AsyncStream<MirroredSessionEvent>.Continuation?>(
         initialState: nil
     )

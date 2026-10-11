@@ -7,13 +7,13 @@ import os
 ///
 /// Since issue #342 it also carries the phone's session in flight to the
 /// wrist, and runs the commands the wrist sends back.
-final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
+nonisolated final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
     static let shared = PhoneWatchSync()
 
     /// Everything the context carries. One value, because
     /// `updateApplicationContext` **replaces** the whole dictionary: sending
     /// the session alone would wipe the synced prefs off the wrist.
-    struct Context: Sendable {
+    nonisolated struct Context: Sendable {
         var payload: WatchSyncPayload?
         var session: PhoneSessionSnapshot?
 

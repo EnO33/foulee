@@ -3,7 +3,7 @@ import Foundation
 /// A walk metric the user can drill into from the Today cards. Pure model
 /// (no HealthKit, no SwiftUI) — the HK mapping lives in `HealthKitClient+Live`
 /// and the icon/colour mapping in the stats views.
-enum WalkMetric: String, CaseIterable, Identifiable, Sendable {
+nonisolated enum WalkMetric: String, CaseIterable, Identifiable, Sendable {
     case steps
     case minutes
     case distance
@@ -38,6 +38,8 @@ enum WalkMetric: String, CaseIterable, Identifiable, Sendable {
     /// (`5 391`, `4,2`). Fractional metrics use a French decimal comma at their
     /// own precision; whole-number metrics use thousands grouping. The branch
     /// follows `fractionDigits`, so a new fractional metric needs no change here.
+    // Main actor: leans on `Int.formattedFR` and `durationText`, UI helpers.
+    @MainActor
     func formatted(_ value: Double) -> String {
         guard fractionDigits > 0 else { return Int(value.rounded()).formattedFR }
         return value.decimalComma(fractionDigits: fractionDigits)
@@ -45,12 +47,14 @@ enum WalkMetric: String, CaseIterable, Identifiable, Sendable {
 
     /// A chart axis graduation (issue #370): the bare figure, but minutes as a
     /// duration — `2 h` rather than `120`.
+    @MainActor
     func axisText(_ value: Double) -> String {
         self == .minutes ? durationText(minutes: Int(value.rounded())) : formatted(value)
     }
 
     /// Same, with the unit appended (`5 391 pas`, `4,2 km`) — and minutes as
     /// a duration, `1 h 05` rather than `65 min` (issue #366).
+    @MainActor
     func formattedWithUnit(_ value: Double) -> String {
         guard self != .minutes else { return durationText(minutes: Int(value.rounded())) }
         return "\(formatted(value)) \(unit)"

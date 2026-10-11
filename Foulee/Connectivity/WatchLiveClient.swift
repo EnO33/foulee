@@ -6,18 +6,18 @@ import Foundation
 ///
 /// Fire-and-forget on purpose: nothing on the phone waits for the wrist — a
 /// walk is never held up by a watch that is off, unpaired or out of range.
-struct WatchLiveClient: Sendable {
+nonisolated struct WatchLiveClient: Sendable {
     /// The session's latest state, or `nil` once there is none.
     var publish: @Sendable (PhoneSessionSnapshot?) -> Void
 }
 
-extension WatchLiveClient: DependencyKey {
+nonisolated extension WatchLiveClient: DependencyKey {
     static let liveValue = WatchLiveClient { PhoneWatchSync.shared.publish(session: $0) }
     static let previewValue = WatchLiveClient { _ in }
     static let testValue = previewValue
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var watchLive: WatchLiveClient {
         get { self[WatchLiveClient.self] }
         set { self[WatchLiveClient.self] = newValue }

@@ -5,11 +5,11 @@ import HealthKit
 /// behind « Annuler » (#354), apart from `HealthKitClient+Live` so that file
 /// stays one screen of wiring.
 
-private let waterType = HKQuantityType(.dietaryWater)
-private let milliliter = HKUnit.literUnit(with: .milli)
+nonisolated private let waterType = HKQuantityType(.dietaryWater)
+nonisolated private let milliliter = HKUnit.literUnit(with: .milli)
 
 /// Today's `dietaryWater` samples, oldest first, from every source.
-func waterSamplesToday(store: HKHealthStore) async throws -> [WaterSample] {
+nonisolated func waterSamplesToday(store: HKHealthStore) async throws -> [WaterSample] {
     let start = Calendar.current.startOfDay(for: .now)
     let descriptor = HKSampleQueryDescriptor(
         predicates: [.quantitySample(
@@ -33,7 +33,7 @@ func waterSamplesToday(store: HKHealthStore) async throws -> [WaterSample] {
 }
 
 /// Daily `dietaryWater` totals over the last `daysBack` days, today included.
-func dailyWater(store: HKHealthStore, daysBack: Int) async throws -> [MetricPoint] {
+nonisolated func dailyWater(store: HKHealthStore, daysBack: Int) async throws -> [MetricPoint] {
     let calendar = Calendar.current
     let today = calendar.startOfDay(for: .now)
     guard daysBack > 0,
@@ -51,7 +51,7 @@ func dailyWater(store: HKHealthStore, daysBack: Int) async throws -> [MetricPoin
 
 /// Delete the one `dietaryWater` sample `id`. A sample that is already gone
 /// deletes nothing and is not an error: the glass is not there either way.
-func deleteWaterSample(store: HKHealthStore, id: UUID) async throws {
+nonisolated func deleteWaterSample(store: HKHealthStore, id: UUID) async throws {
     try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
         store.deleteObjects(of: waterType, predicate: HKQuery.predicateForObject(with: id)) { _, _, error in
             if let error {

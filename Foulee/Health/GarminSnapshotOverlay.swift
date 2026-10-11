@@ -31,7 +31,7 @@ import Foundation
 /// The overlay feeds the **displayed counters** only. The streak keeps reading
 /// its history from HealthKit (`mergedDailyMinutes`): a streak resting on a
 /// two-hour overlay would appear and vanish with BLE range.
-enum GarminSnapshotOverlay {
+nonisolated enum GarminSnapshotOverlay {
     /// Past this age a snapshot no longer earns the day's overlay.
     ///
     /// The watch pushes every five minutes while the phone is in range, and
@@ -52,7 +52,7 @@ enum GarminSnapshotOverlay {
     ///
     /// `Codable` because the day's contribution is persisted as a floor (see
     /// `Floor`), not just held for the length of one refresh.
-    struct Contribution: Codable, Equatable, Sendable {
+    nonisolated struct Contribution: Codable, Equatable, Sendable {
         var steps: Int
         var distanceKm: Double
         var activeMinutes: Int
@@ -75,7 +75,7 @@ enum GarminSnapshotOverlay {
     ///   #152, #203);
     /// - `freshnessHorizon` decides only whether an arriving snapshot is fresh
     ///   enough to **raise** the floor, never whether the floor still applies.
-    struct Floor: Codable, Equatable, Sendable {
+    nonisolated struct Floor: Codable, Equatable, Sendable {
         var contribution: Contribution
         /// Local start-of-day the floor belongs to.
         var day: Date
@@ -84,7 +84,7 @@ enum GarminSnapshotOverlay {
     /// Why a snapshot may not become the day's overlay — one case per gate, so
     /// a refusal can be asserted in a test and surfaced by a future debug view
     /// instead of vanishing (this target logs nothing, by rule).
-    enum Usability: String, Equatable, Sendable {
+    nonisolated enum Usability: String, Equatable, Sendable {
         case usable
         /// Stamped another local day. "Recent" is not the same question as
         /// "today": a snapshot from 23:50 is twenty minutes old at 00:10 and

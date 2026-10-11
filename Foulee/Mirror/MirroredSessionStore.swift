@@ -15,7 +15,6 @@ import Observation
 /// replaces rather than stacks, an end clears, a late end after a new start is
 /// not an end) is asserted, while the HealthKit wiring behind it is not and
 /// cannot be.
-@MainActor
 @Observable
 final class MirroredSessionStore {
     static let shared = MirroredSessionStore()

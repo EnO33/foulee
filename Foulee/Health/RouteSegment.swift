@@ -4,7 +4,7 @@ import Foundation
 ///
 /// The detail map draws one line per segment, each in its activity's colour,
 /// so walk → run → walk reads on the map the way it reads on the timeline.
-struct RouteSegment: Equatable, Sendable, Identifiable {
+nonisolated struct RouteSegment: Equatable, Sendable, Identifiable {
     /// The leg's workout id — one segment per leg, never more.
     var id: UUID
     var activity: RecordedActivity

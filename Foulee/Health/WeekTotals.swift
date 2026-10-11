@@ -7,7 +7,7 @@ import Foundation
 /// Minutes are not here on purpose — the tab sums `weekMinutes`, the merged
 /// per-day figures the week bars and the streak already use, so the total and
 /// the bars under it can never disagree.
-struct WeekTotals: Equatable, Sendable {
+nonisolated struct WeekTotals: Equatable, Sendable {
     var steps: Int
     var distanceKm: Double
     var calories: Int

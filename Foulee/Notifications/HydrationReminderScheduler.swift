@@ -4,7 +4,10 @@ import Foundation
 /// Turns the hydration prefs into a set of daily reminder times and pushes them
 /// to `NotificationsClient`. `reminderTimes` is pure + static so it's unit
 /// tested without the client.
-struct HydrationReminderScheduler {
+///
+/// `nonisolated`: also driven from the background (water observer, notification
+/// action); only the `UserPreferences` entry points stay on the main actor.
+nonisolated struct HydrationReminderScheduler {
     @Dependency(\.notifications) private var notifications
 
     /// UserDefaults key holding the unix time of the last logged glass — used

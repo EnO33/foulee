@@ -4,7 +4,7 @@ import Foundation
 /// in the 7-day résumé. `WorkoutSummary` carries the row-level fields;
 /// `heartRateSamples` and `stepsCount` are the extra signals we pull
 /// from HealthKit on demand.
-struct WorkoutDetail: Equatable, Sendable {
+nonisolated struct WorkoutDetail: Equatable, Sendable {
     var summary: WorkoutSummary
     var heartRateSamples: [HeartRateSample]
     var stepsCount: Int
@@ -53,7 +53,7 @@ struct WorkoutDetail: Equatable, Sendable {
 }
 
 /// Single heart-rate reading during a workout.
-struct HeartRateSample: Equatable, Sendable, Identifiable {
+nonisolated struct HeartRateSample: Equatable, Sendable, Identifiable {
     var id: UUID
     var date: Date
     var bpm: Int

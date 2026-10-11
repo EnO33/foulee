@@ -13,10 +13,10 @@ import os
 /// Nothing here is exercisable in the simulator: the Connect IQ simulator only
 /// speaks to Android companions, so the whole BLE path below is verifiable
 /// only against a physical Garmin watch (#191).
-final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, IQAppMessageDelegate, @unchecked Sendable {
+nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, IQAppMessageDelegate, @unchecked Sendable {
     static let shared = GarminConnectIQBridge()
 
-    private struct State {
+    nonisolated private struct State {
         var isInitialized = false
         /// Devices already registered with the SDK this process — registering
         /// twice would deliver every message twice.
@@ -129,7 +129,7 @@ final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, IQAppMessage
     func deviceStatusChanged(_ device: IQDevice!, status: IQDeviceStatus) {}
 }
 
-extension GarminConnectIQClient {
+nonisolated extension GarminConnectIQClient {
     static let liveValue = GarminConnectIQClient(
         initialize: { GarminConnectIQBridge.shared.initializeIfNeeded() },
         presentDeviceSelection: { GarminConnectIQBridge.shared.presentDeviceSelection() },

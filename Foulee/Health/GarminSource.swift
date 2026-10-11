@@ -6,7 +6,7 @@ import Foundation
 /// without a store and can't drift with the framework. Nothing here ever
 /// *blocks*: a wrong verdict only changes which hint the Today screen shows —
 /// the app stays fully functional either way.
-enum GarminSource {
+nonisolated enum GarminSource {
     /// Device families Garmin Connect uses as the *source name* when samples
     /// are attributed to the watch itself ("Forerunner 965") instead of to the
     /// phone app ("Garmin Connect"). Matched on whole, diacritic-folded words
@@ -48,7 +48,7 @@ enum GarminSource {
 /// What the HealthKit detection found about the watches writing into Santé.
 /// The all-false default means "nothing detected", which keeps every adapted
 /// hint off — the safe state.
-struct GarminStatus: Equatable, Sendable {
+nonisolated struct GarminStatus: Equatable, Sendable {
     var hasGarminSource = false
     var hasAppleWatchData = false
     /// Newest sample written by a Garmin source *today*, when there is one.
@@ -62,7 +62,7 @@ struct GarminStatus: Equatable, Sendable {
 /// is normal, not a bug. The rule is deliberately conservative: the hint only
 /// shows in a Garmin-only setup, during the day, once the gap is long enough
 /// that opening Garmin Connect really is the useful move.
-enum GarminFreshness {
+nonisolated enum GarminFreshness {
     /// A gap this long during the day means the day's numbers are behind.
     static let staleAfter: TimeInterval = 4 * 60 * 60
 

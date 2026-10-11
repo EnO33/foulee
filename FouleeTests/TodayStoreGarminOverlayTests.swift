@@ -16,6 +16,7 @@ struct TodayStoreGarminOverlayTests {
         var errorDescription: String? { "Santé verrouillée" }
     }
 
+    // nonisolated: read from the `@Sendable` overlay closure `watchOverlay` returns.
     private nonisolated static let calendar = Calendar.current
 
     /// Local noon today — the fixed clock every case runs against, so the

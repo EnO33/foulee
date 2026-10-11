@@ -25,7 +25,7 @@ import Foundation
 /// `Codable` so the overlay survives a relaunch — iOS wakes the app in the
 /// background on BLE activity and kills it again between wakes
 /// (`GarminSnapshotStore`, #189).
-struct GarminDailySnapshot: Codable, Equatable, Sendable {
+nonisolated struct GarminDailySnapshot: Codable, Equatable, Sendable {
     /// Frozen schema version. Bumping it means the watch app changed shape;
     /// old phone builds must then reject the payload instead of guessing.
     static let schemaVersion = 1
@@ -45,8 +45,8 @@ struct GarminDailySnapshot: Codable, Equatable, Sendable {
     var generation: Int
 }
 
-extension GarminDailySnapshot {
-    private enum Key {
+nonisolated extension GarminDailySnapshot {
+    nonisolated private enum Key {
         static let version = "v"
         static let steps = "steps"
         static let distanceCm = "distanceCm"

@@ -30,6 +30,7 @@ struct ActivityModeNeutralityTests {
     /// A live 3-day streak (today included) in front of an older 5-day run, so
     /// `current` and `best` differ and neither is 0 — two zeros would compare
     /// equal whatever the mode did.
+    // nonisolated: read from a `@Sendable` history closure.
     private nonisolated static let walkedOffsets = [0, 1, 2, 5, 6, 7, 8, 9]
 
     @Test("Streak, record and calendar are identical under walking, running and both")

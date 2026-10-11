@@ -10,7 +10,8 @@ import WidgetKit
 /// Uses the completion-handler delegate methods (not the `async` variants):
 /// the async forms proved crash-prone here, and the completion-handler form is
 /// the long-stable contract — we just hop the real work onto a `Task`.
-final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
+/// `nonisolated`: the delegate is called on the notification center's queue.
+nonisolated final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     static let shared = HydrationNotificationCenter()
 
     /// Injected so the action path is testable. `@Dependency` is unusable
