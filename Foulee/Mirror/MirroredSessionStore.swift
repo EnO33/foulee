@@ -57,9 +57,14 @@ final class MirroredSessionStore {
     @Dependency(\.mirroredWorkout) private var client
 
     /// Consume the mirror stream until cancelled. One caller, at process start.
-    func observe() async {
+    ///
+    /// `onChange` runs after every event, once the store is up to date — the
+    /// Lock Screen hook of issue #275. A parameter rather than a call inside
+    /// `apply`, so the rules stay testable without ActivityKit.
+    func observe(onChange: @MainActor (MirroredSessionStore) async -> Void = { _ in }) async {
         for await event in client.events() {
             apply(event)
+            await onChange(self)
         }
     }
 
