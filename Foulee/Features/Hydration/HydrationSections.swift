@@ -22,13 +22,13 @@ struct HydrationTodayHero: View {
         layout {
             ZStack(alignment: .bottom) {
                 DropShape()
-                    .fill(HydrationCard.water.opacity(0.12))
+                    .fill(FouleeColor.water.opacity(0.12))
                 Rectangle()
-                    .fill(HydrationCard.water.gradient)
+                    .fill(FouleeColor.water.gradient)
                     .scaleEffect(x: 1, y: progress, anchor: .bottom)
                     .mask(DropShape())
                 DropShape()
-                    .stroke(HydrationCard.water.opacity(0.6), lineWidth: 2)
+                    .stroke(FouleeColor.water.opacity(0.6), lineWidth: 2)
             }
             .frame(width: 84, height: 112)
             .animation(.spring(duration: 0.8, bounce: 0.2), value: progress)
@@ -45,7 +45,7 @@ struct HydrationTodayHero: View {
                 }
                 Label(pace.text, systemImage: pace.systemImage)
                     .font(FouleeFont.callout.weight(.semibold))
-                    .foregroundStyle(pace == .reached ? HydrationCard.water : .primary)
+                    .foregroundStyle(pace == .reached ? FouleeColor.water : .primary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -53,7 +53,7 @@ struct HydrationTodayHero: View {
         .padding(18)
         .background {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(HydrationCard.water)
+                .fill(FouleeColor.water)
                 .opacity(0.1)
         }
         .fouleeGlass(cornerRadius: 24, strong: true)
@@ -116,7 +116,7 @@ struct HydrationTimeline: View {
                 .frame(width: 42, alignment: .trailing)
             VStack(spacing: 0) {
                 Circle()
-                    .fill(HydrationCard.water)
+                    .fill(FouleeColor.water)
                     .frame(width: 10, height: 10)
                     .padding(.top, 3)
                 Rectangle()
@@ -179,7 +179,7 @@ struct HydrationWeekView: View {
             }
             HStack(spacing: 6) {
                 Label("Objectif tenu \(history.goalDaysMet)/\(history.days.count)", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(HydrationCard.water)
+                    .foregroundStyle(FouleeColor.water)
                 Text("· \(litres(history.averageML)) L par jour en moyenne")
                     .foregroundStyle(.secondary)
             }
@@ -194,11 +194,11 @@ struct HydrationWeekView: View {
                 .stroke(Color.gray.opacity(0.18), lineWidth: 4.5)
             Circle()
                 .trim(from: 0, to: HydrationMath.progress(intakeML: day.milliliters, goalML: history.goalML))
-                .stroke(HydrationCard.water.gradient, style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
+                .stroke(FouleeColor.water.gradient, style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             if held {
                 Circle()
-                    .fill(HydrationCard.water.opacity(0.16))
+                    .fill(FouleeColor.water.opacity(0.16))
                     .padding(6.75)
             }
         }

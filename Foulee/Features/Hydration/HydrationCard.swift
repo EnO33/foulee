@@ -13,8 +13,6 @@ struct HydrationCard: View {
     var onDrink: (Int) -> Void
     var onOpen: () -> Void = {}
 
-    static let water = Color.teal
-
     private var fills: [Double] {
         HydrationMath.glassFills(intakeML: intakeML, goalML: goalML, glassML: glassML)
     }
@@ -26,12 +24,12 @@ struct HydrationCard: View {
             HStack(spacing: 8) {
                 Image(systemName: "drop.fill")
                     .font(.system(.callout, weight: .semibold))
-                    .foregroundStyle(Self.water)
+                    .foregroundStyle(FouleeColor.water)
                 Text("Hydratation").font(FouleeFont.headline)
                 Spacer()
                 Text("\(litres(intakeML)) / \(litres(goalML)) L")
                     .scaledNumericFont(size: 16, weight: .semibold)
-                    .foregroundStyle(reached ? Self.water : .secondary)
+                    .foregroundStyle(reached ? FouleeColor.water : .secondary)
                     .contentTransition(.numericText())
             }
 
@@ -50,7 +48,7 @@ struct HydrationCard: View {
             HStack {
                 Label(pace.text, systemImage: pace.systemImage)
                     .font(FouleeFont.footnote.weight(reached ? .semibold : .regular))
-                    .foregroundStyle(reached ? Self.water : .secondary)
+                    .foregroundStyle(reached ? FouleeColor.water : .secondary)
                     .labelStyle(.titleAndIcon)
                     .contentTransition(.opacity)
                 Spacer(minLength: 8)
@@ -60,7 +58,7 @@ struct HydrationCard: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(Self.water, in: Capsule())
+                        .background(FouleeColor.water, in: Capsule())
                 }
                 .buttonStyle(.pressable)
                 .contextMenu {
@@ -91,13 +89,13 @@ struct HydrationGlass: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             GlassShape()
-                .fill(HydrationCard.water.opacity(0.1))
+                .fill(FouleeColor.water.opacity(0.1))
             Rectangle()
-                .fill(HydrationCard.water.gradient)
+                .fill(FouleeColor.water.gradient)
                 .scaleEffect(x: 1, y: fill, anchor: .bottom)
                 .mask(GlassShape())
             GlassShape()
-                .stroke(HydrationCard.water.opacity(fill > 0 ? 0.7 : 0.35), lineWidth: 1.5)
+                .stroke(FouleeColor.water.opacity(fill > 0 ? 0.7 : 0.35), lineWidth: 1.5)
         }
         .aspectRatio(0.75, contentMode: .fit)
     }

@@ -1,5 +1,6 @@
 #if DEBUG
 import Foundation
+import os
 
 /// The clock the capture mode installs as `@Dependency(\.date)`.
 ///
@@ -16,24 +17,21 @@ import Foundation
 /// byte-identical from run to run.
 ///
 /// nonisolated: read from the `@Sendable` closures of `DateGenerator` and the pedometer double.
-nonisolated final class ScreenshotClock: @unchecked Sendable {
+nonisolated final class ScreenshotClock: Sendable {
     static let shared = ScreenshotClock()
 
-    private let lock = NSLock()
-    private var offset: TimeInterval = 0
+    /// Checked rather than `@unchecked` (issue #405): the lock owns the only
+    /// mutable state, so the compiler can see the class is safe to share.
+    private let offset = OSAllocatedUnfairLock<TimeInterval>(initialState: 0)
 
     private init() {}
 
     var now: Date {
-        lock.lock()
-        defer { lock.unlock() }
-        return ScreenshotSeed.instant.addingTimeInterval(offset)
+        ScreenshotSeed.instant.addingTimeInterval(offset.withLock { $0 })
     }
 
     func advance(toOffset newOffset: TimeInterval) {
-        lock.lock()
-        defer { lock.unlock() }
-        offset = max(offset, newOffset)
+        offset.withLock { $0 = max($0, newOffset) }
     }
 }
 #endif

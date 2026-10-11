@@ -61,6 +61,10 @@ nonisolated extension MirroredWorkoutClient {
 /// A class because `HKWorkoutSession.delegate` is **weak** and the session
 /// handed to the handler is otherwise unowned: dropping it would end the mirror
 /// the instant the handler returned.
+///
+/// `@unchecked Sendable` because an `NSObject` subclass can never be checked
+/// `Sendable` (issue #405); both pieces of shared state sit
+/// behind an `OSAllocatedUnfairLock`.
 nonisolated private final class MirrorBridge: NSObject, HKWorkoutSessionDelegate, @unchecked Sendable {
     private let stream = OSAllocatedUnfairLock<AsyncStream<MirroredSessionEvent>.Continuation?>(
         initialState: nil

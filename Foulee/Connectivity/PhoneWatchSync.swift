@@ -7,6 +7,10 @@ import os
 ///
 /// Since issue #342 it also carries the phone's session in flight to the
 /// wrist, and runs the commands the wrist sends back.
+///
+/// `@unchecked Sendable` because an `NSObject` subclass can never be checked
+/// `Sendable` (issue #405); the mutable state it shares is behind
+/// `pending`'s lock, and `isMuted` is written once, before any delivery.
 nonisolated final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
     static let shared = PhoneWatchSync()
 

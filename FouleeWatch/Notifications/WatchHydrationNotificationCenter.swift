@@ -19,6 +19,10 @@ extension Notification.Name {
 /// exactly the bug this fixes. Mirrors the phone's `HydrationNotificationCenter`
 /// but writes to the watch's own HealthKit (which syncs back to the phone).
 /// Set as the delegate once at launch (`FouleeWatchApp.init`).
+///
+/// `@unchecked Sendable` because an `NSObject` subclass can never be checked
+/// `Sendable` (issue #405); its only stored property is an
+/// immutable `HKHealthStore`.
 final class WatchHydrationNotificationCenter: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     static let shared = WatchHydrationNotificationCenter()
 
