@@ -9,11 +9,14 @@ import SwiftUI
 ///
 /// « Contrôles » sits immediately beside « Séance ». The reason is that
 /// stopping must never be more than one gesture away, whatever pages arrive
-/// later — they queue up after it. « Plan » comes next (issue #312): it is the
+/// later — they queue up after it. « Musique » follows (issue #383), where the
+/// Exercice app keeps its own « À l'écoute »: it is reached mid-stride, so it
+/// stays one swipe past the stop. « Plan » comes next (issue #312): it is the
 /// page read while moving, the others are glanced at.
 enum WatchSessionPage: Hashable {
     case session
     case controls
+    case music
     case route
     case legs
     case day
@@ -88,6 +91,8 @@ struct WatchSessionPager: View {
                 .tag(WatchSessionPage.session)
             WatchSessionControlsPage(metrics: metrics, onStop: onStop)
                 .tag(WatchSessionPage.controls)
+            WatchSessionMusicPage()
+                .tag(WatchSessionPage.music)
             WatchSessionRoutePage(route: route, metrics: metrics)
                 .tag(WatchSessionPage.route)
             if showsLegs {
