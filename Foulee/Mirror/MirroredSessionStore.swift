@@ -53,6 +53,18 @@ final class MirroredSessionStore {
     /// monotonic bound costs nothing and cannot lock anything out.
     @ObservationIgnored private var newestSentAt: Date?
 
+    /// Where the last ended outing began (issue #436).
+    ///
+    /// A snapshot of that outing sent after its end — a periodic send that
+    /// left the wrist while it was saving — is newer than everything held, so
+    /// `newestSentAt` lets it through, and it used to put the finished outing
+    /// back on screen and ask for a new Live Activity.
+    ///
+    /// An outing's start only ever moves later (each pause pushes it back), and
+    /// the next outing begins after this one did: so a start no later than
+    /// this one names the outing that is over.
+    @ObservationIgnored private var endedOutingStartedAt: Date?
+
     @ObservationIgnored
     @Dependency(\.mirroredWorkout) private var client
 
@@ -94,6 +106,10 @@ final class MirroredSessionStore {
     /// the counters on screen.
     private func apply(_ snapshot: WatchSessionSnapshot) {
         if let newest = newestSentAt, newest >= snapshot.sentAt { return }
+        if !snapshot.isEnded, let ended = endedOutingStartedAt,
+           snapshot.outingStartedAt <= ended {
+            return
+        }
         newestSentAt = snapshot.sentAt
         figures = snapshot
         outingStartedAt = snapshot.outingStartedAt
@@ -115,6 +131,7 @@ final class MirroredSessionStore {
     }
 
     private func clear() {
+        if let outingStartedAt { endedOutingStartedAt = outingStartedAt }
         session = nil
         outingStartedAt = nil
         figures = nil

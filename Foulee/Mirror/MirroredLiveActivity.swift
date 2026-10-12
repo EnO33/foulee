@@ -8,12 +8,12 @@ import UIKit
 
 /// The outing running on the wrist, on the iPhone's Lock Screen (issue #275).
 ///
-/// **An experiment as much as a feature.** ActivityKit's documentation says
-/// `Activity.request` fails outside the foreground; Apple's WWDC23 session on
-/// mirroring says HealthKit gives the app ten seconds to start one from a
-/// mirror wake. No document settles it and no simulator can, so this tries —
-/// and logs which way it went, with the app state at the moment of asking.
-/// The first outing on a real wrist answers the issue:
+/// ActivityKit's documentation says `Activity.request` fails outside the
+/// foreground; Apple's WWDC23 session on mirroring says HealthKit gives the app
+/// ten seconds to start one from a mirror wake. The WWDC session wins: on a
+/// real wrist and a closed iPhone app (TestFlight 1.52.0), the activity
+/// appears. Every branch still logs, with the app state at the moment of
+/// asking:
 ///
 /// ```sh
 /// log stream --predicate 'subsystem == "com.eno33.foulee" AND category == "live-activity"' --info
@@ -42,6 +42,9 @@ final class MirroredLiveActivity {
             figures: store.figures,
             outingStartedAt: store.outingStartedAt ?? session.startedAt
         )
+        // A relaunch between two wakes loses the reference, not the activity:
+        // take the one already on the Lock Screen rather than ask for a second.
+        if activity == nil { activity = Self.mirroredActivities().first }
         if let activity {
             await activity.update(ActivityContent(state: state, staleDate: Self.staleDate()))
         } else {
@@ -104,11 +107,26 @@ final class MirroredLiveActivity {
         }
     }
 
+    /// Every mirrored activity, not only the one this process holds: iOS may
+    /// have relaunched the app since it started (issue #436).
+    ///
+    /// `.immediate`, like every other end in the app. `.default` keeps an ended
+    /// activity on the Lock Screen for up to four hours, which reads as an
+    /// outing that never stopped.
     private func end() async {
-        guard let activity else { return }
-        self.activity = nil
-        await activity.end(nil, dismissalPolicy: .default)
+        activity = nil
+        let mirrored = Self.mirroredActivities()
+        guard !mirrored.isEmpty else { return }
+        for activity in mirrored {
+            await activity.end(nil, dismissalPolicy: .immediate)
+        }
         FouleeLog.liveActivity.notice("miroir : Live Activity terminée")
+    }
+
+    /// The activities this type starts: no sport in their attributes, where
+    /// the phone's own walk always names one (`ActiveWalkStore`).
+    private static func mirroredActivities() -> [Activity<WalkActivityAttributes>] {
+        Activity<WalkActivityAttributes>.activities.filter { $0.attributes.activity == nil }
     }
 
     /// Read straight from the defaults: a mirror wake mounts no UI, so the

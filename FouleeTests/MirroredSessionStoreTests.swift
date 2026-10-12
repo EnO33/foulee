@@ -184,6 +184,47 @@ struct MirroredSessionStoreTests {
         #expect(store.figures == nil)
     }
 
+    /// The other way back from the dead (issue #436): a snapshot of the ended
+    /// outing sent **after** its end is newer than everything held, so the
+    /// « newest wins » bound lets it through. The outing's start is what names
+    /// it.
+    @Test("A later, unfinished snapshot of an ended outing does not resurrect it")
+    func aSnapshotSentAfterTheEndCannotResurrect() {
+        let store = store()
+        store.apply(snapshot(at: 60, steps: 500))
+        store.apply(snapshot(at: 90, steps: 600, isEnded: true))
+
+        store.apply(snapshot(at: 95, steps: 610))
+
+        #expect(store.isMirroring == false)
+        #expect(store.figures == nil)
+    }
+
+    @Test("An outing ended by the mirror is not resurrected by its figures")
+    func aMirrorEndCannotBeUndoneByFigures() {
+        let store = store()
+        store.apply(mirror(.walking, at: 0))
+        store.apply(snapshot(at: 60, steps: 500))
+        store.apply(.ended)
+
+        store.apply(snapshot(at: 120, steps: 700))
+
+        #expect(store.isMirroring == false)
+    }
+
+    /// The guard names the ended outing, not every outing after it.
+    @Test("The figures of a new outing after an end are believed")
+    func aNewOutingAfterAnEndIsBelieved() {
+        let store = store()
+        store.apply(snapshot(at: 60, steps: 500))
+        store.apply(snapshot(at: 90, steps: 600, isEnded: true))
+
+        store.apply(snapshot(at: 3_660, outingAt: 3_600, steps: 40))
+
+        #expect(store.isMirroring)
+        #expect(store.figures?.steps == 40)
+    }
+
     /// The bound is `>=`, not `>`: two snapshots stamped the same instant are
     /// the same statement, and the second says nothing new.
     @Test("A snapshot as old as the one held is dropped")
