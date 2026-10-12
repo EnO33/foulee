@@ -138,8 +138,8 @@ jobs:
           fi
           xcrun simctl list devices available | grep -E "iPhone 17"
 
-      # A fixed derivedDataPath lets the dead-code step below reuse this
-      # build's index store instead of building the project a second time.
+      # A fixed derivedDataPath: `test-without-building` below reuses this
+      # build.
       - name: Build for testing (iOS)
         run: |
           set -o pipefail
@@ -184,77 +184,6 @@ jobs:
         if: failure()
         with:
           name: ios
-
-      # Periphery scans both schemes. The iPhone app embeds the watch app, so
-      # the build above already indexed FouleeWatch; only the watch's test
-      # target is left. The watchOS job runs those tests — this step only fills
-      # in the index.
-      #
-      # A concrete simulator, not `generic/platform=watchOS Simulator`: the
-      # generic destination builds every simulator architecture, so it rebuilt
-      # the whole watch app a second time (6 min 50 s on the Xcode 27 image)
-      # instead of adding the test target to the build above.
-      - name: Index the watch tests for the dead-code scan
-        if: github.event_name == 'pull_request'
-        run: |
-          set -o pipefail
-          WATCH_ID=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("Apple Watch"))][0].udid')
-          DESTINATION="platform=watchOS Simulator,id=$WATCH_ID"
-          if [ "$WATCH_ID" = "null" ]; then
-            DESTINATION="generic/platform=watchOS Simulator"
-          fi
-          xcodebuild \
-            -workspace Foulee.xcworkspace \
-            -scheme FouleeWatch \
-            -destination "$DESTINATION" \
-            -configuration Debug \
-            -derivedDataPath build/dd \
-            build-for-testing | xcbeautify
-
-      # The kit's tests run in the Kit job, on macOS. Built here only so the
-      # scan sees what they use: a declaration only its tests reach is
-      # otherwise reported as dead.
-      - name: Index the kit tests for the dead-code scan
-        if: github.event_name == 'pull_request'
-        run: |
-          set -o pipefail
-          xcodebuild \
-            -workspace Foulee.xcworkspace \
-            -scheme FouleeKit \
-            -destination 'platform=macOS,arch=arm64' \
-            -configuration Debug \
-            -derivedDataPath build/dd \
-            build-for-testing | xcbeautify
-
-      # Dead-code scan reuses the index from the builds above (--skip-build via
-      # --index-store-path), so it costs seconds, not a second build. PR-only:
-      # the baseline (.periphery.baseline.json) freezes today's findings, so
-      # only NEW unused code fails the check. Refresh after clearing a finding:
-      # `periphery scan --write-baseline .periphery.baseline.json`.
-      - name: Install Periphery 3.8.0
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p "$HOME/periphery"
-          gh release download 3.8.0 \
-            --repo peripheryapp/periphery \
-            --pattern 'periphery-3.8.0.zip' \
-            --dir "$HOME/periphery"
-          (cd "$HOME/periphery" && unzip -o periphery-3.8.0.zip)
-          # The binary loads libIndexStore.dylib from alongside itself.
-          echo "$HOME/periphery" >> "$GITHUB_PATH"
-
-      - name: Dead code (Periphery, reusing the build index)
-        if: github.event_name == 'pull_request'
-        run: |
-          periphery scan \
-            --skip-build \
-            --index-store-path build/dd/Index.noindex/DataStore \
-            --baseline .periphery.baseline.json \
-            --strict \
-            --relative-results \
-            --format github-actions
 
   watchos:
     name: watchOS
@@ -321,18 +250,87 @@ jobs:
         with:
           name: watchos
 
+  # Dead-code scan, in its own job (issue #433): it ran at the end of the iOS
+  # job and added about 4 minutes to the longest path of every PR. Here it
+  # runs beside the test jobs. PR-only: the baseline (.periphery.baseline.json)
+  # freezes today's findings, so only NEW unused code fails the check. Refresh
+  # it after clearing a finding:
+  # `periphery scan --write-baseline .periphery.baseline.json`.
+  deadcode:
+    name: Dead code
+    if: github.event_name == 'pull_request'
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare-project
+
+      # Periphery reads the index of every scheme in .periphery.yml. These
+      # builds only fill that index: no simulator is booted, nothing runs.
+      #
+      # Generic simulator destinations, pinned to arm64: a generic destination
+      # otherwise builds every simulator architecture, and the watch build
+      # would recompile the watch app the iPhone build already embedded.
+      #
+      # 1. The iPhone app, its extensions, the embedded watch app, FouleeTests.
+      # 2. FouleeWatchTests, on top of the watch app built in 1.
+      # 3. FouleeKitTests, on macOS: a declaration only the kit's tests reach
+      #    would otherwise be reported as dead.
+      - name: Index the project for the dead-code scan
+        run: |
+          set -o pipefail
+          index() {
+            xcodebuild \
+              -workspace Foulee.xcworkspace \
+              -scheme "$1" \
+              -destination "$2" \
+              -configuration Debug \
+              -derivedDataPath build/dd \
+              ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+              build-for-testing | xcbeautify
+          }
+          index Foulee 'generic/platform=iOS Simulator'
+          index FouleeWatch 'generic/platform=watchOS Simulator'
+          index FouleeKit 'platform=macOS,arch=arm64'
+
+      - name: Install Periphery 3.8.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$HOME/periphery"
+          gh release download 3.8.0 \
+            --repo peripheryapp/periphery \
+            --pattern 'periphery-3.8.0.zip' \
+            --dir "$HOME/periphery"
+          (cd "$HOME/periphery" && unzip -o periphery-3.8.0.zip)
+          # The binary loads libIndexStore.dylib from alongside itself.
+          echo "$HOME/periphery" >> "$GITHUB_PATH"
+
+      # --skip-build: the index above is already there.
+      - name: Dead code (Periphery, reusing the build index)
+        run: |
+          periphery scan \
+            --skip-build \
+            --index-store-path build/dd/Index.noindex/DataStore \
+            --baseline .periphery.baseline.json \
+            --strict \
+            --relative-results \
+            --format github-actions
+
   build:
     # Keep this name "Build & Test": it's a required status check in main's
     # branch protection. The work now happens in the jobs above; this one
     # only reports their outcome, so the protection rule needs no change.
     # `always()`: a skipped aggregator would count as passing — alls-green
-    # fails it unless every job it needs succeeded.
+    # fails it unless every job it needs succeeded. The dead-code job only
+    # runs on pull requests: skipped on a push to main, it is allowed to be.
     name: Build & Test
-    needs: [kit, ios, watchos]
+    needs: [kit, ios, watchos, deadcode]
     if: always()
     runs-on: ubuntu-24.04
     steps:
       - name: Every platform passed
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
+          allowed-skips: deadcode
           jobs: ${{ toJSON(needs) }}

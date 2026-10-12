@@ -67,4 +67,4 @@ Restent listés dans `Project.swift`, parce qu'ils dépendent d'un framework abs
 
 - **Les tests de logique pure ne paient plus le lancement du simulateur.** Le gain sur la durée de la CI grandit à chaque dossier déplacé.
 - **Un ajout à l'API partagée demande un `public`.** Le compilateur signale l'oubli dès la première cible qui l'utilise.
-- **Periphery indexe aussi le kit et ses tests** (schéma `FouleeKit`). Le job iOS compile ces tests pour macOS, uniquement pour alimenter l'index.
+- **Periphery indexe aussi le kit et ses tests** (schéma `FouleeKit`). Le job « Dead code » compile ces tests pour macOS, uniquement pour alimenter l'index (#433).

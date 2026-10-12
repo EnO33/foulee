@@ -130,12 +130,13 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 
 ## CI
 
-Every PR runs five jobs: **Lint**, **Connect IQ**, **Kit**, **iOS** and
-**watchOS**. **Kit** runs the FouleeKit tests on macOS, with no simulator. The
-two simulator jobs compile once each (`build-for-testing`, then
-`test-without-building`). The iOS job also runs the Periphery dead-code scan on
-the build's index. The three run in parallel; **Build & Test** waits for them
-and is the required check on `main`.
+Every PR runs six jobs: **Lint**, **Connect IQ**, **Kit**, **iOS**,
+**watchOS** and **Dead code**. **Kit** runs the FouleeKit tests on macOS, with
+no simulator. The two simulator jobs compile once each (`build-for-testing`,
+then `test-without-building`). **Dead code** builds the three schemes for their
+index only and runs the Periphery scan on it, beside the test jobs instead of
+after the iOS tests. **Build & Test** waits for Kit, iOS, watchOS and Dead code
+and is the required check on `main`; on a push to `main`, Dead code is skipped.
 
 Dependencies update themselves: Dependabot for the GitHub Actions, and the
 **Swift packages** workflow for the packages in `Project.swift` — every Monday,
