@@ -1,0 +1,118 @@
+name: Screenshots
+
+# The App Store captures, and the review sets around them, taken on the same
+# image and Xcode as CI (issue #408). The runtime is part of the result (see
+# docs/RELEASE.md § 9.1), so a capture made here is one anybody can reproduce,
+# with no simulator to install.
+#
+# Manual, or on a pull request that touches the capture tooling: those are the
+# only changes that can break a run nobody would otherwise notice until the
+# next release.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/screenshots.yml
+      - tools/capture_screenshots.sh
+      - Foulee/Screenshots/**
+      - FouleeScreenshots/**
+      - FouleeWatchScreenshots/**
+
+concurrency:
+  group: screenshots
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Capture
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare-project
+
+      # The script resolves devices by name and refuses a name two runtimes
+      # share, so each is created only when the image lacks it.
+      - name: Ensure the capture simulators exist
+        run: |
+          ensure() {
+            local name="$1" platform="$2"
+            if xcrun simctl list devices available | grep -qF "$name ("; then
+              return
+            fi
+            RUNTIME=$(xcrun simctl list runtimes available -j | jq -r --arg p "$platform" '.runtimes[] | select(.platform == $p) | .identifier' | sort -V | tail -1)
+            DEVICETYPE=$(xcrun simctl list devicetypes -j | jq -r --arg n "$name" '.devicetypes[] | select(.name == $n) | .identifier')
+            echo "Creating $name on $RUNTIME"
+            xcrun simctl create "$name" "$DEVICETYPE" "$RUNTIME"
+          }
+          ensure "iPhone 17 Pro Max" iOS
+          ensure "Apple Watch Series 11 (46mm)" watchOS
+          ensure "Apple Watch SE 3 (40mm)" watchOS
+
+      # The store sets first, under their default names, then the review sets:
+      # dark theme, the largest text sizes (iPhone only: simctl cannot set the
+      # watch's), and the smallest wrist. A set that
+      # fails does not stop the others; the step still fails at the end.
+      - name: Capture
+        run: |
+          failed=()
+          run() { tools/capture_screenshots.sh "$@" || failed+=("$*"); }
+          run
+          run --dark "" review-dark
+          run --text-size accessibility-large "" review-a11y
+          run --watch
+          run --watch "Apple Watch SE 3 (40mm)" probe-40mm
+          if [ ${#failed[@]} -gt 0 ]; then
+            printf '::error::Capture failed: %s\n' "${failed[@]}"
+            exit 1
+          fi
+
+      - name: Keep the captures
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: screenshots
+          path: appstore-screenshots/raw
+          retention-days: 30
+          if-no-files-found: error
+
+      # The captures, downsized, on an orphan `captures` branch overwritten by
+      # each run: browsable on GitHub without unzipping an artifact, and never
+      # part of main's history (appstore-screenshots/ stays untracked, #72).
+      - name: Publish to the captures branch
+        if: always() && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          out="$RUNNER_TEMP/captures"
+          mkdir -p "$out"
+          for set in appstore-screenshots/raw/*/; do
+            name=$(basename "$set")
+            mkdir -p "$out/$name"
+            for png in "$set"*.png; do
+              sips -s format jpeg -s formatOptions 70 -Z 1000 "$png" \
+                --out "$out/$name/$(basename "$png" .png).jpg" >/dev/null
+            done
+          done
+          cd "$out"
+          {
+            echo "# Captures"
+            echo
+            echo "Run ${{ github.run_id }} on \`${{ github.sha }}\`, $(xcodebuild -version | head -1)."
+          } > README.md
+          git init -q -b captures
+          git add -A
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "Captures of ${{ github.sha }}"
+          git push -q --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" \
+            captures
+    permissions:
+      contents: write

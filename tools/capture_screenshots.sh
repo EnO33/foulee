@@ -12,6 +12,8 @@
 #                                                       # ambiguous
 #   tools/capture_screenshots.sh --watch                # Apple Watch 46 mm
 #   tools/capture_screenshots.sh --watch "Apple Watch SE 3 (40mm)" probe-40mm
+#   tools/capture_screenshots.sh --dark "" review-dark   # visual review only
+#   tools/capture_screenshots.sh --text-size accessibility-large "" review-a11y
 #
 # The first argument is a simulator NAME or a UDID. A name shared by two
 # available simulators is refused rather than resolved: the runtime a same-named
@@ -34,18 +36,31 @@
 # output folder, and no status-bar pinning (watchOS refuses it — see below).
 # Everything downstream, from the result bundle to the export, is the same.
 #
+# `--dark` seeds the dark theme and `--text-size <simctl size>` sets the
+# simulator's text size for the run (issue #408): both exist for the visual
+# review of a new SDK, never for the store boards, so they require a set name
+# other than the default one. An empty device argument ("") keeps the default
+# device.
+#
 # Output is NOT tracked by git: appstore-screenshots/ is ignored on purpose
 # (#72), and generated PNGs must stay that way.
 set -euo pipefail
 
 PLATFORM="iOS"
-if [ "${1:-}" = "--watch" ]; then
-  PLATFORM="watchOS"
-  shift
-fi
+DARK=""
+TEXT_SIZE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --watch) PLATFORM="watchOS"; shift ;;
+    --dark) DARK="1"; shift ;;
+    --text-size) TEXT_SIZE="${2:?--text-size needs a simctl content size}"; shift 2 ;;
+    *) break ;;
+  esac
+done
 
 if [ "$PLATFORM" = "watchOS" ]; then
-  DEVICE="${1:-Apple Watch Series 11 (46mm)}"   # 416 × 496, the App Store size
+  DEVICE="${1:-}"
+  DEVICE="${DEVICE:-Apple Watch Series 11 (46mm)}"   # 416 × 496, the App Store size
   DEFAULT_SET="watch"
   DEFAULT_SET_SIZE="416x496"
   SCHEME="FouleeWatchScreenshots"
@@ -55,7 +70,8 @@ if [ "$PLATFORM" = "watchOS" ]; then
   # "watch-01-today_0_<uuid>.png".
   NAME_PATTERN='^(watch-\d\d-[a-z]+)'
 else
-  DEVICE="${1:-iPhone 17 Pro Max}"   # 6.9" — 1320 × 2868, the App Store size
+  DEVICE="${1:-}"
+  DEVICE="${DEVICE:-iPhone 17 Pro Max}"   # 6.9" — 1320 × 2868, the App Store size
   DEFAULT_SET="iphone-6.9"
   DEFAULT_SET_SIZE="1320x2868"
   SCHEME="FouleeScreenshots"
@@ -67,6 +83,20 @@ else
   NAME_PATTERN='^(\d\d_[a-z]+)'
 fi
 SET_NAME="${2:-$DEFAULT_SET}"
+
+if { [ -n "$DARK" ] || [ -n "$TEXT_SIZE" ]; } && [ "$SET_NAME" = "$DEFAULT_SET" ]; then
+  echo "--dark and --text-size are for reviews: name the set (e.g. review-dark)." >&2
+  exit 1
+fi
+if [ -n "$DARK" ] && [ "$PLATFORM" = "watchOS" ]; then
+  echo "--dark has no effect on the watch, which is always dark." >&2
+  exit 1
+fi
+if [ -n "$TEXT_SIZE" ] && [ "$PLATFORM" = "watchOS" ]; then
+  # Verified on watchOS 27: "Runtime does not support dynamic text".
+  echo "--text-size is iPhone only: simctl cannot set the watch's text size." >&2
+  exit 1
+fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_DIR="$REPO_ROOT/appstore-screenshots/raw/$SET_NAME"
@@ -176,6 +206,14 @@ fi
 # `WatchSyncStore` finds no payload and « Démarrer » starts a session outright
 # instead of asking which activity — the one screen of the watch capture that
 # would otherwise depend on what the developer's own phone had synced.
+if [ -n "$TEXT_SIZE" ]; then
+  echo "==> Text size: $TEXT_SIZE"
+  xcrun simctl ui "$UDID" content_size "$TEXT_SIZE"
+  # Back to the default afterwards: the simulator outlives the run, and the
+  # next capture on it must not inherit a review's text size.
+  trap 'xcrun simctl ui "$UDID" content_size large >/dev/null 2>&1 || true; rm -rf "$WORK_DIR"' EXIT
+fi
+
 echo "==> Removing any previous install"
 xcrun simctl uninstall "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
 
@@ -183,7 +221,7 @@ xcrun simctl uninstall "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
 # never answers xcodebuild's request, which then waits out a 600 s timeout
 # after a two-minute capture. The PNGs are attachments, not diagnostics.
 echo "==> Running the capture"
-xcodebuild test \
+TEST_RUNNER_FOULEE_CAPTURE_DARK="$DARK" xcodebuild test \
   -workspace Foulee.xcworkspace \
   -scheme "$SCHEME" \
   -destination "platform=$SIMULATOR_PLATFORM,id=$UDID" \

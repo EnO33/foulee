@@ -3,7 +3,7 @@ import XCTest
 /// Shared plumbing for the App Store capture run (issue #235).
 ///
 /// This target is a **UI test bundle**: it drives the shipped app from another
-/// process, so it cannot import app code. The three strings below are therefore
+/// process, so it cannot import app code. The strings below are therefore
 /// duplicated from `ScreenshotMode` / `TodayAccessibility`, and
 /// `ScreenshotModeTests` (in `FouleeTests`, which *can* import them) pins the
 /// spellings so a rename can't silently detach the two halves.
@@ -12,6 +12,21 @@ enum ScreenshotCapture {
     static let launchArgument = "-FouleeScreenshotMode"
     /// Must equal `ScreenshotMode.onboardingArgument`.
     static let onboardingArgument = "-FouleeScreenshotOnboarding"
+    /// Must equal `ScreenshotMode.darkArgument`.
+    static let darkArgument = "-FouleeScreenshotDark"
+
+    /// French, whatever the host runs (issue #408): the boards are French, and
+    /// a simulator left in English groups thousands as « 8,240 ». CI runners
+    /// are in English; a developer's Mac usually is not, which is why the
+    /// difference went unseen until the captures moved to CI.
+    static let localeArguments = ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"]
+
+    /// Set by `tools/capture_screenshots.sh --dark`. xcodebuild hands the test
+    /// runner every `TEST_RUNNER_`-prefixed variable without the prefix, which
+    /// is the only channel from the script into this process.
+    static var isDark: Bool {
+        ProcessInfo.processInfo.environment["FOULEE_CAPTURE_DARK"] == "1"
+    }
 
     /// Must equal the `TodayAccessibility` constants.
     enum Card {
@@ -33,8 +48,9 @@ extension XCTestCase {
     @discardableResult
     func launchInCaptureMode(onboarding: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = [ScreenshotCapture.launchArgument]
+        app.launchArguments = [ScreenshotCapture.launchArgument] + ScreenshotCapture.localeArguments
         if onboarding { app.launchArguments.append(ScreenshotCapture.onboardingArgument) }
+        if ScreenshotCapture.isDark { app.launchArguments.append(ScreenshotCapture.darkArgument) }
         app.launch()
         return app
     }
