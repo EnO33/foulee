@@ -1,7 +1,6 @@
-import FouleeKit
 import Foundation
 import Testing
-@testable import FouleeWatch
+@testable import FouleeKit
 
 @Suite("WatchSyncStore")
 struct WatchSyncStoreTests {
