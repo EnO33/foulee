@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Where today's intake stands against the hydration window (issue #353): the

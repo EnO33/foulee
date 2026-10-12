@@ -2,7 +2,7 @@ import Foundation
 
 /// Day-of-week aligned to Apple's "Lundi = first" convention, with French
 /// short labels used by the onboarding chips and the Today week bars.
-nonisolated enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
+nonisolated public enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
     case monday = 1
     case tuesday
     case wednesday
@@ -11,9 +11,9 @@ nonisolated enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
     case saturday
     case sunday
 
-    var id: Int { rawValue }
+    public var id: Int { rawValue }
 
-    var shortLabel: String {
+    public var shortLabel: String {
         switch self {
         case .monday: "L"
         case .tuesday: "M"
@@ -26,7 +26,7 @@ nonisolated enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
     }
 
     /// Full French day name, lowercased for use mid-sentence ("le mardi").
-    var fullName: String {
+    public var fullName: String {
         switch self {
         case .monday: "lundi"
         case .tuesday: "mardi"
@@ -39,14 +39,14 @@ nonisolated enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
     }
 
     /// Default "weekday" set used at onboarding (Mon → Fri).
-    static let workWeek: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
+    public static let workWeek: Set<Weekday> = [.monday, .tuesday, .wednesday, .thursday, .friday]
 
     /// This day in `Calendar`'s numbering (1 = Sunday … 7 = Saturday), to feed
     /// `StreakCalculator` and `Calendar.component(.weekday:)`.
-    var calendarWeekday: Int { (rawValue % 7) + 1 }
+    public var calendarWeekday: Int { (rawValue % 7) + 1 }
 }
 
-nonisolated extension Set where Element == Weekday {
+nonisolated public extension Set where Element == Weekday {
     /// Compact bitmask (7 bits, Monday is bit 0) for UserDefaults storage.
     var bitmask: Int {
         reduce(0) { acc, day in acc | (1 << (day.rawValue - 1)) }

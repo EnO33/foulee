@@ -1,4 +1,3 @@
-import FouleeKit
 import Foundation
 
 /// Collapses one outing written by several sources into one row of the 7-day
@@ -17,7 +16,7 @@ import Foundation
 /// this fixes, one level up.
 ///
 /// Pure and total: same input, same output, always.
-nonisolated public enum WorkoutDeduplication {
+nonisolated enum WorkoutDeduplication {
     /// One row per stretch of clock actually exercised, newest first.
     ///
     /// **Which source shows its label and its numbers** when rows merge: the
@@ -49,7 +48,7 @@ nonisolated public enum WorkoutDeduplication {
     /// **Distinct sessions stay distinct.** Only genuinely overlapping spans
     /// merge; two runs the same day, or a pair where one ends exactly when the
     /// next starts, remain two rows (see `ActiveMinutes.overlap`).
-    public static func collapsingOverlaps(_ workouts: [WorkoutSummary]) -> [WorkoutSummary] {
+    static func collapsingOverlaps(_ workouts: [WorkoutSummary]) -> [WorkoutSummary] {
         var rows: [WorkoutSummary] = []
         var group: [WorkoutSummary] = []
         var groupSpan: Range<Date>?

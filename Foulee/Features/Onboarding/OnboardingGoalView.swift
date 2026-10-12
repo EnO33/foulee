@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Third onboarding screen — pick active days, time window and minutes

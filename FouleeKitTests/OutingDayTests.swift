@@ -1,7 +1,6 @@
-import FouleeKit
 import Foundation
 import Testing
-@testable import Foulee
+@testable import FouleeKit
 
 /// Cover for the *integration point* of #218: `OutingDay.days(in:)`
 /// deduplicates and only then groups by day.
