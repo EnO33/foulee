@@ -17,6 +17,9 @@ struct WatchPhoneSessionPager: View {
     var errorMessage: String?
     var onCommand: (PhoneSessionCommand) -> Void
 
+    /// Opens on the figures, with the controls one swipe to the left. Only
+    /// ever read through `$page`, which Periphery does not count as a use.
+    // periphery:ignore
     @State private var page: WatchSessionPage = .session
 
     var body: some View {
