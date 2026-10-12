@@ -168,17 +168,17 @@ struct WatchMirrorSnapshotTests {
     @Test("Nothing is sent by the interval while the outing is being saved")
     func nothingTicksWhileSaving() async {
         let stub = WorkoutHealthKitStub()
-        stub.yieldsWhileSaving = true
         let store = stub.makeStore()
         await store.start(activity: .walking)
-        let runningBefore = stub.sentSnapshots.filter { !$0.isEnded }.count
+        #expect(store.mirrorableMetrics != nil)
 
-        let stopping = Task { await store.stop() }
-        await waitUntil { store.isSaving }
-        await store.mirrorIfDue(at: base.addingTimeInterval(3_600))
-        await stopping.value
+        // Read inside the save itself: the state is still `.active` there.
+        var mirrorableWhileSaving: WatchWorkoutMetrics?
+        stub.onFinish = { mirrorableWhileSaving = store.mirrorableMetrics }
+        await store.stop()
 
-        #expect(stub.sentSnapshots.filter { !$0.isEnded }.count == runningBefore)
+        #expect(stub.finishCalls == 1)
+        #expect(mirrorableWhileSaving == nil)
         #expect(stub.sentSnapshots.last?.isEnded == true)
     }
 

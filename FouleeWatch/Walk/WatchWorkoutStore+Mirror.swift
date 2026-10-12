@@ -15,6 +15,14 @@ import Foundation
 /// information a tick cannot — the outing starting, the sport changing, the
 /// outing ending.
 extension WatchWorkoutStore {
+    /// The figures a tick or a switch may send: the outing's, while it runs
+    /// and is not being saved. `stop()` sends its own final snapshot, marked
+    /// ended, and nothing may follow it (issue #436).
+    var mirrorableMetrics: WatchWorkoutMetrics? {
+        guard case .active(let metrics) = state, !isSaving else { return nil }
+        return metrics
+    }
+
     /// Long enough to be free, short enough that a phone woken at any moment
     /// finds something recent. Nothing hangs on the exact figure — the phone
     /// dates what it shows.
@@ -32,7 +40,7 @@ extension WatchWorkoutStore {
     /// that is over. That includes the seconds spent saving after « Arrêter »
     /// (issue #436): the state is still `.active`, but the end has been sent.
     func mirrorIfDue(at now: Date) async {
-        guard case .active(let metrics) = state, !isSaving else { return }
+        guard let metrics = mirrorableMetrics else { return }
         if let last = lastMirrorSendAt, now.timeIntervalSince(last) < Self.mirrorInterval {
             return
         }
@@ -70,7 +78,7 @@ extension WatchWorkoutStore {
     /// older than the last periodic send and the phone would drop it on its
     /// newest-wins rule — the send would look done and change nothing.
     func mirrorSwitch() async {
-        guard case .active(let metrics) = state, !isSaving else { return }
+        guard let metrics = mirrorableMetrics else { return }
         await mirrorNow(metrics, at: clock(), isEnded: false)
     }
 
