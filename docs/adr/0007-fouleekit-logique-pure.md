@@ -37,7 +37,8 @@ Le code partagé entre les cibles était compilé plusieurs fois. Chaque extensi
 1. **Cette étape** : les fichiers de `Foulee/Shared/` qui ne dépendent que de Foundation, `os` et CoreLocation, avec les fichiers dont ils dépendent (`ActivityMode`, `Coordinate`, `MotionActivityReading`, `HydrationNotification`, `ActiveMinutes`), et leurs tests.
 2. **Ensuite** : les calculs de l'app, dossier par dossier, une PR par dossier.
    - **Health** : les modèles et calculs de `Foulee/Health/` qui ne dépendent pas de HealthKit (résumés et détail de sortie, regroupement, déduplication, métriques, surcouche Garmin), avec `GarminDailySnapshot` qu'utilise la surcouche, et `Int.formattedFR`, qui part de `TodayHeroCard` vers `NumberFormatting`. Les clients HealthKit et les extensions qui lisent un `HKWorkout` restent dans l'app.
-   - Puis Recap, Streak, Preferences et Walk.
+   - **Recap** : le Bilan (`Recap`, `RecapPeriod`, `RecapWater`, `OutingDay`), avec `Weekday` (Preferences) et `HydrationMath` (Hydration) qu'il utilise. Restent dans l'app le store et la carte de partage, qui dessine en SwiftUI.
+   - Puis Streak, Preferences et Walk.
 
 Restent listés dans `Project.swift`, parce qu'ils dépendent d'un framework absent de macOS ou de l'état de l'app :
 

@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Planning: the days and the time window the reminders and the streak follow.

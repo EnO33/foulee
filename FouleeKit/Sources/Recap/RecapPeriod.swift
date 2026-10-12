@@ -6,14 +6,14 @@ import Foundation
 /// where the outings of the days just gone are read (#350), in the Monday-first
 /// week the rest of the app draws (#363). The month stays the last **finished**
 /// one: on the 1st, the month that just ended.
-nonisolated struct RecapPeriod: Hashable, Sendable {
-    nonisolated enum Kind: String, CaseIterable, Identifiable, Sendable {
+nonisolated public struct RecapPeriod: Hashable, Sendable {
+    nonisolated public enum Kind: String, CaseIterable, Identifiable, Sendable {
         case week
         case month
 
-        var id: String { rawValue }
+        public var id: String { rawValue }
 
-        var label: String {
+        public var label: String {
             switch self {
             case .week: "Semaine"
             case .month: "Mois"
@@ -28,15 +28,15 @@ nonisolated struct RecapPeriod: Hashable, Sendable {
         }
     }
 
-    var kind: Kind
+    public var kind: Kind
     /// First instant of the period.
-    var start: Date
+    public var start: Date
     /// First instant **after** the period.
-    var end: Date
+    public var end: Date
 
     /// The period the Bilan shows for `kind` at `now`: the week so far, and
     /// the last finished month (issues #350, #363).
-    static func current(_ kind: Kind, at now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
+    public static func current(_ kind: Kind, at now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
         switch kind {
         case .week: weekSoFar(at: now, calendar: calendar)
         case .month: lastCompleted(.month, before: now, calendar: calendar)
@@ -47,7 +47,7 @@ nonisolated struct RecapPeriod: Hashable, Sendable {
     ///
     /// The calendar is ISO, Monday first, like every week the app draws: a
     /// recap that cut its weeks on Sunday would disagree with the home's bars.
-    static func lastCompleted(_ kind: Kind, before now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
+    public static func lastCompleted(_ kind: Kind, before now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
         let current = calendar.dateInterval(of: kind.component, for: now)
             ?? DateInterval(start: calendar.startOfDay(for: now), duration: 0)
         return period(kind, containing: current.start.addingTimeInterval(-1), calendar: calendar)
@@ -55,7 +55,7 @@ nonisolated struct RecapPeriod: Hashable, Sendable {
 
     /// The week in progress, Monday through today — the Bilan's week (issue
     /// #363). Its totals are the days lived; `daysToCome` are the rest.
-    static func weekSoFar(at now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
+    public static func weekSoFar(at now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
         let today = calendar.startOfDay(for: now)
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? now
         let monday = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? today
@@ -64,7 +64,7 @@ nonisolated struct RecapPeriod: Hashable, Sendable {
 
     /// The days of a week in progress still to come, through Sunday: drawn,
     /// never counted. Empty for a month, or a week already over.
-    func daysToCome(calendar: Calendar = .iso8601Monday) -> [Date] {
+    public func daysToCome(calendar: Calendar = .iso8601Monday) -> [Date] {
         guard kind == .week, let week = calendar.dateInterval(of: .weekOfYear, for: start) else { return [] }
         var days: [Date] = []
         var cursor = calendar.startOfDay(for: end)
@@ -82,7 +82,7 @@ nonisolated struct RecapPeriod: Hashable, Sendable {
     /// previous ISO week for a whole week, and Monday → Saturday against Monday
     /// → Saturday for a week in progress — a fair comparison either way. For a
     /// month, the calendar month before.
-    func previous(calendar: Calendar = .iso8601Monday) -> RecapPeriod {
+    public func previous(calendar: Calendar = .iso8601Monday) -> RecapPeriod {
         switch kind {
         case .week:
             let earlier: (Date) -> Date = { calendar.date(byAdding: .day, value: -7, to: $0) ?? $0 }
@@ -92,12 +92,12 @@ nonisolated struct RecapPeriod: Hashable, Sendable {
         }
     }
 
-    func contains(_ date: Date) -> Bool {
+    public func contains(_ date: Date) -> Bool {
         date >= start && date < end
     }
 
     /// Each day of the period, as day starts, in order.
-    func days(calendar: Calendar = .iso8601Monday) -> [Date] {
+    public func days(calendar: Calendar = .iso8601Monday) -> [Date] {
         var days: [Date] = []
         var cursor = calendar.startOfDay(for: start)
         while cursor < end {
@@ -109,7 +109,7 @@ nonisolated struct RecapPeriod: Hashable, Sendable {
     }
 
     /// « Du 29 sept. au 5 oct. » for a week, « Septembre 2026 » for a month.
-    var title: String {
+    public var title: String {
         switch kind {
         case .week:
             let last = end.addingTimeInterval(-1)
@@ -140,4 +140,14 @@ nonisolated struct RecapPeriod: Hashable, Sendable {
         formatter.dateFormat = "LLLL yyyy"
         return formatter
     }()
+
+    public init(
+        kind: Kind,
+        start: Date,
+        end: Date
+    ) {
+        self.kind = kind
+        self.start = start
+        self.end = end
+    }
 }

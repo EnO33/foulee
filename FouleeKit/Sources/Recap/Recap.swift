@@ -6,30 +6,48 @@ import Foundation
 /// Pure: built from what the home already reads from Santé — the merged daily
 /// minutes, the daily series, the workouts — so every figure here is one the
 /// rest of the app would give for the same days.
-nonisolated struct Recap: Equatable, Sendable {
-    nonisolated struct Totals: Equatable, Sendable {
-        var minutes = 0
-        var steps = 0
-        var distanceKm: Double = 0
-        var calories = 0
+nonisolated public struct Recap: Equatable, Sendable {
+    nonisolated public struct Totals: Equatable, Sendable {
+        public var minutes = 0
+        public var steps = 0
+        public var distanceKm: Double = 0
+        public var calories = 0
         /// Outings, counted like the résumé counts them: the legs of one
         /// outing are one, and a Strava copy of a watch session is the same.
-        var outings = 0
+        public var outings = 0
+
+        public init(minutes: Int = 0, steps: Int = 0, distanceKm: Double = 0, calories: Int = 0, outings: Int = 0) {
+            self.minutes = minutes
+            self.steps = steps
+            self.distanceKm = distanceKm
+            self.calories = calories
+            self.outings = outings
+        }
     }
 
     /// One day of the period.
-    nonisolated struct Day: Equatable, Sendable, Identifiable {
-        var date: Date
-        var minutes: Int
+    nonisolated public struct Day: Equatable, Sendable, Identifiable {
+        public var date: Date
+        public var minutes: Int
         /// An active day — one the user planned to move on. The others are
         /// rest days: drawn as such, and never counted as missed.
-        var isPlanned: Bool
+        public var isPlanned: Bool
 
-        var id: Date { date }
+        public var id: Date { date }
+
+        public init(
+            date: Date,
+            minutes: Int,
+            isPlanned: Bool
+        ) {
+            self.date = date
+            self.minutes = minutes
+            self.isPlanned = isPlanned
+        }
     }
 
     /// What the period says, in one sentence — the first thing read.
-    nonisolated enum Verdict: Equatable, Sendable {
+    nonisolated public enum Verdict: Equatable, Sendable {
         /// Nothing recorded.
         case quiet
         /// The goal held on every planned day.
@@ -42,32 +60,32 @@ nonisolated struct Recap: Equatable, Sendable {
         case started
     }
 
-    var period: RecapPeriod
-    var totals: Totals
+    public var period: RecapPeriod
+    public var totals: Totals
     /// The period before, for the comparison.
-    var previous: Totals
+    public var previous: Totals
     /// Every day of the period, zero-filled, in order.
-    var days: [Day]
-    var goalMinutes: Int
+    public var days: [Day]
+    public var goalMinutes: Int
     /// Active days of the period on which the minutes goal was reached.
-    var goalDaysMet: Int
+    public var goalDaysMet: Int
     /// Active days in the period — the ones the user planned to move on.
-    var goalDaysPlanned: Int
+    public var goalDaysPlanned: Int
 
     /// The day with the most minutes; `nil` for a period without any.
-    var bestDay: Day? {
+    public var bestDay: Day? {
         days.filter { $0.minutes > 0 }.max { $0.minutes < $1.minutes }
     }
 
     /// Share of the planned days on which the goal held, `0...1`.
-    var goalRate: Double {
+    public var goalRate: Double {
         goalDaysPlanned > 0 ? Double(goalDaysMet) / Double(goalDaysPlanned) : 0
     }
 
     /// Most telling first: a perfect period says so even if it did fewer
     /// minutes than the one before; regularity outranks volume, because the
     /// streak is what the app is about.
-    var verdict: Verdict {
+    public var verdict: Verdict {
         if isEmpty { return .quiet }
         if goalDaysPlanned > 0, goalDaysMet == goalDaysPlanned { return .perfect }
         if goalRate >= Self.steadyRate { return .steady }
@@ -78,22 +96,36 @@ nonisolated struct Recap: Equatable, Sendable {
     }
 
     /// From this share of planned days held, a period reads as regular.
-    static let steadyRate = 0.7
+    public static let steadyRate = 0.7
 
-    var isEmpty: Bool {
+    public var isEmpty: Bool {
         totals.minutes == 0 && totals.steps == 0 && totals.outings == 0
     }
 
     /// What the recap is made of: Santé, read once for both periods.
-    nonisolated struct Inputs: Sendable {
-        var minutes: [DailyMinutes] = []
-        var steps: [MetricPoint] = []
-        var distance: [MetricPoint] = []
-        var calories: [MetricPoint] = []
-        var workouts: [WorkoutSummary] = []
+    nonisolated public struct Inputs: Sendable {
+        public var minutes: [DailyMinutes] = []
+        public var steps: [MetricPoint] = []
+        public var distance: [MetricPoint] = []
+        public var calories: [MetricPoint] = []
+        public var workouts: [WorkoutSummary] = []
+
+        public init(
+            minutes: [DailyMinutes] = [],
+            steps: [MetricPoint] = [],
+            distance: [MetricPoint] = [],
+            calories: [MetricPoint] = [],
+            workouts: [WorkoutSummary] = []
+        ) {
+            self.minutes = minutes
+            self.steps = steps
+            self.distance = distance
+            self.calories = calories
+            self.workouts = workouts
+        }
     }
 
-    static func make(
+    public static func make(
         period: RecapPeriod,
         from inputs: Inputs,
         goalMinutes: Int,
@@ -137,8 +169,26 @@ nonisolated struct Recap: Equatable, Sendable {
 
     /// The change from `old` to `new`, as a fraction: 0.12 for +12 %. `nil`
     /// when there was nothing before — « +∞ % » says nothing.
-    static func change(from old: Double, to new: Double) -> Double? {
+    public static func change(from old: Double, to new: Double) -> Double? {
         guard old > 0 else { return nil }
         return (new - old) / old
+    }
+
+    public init(
+        period: RecapPeriod,
+        totals: Totals,
+        previous: Totals,
+        days: [Day],
+        goalMinutes: Int,
+        goalDaysMet: Int,
+        goalDaysPlanned: Int
+    ) {
+        self.period = period
+        self.totals = totals
+        self.previous = previous
+        self.days = days
+        self.goalMinutes = goalMinutes
+        self.goalDaysMet = goalDaysMet
+        self.goalDaysPlanned = goalDaysPlanned
     }
 }

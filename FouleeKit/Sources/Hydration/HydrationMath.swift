@@ -4,27 +4,27 @@ import Foundation
 /// rounding rules are unit-tested.
 ///
 /// nonisolated: also read by `RecapWater`, outside the main actor.
-nonisolated enum HydrationMath {
+nonisolated public enum HydrationMath {
     /// Progress toward the goal, clamped to 0…1 — the screen's drop and the
     /// week's rings (issue #355).
-    static func progress(intakeML: Int, goalML: Int) -> Double {
+    public static func progress(intakeML: Int, goalML: Int) -> Double {
         guard goalML > 0 else { return 0 }
         return min(Double(intakeML) / Double(goalML), 1)
     }
 
-    static func reachedGoal(intakeML: Int, goalML: Int) -> Bool {
+    public static func reachedGoal(intakeML: Int, goalML: Int) -> Bool {
         goalML > 0 && intakeML >= goalML
     }
 
     /// Most glasses the card draws in a row; past it each one stands for a
     /// larger share of the goal, so a 4 L goal never overflows the card.
-    static let maxGlasses = 10
+    public static let maxGlasses = 10
 
     /// How full each glass of the card's row is, `0...1` each (issue #353):
     /// as many glasses as the goal holds, rounded up and at most `maxGlasses`,
     /// sharing the goal evenly; the last one drunk may be partly filled. Empty
     /// when there is no goal to draw.
-    static func glassFills(intakeML: Int, goalML: Int, glassML: Int) -> [Double] {
+    public static func glassFills(intakeML: Int, goalML: Int, glassML: Int) -> [Double] {
         guard goalML > 0, glassML > 0 else { return [] }
         let count = min(Int((Double(goalML) / Double(glassML)).rounded(.up)), maxGlasses)
         let share = Double(goalML) / Double(count)

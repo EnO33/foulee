@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// The two shapes a shared Bilan comes in (issue #410).

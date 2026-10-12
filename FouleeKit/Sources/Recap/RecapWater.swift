@@ -4,15 +4,15 @@ import Foundation
 /// The water side of a recap (issue #356): how much a day on average, how
 /// many days held the goal, and the average of the period before. Pure, from
 /// the daily `dietaryWater` totals, like `Recap.make` from the minutes.
-nonisolated struct RecapWater: Equatable, Sendable {
-    var averageML: Int
-    var previousAverageML: Int
-    var goalDaysMet: Int
+nonisolated public struct RecapWater: Equatable, Sendable {
+    public var averageML: Int
+    public var previousAverageML: Int
+    public var goalDaysMet: Int
     /// Days in the period — the goal days' denominator.
-    var dayCount: Int
-    var goalML: Int
+    public var dayCount: Int
+    public var goalML: Int
 
-    static func make(
+    public static func make(
         period: RecapPeriod,
         series: [MetricPoint],
         goalML: Int,
@@ -36,5 +36,19 @@ nonisolated struct RecapWater: Equatable, Sendable {
             dayCount: days.count,
             goalML: goalML
         )
+    }
+
+    public init(
+        averageML: Int,
+        previousAverageML: Int,
+        goalDaysMet: Int,
+        dayCount: Int,
+        goalML: Int
+    ) {
+        self.averageML = averageML
+        self.previousAverageML = previousAverageML
+        self.goalDaysMet = goalDaysMet
+        self.dayCount = dayCount
+        self.goalML = goalML
     }
 }

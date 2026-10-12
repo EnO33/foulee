@@ -1,7 +1,6 @@
-import FouleeKit
 import Foundation
 import Testing
-@testable import Foulee
+@testable import FouleeKit
 
 /// The week and the month in review (issues #344, #350).
 @Suite("Recap")

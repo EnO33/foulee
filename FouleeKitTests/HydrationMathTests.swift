@@ -1,5 +1,5 @@
 import Testing
-@testable import Foulee
+@testable import FouleeKit
 
 @Suite struct HydrationMathTests {
     @Test func progressClampsToOne() {
