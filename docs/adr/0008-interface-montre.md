@@ -18,7 +18,9 @@ Le résumé de fin de sortie avait le même défaut que l'accueil : avec le plan
 ### D1 — L'action principale d'un écran est fixe en bas
 
 - **« Démarrer » à l'accueil, « Terminer » au résumé** (ou « Réessayer » après un échec d'enregistrement) restent en bas de l'écran ; le reste défile au-dessus (`pinnedAction`).
-- **Un `safeAreaInset`, pas un bouton de barre d'outils** : watchOS dessine ses boutons de barre du bas ronds et sans texte, alors que ceux de Foulée sont des capsules pleine largeur. La vue défilante s'arrête au-dessus du bouton, et un fond masque les lignes qui passent dessous.
+- **Une surcouche sur la vue défilante, pas un bouton de barre d'outils** : watchOS dessine ses boutons de barre du bas ronds et sans texte, alors que ceux de Foulée sont des capsules pleine largeur. Le contenu défile sous le bouton, et une marge basse de la hauteur du bouton laisse remonter la dernière ligne au-dessus.
+- **Pas de `safeAreaInset`** (#440) : il réduisait la vue défilante à l'espace au-dessus du bouton, et l'accueil ne défilait plus sur watchOS.
+- **Taille réduite (`controlSize(.small)`) et fondu vers le noir** plutôt qu'un fond opaque : le bouton occupe environ un sixième de l'écran, et les lignes qui passent dessous restent lisibles jusqu'au bout.
 - **Une seule action fixe par écran.** L'action secondaire (« Terminer » après un échec) reste à la fin du défilement.
 
 ### D2 — On quitte un écran de choix par la croix du système

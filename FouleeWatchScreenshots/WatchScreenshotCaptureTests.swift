@@ -52,8 +52,13 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     /// scrolling rule in docs/RELEASE.md § 9.1.
     private func captureHydration(_ app: XCUIApplication) {
         for _ in 0..<Self.scrollSwipes { app.swipeUp() }
-        waitForWatchScreen(app.buttons["J'ai bu"], "Hydration card")
+        let drank = app.buttons["J'ai bu"]
+        waitForWatchScreen(drank, "Hydration card")
         settleWatchScrolling()
+        // Existence is not enough: the card is in the hierarchy before any
+        // scroll, and a home that had stopped scrolling still passed this step
+        // and photographed itself twice (issue #440).
+        XCTAssertTrue(drank.isHittable, "The home did not scroll to the hydration card")
         captureWatch("watch-02-hydration")
     }
 
