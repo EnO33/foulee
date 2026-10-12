@@ -29,9 +29,10 @@ extension WatchWorkoutStore {
     /// of what it last heard, which is the truth.
     /// **Only while the outing is running.** A periodic send from an ended
     /// session would carry `isEnded: false` and un-end, on the phone, an outing
-    /// that is over.
+    /// that is over. That includes the seconds spent saving after « Arrêter »
+    /// (issue #436): the state is still `.active`, but the end has been sent.
     func mirrorIfDue(at now: Date) async {
-        guard case .active(let metrics) = state else { return }
+        guard case .active(let metrics) = state, !isSaving else { return }
         if let last = lastMirrorSendAt, now.timeIntervalSince(last) < Self.mirrorInterval {
             return
         }
@@ -69,7 +70,7 @@ extension WatchWorkoutStore {
     /// older than the last periodic send and the phone would drop it on its
     /// newest-wins rule — the send would look done and change nothing.
     func mirrorSwitch() async {
-        guard case .active(let metrics) = state else { return }
+        guard case .active(let metrics) = state, !isSaving else { return }
         await mirrorNow(metrics, at: clock(), isEnded: false)
     }
 

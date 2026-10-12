@@ -57,9 +57,12 @@ Le pendant de D1 dans l'autre sens : pour une séance lancée sur l'iPhone, **l'
 - **La détection marche/course s'arrête pendant la pause**, et un changement en attente est abandonné. S'arrêter à un passage piéton n'est pas un changement de sport, et une pause ne coupe jamais une portion.
 - **L'iPhone est prévenu** : `WatchSessionSnapshot.isPaused` part au moment de la pause et de la reprise. Pendant la pause, le chrono de l'écran miroir s'arrête sur la valeur annoncée, avec « En pause ». Le champ est absent chez une montre plus ancienne, ce qui vaut « jamais en pause ».
 
-### D6 — Une sortie de la montre tente une Live Activity sur l'iPhone (#275)
+### D6 — Une sortie de la montre affiche une Live Activity sur l'iPhone (#275, #436)
 
-- **On essaie, et on journalise.** La doc ActivityKit dit qu'`Activity.request` échoue hors du premier plan ; la session WWDC23 sur le miroir dit que HealthKit laisse 10 s à l'app pour en démarrer une. Rien ne tranche, et le simulateur ne fait pas de miroir. `MirroredLiveActivity` tente la demande à l'arrivée du miroir et note dans le journal `live-activity` le résultat **et l'état de l'app** (premier plan ou arrière-plan) au moment de demander.
+- **La demande passe depuis un réveil miroir.** La doc ActivityKit dit qu'`Activity.request` échoue hors du premier plan ; la session WWDC23 sur le miroir dit que HealthKit laisse 10 s à l'app pour en démarrer une. Vérifié sur appareils réels (TestFlight 1.52.0, app iPhone fermée) : la WWDC a raison. `MirroredLiveActivity` journalise toujours le résultat **et l'état de l'app** dans `live-activity`.
+- **La fin la retire aussitôt** (`dismissalPolicy: .immediate`), comme partout ailleurs dans l'app. `.default` la laissait jusqu'à quatre heures sur l'écran verrouillé, ce qui se lisait comme une sortie jamais arrêtée.
+- **Les activités miroir se retrouvent par `Activity.activities`** (attributs sans sport), pas seulement par la référence gardée en mémoire : iOS peut relancer l'app entre le début et la fin.
+- **Une sortie finie ne revit pas.** Un snapshot non terminé dont le début de sortie n'est pas postérieur à celui de la sortie finie est ignoré : le début d'une sortie ne fait que reculer avec les pauses, et la suivante commence après. La montre n'envoie plus de snapshot périodique pendant l'enregistrement qui suit « Arrêter ».
 - **Un refus ne change rien** : l'écran miroir de l'app (#279) reste la référence.
 - **Pas de sport dans les attributs** : ils sont figés pour toute la vie de l'activité, alors qu'une sortie peut passer de la marche à la course. L'écran verrouillé dit « Ta sortie ».
 - **Le balayage des activités orphelines au lancement épargne celle-ci** : un réveil miroir est aussi un lancement de l'app.
@@ -73,6 +76,6 @@ Le pendant de D1 dans l'autre sens : pour une séance lancée sur l'iPhone, **l'
 ## Ce qui reste non mesuré
 
 - **La taille maximale d'un envoi** par `sendToRemoteWorkoutSession(data:)` n'est pas documentée. 1 500 points compacts font environ 30 Ko ; le plafond est le réglage à baisser si un envoi échoue (le journal `session` le dira : « snapshot non transmis »).
-- **La Live Activity d'une sortie de la montre** (D6) : à lire dans le journal après une première sortie, avec `log stream --predicate 'subsystem == "com.eno33.foulee" AND category == "live-activity"' --info`. « démarrée (app en arrière-plan) » confirme la WWDC, « refusé (app en arrière-plan) » confirme la doc.
+- **L'arrivée du signal de fin** (D6) : le snapshot final et la fin de la session miroir ne sont promis par aucune doc à une app iPhone en arrière-plan. Si l'activité restait encore affichée, le journal le dira (`log stream --predicate 'subsystem == "com.eno33.foulee" AND category == "live-activity"' --info`) : sans « miroir : Live Activity terminée », le signal n'est pas arrivé, et un `WCSession.sendMessage` de la montre, qui réveille l'iPhone, deviendrait la voie de fin.
 - **Le coût CPU** de l'allègement toutes les 8 s sur une longue sortie : linéaire, jamais mesuré au poignet.
 - **Le coût en batterie** d'un `sendMessage` toutes les 3 s pendant une séance iPhone, des deux côtés. C'est le réglage à allonger (`ActiveWalkStore.watchInterval`) si la montre s'en ressent.

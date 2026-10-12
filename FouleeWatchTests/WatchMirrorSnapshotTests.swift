@@ -162,6 +162,26 @@ struct WatchMirrorSnapshotTests {
         #expect(stub.sentSnapshots.last?.isEnded == true)
     }
 
+    /// The state stays `.active` for the seconds it takes to save, and a tick
+    /// sent then would reach the phone **after** the end, newer than it, and
+    /// put the outing back on the Lock Screen (issue #436).
+    @Test("Nothing is sent by the interval while the outing is being saved")
+    func nothingTicksWhileSaving() async {
+        let stub = WorkoutHealthKitStub()
+        stub.yieldsWhileSaving = true
+        let store = stub.makeStore()
+        await store.start(activity: .walking)
+        let runningBefore = stub.sentSnapshots.filter { !$0.isEnded }.count
+
+        let stopping = Task { await store.stop() }
+        await waitUntil { store.isSaving }
+        await store.mirrorIfDue(at: base.addingTimeInterval(3_600))
+        await stopping.value
+
+        #expect(stub.sentSnapshots.filter { !$0.isEnded }.count == runningBefore)
+        #expect(stub.sentSnapshots.last?.isEnded == true)
+    }
+
     /// A change of sport carries information no tick can: the phone would
     /// otherwise keep naming the previous sport for up to an interval.
     @Test("A change of sport is sent without waiting the interval")
