@@ -15,10 +15,10 @@ import XCTest
 /// and the session's elapsed clock is a seeded constant rather than a running
 /// timer, so the shutter can fire whenever it likes.
 final class WatchScreenshotCaptureTests: XCTestCase {
-    /// Enough swipes to reach the bottom of the home's scroll view on any watch
-    /// in the set. Overshooting is free — the end clamps, and a clamped
-    /// position is identical on every run whatever the swipe momentum did.
-    private static let scrollSwipes = 4
+    /// Enough turns of the crown to reach the bottom of the home's scroll view
+    /// on any watch in the set. Overshooting is free — the end clamps, and a
+    /// clamped position is identical on every run whatever the momentum did.
+    private static let crownTurns = 4
 
     override func setUp() {
         super.setUp()
@@ -51,9 +51,17 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     /// scroll is the one thing here that would not be reproducible. See the
     /// scrolling rule in docs/RELEASE.md § 9.1.
     private func captureHydration(_ app: XCUIApplication) {
-        for _ in 0..<Self.scrollSwipes { app.swipeUp() }
-        waitForWatchScreen(app.buttons["J'ai bu"], "Hydration card")
+        // The crown, not a swipe (issue #440): « Démarrer » is pinned over the
+        // bottom of the screen, outside the scroll view, and a swipe that
+        // starts on it moves nothing. The crown scrolls whatever is under it.
+        for _ in 0..<Self.crownTurns { XCUIDevice.shared.rotateDigitalCrown(delta: 1) }
+        let drank = app.buttons["J'ai bu"]
+        waitForWatchScreen(drank, "Hydration card")
         settleWatchScrolling()
+        // Existence is not enough: the card is in the hierarchy before any
+        // scroll, and a home that had stopped scrolling still passed this step
+        // and photographed itself twice (issue #440).
+        XCTAssertTrue(drank.isHittable, "The home did not scroll to the hydration card")
         captureWatch("watch-02-hydration")
     }
 
