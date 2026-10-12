@@ -215,6 +215,7 @@ the GitHub secrets the workflow needs.
 - **Errors** — no `try`/`catch` blocks; use `throws` + propagation, `Result`, or `do { try await … }` at the highest sensible boundary only
 - **Shared code** — models and pure logic go in `FouleeKit`, tested on macOS; what other targets use is `public` ([ADR 0007](docs/adr/0007-fouleekit-logique-pure.md))
 - **Concurrency** — the iPhone app is main-actor by default: data types, pure logic and system clients are `nonisolated`, heavy async work is `@concurrent` ([ADR 0006](docs/adr/0006-isolation-main-actor-par-defaut.md))
+- **Watch screens** — one main action per screen, pinned at the bottom; a choice closes with the system's close button; session pages follow the Exercice app's order ([ADR 0008](docs/adr/0008-interface-montre.md))
 - **Tests** — never read the real clock: inject it (`@Dependency(\.date)` on the phone, `clock:` on the watch's workout store); a precondition is `try #require(…)`, not a `guard` that records an issue and returns
 - **Positive code** — guard-based early returns, declarative SwiftUI, no flag-based branches when a value-based one will do
 

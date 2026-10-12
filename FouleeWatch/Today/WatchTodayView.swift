@@ -6,6 +6,9 @@ import SwiftUI
 /// the old bare idle screen so the watch is useful at a glance, not only
 /// mid-session.
 ///
+/// « Démarrer » is pinned to the bottom (ADR 0008) while the rest scrolls: it
+/// is what the screen is for, and it used to come after everything else.
+///
 /// Nothing here names an activity (issue #222): the CTA is the bare verb, and
 /// the steps tile carries the footprints glyph — a step count, not a walking
 /// figure. The mode does reach this target (`WatchSyncStore`, issue #223), but
@@ -21,7 +24,6 @@ struct WatchTodayView: View {
                 streakHero
                 statsGrid
                 if store.hydrationEnabled { WatchHydrationCard(store: store) }
-                startButton
                 if !store.isLoading, !store.hasPhoneSync { syncHint }
                 if let errorMessage {
                     Text(errorMessage)
@@ -32,6 +34,7 @@ struct WatchTodayView: View {
             }
             .padding(.horizontal, 2)
         }
+        .pinnedAction { WatchStartButton(start: onStart) }
         .task {
             store.startObserving()
             await store.load()
@@ -106,18 +109,23 @@ struct WatchTodayView: View {
             .multilineTextAlignment(.center)
     }
 
-    private var startButton: some View {
-        Button(action: onStart) {
+    private var kmText: String {
+        store.distanceKm.decimalComma()
+    }
+}
+
+/// « Démarrer ». Named rather than inline so a test can find where the home
+/// puts it: pinned, outside the scroll (ADR 0008).
+struct WatchStartButton: View {
+    var start: () -> Void
+
+    var body: some View {
+        Button(action: start) {
             Label("Démarrer", systemImage: "play.fill")
                 .font(.headline)
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
         .tint(Color("AccentColor"))
-        .padding(.top, 2)
-    }
-
-    private var kmText: String {
-        store.distanceKm.decimalComma()
     }
 }

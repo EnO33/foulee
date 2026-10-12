@@ -11,6 +11,11 @@ import SwiftUI
 /// session that failed to save. The failure line added by issue #256 makes the
 /// content taller still, and an error message that costs the user their walk
 /// would be a poor trade.
+///
+/// The main button is pinned below the scroll (ADR 0008), like the home's
+/// « Démarrer »: the map and the kilometres made the summary long enough that
+/// « Terminer » came last. After a failed save, « Réessayer » is the pinned
+/// one and « Terminer » closes the scroll: keeping the outing comes first.
 struct WatchFinishedView: View {
     let metrics: WatchWorkoutMetrics
     /// The whole outing's path, cut by leg (issues #312, #320). Empty when
@@ -61,11 +66,17 @@ struct WatchFinishedView: View {
                 if let reasonText {
                     reason(reasonText)
                 }
-                buttons
+                if saveFailed {
+                    Button(action: onDone) {
+                        Text("Terminer")
+                            .frame(maxWidth: .infinity)
+                    }
                     .padding(.top, 10)
+                }
             }
             .padding(.horizontal, 8)
         }
+        .pinnedAction { primaryButton }
     }
 
     /// What to print under the summary, if anything.
@@ -173,26 +184,13 @@ struct WatchFinishedView: View {
             .padding(.top, 4)
     }
 
-    @ViewBuilder
-    private var buttons: some View {
-        if saveFailed {
-            Button(action: onRetry) {
-                Text("Réessayer")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Color("AccentColor"))
-            Button(action: onDone) {
-                Text("Terminer")
-                    .frame(maxWidth: .infinity)
-            }
-        } else {
-            Button(action: onDone) {
-                Text("Terminer")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Color("AccentColor"))
+    /// « Réessayer » after a failed save, « Terminer » otherwise.
+    private var primaryButton: some View {
+        Button(action: saveFailed ? onRetry : onDone) {
+            Text(saveFailed ? "Réessayer" : "Terminer")
+                .frame(maxWidth: .infinity)
         }
+        .buttonStyle(.borderedProminent)
+        .tint(Color("AccentColor"))
     }
 }

@@ -178,7 +178,7 @@ struct WatchActivityPickerTests {
         #expect(box.started.isEmpty)
     }
 
-    @Test("The way out is pinned to the screen, not scrolled away with the answers")
+    @Test("The way out is the system's close button, not scrolled away with the answers")
     func cancelIsOutsideTheScrolledRegion() throws {
         let box = Taps()
         let screen = idle(intent: .ask, isChoosingActivity: true, into: box)
@@ -192,13 +192,30 @@ struct WatchActivityPickerTests {
             ForEach<[SessionActivity], SessionActivity, WatchActivityChoiceButton>.self,
             in: scrolled
         ))
-        // « Annuler » must not. It is the only way back — there is no
-        // navigation bar behind this screen to swipe to — so scrolled with the
-        // content it is off the bottom of a 40 mm screen at the default text
-        // size and gone entirely at the larger ones, leaving a screen whose
-        // only visible controls both start a permanent workout.
+        // « Annuler » must not. It is the only way back — there is no screen
+        // behind this one to swipe to — so scrolled with the content it is off
+        // the bottom of a 40 mm screen at the default text size and gone
+        // entirely at the larger ones. It sits in the toolbar instead, as the
+        // system's close button (ADR 0008).
         #expect(ViewTreeProbe.contains(WatchActivityCancelButton.self, in: scrolled) == false)
         #expect(ViewTreeProbe.contains(WatchActivityCancelButton.self, in: picker.body))
+    }
+
+    /// « Démarrer » used to come after the streak, the four tiles and the
+    /// hydration card: the one thing the home is for was the last thing
+    /// reached. Pinned below the scroll, it is on screen from the first glance
+    /// (ADR 0008).
+    @Test("« Démarrer » is pinned to the home, not scrolled with the figures")
+    func startIsOutsideTheScrolledRegion() throws {
+        let box = Taps()
+        let screen = idle(intent: .start(.walking), into: box)
+        let home = try #require(ViewTreeProbe.first(WatchTodayView.self, in: screen.body))
+        let scrolled = try #require(scrolledRegion(of: home.body))
+
+        #expect(ViewTreeProbe.contains(WatchStartButton.self, in: scrolled) == false)
+        let start = try #require(ViewTreeProbe.first(WatchStartButton.self, in: home.body))
+        start.start()
+        #expect(box.started == [.walking])
     }
 
     /// The part of the picker the crown can push off the screen.

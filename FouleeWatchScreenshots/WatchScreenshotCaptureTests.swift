@@ -73,7 +73,8 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     ///
     /// **Verified by inverting it**, because a sentinel nobody has watched fail
     /// is a sentinel nobody should trust: with the pager's initial page set to
-    /// `.controls`, this step fails. It fails at `waitForExistence`, which is
+    /// `.controls` — the page left of « Séance » since ADR 0008 — this step
+    /// fails. It fails at `waitForExistence`, which is
     /// the useful finding — a paged `TabView` does *not* keep the page it is
     /// not showing in the query hierarchy, so existence alone is already a
     /// framing check here and not merely a spelling one.
@@ -92,16 +93,16 @@ final class WatchScreenshotCaptureTests: XCTestCase {
 
     /// The fourth board: the same outing, split (issue #276).
     ///
-    /// **Four swipes**, not one — « Contrôles », « Musique » (#383) and « Plan »
-    /// sit between « Séance » and « Jambes », which is deliberate (see
-    /// `WatchSessionPage`).
+    /// **Three swipes**, not one — « Musique » (#383) and « Plan » sit between
+    /// « Séance » and « Jambes », which is deliberate (see `WatchSessionPage`);
+    /// « Contrôles » is on the other side of « Séance » since ADR 0008.
     /// If that order ever changes, this step fails on a sentinel rather than
     /// photographing the wrong page — which is exactly how « Plan » (#312) was
     /// caught arriving: two swipes landed on it, not on « Jambes ».
     ///
     /// **One page at a time, each confirmed before the next**, rather than two
     /// swipes fired back to back — the second would land during the first
-    /// transition. Waiting on « Arrêter » in between costs nothing and makes the
+    /// transition. Waiting on each page's sentinel costs nothing and makes the
     /// step depend on the page order rather than on gesture momentum.
     ///
     /// This step is also what caught the pager's axis being wrong. With
@@ -113,8 +114,6 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     /// closed: a leg still in flight measures itself against the instant it is
     /// drawn, which would make this board depend on when the shutter fired.
     private func captureLegs(_ app: XCUIApplication) {
-        app.swipeLeft()
-        waitForWatchScreen(app.buttons["Arrêter"], "Controls page")
         app.swipeLeft()
         let music = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label == %@", "Musique"))
