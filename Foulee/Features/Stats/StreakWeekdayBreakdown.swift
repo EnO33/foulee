@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Fitness-style "which days are you most regular" breakdown: one mini bar per

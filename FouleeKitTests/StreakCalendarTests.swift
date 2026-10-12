@@ -1,7 +1,6 @@
-import FouleeKit
 import Foundation
 import Testing
-@testable import Foulee
+@testable import FouleeKit
 
 @Suite("StreakCalendar")
 struct StreakCalendarTests {
