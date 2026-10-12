@@ -95,7 +95,7 @@ jobs:
       - uses: ./.github/actions/prepare-project
 
       # The architecture is named: « My Mac » matches arm64 and x86_64, and
-      # the bundle, built for the active one only, fails to load under the other.
+      # xcodebuild would otherwise pick one with a warning.
       - name: Test (FouleeKit, macOS)
         run: |
           set -o pipefail

@@ -4,7 +4,7 @@
 #
 #   tools/check_build.sh
 #
-# Four passes, each into build/check (gitignored):
+# Four passes, logged into build/check (gitignored):
 #
 #   1. SwiftLint, strict, when it is installed.
 #   2. FouleeKit's tests on macOS — no simulator, a few seconds.
@@ -17,12 +17,18 @@
 # would otherwise compile every architecture. The simulator tests themselves
 # are left to CI; this is the minute-long loop before a push.
 #
+# The build itself goes to ~/Library/Developer/Xcode/DerivedData/FouleeCheck,
+# outside the checkout: a clone under ~/Documents is protected by macOS
+# privacy controls, and the test runner xcodebuild starts may not read it — the
+# kit's test bundle then fails to load, reported as « executable not found ».
+#
 # Exits non-zero when any pass fails. Full logs: build/check/<pass>.log.
 
 set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 out=build/check
+dd="$HOME/Library/Developer/Xcode/DerivedData/FouleeCheck"
 mkdir -p "$out"
 arch=$(uname -m)
 failed=()
@@ -60,17 +66,17 @@ fi
 pass kit xcodebuild test \
     -workspace Foulee.xcworkspace -scheme FouleeKit \
     -destination "platform=macOS,arch=$arch" \
-    -derivedDataPath "$out/dd"
+    -derivedDataPath "$dd"
 
 pass ios xcodebuild build-for-testing \
     -workspace Foulee.xcworkspace -scheme Foulee \
     -destination 'generic/platform=iOS Simulator' \
-    -derivedDataPath "$out/dd" ARCHS="$arch" ONLY_ACTIVE_ARCH=NO
+    -derivedDataPath "$dd" ARCHS="$arch" ONLY_ACTIVE_ARCH=NO
 
 pass watchos xcodebuild build-for-testing \
     -workspace Foulee.xcworkspace -scheme FouleeWatch \
     -destination 'generic/platform=watchOS Simulator' \
-    -derivedDataPath "$out/dd" ARCHS="$arch" ONLY_ACTIVE_ARCH=NO
+    -derivedDataPath "$dd" ARCHS="$arch" ONLY_ACTIVE_ARCH=NO
 
 if [ ${#failed[@]} -gt 0 ]; then
     echo "✖ failed: ${failed[*]} (logs in $out/)"
