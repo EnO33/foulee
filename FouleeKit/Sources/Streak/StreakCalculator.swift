@@ -21,7 +21,7 @@ nonisolated public enum StreakCalculator {
     /// calendar sheet said 23).
     public static let historyWindowDays = historyMonths * 31 + 7
 
-    private static let everyDay: Set<Int> = [1, 2, 3, 4, 5, 6, 7]
+    @usableFromInline static let everyDay: Set<Int> = [1, 2, 3, 4, 5, 6, 7]
 
     /// Count back from `today` over active days, skipping rest days, while each
     /// active day reaches `goalMinutes`. Today counts if it already meets the
