@@ -17,7 +17,7 @@ struct WatchPhoneSessionPager: View {
     var errorMessage: String?
     var onCommand: (PhoneSessionCommand) -> Void
 
-    /// Opens on the figures, with the controls one swipe to the left.
+    // Opens on the figures, with the controls one swipe to the left.
     // periphery:ignore - read only through `$page`, like the route page's
     // camera: Periphery 3.8 does not count a macro `@State`'s projected value
     // as a use (issue #404).
