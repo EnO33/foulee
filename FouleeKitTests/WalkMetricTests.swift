@@ -1,5 +1,5 @@
 import Testing
-@testable import Foulee
+@testable import FouleeKit
 
 @Suite struct WalkMetricTests {
     @Test func fractionDigitsPerMetric() {

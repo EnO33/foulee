@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// The water side of a recap (issue #356): how much a day on average, how

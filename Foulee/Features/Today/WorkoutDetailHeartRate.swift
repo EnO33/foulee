@@ -1,4 +1,5 @@
 import Charts
+import FouleeKit
 import SwiftUI
 
 /// HR section of `WorkoutDetailSheet` — min/avg/max trio + a small line

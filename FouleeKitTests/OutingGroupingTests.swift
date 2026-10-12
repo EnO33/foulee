@@ -1,7 +1,6 @@
-import FouleeKit
 import Foundation
 import Testing
-@testable import Foulee
+@testable import FouleeKit
 
 /// Cover for #317: an outing the watch split into legs reads as one row of the
 /// 7-day résumé.

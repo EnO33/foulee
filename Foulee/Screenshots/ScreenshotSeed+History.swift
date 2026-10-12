@@ -1,4 +1,5 @@
 #if DEBUG
+import FouleeKit
 import Foundation
 
 /// The seeded twelve months of history, and everything the app derives from it.

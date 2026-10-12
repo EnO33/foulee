@@ -17,7 +17,7 @@ import Foundation
 /// this fixes, one level up.
 ///
 /// Pure and total: same input, same output, always.
-nonisolated enum WorkoutDeduplication {
+nonisolated public enum WorkoutDeduplication {
     /// One row per stretch of clock actually exercised, newest first.
     ///
     /// **Which source shows its label and its numbers** when rows merge: the
@@ -49,7 +49,7 @@ nonisolated enum WorkoutDeduplication {
     /// **Distinct sessions stay distinct.** Only genuinely overlapping spans
     /// merge; two runs the same day, or a pair where one ends exactly when the
     /// next starts, remain two rows (see `ActiveMinutes.overlap`).
-    static func collapsingOverlaps(_ workouts: [WorkoutSummary]) -> [WorkoutSummary] {
+    public static func collapsingOverlaps(_ workouts: [WorkoutSummary]) -> [WorkoutSummary] {
         var rows: [WorkoutSummary] = []
         var group: [WorkoutSummary] = []
         var groupSpan: Range<Date>?

@@ -32,7 +32,7 @@ import Foundation
 /// The overlay feeds the **displayed counters** only. The streak keeps reading
 /// its history from HealthKit (`mergedDailyMinutes`): a streak resting on a
 /// two-hour overlay would appear and vanish with BLE range.
-nonisolated enum GarminSnapshotOverlay {
+nonisolated public enum GarminSnapshotOverlay {
     /// Past this age a snapshot no longer earns the day's overlay.
     ///
     /// The watch pushes every five minutes while the phone is in range, and
@@ -42,21 +42,31 @@ nonisolated enum GarminSnapshotOverlay {
     /// must stop accepting new totals well before the app itself starts
     /// telling the user their Garmin day is behind, and the two constants have
     /// to move together.
-    static let freshnessHorizon: TimeInterval = GarminFreshness.staleAfter / 2
+    public static let freshnessHorizon: TimeInterval = GarminFreshness.staleAfter / 2
 
     /// A watch clock a few minutes ahead of the phone's is normal, and would
     /// otherwise make every snapshot arrive "from the future" and be dropped.
-    static let clockSkewTolerance: TimeInterval = 5 * 60
+    public static let clockSkewTolerance: TimeInterval = 5 * 60
 
     /// What a usable snapshot contributes to today. Calories are absent by
     /// design — see `merged(healthKit:overlay:)`.
     ///
     /// `Codable` because the day's contribution is persisted as a floor (see
     /// `Floor`), not just held for the length of one refresh.
-    nonisolated struct Contribution: Codable, Equatable, Sendable {
-        var steps: Int
-        var distanceKm: Double
-        var activeMinutes: Int
+    nonisolated public struct Contribution: Codable, Equatable, Sendable {
+        public var steps: Int
+        public var distanceKm: Double
+        public var activeMinutes: Int
+
+        public init(
+            steps: Int,
+            distanceKm: Double,
+            activeMinutes: Int
+        ) {
+            self.steps = steps
+            self.distanceKm = distanceKm
+            self.activeMinutes = activeMinutes
+        }
     }
 
     /// **The high-water floor: the rule that keeps counters from counting
@@ -76,16 +86,16 @@ nonisolated enum GarminSnapshotOverlay {
     ///   #152, #203);
     /// - `freshnessHorizon` decides only whether an arriving snapshot is fresh
     ///   enough to **raise** the floor, never whether the floor still applies.
-    nonisolated struct Floor: Codable, Equatable, Sendable {
-        var contribution: Contribution
+    nonisolated public struct Floor: Codable, Equatable, Sendable {
+        public var contribution: Contribution
         /// Local start-of-day the floor belongs to.
-        var day: Date
+        public var day: Date
     }
 
     /// Why a snapshot may not become the day's overlay — one case per gate, so
     /// a refusal can be asserted in a test and surfaced by a future debug view
     /// instead of vanishing (this target logs nothing, by rule).
-    nonisolated enum Usability: String, Equatable, Sendable {
+    nonisolated public enum Usability: String, Equatable, Sendable {
         case usable
         /// Stamped another local day. "Recent" is not the same question as
         /// "today": a snapshot from 23:50 is twenty minutes old at 00:10 and
@@ -100,7 +110,7 @@ nonisolated enum GarminSnapshotOverlay {
 
     /// Whether `snapshot` still speaks for the day `now` falls in, and why not
     /// when it doesn't.
-    static func usability(
+    public static func usability(
         _ snapshot: GarminDailySnapshot,
         now: Date,
         calendar: Calendar = .current
@@ -112,13 +122,13 @@ nonisolated enum GarminSnapshotOverlay {
         return .usable
     }
 
-    static func isUsable(_ snapshot: GarminDailySnapshot, now: Date, calendar: Calendar = .current) -> Bool {
+    public static func isUsable(_ snapshot: GarminDailySnapshot, now: Date, calendar: Calendar = .current) -> Bool {
         usability(snapshot, now: now, calendar: calendar) == .usable
     }
 
     /// `snapshot`'s contribution to today, or nil when it has none. This is the
     /// gate that decides whether the floor may be *raised*.
-    static func contribution(
+    public static func contribution(
         of snapshot: GarminDailySnapshot?,
         now: Date,
         calendar: Calendar = .current
@@ -134,7 +144,7 @@ nonisolated enum GarminSnapshotOverlay {
     /// `floor` raised by `contribution`, per metric. A floor from another day
     /// is not raised, it is replaced: yesterday's totals may never carry into
     /// today.
-    static func raised(
+    public static func raised(
         _ floor: Floor?,
         with contribution: Contribution,
         now: Date,
@@ -157,7 +167,7 @@ nonisolated enum GarminSnapshotOverlay {
     /// What `floor` still contributes at `now`: everything until local
     /// midnight, nothing after it. Deliberately blind to `freshnessHorizon` —
     /// see `Floor`.
-    static func standing(_ floor: Floor?, now: Date, calendar: Calendar = .current) -> Contribution? {
+    public static func standing(_ floor: Floor?, now: Date, calendar: Calendar = .current) -> Contribution? {
         guard let floor, calendar.isDate(floor.day, inSameDayAs: now) else { return nil }
         return floor.contribution
     }
@@ -176,7 +186,7 @@ nonisolated enum GarminSnapshotOverlay {
     /// isn't a double count, it is simply a wrong number — ~400 active kcal
     /// replaced by ~2000 total kcal on the day's first snapshot. The watch
     /// keeps sending the field (the schema is frozen); iOS ignores it.
-    static func merged(healthKit: HealthMetrics, overlay: Contribution?) -> HealthMetrics {
+    public static func merged(healthKit: HealthMetrics, overlay: Contribution?) -> HealthMetrics {
         guard let overlay else { return healthKit }
         return HealthMetrics(
             steps: max(healthKit.steps, overlay.steps),
@@ -200,12 +210,12 @@ nonisolated enum GarminSnapshotOverlay {
     /// vigorous count above its own total, the subtraction under-credits — the
     /// deliberate direction: this overlay may only ever be a floor under
     /// HealthKit, never a source of minutes the user did not earn.
-    static func wallClockActiveMinutes(_ snapshot: GarminDailySnapshot) -> Int {
+    public static func wallClockActiveMinutes(_ snapshot: GarminDailySnapshot) -> Int {
         min(max(snapshot.activeMinutes - snapshot.activeMinutesVigorous, 0), ActiveMinutes.dailyCap)
     }
 
     /// Garmin reports `ActivityMonitor.Info.distance` in centimetres.
-    static func distanceKm(_ snapshot: GarminDailySnapshot) -> Double {
+    public static func distanceKm(_ snapshot: GarminDailySnapshot) -> Double {
         Double(max(0, snapshot.distanceCm)) / 100_000
     }
 }

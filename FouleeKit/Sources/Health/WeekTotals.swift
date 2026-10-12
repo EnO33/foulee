@@ -8,14 +8,14 @@ import Foundation
 /// Minutes are not here on purpose — the tab sums `weekMinutes`, the merged
 /// per-day figures the week bars and the streak already use, so the total and
 /// the bars under it can never disagree.
-nonisolated struct WeekTotals: Equatable, Sendable {
-    var steps: Int
-    var distanceKm: Double
-    var calories: Int
+nonisolated public struct WeekTotals: Equatable, Sendable {
+    public var steps: Int
+    public var distanceKm: Double
+    public var calories: Int
 
     /// Days from Monday to `today`, both included: 1 on a Monday, 7 on a
     /// Sunday — how far back the daily series must reach.
-    static func daysSoFar(at today: Date, calendar: Calendar = .iso8601Monday) -> Int {
+    public static func daysSoFar(at today: Date, calendar: Calendar = .iso8601Monday) -> Int {
         let start = calendar.startOfDay(for: today)
         let index = ISOWeek.days(containing: today, calendar: calendar).firstIndex(of: start) ?? 6
         return index + 1
@@ -23,8 +23,18 @@ nonisolated struct WeekTotals: Equatable, Sendable {
 
     /// Sum `points` from this week's Monday on. Points from before it — a
     /// series asked for a day too many — are left out rather than counted.
-    static func sum(_ points: [MetricPoint], weekOf today: Date, calendar: Calendar = .iso8601Monday) -> Double {
+    public static func sum(_ points: [MetricPoint], weekOf today: Date, calendar: Calendar = .iso8601Monday) -> Double {
         guard let monday = ISOWeek.days(containing: today, calendar: calendar).first else { return 0 }
         return points.filter { $0.date >= monday }.map(\.value).reduce(0, +)
+    }
+
+    public init(
+        steps: Int,
+        distanceKm: Double,
+        calories: Int
+    ) {
+        self.steps = steps
+        self.distanceKm = distanceKm
+        self.calories = calories
     }
 }

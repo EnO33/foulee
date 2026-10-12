@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Foulee
+@testable import FouleeKit
 
 /// The « Semaine » tab's arithmetic (issue #327): which days count, and that
 /// a series reaching back past Monday is not counted twice.

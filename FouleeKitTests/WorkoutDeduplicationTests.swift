@@ -1,7 +1,6 @@
-import FouleeKit
 import Foundation
 import Testing
-@testable import Foulee
+@testable import FouleeKit
 
 /// Cover for #218: the 7-day résumé listed the same outing once per writer
 /// (Apple Watch + Garmin Connect, watch + Strava), because it grouped by day

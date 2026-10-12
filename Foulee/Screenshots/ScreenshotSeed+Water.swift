@@ -1,4 +1,5 @@
 #if DEBUG
+import FouleeKit
 import Foundation
 
 /// The seeded water (issue #355): today's glasses, which add up to `waterML`,

@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// One day of a recap and the outings filed under it — what the Bilan shows

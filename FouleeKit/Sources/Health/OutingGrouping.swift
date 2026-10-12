@@ -14,7 +14,7 @@ import Foundation
 /// overlap rule does the rest.
 ///
 /// Pure and total: same input, same output, always.
-nonisolated enum OutingGrouping {
+nonisolated public enum OutingGrouping {
     /// How far apart two legs may be and still read as one outing, when the
     /// watch did not say so.
     ///
@@ -22,7 +22,7 @@ nonisolated enum OutingGrouping {
     /// boundary it detected — so legs from before #316 touch exactly. One
     /// second absorbs any rounding on the way through HealthKit and nothing
     /// more: two separate outings are never that close.
-    static let contiguityTolerance: TimeInterval = 1
+    public static let contiguityTolerance: TimeInterval = 1
 
     /// One row per outing, the others untouched.
     ///
@@ -36,7 +36,7 @@ nonisolated enum OutingGrouping {
     ///
     /// Two workouts carrying **different** identifiers are never joined, however
     /// close: the watch has already said they are two outings.
-    static func groupingLegs(_ workouts: [WorkoutSummary]) -> [WorkoutSummary] {
+    public static func groupingLegs(_ workouts: [WorkoutSummary]) -> [WorkoutSummary] {
         var outings: [[WorkoutSummary]] = []
         for workout in workouts.sorted(by: startsFirst) {
             if let index = outings.firstIndex(where: { continues($0, with: workout) }) {

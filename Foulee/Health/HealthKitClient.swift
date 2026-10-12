@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import Foundation
 
 /// Thin, testable façade over HealthKit. All entry points are `async` and

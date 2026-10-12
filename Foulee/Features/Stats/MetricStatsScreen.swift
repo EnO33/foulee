@@ -1,5 +1,6 @@
 import Charts
 import Dependencies
+import FouleeKit
 import SwiftUI
 
 /// Per-metric stats, opened by tapping a card on the Today screen. A segmented

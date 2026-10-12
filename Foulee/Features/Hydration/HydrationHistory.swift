@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// The week's water so far (issues #355, #363), read like the Bilan reads

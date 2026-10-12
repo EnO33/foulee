@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Pure functions that turn a history of `DailyMinutes` into streak counts.

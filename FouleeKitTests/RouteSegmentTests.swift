@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Foulee
+@testable import FouleeKit
 
 /// Which workouts the detail map reads a route from (issue #319).
 @Suite("Route segments")

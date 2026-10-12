@@ -25,27 +25,45 @@ import Foundation
 /// `Codable` so the overlay survives a relaunch — iOS wakes the app in the
 /// background on BLE activity and kills it again between wakes
 /// (`GarminSnapshotStore`, #189).
-nonisolated struct GarminDailySnapshot: Codable, Equatable, Sendable {
+nonisolated public struct GarminDailySnapshot: Codable, Equatable, Sendable {
     /// Frozen schema version. Bumping it means the watch app changed shape;
     /// old phone builds must then reject the payload instead of guessing.
-    static let schemaVersion = 1
+    public static let schemaVersion = 1
 
-    var steps: Int
-    var distanceCm: Int
+    public var steps: Int
+    public var distanceCm: Int
     /// Total active minutes for the day — Garmin's `activeMinutesDay.total`,
     /// the native equivalent of `appleExerciseTime` (ADR 0001).
-    var activeMinutes: Int
+    public var activeMinutes: Int
     /// The vigorous share of `activeMinutes`, kept apart because Garmin counts
     /// vigorous minutes double in its own totals — `GarminSnapshotOverlay`
     /// subtracts it back out to get wall-clock minutes comparable to
     /// `appleExerciseTime`.
-    var activeMinutesVigorous: Int
-    var calories: Int
-    var timestamp: Date
-    var generation: Int
+    public var activeMinutesVigorous: Int
+    public var calories: Int
+    public var timestamp: Date
+    public var generation: Int
+
+    public init(
+        steps: Int,
+        distanceCm: Int,
+        activeMinutes: Int,
+        activeMinutesVigorous: Int,
+        calories: Int,
+        timestamp: Date,
+        generation: Int
+    ) {
+        self.steps = steps
+        self.distanceCm = distanceCm
+        self.activeMinutes = activeMinutes
+        self.activeMinutesVigorous = activeMinutesVigorous
+        self.calories = calories
+        self.timestamp = timestamp
+        self.generation = generation
+    }
 }
 
-nonisolated extension GarminDailySnapshot {
+nonisolated public extension GarminDailySnapshot {
     nonisolated private enum Key {
         static let version = "v"
         static let steps = "steps"

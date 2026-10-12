@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import Foundation
 
 /// A Garmin device the user authorized through Garmin Connect Mobile.

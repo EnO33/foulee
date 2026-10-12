@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// The Bilan: the week so far or the last month (issues #344, #346, #350, #363).
