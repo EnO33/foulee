@@ -22,7 +22,7 @@ struct WalkSplit: Equatable, Sendable, Identifiable {
     var paceText: String? { duration.paceText(overKm: 1) }
 
     /// « 160 pas/min », or `nil` when no step was counted.
-    var cadenceText: String? { FouleeWatch.cadenceText(steps: steps, over: duration) }
+    var cadenceText: String? { FouleeKit.cadenceText(steps: steps, over: duration) }
 
     /// « Course », « Marche », or « Marche et course » for a kilometre that
     /// changed sport on the way.

@@ -17,7 +17,9 @@ nonisolated public extension Coordinate {
 }
 
 nonisolated public extension CLAuthorizationStatus {
-    /// Whether this status lets the app read a position at all.
+    /// Whether this status lets the app read a position at all. Not on macOS,
+    /// which has no « when in use » grant and no Foulée to ask for one.
+    @available(macOS, unavailable)
     var allowsLocation: Bool {
         self == .authorizedWhenInUse || self == .authorizedAlways
     }
