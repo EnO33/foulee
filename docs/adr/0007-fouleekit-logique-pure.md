@@ -39,7 +39,8 @@ Le code partagé entre les cibles était compilé plusieurs fois. Chaque extensi
    - **Health** : les modèles et calculs de `Foulee/Health/` qui ne dépendent pas de HealthKit (résumés et détail de sortie, regroupement, déduplication, métriques, surcouche Garmin), avec `GarminDailySnapshot` qu'utilise la surcouche, et `Int.formattedFR`, qui part de `TodayHeroCard` vers `NumberFormatting`. Les clients HealthKit et les extensions qui lisent un `HKWorkout` restent dans l'app.
    - **Recap** : le Bilan (`Recap`, `RecapPeriod`, `RecapWater`, `OutingDay`), avec `Weekday` (Preferences) et `HydrationMath` (Hydration) qu'il utilise. Restent dans l'app le store et la carte de partage, qui dessine en SwiftUI.
    - **Streak** : le calcul de la série (`StreakCalculator`) et son calendrier (`StreakCalendar`, `StreakMonth`, `CalendarDay`, `WeekdayStat`). Le store du calendrier et ses vues restent dans l'app.
-   - Puis Preferences et Walk.
+   - **Preferences** : `TimeOfDay`, l'heure et les plages horaires des réglages. `UserPreferences` reste dans l'app : c'est un store `@Observable` adossé à `UserDefaults`. `ThemeMode` aussi, qui importe SwiftUI.
+   - Puis Walk.
 
 Restent listés dans `Project.swift`, parce qu'ils dépendent d'un framework absent de macOS ou de l'état de l'app :
 

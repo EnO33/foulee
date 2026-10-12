@@ -2,34 +2,34 @@ import Foundation
 
 /// Hour+minute pair, calendar-agnostic. Encoded as `hour * 60 + minute` in
 /// UserDefaults so a single `Int` round-trips cleanly.
-nonisolated struct TimeOfDay: Equatable, Hashable, Sendable, Codable {
-    var hour: Int
-    var minute: Int
+nonisolated public struct TimeOfDay: Equatable, Hashable, Sendable, Codable {
+    public var hour: Int
+    public var minute: Int
 
-    static let middayWindowStart = TimeOfDay(hour: 11, minute: 30)
-    static let middayWindowEnd = TimeOfDay(hour: 13, minute: 30)
+    public static let middayWindowStart = TimeOfDay(hour: 11, minute: 30)
+    public static let middayWindowEnd = TimeOfDay(hour: 13, minute: 30)
 
-    var rawMinutes: Int {
+    public var rawMinutes: Int {
         hour * 60 + minute
     }
 
-    init(hour: Int, minute: Int) {
+    public init(hour: Int, minute: Int) {
         self.hour = hour
         self.minute = minute
     }
 
-    init(rawMinutes: Int) {
+    public init(rawMinutes: Int) {
         self.hour = (rawMinutes / 60) % 24
         self.minute = rawMinutes % 60
     }
 
-    init(date: Date, calendar: Calendar = .current) {
+    public init(date: Date, calendar: Calendar = .current) {
         let components = calendar.dateComponents([.hour, .minute], from: date)
         self.init(hour: components.hour ?? 0, minute: components.minute ?? 0)
     }
 
     /// Bind to today's date for a `DatePicker` or scheduling call.
-    func dateToday(calendar: Calendar = .current, now: Date = .now) -> Date {
+    public func dateToday(calendar: Calendar = .current, now: Date = .now) -> Date {
         var components = calendar.dateComponents([.year, .month, .day], from: now)
         components.hour = hour
         components.minute = minute
@@ -37,12 +37,12 @@ nonisolated struct TimeOfDay: Equatable, Hashable, Sendable, Codable {
     }
 }
 
-nonisolated extension TimeOfDay {
+nonisolated public extension TimeOfDay {
     /// « 11:30 » — the same 24-hour wall clock as `Date.clockText`.
     var clockText: String { String(format: "%02d:%02d", hour, minute) }
 }
 
-nonisolated extension TimeOfDay {
+nonisolated public extension TimeOfDay {
     /// The shortest window — outing or hydration — the app accepts (#395).
     static let minimumWindowMinutes = 5
 

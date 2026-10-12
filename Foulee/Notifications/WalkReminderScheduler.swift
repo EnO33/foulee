@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import Foundation
 
 /// Computes the set of `WalkReminder`s implied by the current
