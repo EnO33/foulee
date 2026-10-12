@@ -1,3 +1,4 @@
+import FouleeKit
 import Observation
 
 /// A session the phone asked for, waiting for something able to start it

@@ -1,4 +1,5 @@
 #if DEBUG
+import FouleeKit
 import Foundation
 
 /// The two screens' worth of seeded state the watch capture needs, assembled

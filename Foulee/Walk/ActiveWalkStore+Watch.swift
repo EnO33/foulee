@@ -1,4 +1,5 @@
 import CoreLocation
+import FouleeKit
 import Foundation
 
 /// The phone's session, shown and steered from the wrist (issue #342).

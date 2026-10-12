@@ -1,4 +1,5 @@
 @preconcurrency import CoreLocation
+import FouleeKit
 @preconcurrency import HealthKit
 
 /// The HealthKit side effects `WatchWorkoutStore` drives, as an injectable

@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// What the session's distance says about how fast the wearer is going

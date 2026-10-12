@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// What one sport added up to inside an outing (issue #318).

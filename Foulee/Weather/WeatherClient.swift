@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import Foundation
 
 /// WeatherKit façade. `forecast(at:time:)` returns the forecast at the given

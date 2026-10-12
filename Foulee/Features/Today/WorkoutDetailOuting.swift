@@ -1,4 +1,5 @@
 import Charts
+import FouleeKit
 import SwiftUI
 
 /// The outing, sport by sport (issue #318): a timeline of its legs, then what

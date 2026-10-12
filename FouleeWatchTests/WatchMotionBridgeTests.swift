@@ -1,7 +1,7 @@
 import CoreMotion
+import FouleeKit
 import Foundation
 import Testing
-@testable import FouleeWatch
 
 /// The one-line bridge out of `CMMotionActivity`, pinned against CoreMotion's
 /// own constants.

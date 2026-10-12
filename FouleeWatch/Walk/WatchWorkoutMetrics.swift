@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Live snapshot from `HKLiveWorkoutBuilder` — the view binds against

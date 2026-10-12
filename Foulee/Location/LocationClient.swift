@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import Foundation
 
 /// `CLLocationManager` wrapped as a struct-of-closures. `currentLocation()`

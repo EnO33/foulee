@@ -1,4 +1,5 @@
 @preconcurrency import CoreLocation
+import FouleeKit
 import Observation
 
 /// The app's contact with CoreLocation during an outing, as two closures

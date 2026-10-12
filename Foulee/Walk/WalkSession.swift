@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Immutable-ish snapshot of an in-flight or finished walk. The store mutates

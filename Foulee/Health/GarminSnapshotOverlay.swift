@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Arbitration between the two channels a Garmin day reaches Foulée by

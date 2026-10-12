@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Second onboarding screen — marche, course, ou les deux.

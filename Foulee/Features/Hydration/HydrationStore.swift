@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import Observation
 import WidgetKit
 

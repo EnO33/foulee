@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// One `CMMotionActivity`, flattened into values.

@@ -13,6 +13,13 @@ let mainActorByDefault: SettingsDictionary = [
     "SWIFT_APPROACHABLE_CONCURRENCY": "YES"
 ]
 
+// The kit's macOS build exists for its tests alone (issue #425): signed to run
+// locally, so it needs no team, on CI or on a developer's Mac.
+let kitMacSigning: SettingsDictionary = [
+    "CODE_SIGN_IDENTITY[sdk=macosx*]": "-",
+    "CODE_SIGN_STYLE[sdk=macosx*]": "Manual"
+]
+
 // Per-developer signing — read DEVELOPMENT_TEAM from Local.xcconfig if it
 // exists (gitignored). On CI the file is absent and the build targets the
 // simulator with no signing, so the default empty value is fine.
@@ -75,6 +82,38 @@ let project = Project(
         configurations: configurations
     ),
     targets: [
+        // The pure logic and the models every target shares (issue #425, ADR
+        // 0007): one module, compiled once per platform, instead of the same
+        // files listed in each target. macOS is there for the tests alone:
+        // they run on the runner itself, with no simulator to boot.
+        .target(
+            name: "FouleeKit",
+            destinations: [.iPhone, .appleWatch, .mac],
+            product: .framework,
+            bundleId: "\(bundleIdBase).kit",
+            deploymentTargets: .multiplatform(iOS: "26.0", macOS: "15.0", watchOS: "26.0"),
+            sources: ["FouleeKit/Sources/**"],
+            settings: .settings(base: kitMacSigning.merging([
+                // Linked by the widgets and the Live Activity.
+                "APPLICATION_EXTENSION_API_ONLY": "YES"
+            ]) { $1 })
+        ),
+        .target(
+            name: "FouleeKitTests",
+            destinations: [.mac],
+            product: .unitTests,
+            bundleId: "\(bundleIdBase).kit.tests",
+            deploymentTargets: .macOS("15.0"),
+            sources: ["FouleeKitTests/**"],
+            dependencies: [
+                .target(name: "FouleeKit")
+            ],
+            settings: .settings(base: kitMacSigning.merging([
+                // No host app embeds the framework on macOS: the bundle finds
+                // it next to itself, in the build products directory.
+                "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@loader_path/../../.."]
+            ]) { $1 })
+        ),
         .target(
             name: "Foulee",
             destinations: [.iPhone],
@@ -88,6 +127,7 @@ let project = Project(
             ],
             entitlements: .file(path: "Foulee/Resources/Foulee.entitlements"),
             dependencies: [
+                .target(name: "FouleeKit"),
                 .package(product: "Dependencies"),
                 // iPhone app only — the widget and watch targets must never
                 // link the Connect IQ framework (iOS-only binary, and the
@@ -122,24 +162,9 @@ let project = Project(
             ]),
             sources: [
                 "FouleeWidget/**",
-                // Pure active-minutes merge shared with the app so widget
-                // minutes match the hero ring (issue #181).
-                "Foulee/Health/ActiveMinutes.swift",
-                "Foulee/Shared/SharedWidgetData.swift",
-                "Foulee/Shared/NumberFormatting.swift",
-                "Foulee/Shared/UncheckedSendableBox.swift",
-                "Foulee/Shared/WidgetRefresh.swift",
-                "Foulee/Shared/WidgetTimelineBuilder.swift",
-                "Foulee/Shared/WidgetKind.swift",
+                // The intent the app registers too: an App Intent is declared
+                // in each process that runs it, not linked.
                 "Foulee/Shared/LogWaterIntent.swift",
-                // The activity preference and the glyph it maps to, so the
-                // widget's figure follows the user's mode like the app's own
-                // ring (issue #222). Both Foundation-only — `ActivityMode+Icon`
-                // reads `ActivityGlyph`, not `FouleeIcon`, precisely so it can
-                // be listed here.
-                "Foulee/Preferences/ActivityMode.swift",
-                "Foulee/Preferences/ActivityMode+Icon.swift",
-                "Foulee/Shared/ActivityGlyph.swift",
                 "FouleeWatchWidget/StreakEntry.swift"
             ],
             resources: [
@@ -149,7 +174,9 @@ let project = Project(
                 )
             ],
             entitlements: .file(path: "FouleeWidget/Resources/FouleeWidget.entitlements"),
-            dependencies: []
+            dependencies: [
+                .target(name: "FouleeKit")
+            ]
         ),
         .target(
             name: "FouleeLiveActivity",
@@ -170,22 +197,10 @@ let project = Project(
             ]),
             sources: [
                 "FouleeLiveActivity/**",
-                "Foulee/Walk/WalkActivityAttributes.swift",
-                "Foulee/Shared/WalkFormatting.swift",
-                "Foulee/Shared/NumberFormatting.swift",
-                // The glyph names plus the activity vocabulary the attributes
-                // now carry (issue #225): this extension still has no
-                // app-group entitlement and no channel to the *preference*,
-                // but `WalkActivityAttributes.activity` hands it what the
-                // session in flight is, so it must be able to decode a
-                // `SessionActivity`. `ActivityMode` rides along only because
-                // `SessionActivity.init(mode:)` names it — same transitive
-                // reason the watch target lists it. All three Foundation-only;
-                // `SessionActivity+HealthKit` deliberately stays out, so no
-                // HealthKit is pulled into an extension that writes nothing.
-                "Foulee/Shared/ActivityGlyph.swift",
-                "Foulee/Shared/SessionActivity.swift",
-                "Foulee/Preferences/ActivityMode.swift"
+                // ActivityKit, which FouleeKit does not import: macOS has none.
+                // `SessionActivity+HealthKit` stays out of this extension too,
+                // so no HealthKit is pulled into a process that writes nothing.
+                "Foulee/Walk/WalkActivityAttributes.swift"
             ],
             resources: [
                 .glob(
@@ -194,7 +209,9 @@ let project = Project(
                 )
             ],
             entitlements: .file(path: "FouleeLiveActivity/Resources/FouleeLiveActivity.entitlements"),
-            dependencies: []
+            dependencies: [
+                .target(name: "FouleeKit")
+            ]
         ),
         .target(
             name: "FouleeWatch",
@@ -205,62 +222,19 @@ let project = Project(
             infoPlist: .extendingDefault(with: fouleeWatchInfoPlist),
             sources: [
                 "FouleeWatch/**",
-                "Foulee/Shared/WalkFormatting.swift",
-                "Foulee/Shared/NumberFormatting.swift",
-                "Foulee/Shared/UncheckedSendableBox.swift",
-                // Both halves of the session path log to the same subsystem, so
-                // one `log stream` follows an outing across the two devices
-                // (issue #273).
-                "Foulee/Shared/FouleeLog.swift",
-                // The figures the wrist states to the phone (issue #278). Both
-                // ends compile the same type, so a field can only ever be added
-                // in one place — the tolerant decoder handles the window where
-                // one app has been updated and the other has not.
-                "Foulee/Shared/WatchSessionSnapshot.swift",
-                // What the phone can ask the wrist to do (issue #282). Shared
-                // for the same reason as the snapshot: one type, two ends.
-                "Foulee/Shared/MirrorCommand.swift",
                 // The route recorder the phone's map already uses (issue
                 // #312): one accuracy rule, one stream lifetime, one place
-                // that asks for location. CoreLocation-only, no Dependencies.
-                "Foulee/Location/Coordinate.swift",
-                "Foulee/Location/CoreLocation+Foulee.swift",
+                // that asks for location. Main-actor state, so not in the kit.
                 "Foulee/Location/RouteRecorder.swift",
-                "Foulee/Shared/WatchSyncPayload.swift",
-                "Foulee/Shared/WatchComplicationKind.swift",
-                "Foulee/Shared/WatchComplicationCache.swift",
-                // The watch writes its own workouts, so it needs the same
-                // activity vocabulary as the phone (issue #223) — and the
-                // preference it resolves from, which rides in the sync payload.
-                "Foulee/Shared/SessionActivity.swift",
+                // The watch writes its own workouts, with the phone's mapping
+                // to HealthKit (issue #223). HealthKit stays out of the kit.
                 "Foulee/Shared/SessionActivity+HealthKit.swift",
-                // The keys the phone reads back to tie legs into one outing
-                // (issue #316).
-                "Foulee/Shared/FouleeWorkoutMetadata.swift",
-                // What one CoreMotion estimate means. Shared because the phone
-                // reads the same history after a session (issue #246), and two
-                // platforms disagreeing about a single estimate would be a bug
-                // nobody could explain.
-                "Foulee/Motion/MotionActivityReading.swift",
-                "Foulee/Preferences/ActivityMode.swift",
-                // « Les deux » makes the watch ask which activity before it
-                // records one (issue #224): the intent is the shared decision,
-                // and the glyphs are what its two buttons draw — the watch has
-                // no DesignSystem, so `SessionActivity.icon` reads these.
-                "Foulee/Shared/ActivityStartIntent.swift",
-                "Foulee/Shared/ActivityGlyph.swift",
                 // The colours an outing is drawn in by sport, shared with the
-                // phone's detail (issue #320).
+                // phone's detail (issue #320), and the colour of each daily
+                // metric, the phone's rings' (#372). SwiftUI, so not in the kit.
                 "Foulee/Shared/ActivityPalette.swift",
                 "Foulee/Shared/SessionActivity+Tint.swift",
-                // The colour of each daily metric, the phone's rings' (#372).
                 "Foulee/Shared/MetricPalette.swift",
-                // The route a mirrored outing sends to the phone (issue #334).
-                "Foulee/Shared/MirroredRoute.swift",
-                "Foulee/Shared/MirroredRoute+Thinning.swift",
-                // The phone's session as the wrist shows it (issue #342).
-                "Foulee/Shared/PhoneSessionSnapshot.swift",
-                "Foulee/Notifications/HydrationNotification.swift",
                 // The App Store capture seed (issue #239). Only the
                 // Foundation-only half: the watch board and the phone board
                 // must show the same day, and the way to guarantee that is to
@@ -277,6 +251,7 @@ let project = Project(
             ],
             entitlements: .file(path: "FouleeWatch/Resources/FouleeWatch.entitlements"),
             dependencies: [
+                .target(name: "FouleeKit"),
                 .target(name: "FouleeWatchWidget")
             ]
         ),
@@ -295,17 +270,7 @@ let project = Project(
                 ]
             ]),
             sources: [
-                "FouleeWatchWidget/**",
-                "Foulee/Shared/NumberFormatting.swift",
-                "Foulee/Shared/UncheckedSendableBox.swift",
-                "Foulee/Shared/WidgetRefresh.swift",
-                "Foulee/Shared/WidgetTimelineBuilder.swift",
-                "Foulee/Shared/WatchSyncPayload.swift",
-                // Only because the payload above carries it — no complication
-                // renders the activity mode.
-                "Foulee/Preferences/ActivityMode.swift",
-                "Foulee/Shared/WatchComplicationKind.swift",
-                "Foulee/Shared/WatchComplicationCache.swift"
+                "FouleeWatchWidget/**"
             ],
             resources: [
                 .glob(
@@ -314,7 +279,9 @@ let project = Project(
                 )
             ],
             entitlements: .file(path: "FouleeWatchWidget/Resources/FouleeWatchWidget.entitlements"),
-            dependencies: []
+            dependencies: [
+                .target(name: "FouleeKit")
+            ]
         ),
         .target(
             name: "FouleeTests",
@@ -381,6 +348,13 @@ let project = Project(
         )
     ],
     schemes: [
+        // The kit's tests, on macOS (issue #425): no simulator, seconds.
+        .scheme(
+            name: "FouleeKit",
+            shared: true,
+            buildAction: .buildAction(targets: ["FouleeKit"]),
+            testAction: .targets(["FouleeKitTests"])
+        ),
         .scheme(
             name: "Foulee",
             shared: true,

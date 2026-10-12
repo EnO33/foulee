@@ -1,3 +1,4 @@
+import FouleeKit
 @preconcurrency import HealthKit
 @preconcurrency import UserNotifications
 import WidgetKit

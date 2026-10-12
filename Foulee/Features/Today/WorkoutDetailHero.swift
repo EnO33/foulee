@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Hero card at the top of `WorkoutDetailSheet` — the session's own figure,

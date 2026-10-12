@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Runs `ActivitySwitchDetector` against the live motion streams for the

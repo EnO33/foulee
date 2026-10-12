@@ -1,5 +1,6 @@
 @preconcurrency import ActivityKit
 import Dependencies
+import FouleeKit
 import Foundation
 import Observation
 import WidgetKit

@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Objectifs: what the user moves at, and how much a day.

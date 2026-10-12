@@ -1,4 +1,5 @@
 import CoreMotion
+import FouleeKit
 import Foundation
 
 /// What the pedometer says about the wearer's rhythm right now (issue #331).

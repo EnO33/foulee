@@ -1,4 +1,5 @@
 import CoreLocation
+import FouleeKit
 import Foundation
 
 /// The phone's session in the wrist's own types (issue #342), so its screens

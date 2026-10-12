@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Reminder controls inside the Hydratation settings page: an on/off toggle
