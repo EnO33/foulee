@@ -1,4 +1,3 @@
-import FouleeKit
 import Foundation
 
 /// Pure functions that turn a history of `DailyMinutes` into streak counts.
@@ -9,10 +8,10 @@ import Foundation
 /// breaks the streak — only a *missed active day* breaks it. The default of
 /// every weekday keeps the "every single day" behaviour (used by the widgets,
 /// which don't know the user's chosen days).
-nonisolated enum StreakCalculator {
+nonisolated public enum StreakCalculator {
     /// Months of history every streak surface covers — the calendar sheet's
     /// browsable months (`StreakCalendarStore.monthsBack` mirrors this).
-    static let historyMonths = 12
+    public static let historyMonths = 12
 
     /// Day window to fetch so `historyMonths` are fully covered: a 31-day
     /// upper bound per month plus a week of slack past the 1st of the oldest
@@ -20,14 +19,14 @@ nonisolated enum StreakCalculator {
     /// with this same window — a shallower fetch silently turns the record
     /// into "best of the last N days" (issue #176: home card said 12, the
     /// calendar sheet said 23).
-    static let historyWindowDays = historyMonths * 31 + 7
+    public static let historyWindowDays = historyMonths * 31 + 7
 
-    private static let everyDay: Set<Int> = [1, 2, 3, 4, 5, 6, 7]
+    @usableFromInline static let everyDay: Set<Int> = [1, 2, 3, 4, 5, 6, 7]
 
     /// Count back from `today` over active days, skipping rest days, while each
     /// active day reaches `goalMinutes`. Today counts if it already meets the
     /// goal; an unfinished today doesn't break a streak that held yesterday.
-    static func current(
+    public static func current(
         history: [DailyMinutes],
         goalMinutes: Int,
         activeWeekdays: Set<Int> = everyDay,
@@ -70,7 +69,7 @@ nonisolated enum StreakCalculator {
     /// raw calendar numbers — the single entry point for every surface that
     /// derives the streak from the user's settings (Today screen, background
     /// wake), so they can't answer differently for the same day.
-    static func current(
+    public static func current(
         history: [DailyMinutes],
         goalMinutes: Int,
         activeDays: Set<Weekday>,
@@ -86,7 +85,7 @@ nonisolated enum StreakCalculator {
 
     /// Longest run of consecutive active days meeting `goalMinutes` across the
     /// history, with rest days skipped. Empty history → 0.
-    static func best(
+    public static func best(
         history: [DailyMinutes],
         goalMinutes: Int,
         activeWeekdays: Set<Int> = everyDay,

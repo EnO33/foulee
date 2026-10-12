@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// One calendar month rendered as weekday-aligned daily rings. Each active day

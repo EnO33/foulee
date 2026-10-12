@@ -1,8 +1,7 @@
-import FouleeKit
 import Foundation
 
 /// How a single day reads on the streak calendar.
-nonisolated enum DayStatus: Equatable, Sendable {
+nonisolated public enum DayStatus: Equatable, Sendable {
     case done    // active day, goal met
     case missed  // active day, goal not met
     case rest    // not one of the user's active weekdays
@@ -10,35 +9,35 @@ nonisolated enum DayStatus: Equatable, Sendable {
 }
 
 /// One cell of the streak calendar.
-nonisolated struct CalendarDay: Identifiable, Equatable, Sendable {
-    let date: Date
-    let status: DayStatus
+nonisolated public struct CalendarDay: Identifiable, Equatable, Sendable {
+    public let date: Date
+    public let status: DayStatus
     /// Exercise minutes that day (drives the inner activity ring + day detail).
-    let minutes: Int
+    public let minutes: Int
     /// Steps that day (drives the outer step ring + day detail).
-    let steps: Int
-    var id: Date { date }
+    public let steps: Int
+    public var id: Date { date }
 }
 
 /// One calendar month laid out for the rings browser: weekday-aligned cells
 /// (leading `nil`s pad the first week, trailing `nil`s pad to a fixed 6 rows so
 /// pages don't change height), the month's title, and a few derived stats.
-nonisolated struct StreakMonth: Identifiable, Equatable, Sendable {
+nonisolated public struct StreakMonth: Identifiable, Equatable, Sendable {
     let monthStart: Date
-    let title: String
-    let cells: [CalendarDay?]
-    var id: Date { monthStart }
+    public let title: String
+    public let cells: [CalendarDay?]
+    public var id: Date { monthStart }
 
     private var realDays: [CalendarDay] { cells.compactMap { $0 } }
 
     /// Days whose goal was met.
-    var walks: Int { realDays.filter { $0.status == .done }.count }
+    public var walks: Int { realDays.filter { $0.status == .done }.count }
 
     /// Total exercise minutes logged across the month.
-    var minutes: Int { realDays.reduce(0) { $0 + $1.minutes } }
+    public var minutes: Int { realDays.reduce(0) { $0 + $1.minutes } }
 
     /// Share of active (past, non-rest) days whose goal was met, as a percent.
-    var rate: Int {
+    public var rate: Int {
         let active = realDays.filter { $0.status == .done || $0.status == .missed }
         guard !active.isEmpty else { return 0 }
         let done = active.filter { $0.status == .done }.count
@@ -48,23 +47,23 @@ nonisolated struct StreakMonth: Identifiable, Equatable, Sendable {
 
 /// Success rate for one weekday across the loaded history (Fitness-style
 /// "which days are you most regular" breakdown).
-nonisolated struct WeekdayStat: Identifiable, Equatable, Sendable {
-    let weekday: Weekday
+nonisolated public struct WeekdayStat: Identifiable, Equatable, Sendable {
+    public let weekday: Weekday
     /// 0…100 — share of that weekday's active days whose goal was met.
-    let rate: Int
+    public let rate: Int
     /// One of the user's active weekdays (false ones are muted in the UI).
-    let isActive: Bool
-    var id: Int { weekday.rawValue }
+    public let isActive: Bool
+    public var id: Int { weekday.rawValue }
 }
 
 /// Pure builder for the streak rings — the last `count` calendar months, each
 /// weekday-aligned (Monday first) for a 7-column grid.
-nonisolated enum StreakCalendar {
+nonisolated public enum StreakCalendar {
     /// The last `count` calendar months, oldest → newest (current month last).
     /// Each month's `cells` start with leading `nil`s so the 1st lands under its
     /// weekday column, and are padded with trailing `nil`s to exactly 6 rows
     /// (42 cells) so swiping between months keeps a stable height.
-    static func months(
+    public static func months(
         history: [DailyMinutes],
         steps: [MetricPoint] = [],
         goalMinutes: Int,
@@ -118,7 +117,7 @@ nonisolated enum StreakCalendar {
     /// Per-weekday success rate over the given months (Monday → Sunday). Only
     /// active (done/missed) days count toward each weekday's rate; rest days
     /// are flagged so the UI can mute them.
-    static func weekdayStats(
+    public static func weekdayStats(
         months: [StreakMonth],
         activeDays: Set<Weekday>,
         calendar: Calendar = .iso8601Monday
