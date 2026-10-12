@@ -1,4 +1,3 @@
-import FouleeKit
 import Foundation
 
 /// A week or a month in review (issue #344).

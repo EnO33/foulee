@@ -1,4 +1,3 @@
-import FouleeKit
 import Foundation
 
 /// One leg's stretch of the route, and the sport it was done as (issue #319).

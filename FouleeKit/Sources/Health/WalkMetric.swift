@@ -1,4 +1,3 @@
-import FouleeKit
 import Foundation
 
 /// A walk metric the user can drill into from the Today cards. Pure model
