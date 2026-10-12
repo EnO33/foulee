@@ -45,7 +45,7 @@ struct WatchFinishedView: View {
                     Text(metrics.elapsed.walkClockText)
                         .font(.system(size: 22, weight: .semibold, design: .rounded))
                         .monospacedDigit()
-                    Text("\(metrics.steps) pas · \(metrics.distanceKm.kmText())")
+                    Text("\(metrics.steps.formatted()) pas · \(metrics.distanceKm.kmText())")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

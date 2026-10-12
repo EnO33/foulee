@@ -8,7 +8,9 @@ struct ProgressRing<Label: View>: View {
     var progress: Double
     var lineWidth: CGFloat = 12
     var gradient: LinearGradient = FouleeColor.accentGradient
-    var trackColor: Color = .black.opacity(0.06)
+    /// Adapts to the scheme: a fixed black track all but vanished on the dark
+    /// background of the session screen (issue #408).
+    var trackColor: Color = .primary.opacity(0.08)
     @ViewBuilder var label: () -> Label
 
     private var clamped: Double {

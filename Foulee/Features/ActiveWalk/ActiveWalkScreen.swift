@@ -224,9 +224,13 @@ struct ActiveWalkScreen: View {
                 .scaledNumericFont(size: 17, weight: .semibold)
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
+            // One line, shrunk if needed: the ring is a fixed 232 pt, and at the
+            // accessibility sizes « Distance » broke mid-word (issue #408).
             Text(label)
                 .font(FouleeFont.caption)
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
     }
 
@@ -238,6 +242,7 @@ struct ActiveWalkScreen: View {
             Text("Connecte ta Watch pour le rythme cardiaque")
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer()
         }
         .padding(16)
