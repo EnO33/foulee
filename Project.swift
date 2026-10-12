@@ -38,14 +38,13 @@ let project = Project(
         developmentRegion: "fr"
     ),
     packages: [
-        // Pulls in xctest-dynamic-overlay, whose IssueReporting reads Swift
-        // Testing's private type layout to find the running test. Swift 6.4
-        // (Xcode 27) changed that layout: below 1.10.0, any `@Dependency`
-        // read at app launch crashes the test host (issue #404). The pin in
-        // `.package.resolved` must stay at 1.10.0 or later.
+        // 1.17 is the floor: it depends on swift-issue-reporting 2, whose
+        // reading of Swift Testing's private layout matches Swift 6.4. Older
+        // releases pull in xctest-dynamic-overlay, which crashed the test host
+        // on Xcode 27 below 1.10.0 (issues #404, #414).
         .remote(
             url: "https://github.com/pointfreeco/swift-dependencies",
-            requirement: .upToNextMajor(from: "1.4.0")
+            requirement: .upToNextMajor(from: "1.17.0")
         ),
         // Garmin Connect IQ companion SDK — a binary xcframework, iOS-only.
         // Linked to the iPhone app target exclusively (issue #187).
