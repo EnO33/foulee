@@ -26,7 +26,7 @@ actor GarminSourceDetector {
     /// Outcome of the "which watch" probe. The matching `HKSource`s are kept
     /// so the freshness query can target them with `predicateForObjects(from:)`
     /// instead of scanning every sample of the day.
-    private struct Devices: Sendable {
+    nonisolated private struct Devices: Sendable {
         var garminSources: Set<HKSource> = []
         var hasAppleWatch = false
         /// Every query answered. A failure — typically "authorization not
@@ -98,7 +98,7 @@ actor GarminSourceDetector {
 /// Sources that wrote `type` in the window and look Garmin. `HKSourceQuery`
 /// returns just the sources — no samples — so this stays cheap. `nil` means
 /// the query failed and there is no verdict to cache.
-private func garminSources(
+nonisolated private func garminSources(
     store: HKHealthStore,
     type: HKSampleType,
     start: Date,
@@ -124,7 +124,7 @@ private func garminSources(
 /// device fact HealthKit lets a predicate filter on. Samples written without a
 /// device (rare, older data) are invisible here — the cost of a false negative
 /// is one extra hint, never a missing feature. `nil` means the query failed.
-private func hasAppleWatchSamples(
+nonisolated private func hasAppleWatchSamples(
     store: HKHealthStore,
     start: Date,
     end: Date
@@ -156,7 +156,7 @@ private func hasAppleWatchSamples(
 /// pushed nothing since midnight. Steps *and* workouts, because a user can
 /// allow only one of the two in Garmin Connect — measuring the wrong stream
 /// would report an eternal silence and nag forever.
-private func latestGarminSampleToday(store: HKHealthStore, sources: Set<HKSource>) async -> Date? {
+nonisolated private func latestGarminSampleToday(store: HKHealthStore, sources: Set<HKSource>) async -> Date? {
     let end = Date.now
     let start = Calendar.current.startOfDay(for: end)
     async let steps = newestSample(
@@ -171,7 +171,7 @@ private func latestGarminSampleToday(store: HKHealthStore, sources: Set<HKSource
 /// Start date of the newest `type` sample today written by `sources`. Filtered
 /// by HealthKit (`predicateForObjects(from:)`) and capped at one result, so a
 /// busy day doesn't drag thousands of samples into memory on every refresh.
-private func newestSample(
+nonisolated private func newestSample(
     store: HKHealthStore,
     type: HKSampleType,
     sources: Set<HKSource>,

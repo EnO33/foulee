@@ -4,7 +4,9 @@ import Testing
 
 /// Fixtures shared by the streak suites that drive a real `TodayStore`
 /// (`TodayStoreTests`, `TodayStoreLateDataTests`).
-enum StreakTestSupport {
+///
+/// nonisolated: `walkedDays` is called from the `@Sendable` closures `windowed` takes.
+nonisolated enum StreakTestSupport {
     /// Minutes recorded on a walked day — comfortably past the 20-minute goal.
     private static let walkedMinutes = 25
 

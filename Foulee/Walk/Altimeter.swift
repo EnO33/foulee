@@ -4,7 +4,7 @@ import Foundation
 /// Turns a stream of (signed) relative-altitude readings into cumulative
 /// elevation *gain* — the sum of the positive changes, ignoring descents.
 /// Pure + value type so it's trivially unit-testable.
-struct ElevationAccumulator {
+nonisolated struct ElevationAccumulator {
     private var last: Double?
     private(set) var gain: Double = 0
 
@@ -21,12 +21,12 @@ struct ElevationAccumulator {
 /// CoreMotion's `CMAltimeter` wrapped as a struct-of-closures (DI parity with
 /// `Pedometer`). `startUpdates()` yields the cumulative elevation gain in
 /// metres each time the barometer reports a fresh reading.
-struct Altimeter: Sendable {
+nonisolated struct Altimeter: Sendable {
     var startUpdates: @Sendable () -> AsyncStream<Double>
     var stop: @Sendable () -> Void
 }
 
-extension Altimeter: DependencyKey {
+nonisolated extension Altimeter: DependencyKey {
     static let previewValue = Altimeter(
         startUpdates: {
             AsyncStream { continuation in
@@ -50,7 +50,7 @@ extension Altimeter: DependencyKey {
     )
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var altimeter: Altimeter {
         get { self[Altimeter.self] }
         set { self[Altimeter.self] = newValue }

@@ -18,7 +18,7 @@ import Foundation
 /// this one (`FouleeIcon.mixedCardio`), so a future swap is still one line and
 /// now propagates past the app target. The walk and run names are read through
 /// `ActivityMode.icon` instead — a screen that knows the mode asks the mode.
-enum ActivityGlyph {
+nonisolated enum ActivityGlyph {
     static let walk = "figure.walk"
     static let run = "figure.run"
     /// Read-side only: Foulée never records a hike, but the 7-day résumé has

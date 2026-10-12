@@ -17,12 +17,11 @@ import Testing
 /// reading it back would race with every other suite running in parallel.
 @Suite("TodayStore metrics failure")
 struct TodayStoreMetricsFailureTests {
-    private struct MetricsDown: Error, LocalizedError {
+    nonisolated private struct MetricsDown: Error, LocalizedError {
         var errorDescription: String? { "Santé verrouillée" }
     }
 
     @Test("A failing metrics read carries the stored counters forward")
-    @MainActor
     func failedMetricsCarriesStoredCountersForward() async throws {
         try await withDependencies {
             // Publication reads the clock unconditionally since #214 (the
@@ -49,7 +48,6 @@ struct TodayStoreMetricsFailureTests {
     }
 
     @Test("A failing metrics read still pushes the streak to the Watch")
-    @MainActor
     func failedMetricsStillPushesWatchPayload() async throws {
         try await withDependencies {
             $0.date = .constant(.now)
@@ -70,7 +68,6 @@ struct TodayStoreMetricsFailureTests {
     }
 
     @Test("A failing metrics read doesn't resurrect yesterday's counters")
-    @MainActor
     func failedMetricsDoesNotResurrectYesterdaysCounters() async throws {
         try await withDependencies {
             $0.date = .constant(.now)
@@ -97,7 +94,6 @@ struct TodayStoreMetricsFailureTests {
     }
 
     @Test("A read metrics wins over the stored counters, downwards too")
-    @MainActor
     func measuredMetricsWinOverStoredCounters() async throws {
         try await withDependencies {
             $0.date = .constant(.now)
@@ -120,7 +116,6 @@ struct TodayStoreMetricsFailureTests {
     }
 
     @Test("Both legs failing on a cold launch invents nothing")
-    @MainActor
     func bothLegsFailingOnColdLaunchInventsNothing() async throws {
         try await withDependencies {
             $0.date = .constant(.now)

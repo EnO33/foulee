@@ -4,7 +4,6 @@ import Testing
 @testable import Foulee
 
 @Suite("Onboarding")
-@MainActor
 struct OnboardingFlowTests {
     @Test("The flow walks every step in order and stops on the last one")
     func stepsAdvanceInOrder() {

@@ -10,7 +10,7 @@ import HealthKit
 /// on a phone that never produced an `appleExerciseTime` sample the
 /// statistics query returns nothing at all, and the merged series must still
 /// cover every day so streaks and charts see real zeros.
-func mergedDailyMinutes(
+nonisolated func mergedDailyMinutes(
     store: HKHealthStore,
     minutesType: HKQuantityType,
     daysBack: Int
@@ -44,7 +44,7 @@ func mergedDailyMinutes(
 
 /// Today's workout minutes (all activity types, attributed by `startDate`)
 /// for the `HealthMetrics.activeMinutes` and widget-snapshot merges.
-func todayWorkoutMinutes(store: HKHealthStore) async throws -> Int {
+nonisolated func todayWorkoutMinutes(store: HKHealthStore) async throws -> Int {
     let calendar = Calendar.current
     let start = calendar.startOfDay(for: .now)
     let intervals = try await workoutIntervals(store: store, start: start, end: .now)
@@ -56,7 +56,7 @@ func todayWorkoutMinutes(store: HKHealthStore) async throws -> Int {
 /// bar at 25 min and an hourly curve flat at zero — the same number, two
 /// different answers. The merge rule (and why it is decided on the day's
 /// totals rather than hour by hour) lives in `ActiveMinutes`.
-func mergedHourlyMinutesToday(
+nonisolated func mergedHourlyMinutesToday(
     store: HKHealthStore,
     minutesType: HKQuantityType
 ) async throws -> [MetricPoint] {
@@ -86,7 +86,7 @@ func mergedHourlyMinutesToday(
 /// Bucket granularity understood by `appleMinutesByBucket`. A closed two-case
 /// enum rather than a `Calendar.Component`, so no caller can ask for a
 /// granularity the query has no interval for and silently get days back.
-private enum MinutesBucket {
+nonisolated private enum MinutesBucket {
     case day
     case hour
 
@@ -111,7 +111,7 @@ private enum MinutesBucket {
 /// in the callers. Empty when the range has no samples.
 /// `HKStatisticsCollectionQuery` merges every source before summing (Apple
 /// documented behaviour), so no manual per-source addition happens here.
-private func appleMinutesByBucket(
+nonisolated private func appleMinutesByBucket(
     store: HKHealthStore,
     type: HKQuantityType,
     start: Date,
@@ -154,7 +154,7 @@ private func appleMinutesByBucket(
 /// All `HKWorkout`s started in `start..<end`, any activity type, reduced to
 /// the pure `WorkoutInterval` shape. Workouts are sparse — a plain
 /// `HKSampleQuery` over the whole streak window is trivial.
-private func workoutIntervals(
+nonisolated private func workoutIntervals(
     store: HKHealthStore,
     start: Date,
     end: Date

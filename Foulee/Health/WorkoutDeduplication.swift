@@ -16,7 +16,7 @@ import Foundation
 /// this fixes, one level up.
 ///
 /// Pure and total: same input, same output, always.
-enum WorkoutDeduplication {
+nonisolated enum WorkoutDeduplication {
     /// One row per stretch of clock actually exercised, newest first.
     ///
     /// **Which source shows its label and its numbers** when rows merge: the

@@ -4,6 +4,15 @@ import ProjectDescriptionHelpers
 
 let deploymentTargets: DeploymentTargets = .iOS("26.0")
 
+// Main-actor isolation by default (issue #407, ADR 0006): code is on the main
+// actor unless it says otherwise, so what leaves it is marked `nonisolated` or
+// `@concurrent` where it is declared. Enabled target by target; a target
+// without it keeps the Swift default (nonisolated).
+let mainActorByDefault: SettingsDictionary = [
+    "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
+    "SWIFT_APPROACHABLE_CONCURRENCY": "YES"
+]
+
 // Per-developer signing — read DEVELOPMENT_TEAM from Local.xcconfig if it
 // exists (gitignored). On CI the file is absent and the build targets the
 // simulator with no signing, so the default empty value is fine.
@@ -91,12 +100,12 @@ let project = Project(
                 // ships in the same App Store submission.
                 .target(name: "FouleeWatch")
             ],
-            settings: .settings(base: [
+            settings: .settings(base: mainActorByDefault.merging([
                 // The Connect IQ framework ships Objective-C categories; without
                 // -ObjC the linker drops them and the SDK crashes at runtime on
                 // unrecognised selectors (SDK guide, "Add required linker flags").
                 "OTHER_LDFLAGS": ["$(inherited)", "-ObjC"]
-            ])
+            ]) { $1 })
         ),
         .target(
             name: "FouleeWidget",
@@ -317,7 +326,8 @@ let project = Project(
             sources: ["FouleeTests/**"],
             dependencies: [
                 .target(name: "Foulee")
-            ]
+            ],
+            settings: .settings(base: mainActorByDefault)
         ),
         // App Store capture target (issue #235). A UI test bundle, not a unit
         // one: it drives the shipped app from another process, launches it with

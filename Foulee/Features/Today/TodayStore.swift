@@ -7,7 +7,6 @@ import UserNotifications
 ///
 /// Single error boundary (`runOrTrap`) keeps the rest of the store
 /// try-catch free — every call site reads as a happy-path narrative.
-@MainActor
 @Observable
 final class TodayStore {
     private(set) var snapshot: TodaySnapshot?

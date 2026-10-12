@@ -10,7 +10,6 @@ import Testing
 /// phone and is exercised by nothing here. What *is* testable is the half that
 /// decides what the phone believes, and every rule below has a way of being
 /// wrong that would show up as a bad screen mid-outing.
-@MainActor
 @Suite("Mirrored session store")
 struct MirroredSessionStoreTests {
     private let base = Date(timeIntervalSince1970: 1_754_000_000)

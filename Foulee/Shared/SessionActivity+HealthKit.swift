@@ -1,6 +1,6 @@
 import HealthKit
 
-extension SessionActivity {
+nonisolated extension SessionActivity {
     /// The `HKWorkoutConfiguration.activityType` to stamp on the workout.
     ///
     /// The single place the app decides what Santé will show for a session.

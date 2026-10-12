@@ -1,6 +1,6 @@
 import Foundation
 
-extension TimeInterval {
+nonisolated extension TimeInterval {
     /// Elapsed walk time as `mm:ss`, promoting to `h:mm:ss` once the walk
     /// passes the hour. Shared by the iPhone + Watch active-walk and recap
     /// screens and the Live Activity so they all read identically.
@@ -15,7 +15,7 @@ extension TimeInterval {
     }
 }
 
-extension TimeInterval {
+nonisolated extension TimeInterval {
     /// This duration spent covering `km`, as a pace — « 6'10"/km » (issue
     /// #276).
     ///
@@ -50,7 +50,7 @@ extension TimeInterval {
 ///
 /// A free function like `litres`, because there is no natural receiver — the
 /// argument is already the answer, only unformatted.
-func paceText(secondsPerKm: TimeInterval, roundedTo step: TimeInterval) -> String {
+nonisolated func paceText(secondsPerKm: TimeInterval, roundedTo step: TimeInterval) -> String {
     let rounded = Int((secondsPerKm / step).rounded() * step)
     return String(format: "%d'%02d\"/km", rounded / 60, rounded % 60)
 }
@@ -66,7 +66,7 @@ func paceText(secondsPerKm: TimeInterval, roundedTo step: TimeInterval) -> Strin
 /// HealthKit has nothing to offer here: the only identifier carrying the word
 /// is `cyclingCadence`. Dividing the step count is not a fallback — it is the
 /// only road.
-func cadenceText(steps: Int, over elapsed: TimeInterval) -> String? {
+nonisolated func cadenceText(steps: Int, over elapsed: TimeInterval) -> String? {
     guard elapsed >= 10, steps > 0 else { return nil }
     return cadenceText(stepsPerSecond: Double(steps) / elapsed)
 }
@@ -74,7 +74,7 @@ func cadenceText(steps: Int, over elapsed: TimeInterval) -> String? {
 /// « 165 pas/min » from a cadence already measured — the pedometer's live one
 /// (issue #331) — or `nil` for no rhythm at all. Rounded to five like the
 /// average: the pedometer is a better source, not a finer one.
-func cadenceText(stepsPerSecond: Double) -> String? {
+nonisolated func cadenceText(stepsPerSecond: Double) -> String? {
     // Finite first: the figure comes straight from the system, and `Int(_:)`
     // on an infinity or a NaN is a crash, not a rounding (issue #338).
     guard stepsPerSecond.isFinite, stepsPerSecond > 0 else { return nil }
@@ -85,7 +85,7 @@ func cadenceText(stepsPerSecond: Double) -> String? {
     return "\(Int((stepsPerSecond * 60 / 5).rounded()) * 5)\u{00A0}pas/min"
 }
 
-extension Double {
+nonisolated extension Double {
     /// A km distance with a French decimal comma and no unit, e.g. `1,23`.
     func kmValue(fractionDigits: Int = 2) -> String {
         decimalComma(fractionDigits: fractionDigits)

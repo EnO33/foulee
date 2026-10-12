@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum ThemeMode: String, CaseIterable, Codable, Sendable, Identifiable {
+nonisolated enum ThemeMode: String, CaseIterable, Codable, Sendable, Identifiable {
     case light
     case dark
     case system

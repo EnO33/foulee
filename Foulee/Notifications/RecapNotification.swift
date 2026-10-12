@@ -9,7 +9,7 @@ import Observation
 /// **Fixed text.** A notification is scheduled ahead and cannot read Santé
 /// when it fires, so it announces the recap rather than quoting it — the
 /// figures are one tap away, and always the current ones.
-enum RecapNotification {
+nonisolated enum RecapNotification {
     static let prefix = "foulee.recap."
 
     static func identifier(for kind: RecapPeriod.Kind) -> String {
@@ -56,7 +56,6 @@ enum RecapNotification {
 
 /// Which recap to open, handed from the notification delegate — which runs
 /// before any screen may exist — to the home that presents it (issue #344).
-@MainActor
 @Observable
 final class RecapRouter {
     static let shared = RecapRouter()

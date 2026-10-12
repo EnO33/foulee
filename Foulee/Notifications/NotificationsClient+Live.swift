@@ -1,7 +1,7 @@
 import Foundation
 @preconcurrency import UserNotifications
 
-extension NotificationsClient {
+nonisolated extension NotificationsClient {
     /// `UNUserNotificationCenter`-backed implementation. `replaceWalkReminders`
     /// always wipes the previous Foulée requests first so the user's pending
     /// queue can't drift out of sync with their preferences.
@@ -154,7 +154,7 @@ extension NotificationsClient {
 }
 
 /// Foulée's `Weekday` is Mon = 1, Apple's is Sun = 1. Translate.
-private func appleWeekday(from day: Weekday) -> Int {
+nonisolated private func appleWeekday(from day: Weekday) -> Int {
     switch day {
     case .sunday: 1
     case .monday: 2

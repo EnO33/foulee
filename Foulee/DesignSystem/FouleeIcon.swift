@@ -2,7 +2,7 @@ import SwiftUI
 
 /// SF Symbol names used across screens, mapped to the design's icon vocabulary
 /// (`walk`, `timer`, `flame`, …). Centralised so a future swap is one-line.
-enum FouleeIcon {
+nonisolated enum FouleeIcon {
     // The activity figures are the one part of this table that surfaces outside
     // the app — the widgets draw them too, and they can't compile this file
     // (SwiftUI, DesignSystem). They live in `ActivityGlyph`, which is

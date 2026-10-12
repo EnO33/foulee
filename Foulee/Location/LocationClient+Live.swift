@@ -5,7 +5,6 @@ import Foundation
 /// `async`. MainActor-isolated because `CLLocationManager` wants to be hung
 /// off a runloop thread. Authorization goes through `RouteRecorder`, the
 /// app's single place that asks.
-@MainActor
 private final class LocationBridge: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var locationContinuation: CheckedContinuation<Coordinate?, Never>?
@@ -48,10 +47,11 @@ extension LocationBridge {
     /// Single shared bridge — `@MainActor` so it can keep its delegate
     /// continuations safely. Lazy via Swift's static-let semantics; first
     /// access happens from `TodayStore` which is already `@MainActor`.
-    @MainActor static let shared = LocationBridge()
+    static let shared = LocationBridge()
 }
 
-extension LocationClient {
+// Read by swift-dependencies from any thread.
+nonisolated extension LocationClient {
     static let liveValue: LocationClient = LocationClient(
         requestWhenInUse: { await RouteRecorder.shared.requestAuthorization() },
         currentLocation: { await LocationBridge.shared.currentLocation() },

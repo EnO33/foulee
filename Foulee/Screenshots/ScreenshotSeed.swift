@@ -18,7 +18,7 @@ import Foundation
 /// ring; the 34-day streak and the 41-day record are not written down anywhere,
 /// they are what `StreakCalculator` derives from the seeded history
 /// (`ScreenshotSeedTests` pins that).
-extension ScreenshotSeed {
+nonisolated extension ScreenshotSeed {
     // MARK: - Preferences
 
     /// The install the captures show: goals met by a regular user, hydration
@@ -30,6 +30,8 @@ extension ScreenshotSeed {
     /// `.both` is likewise deliberate (#222/#224): it is the mode that names no
     /// activity in Réglages, and it makes « Démarrer ta sortie » open the
     /// marche/course picker, which is a screen worth showing.
+    ///
+    /// Main actor: `UserPreferences` is main-actor state.
     @MainActor
     static func seed(_ preferences: UserPreferences, hasCompletedOnboarding: Bool) {
         preferences.hasCompletedOnboarding = hasCompletedOnboarding

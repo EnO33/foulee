@@ -1,6 +1,6 @@
 import HealthKit
 
-extension RecordedActivity {
+nonisolated extension RecordedActivity {
     /// Read `HKWorkout.workoutActivityType`.
     ///
     /// Total rather than optional, unlike `SessionActivity(_:)`: that one

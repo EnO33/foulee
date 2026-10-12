@@ -5,7 +5,7 @@ import UserNotifications
 /// Recurring weekly reminder description — one notification per `Weekday`
 /// firing at `time` local. Identifier is derived so reschedules are
 /// idempotent (replacing the old request for the same day).
-struct WalkReminder: Equatable, Sendable {
+nonisolated struct WalkReminder: Equatable, Sendable {
     var weekday: Weekday
     var time: TimeOfDay
     var title: String
@@ -19,7 +19,7 @@ struct WalkReminder: Equatable, Sendable {
 /// Wrapper over `UNUserNotificationCenter` with the operations the app
 /// actually needs. Async/throws bubble up to the scheduler boundary; no
 /// per-call try/catch sprinkled.
-struct NotificationsClient: Sendable {
+nonisolated struct NotificationsClient: Sendable {
     var requestAuthorization: @Sendable () async throws -> Bool
 
     /// Current system-level authorization, so the UI can tell "enabled in
@@ -57,7 +57,7 @@ struct NotificationsClient: Sendable {
         = { _ in }
 }
 
-extension NotificationsClient: DependencyKey {
+nonisolated extension NotificationsClient: DependencyKey {
     static let previewValue = NotificationsClient(
         requestAuthorization: { true },
         authorizationStatus: { .authorized },
@@ -72,7 +72,7 @@ extension NotificationsClient: DependencyKey {
     )
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var notifications: NotificationsClient {
         get { self[NotificationsClient.self] }
         set { self[NotificationsClient.self] = newValue }

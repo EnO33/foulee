@@ -2,7 +2,7 @@ import Foundation
 
 /// Every web page the app links to (issue #396), in one place: fixed https
 /// addresses on the public repository, never built from user input.
-enum AppLinks {
+nonisolated enum AppLinks {
     private static let repository = "https://github.com/EnO33/foulee"
 
     static let privacyPolicy = link("\(repository)/blob/main/docs/privacy.md")
@@ -19,7 +19,7 @@ enum AppLinks {
 }
 
 /// The running build as the user reports it: « 1.52 (123) ».
-enum AppVersion {
+nonisolated enum AppVersion {
     static var current: String {
         text(
             version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,

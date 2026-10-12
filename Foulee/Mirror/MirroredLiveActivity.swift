@@ -20,7 +20,6 @@ import UIKit
 ///
 /// Either outcome leaves the app as it was: a refused request is logged and
 /// the in-app mirror screen (#279) carries on alone.
-@MainActor
 final class MirroredLiveActivity {
     static let shared = MirroredLiveActivity()
 

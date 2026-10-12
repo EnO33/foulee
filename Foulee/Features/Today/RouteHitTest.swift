@@ -5,7 +5,7 @@ import CoreGraphics
 /// In screen points, not metres: « close enough » is a matter of finger size,
 /// and the same 40 m are a hair's breadth zoomed out and half the screen
 /// zoomed in. Pure, so the geometry is tested without a map.
-enum RouteHitTest {
+nonisolated enum RouteHitTest {
     /// Roughly half a fingertip.
     static let tolerance: CGFloat = 24
 

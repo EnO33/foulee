@@ -3,7 +3,7 @@ import Foundation
 /// A walk metric the user can drill into from the Today cards. Pure model
 /// (no HealthKit, no SwiftUI) — the HK mapping lives in `HealthKitClient+Live`
 /// and the icon/colour mapping in the stats views.
-enum WalkMetric: String, CaseIterable, Identifiable, Sendable {
+nonisolated enum WalkMetric: String, CaseIterable, Identifiable, Sendable {
     case steps
     case minutes
     case distance

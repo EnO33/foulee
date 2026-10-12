@@ -2,7 +2,8 @@
 import Foundation
 import WeatherKit
 
-extension WeatherClient {
+// Read by swift-dependencies from any thread.
+nonisolated extension WeatherClient {
     /// Real WeatherKit-backed implementation. Asks for the hourly forecast
     /// and picks the entry closest to `target`.
     static let liveValue: WeatherClient = WeatherClient(

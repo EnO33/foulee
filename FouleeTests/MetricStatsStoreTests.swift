@@ -5,7 +5,8 @@ import Testing
 
 @Suite("MetricStatsStore")
 struct MetricStatsStoreTests {
-    private func points(_ values: [Double]) -> [MetricPoint] {
+    // Nonisolated: the stubbed HealthKit closures call it.
+    nonisolated private func points(_ values: [Double]) -> [MetricPoint] {
         values.enumerated().map { index, value in
             MetricPoint(
                 date: Date(timeIntervalSince1970: 1_700_000_000 + Double(index) * 86_400),
@@ -15,7 +16,6 @@ struct MetricStatsStoreTests {
     }
 
     @Test("Week range loads the daily series and derives total / average / best")
-    @MainActor
     func weekSummary() async {
         let series = points([10, 0, 20, 30])
         await withDependencies {
@@ -33,7 +33,6 @@ struct MetricStatsStoreTests {
     }
 
     @Test("Empty series → isEmpty with a zeroed summary")
-    @MainActor
     func emptySummary() async {
         await withDependencies {
             $0.healthKit.metricSeries = { _, _ in [] }
@@ -50,7 +49,6 @@ struct MetricStatsStoreTests {
     }
 
     @Test("Today range pulls the hourly series, not the daily one")
-    @MainActor
     func todayUsesHourly() async {
         await withDependencies {
             $0.healthKit.hourlyToday = { _ in self.points([2, 3]) }
@@ -65,9 +63,8 @@ struct MetricStatsStoreTests {
     }
 
     @Test("A transient failure clears once the next load succeeds")
-    @MainActor
     func transientErrorClearsOnNextSuccess() async {
-        struct Boom: Error, LocalizedError {
+        nonisolated struct Boom: Error, LocalizedError {
             var errorDescription: String? { "Santé indisponible" }
         }
         let failing = LockedRef(true)

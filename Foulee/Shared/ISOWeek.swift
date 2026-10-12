@@ -1,6 +1,6 @@
 import Foundation
 
-extension Calendar {
+nonisolated extension Calendar {
     /// An ISO-8601 calendar pinned to Monday as the first weekday — matches
     /// the `L M M J V S D` labels the Today and Stats week views render.
     static var iso8601Monday: Calendar {
@@ -10,7 +10,7 @@ extension Calendar {
     }
 }
 
-enum ISOWeek {
+nonisolated enum ISOWeek {
     /// The seven day-start `Date`s, Monday → Sunday, of the ISO week
     /// containing `reference`. Returns an empty array only if calendar math
     /// fails (it doesn't in practice).

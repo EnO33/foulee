@@ -34,7 +34,6 @@ enum MetricRange: String, CaseIterable, Identifiable, Sendable {
 /// Loads one `WalkMetric`'s series for the active range (hourly for today,
 /// daily for week/month) and derives the headline summary. Mirrors the
 /// `runOrTrap` single-boundary error handling of the other stores.
-@MainActor
 @Observable
 final class MetricStatsStore {
     let metric: WalkMetric

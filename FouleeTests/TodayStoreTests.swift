@@ -6,7 +6,6 @@ import Testing
 @Suite("TodayStore")
 struct TodayStoreTests {
     @Test("Refresh maps HealthMetrics into the snapshot")
-    @MainActor
     func refreshPopulatesSnapshot() async {
         await withDependencies {
             $0.date = .constant(.now)
@@ -41,7 +40,6 @@ struct TodayStoreTests {
     }
 
     @Test("hasWalkedToday flips once activeMinutes reaches the goal")
-    @MainActor
     func hasWalkedTodayFlips() async {
         await withDependencies {
             $0.date = .constant(.now)
@@ -71,9 +69,8 @@ struct TodayStoreTests {
     }
 
     @Test("A throwing HealthKit surfaces lastError and falls back to zero metrics")
-    @MainActor
     func failureFallsBackAndSurfacesError() async {
-        struct Boom: Error, LocalizedError {
+        nonisolated struct Boom: Error, LocalizedError {
             var errorDescription: String? { "Santé en feu" }
         }
         await withDependencies {
@@ -103,7 +100,6 @@ struct TodayStoreTests {
     }
 
     @Test("Refresh fills weather when location is granted and WeatherKit responds")
-    @MainActor
     func refreshPopulatesWeather() async {
         await withDependencies {
             $0.date = .constant(.now)
@@ -140,7 +136,6 @@ struct TodayStoreTests {
     }
 
     @Test("Refresh still completes when location is denied — weather stays on fallback")
-    @MainActor
     func refreshSkipsWeatherWithoutLocation() async {
         await withDependencies {
             $0.date = .constant(.now)
@@ -173,7 +168,6 @@ struct TodayStoreTests {
     }
 
     @Test("Refresh aligns weekMinutes on the current ISO week (Mon → Sun)")
-    @MainActor
     func weekMinutesAlignedToCurrentWeek() async throws {
         var calendar = Calendar(identifier: .iso8601)
         calendar.firstWeekday = 2
@@ -219,7 +213,6 @@ struct TodayStoreTests {
     }
 
     @Test("Bootstrap still populates the snapshot when authorization is denied")
-    @MainActor
     func bootstrapPopulatesEvenWhenDenied() async {
         await withDependencies {
             $0.date = .constant(.now)
@@ -248,7 +241,6 @@ struct TodayStoreTests {
 @Suite("TodayStore streak history window")
 struct TodayStoreStreakWindowTests {
     @Test("Refresh fetches the shared streak history window, not 30 days")
-    @MainActor
     func refreshFetchesFullHistoryWindow() async {
         let captured = LockedRef(0)
         await withDependencies {
@@ -266,7 +258,6 @@ struct TodayStoreStreakWindowTests {
     }
 
     @Test("A record older than 30 days shows on the home card (device report: 23 vs 12)")
-    @MainActor
     func recordOlderThanThirtyDaysShowsOnHomeCard() async throws {
         // 23-day run ending ~40 days ago, then a fresh 12-day run up to today.
         let crafted = StreakTestSupport.walkedDays(Array(40...62) + Array(0...11))
@@ -283,7 +274,6 @@ struct TodayStoreStreakWindowTests {
     }
 
     @Test("A current streak longer than 30 days isn't capped")
-    @MainActor
     func longCurrentStreakNotCapped() async throws {
         let crafted = StreakTestSupport.walkedDays(Array(0...34))
         try await withDependencies {
@@ -299,7 +289,6 @@ struct TodayStoreStreakWindowTests {
     }
 
     @Test("A year of history doesn't disturb the current week's bars")
-    @MainActor
     func weekBarsUnaffectedByDeepHistory() async {
         let calendar = Calendar.iso8601Monday
         let today = calendar.startOfDay(for: .now)
@@ -331,7 +320,6 @@ struct TodayStoreStreakWindowTests {
 @Suite("TodayStore optimistic walk overlay")
 struct TodayStoreWalkOverlayTests {
     @Test("A finished walk overlays its steps + distance, then reconciles to HealthKit")
-    @MainActor
     func optimisticWalkOverlayReconciles() async {
         // HealthKit lags behind the walk: it keeps reporting the pre-walk totals
         // until iOS flushes the walk, then jumps past them.
@@ -384,9 +372,8 @@ struct TodayStoreWalkOverlayTests {
 @Suite("TodayStore weather isolation")
 struct TodayStoreWeatherTests {
     @Test("A WeatherKit failure doesn't raise the Health-data error banner")
-    @MainActor
     func weatherFailureDoesNotSetLastError() async {
-        struct WeatherDown: Error {}
+        nonisolated struct WeatherDown: Error {}
         await withDependencies {
             $0.date = .constant(.now)
             $0.healthKit = HealthKitClient(

@@ -9,10 +9,9 @@ import Testing
 /// dans 3 h » — where a noon reading for an 18:30 window would read as the
 /// weather the user is about to go out in, and be wrong.
 @Suite("Today weather follows the window")
-@MainActor
 struct TodayStoreWeatherTimeTests {
     /// Every hour the store asked the forecast for, in order.
-    private final class AskedTimes: @unchecked Sendable {
+    nonisolated private final class AskedTimes: @unchecked Sendable {
         private let lock = NSLock()
         private var values: [Date] = []
         func append(_ date: Date) { lock.withLock { values.append(date) } }

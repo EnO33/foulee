@@ -69,7 +69,7 @@ struct RecapShareCard: Equatable, Sendable {
     }()
 }
 
-extension Recap {
+nonisolated extension Recap {
     /// The days cut into Monday-first weeks of seven, `nil` before the first
     /// day and after the last — a month laid out as a calendar (issue #410).
     var calendarWeeks: [[Day?]] {

@@ -103,7 +103,6 @@ struct RecapShareTests {
     }
 
     @Test("Each format renders at its pixel size", arguments: RecapShareFormat.allCases)
-    @MainActor
     func renders(format: RecapShareFormat) throws {
         let image = try #require(RecapShareRenderer.image(of: week(), as: format))
         #expect(image.size.width * image.scale == format.size.width * 3)

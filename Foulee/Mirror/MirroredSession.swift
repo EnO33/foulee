@@ -10,7 +10,7 @@ import Foundation
 /// session measured by the iPhone cannot be shown on the wrist the same way.
 /// `ActiveWalkStore` is the fallback for « no watch », not the other half of a
 /// symmetry.
-struct MirroredSession: Equatable, Sendable {
+nonisolated struct MirroredSession: Equatable, Sendable {
     /// When the leg began — **its** start, not the outing's.
     ///
     /// A change of sport ends one session and opens another (issue #265), so
@@ -25,7 +25,7 @@ struct MirroredSession: Equatable, Sendable {
 /// A stream of events rather than a snapshot, because the interesting moments
 /// are the edges: a mirror opening (the wearer started, or changed sport) and a
 /// mirror closing.
-enum MirroredSessionEvent: Equatable, Sendable {
+nonisolated enum MirroredSessionEvent: Equatable, Sendable {
     case started(MirroredSession)
     /// Figures the wrist stated (issue #278). A complete state, dated by the
     /// wrist — the phone keeps the newest and drops the rest, because HealthKit

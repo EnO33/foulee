@@ -3,7 +3,7 @@ import Foundation
 /// Which of the day's two goals are met (issue #368) — the home's two rings.
 /// Compared from one snapshot to the next, it tells the moment a ring closes,
 /// which is what gets celebrated: the crossing, never the state.
-struct DailyGoals: Equatable, Sendable {
+nonisolated struct DailyGoals: Equatable, Sendable {
     var steps: Bool
     var minutes: Bool
 

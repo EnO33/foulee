@@ -18,11 +18,10 @@ struct WalkReminderScheduler {
         return TimeOfDay(rawMinutes: raw)
     }
 
-    /// Produce one reminder per active day of the week. `@MainActor` because
-    /// `UserPreferences` is main-isolated. Returns an empty array when the
+    /// Produce one reminder per active day of the week. On the main actor
+    /// (the module default) because `UserPreferences` is main-isolated. Returns an empty array when the
     /// user has flipped notifications off — the live client then wipes the
     /// pending queue on the next `sync(with:)`.
-    @MainActor
     static func reminders(for preferences: UserPreferences) -> [WalkReminder] {
         guard preferences.notificationsEnabled else { return [] }
         let time = reminderTime(forWindowStart: preferences.walkWindowStart)
@@ -46,7 +45,6 @@ struct WalkReminderScheduler {
     /// Single error boundary: a denied authorization (or any scheduling
     /// hiccup) is absorbed here; the Settings screen exposes the toggle
     /// the user would actually use to recover.
-    @MainActor
     func sync(with preferences: UserPreferences) async {
         // Ensure notification permission when reminders are on (idempotent —
         // no re-prompt once the user has decided).
@@ -66,7 +64,6 @@ struct WalkReminderScheduler {
     /// actions). Independent of the recurring weekly schedule. Errors are
     /// absorbed — the bell visually flips to confirm the tap, that's the
     /// only feedback the user needs.
-    @MainActor
     func snooze(after interval: TimeInterval) async {
         do {
             try await notifications.scheduleSnooze(interval)

@@ -127,8 +127,8 @@ struct WalkActivityAttributesTests {
         // documented — the archive format is private. So the tolerance is
         // checked under both coders rather than assumed of the one the tests
         // above happen to use.
-        struct LegacyPayload: Encodable { let goalMinutes: Int }
-        struct FuturePayload: Encodable { let goalMinutes: Int, activity: String }
+        nonisolated struct LegacyPayload: Encodable { let goalMinutes: Int }
+        nonisolated struct FuturePayload: Encodable { let goalMinutes: Int, activity: String }
 
         let legacy = try PropertyListEncoder().encode(LegacyPayload(goalMinutes: 30))
         let future = try PropertyListEncoder().encode(

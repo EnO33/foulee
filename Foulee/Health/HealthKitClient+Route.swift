@@ -10,7 +10,7 @@ import os
 /// costs the heart rate and the stats beside it.
 
 /// One segment per leg that has a route, in leg order.
-func fetchRouteSegments(for summary: WorkoutSummary, store: HKHealthStore) async -> [RouteSegment] {
+nonisolated func fetchRouteSegments(for summary: WorkoutSummary, store: HKHealthStore) async -> [RouteSegment] {
     var segments: [RouteSegment] = []
     for leg in RouteSegment.sources(of: summary) {
         guard !Task.isCancelled else { break }
@@ -24,7 +24,7 @@ func fetchRouteSegments(for summary: WorkoutSummary, store: HKHealthStore) async
 }
 
 /// Every point of every `HKWorkoutRoute` attached to `workout`, oldest first.
-private func fetchRouteCoordinates(of workout: HKWorkout, store: HKHealthStore) async throws -> [Coordinate] {
+nonisolated private func fetchRouteCoordinates(of workout: HKWorkout, store: HKHealthStore) async throws -> [Coordinate] {
     let routes = try await fetchRoutes(of: workout, store: store)
     var coordinates: [Coordinate] = []
     for route in routes {
@@ -33,7 +33,7 @@ private func fetchRouteCoordinates(of workout: HKWorkout, store: HKHealthStore) 
     return coordinates
 }
 
-private func fetchRoutes(of workout: HKWorkout, store: HKHealthStore) async throws -> [HKWorkoutRoute] {
+nonisolated private func fetchRoutes(of workout: HKWorkout, store: HKHealthStore) async throws -> [HKWorkoutRoute] {
     try await withCheckedThrowingContinuation { continuation in
         let query = HKSampleQuery(
             sampleType: HKSeriesType.workoutRoute(),
@@ -63,11 +63,11 @@ private func fetchRoutes(of workout: HKWorkout, store: HKHealthStore) async thro
 /// handler again, and a continuation left waiting would leak. A route is a
 /// bounded read; leaving the detail stops the loop in `fetchRouteSegments`
 /// between two legs instead.
-private func fetchLocations(of route: HKWorkoutRoute, store: HKHealthStore) async throws -> [CLLocation] {
+nonisolated private func fetchLocations(of route: HKWorkoutRoute, store: HKHealthStore) async throws -> [CLLocation] {
     /// HealthKit calls the handler serially, one batch after another. The lock
     /// costs nothing in that case and turns the promise into something the
     /// compiler checks, instead of an `@unchecked Sendable` (issue #405).
-    struct Batches: Sendable {
+    nonisolated struct Batches: Sendable {
         var locations: [CLLocation] = []
         var isFinished = false
     }

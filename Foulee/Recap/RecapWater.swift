@@ -3,7 +3,7 @@ import Foundation
 /// The water side of a recap (issue #356): how much a day on average, how
 /// many days held the goal, and the average of the period before. Pure, from
 /// the daily `dietaryWater` totals, like `Recap.make` from the minutes.
-struct RecapWater: Equatable, Sendable {
+nonisolated struct RecapWater: Equatable, Sendable {
     var averageML: Int
     var previousAverageML: Int
     var goalDaysMet: Int

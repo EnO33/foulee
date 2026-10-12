@@ -2,7 +2,7 @@ import Foundation
 
 /// Day-of-week aligned to Apple's "Lundi = first" convention, with French
 /// short labels used by the onboarding chips and the Today week bars.
-enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
+nonisolated enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
     case monday = 1
     case tuesday
     case wednesday
@@ -46,7 +46,7 @@ enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
     var calendarWeekday: Int { (rawValue % 7) + 1 }
 }
 
-extension Set where Element == Weekday {
+nonisolated extension Set where Element == Weekday {
     /// Compact bitmask (7 bits, Monday is bit 0) for UserDefaults storage.
     var bitmask: Int {
         reduce(0) { acc, day in acc | (1 << (day.rawValue - 1)) }

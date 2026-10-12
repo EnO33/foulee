@@ -12,7 +12,7 @@ import HealthKit
 /// résumé is a factual record of what was done, and those minutes already
 /// validated the streak whatever the setting was. Filtering on the
 /// preference would recreate the exact asymmetry that is the bug.
-enum WorkoutActivityFilter {
+nonisolated enum WorkoutActivityFilter {
     /// Walking, running and hiking. All three report their distance under
     /// `.distanceWalkingRunning`, so `WorkoutSummary.init(workout:)` maps
     /// them without a special case.

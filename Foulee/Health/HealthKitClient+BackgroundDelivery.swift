@@ -8,7 +8,7 @@ import WidgetKit
 /// and each run would otherwise `execute` a fresh set of HKObserverQuery on the
 /// long-lived live store — stacking observers so a single sample fires the
 /// handler N times.
-private let backgroundObserversStarted = OSAllocatedUnfairLock(initialState: false)
+nonisolated private let backgroundObserversStarted = OSAllocatedUnfairLock(initialState: false)
 
 /// Builds the live `enableBackgroundDelivery` closure: register for Health
 /// background updates and, on each wake, refresh the widget snapshot's
@@ -17,7 +17,9 @@ private let backgroundObserversStarted = OSAllocatedUnfairLock(initialState: fal
 /// and workouts deliver *immediately*, so drinking (even from the watch) or
 /// finishing a walk updates the iPhone widgets within seconds. Separate file
 /// to keep HealthKitClient+Live.swift within the file-length limit.
-func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async -> Void {
+/// `nonisolated`, like everything below: the observer handlers and the
+/// background wakes run off the main actor.
+nonisolated func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async -> Void {
     {
         guard HKHealthStore.isHealthDataAvailable() else { return }
         let shouldStart = backgroundObserversStarted.withLock { started -> Bool in
@@ -59,7 +61,7 @@ func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Sendable () async
 
 /// Same snapshot refresh, callable with a standalone store — used by the
 /// BGAppRefresh task as an extra wake source between Health deliveries.
-func refreshWidgetSnapshotFromHealth() async {
+nonisolated func refreshWidgetSnapshotFromHealth() async {
     guard HKHealthStore.isHealthDataAvailable() else { return }
     await refreshSnapshotMetrics(store: HKHealthStore(), wake: .other)
 }
@@ -68,7 +70,7 @@ func refreshWidgetSnapshotFromHealth() async {
 /// when there's no snapshot yet (first launch publishes one) or a read fails
 /// (locked phone — keep the last known values). The streak rides along only
 /// when this wake can have changed it (`BackgroundStreakRefresh`).
-private func refreshSnapshotMetrics(store: HKHealthStore, wake: BackgroundStreakRefresh.Wake) async {
+nonisolated private func refreshSnapshotMetrics(store: HKHealthStore, wake: BackgroundStreakRefresh.Wake) async {
     guard let stored = SharedStore.read() else { return }
     let now = Date.now
     let defaults = UserDefaults.standard
@@ -161,7 +163,7 @@ private func refreshSnapshotMetrics(store: HKHealthStore, wake: BackgroundStreak
 /// Today's counters as this wake measured them. A nil leg is a read HealthKit
 /// refused (locked phone), which must keep the stored value rather than
 /// publish a zero.
-private struct MeasuredCounters {
+nonisolated private struct MeasuredCounters {
     var steps: Int?
     var minutes: Int?
     var distanceKm: Double?
@@ -169,7 +171,7 @@ private struct MeasuredCounters {
     var waterML: Int?
 }
 
-private func measuredCounters(store: HKHealthStore) async -> MeasuredCounters {
+nonisolated private func measuredCounters(store: HKHealthStore) async -> MeasuredCounters {
     // Independent sums — run concurrently to keep the background wake short.
     async let steps = backgroundSum(store, .stepCount, .count())
     async let minutes = backgroundSum(store, .appleExerciseTime, .minute())
@@ -200,8 +202,8 @@ private func measuredCounters(store: HKHealthStore) async -> MeasuredCounters {
 /// shared snapshot can't serve as the "before" value: the widget's
 /// `LogWaterIntent` rewrites it from its own process before (or racing) this
 /// observer, which would mask exactly the glasses this path exists to catch.
-private let observedWaterTotalKey = "hydration.observedWaterML"
-private let observedWaterDayKey = "hydration.observedWaterAt"
+nonisolated private let observedWaterTotalKey = "hydration.observedWaterML"
+nonisolated private let observedWaterDayKey = "hydration.observedWaterAt"
 
 /// A glass logged outside the app (widget intent, the Watch, another Health
 /// app) never runs the in-app reschedule path, so a reminder could fire
@@ -211,7 +213,7 @@ private let observedWaterDayKey = "hydration.observedWaterAt"
 /// is harmless (the drink stamp lands seconds apart and the pending requests
 /// are replaced deterministically). Decreases (sample deletions) and the
 /// initial fire at observer registration must not shift anything.
-private func reshiftHydrationRemindersIfWaterIncreased(store: HKHealthStore) async {
+nonisolated private func reshiftHydrationRemindersIfWaterIncreased(store: HKHealthStore) async {
     guard let total = await backgroundSum(store, .dietaryWater, .literUnit(with: .milli)) else { return }
     let defaults = UserDefaults.standard
     let previous = lastObservedWaterToday(defaults: defaults)
@@ -234,7 +236,7 @@ private func reshiftHydrationRemindersIfWaterIncreased(store: HKHealthStore) asy
 
 /// The total recorded by the last observation *today*, or nil when none —
 /// so the day's first out-of-app glass counts as an increase from 0.
-private func lastObservedWaterToday(defaults: UserDefaults) -> Int? {
+nonisolated private func lastObservedWaterToday(defaults: UserDefaults) -> Int? {
     let stamp = defaults.double(forKey: observedWaterDayKey)
     guard stamp > 0,
           Calendar.current.isDate(Date(timeIntervalSince1970: stamp), inSameDayAs: .now)
@@ -244,7 +246,7 @@ private func lastObservedWaterToday(defaults: UserDefaults) -> Int? {
 
 /// Today's cumulative sum, or nil when HealthKit can't answer. "No samples
 /// yet" is a real 0, not a failure.
-private func backgroundSum(
+nonisolated private func backgroundSum(
     _ store: HKHealthStore,
     _ identifier: HKQuantityTypeIdentifier,
     _ unit: HKUnit

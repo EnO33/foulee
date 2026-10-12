@@ -7,7 +7,7 @@ import Foundation
 ///
 /// The struct-of-closures shape (Point-Free convention) lets previews and
 /// tests swap in deterministic stubs without subclassing or mocking.
-struct HealthKitClient: Sendable {
+nonisolated struct HealthKitClient: Sendable {
     /// Prompts the user with the system HealthKit sheet on first call.
     /// Returns `true` once permissions have been requested (even if denied —
     /// the system never tells us per-type denial, by design).
@@ -119,7 +119,7 @@ struct HealthKitClient: Sendable {
         = {}
 }
 
-extension HealthKitClient: DependencyKey {
+nonisolated extension HealthKitClient: DependencyKey {
     /// Stub used in `#Preview` and in tests unless explicitly overridden.
     /// `liveValue` is supplied in `HealthKitClient+Live.swift` so this file
     /// stays HealthKit-free and previewable on any platform.
@@ -273,7 +273,7 @@ extension HealthKitClient: DependencyKey {
     }
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var healthKit: HealthKitClient {
         get { self[HealthKitClient.self] }
         set { self[HealthKitClient.self] = newValue }

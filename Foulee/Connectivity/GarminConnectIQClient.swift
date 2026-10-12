@@ -8,14 +8,14 @@ import Foundation
 /// authorized set has to survive a relaunch: after a background BLE wake the
 /// app must re-register its listeners without sending the user through the
 /// Garmin Connect round-trip again.
-struct GarminDevice: Codable, Equatable, Sendable {
+nonisolated struct GarminDevice: Codable, Equatable, Sendable {
     var id: UUID
     var modelName: String
     var friendlyName: String
 }
 
 /// Constants the SDK needs at initialization time.
-enum GarminConnectIQConfiguration {
+nonisolated enum GarminConnectIQConfiguration {
     /// URL scheme Garmin Connect Mobile calls back with the device-selection
     /// response. Declared in `Tuist/ProjectDescriptionHelpers/InfoPlists.swift`
     /// as `garminReturnURLScheme` — the two must stay equal, and there is no
@@ -48,7 +48,7 @@ enum GarminConnectIQConfiguration {
 /// Scope of #187 stops at "a snapshot arrived and decoded". Nothing here
 /// writes to HealthKit or to the widget snapshot — merging Garmin data into
 /// the app's own totals without double-counting is #189.
-struct GarminConnectIQClient: Sendable {
+nonisolated struct GarminConnectIQClient: Sendable {
     /// Initializes the SDK singleton (URL scheme + BLE state-restoration id).
     /// Idempotent; must run at process start, including on a background wake.
     var initialize: @Sendable () -> Void
@@ -92,7 +92,7 @@ struct GarminConnectIQClient: Sendable {
     var todayOverlay: @Sendable (Date) -> GarminSnapshotOverlay.Contribution?
 }
 
-extension GarminConnectIQClient: DependencyKey {
+nonisolated extension GarminConnectIQClient: DependencyKey {
     static let previewValue = GarminConnectIQClient(
         initialize: {},
         presentDeviceSelection: {},
@@ -116,7 +116,7 @@ extension GarminConnectIQClient: DependencyKey {
     )
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var garminConnectIQ: GarminConnectIQClient {
         get { self[GarminConnectIQClient.self] }
         set { self[GarminConnectIQClient.self] = newValue }
@@ -126,7 +126,7 @@ extension DependencyValues {
 /// Persistence of the authorized device set. Same shape as `WatchSyncStore`:
 /// the `defaults` parameter is a test seam, production always takes the
 /// default. Not the app group — the widget has no business talking BLE.
-enum GarminDeviceStore {
+nonisolated enum GarminDeviceStore {
     private static let key = "garmin.connectiq.devices"
 
     static func write(_ devices: [GarminDevice], to defaults: UserDefaults = .standard) {

@@ -1,6 +1,6 @@
 import Foundation
 
-extension Date {
+nonisolated extension Date {
     /// « 08:10 » — the wall-clock time every Foulée screen prints a session
     /// with. French and 24-hour whatever the device's locale: the app speaks
     /// French only, and « 8:10 AM » next to « Marche et course » reads as two
@@ -15,7 +15,7 @@ extension Date {
     }()
 }
 
-extension DateComponents {
+nonisolated extension DateComponents {
     /// « 18:30 » for an hour-and-minute setting such as the outing window, or
     /// « — » when it carries neither.
     var clockText: String {

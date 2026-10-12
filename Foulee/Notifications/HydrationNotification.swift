@@ -3,7 +3,7 @@ import Foundation
 /// Shared identifiers for the hydration reminder notification, its category and
 /// its two actions — used both by the scheduler (which builds requests) and the
 /// delegate (which handles taps), so they can't drift apart.
-enum HydrationNotification {
+nonisolated enum HydrationNotification {
     static let category = "foulee.hydration.reminder"
     static let drankAction = "foulee.hydration.action.drank"
     static let snoozeAction = "foulee.hydration.action.snooze"
@@ -29,7 +29,7 @@ enum HydrationNotification {
 
     /// What it takes to take a glass back (issue #354): the sample written to
     /// Santé, and the drink the reminder grid was anchored on before it.
-    struct Undo: Equatable, Sendable {
+    nonisolated struct Undo: Equatable, Sendable {
         var sample: UUID
         var milliliters: Int
         var previousDrinkAt: TimeInterval?

@@ -2,7 +2,7 @@ import Dependencies
 import Foundation
 import HealthKit
 
-extension HealthKitClient {
+nonisolated extension HealthKitClient {
     /// Real implementation backed by a single shared `HKHealthStore`.
     /// All four metrics are fetched in parallel from midnight to now.
     /// Satisfies the `DependencyKey.liveValue` requirement declared
@@ -150,13 +150,13 @@ extension HealthKitClient {
 /// HealthKit quantity type, unit and scale factor for a `WalkMetric` — or for
 /// water (`HealthKitClient+Water`). The scale converts the raw HK unit into the
 /// display unit (distance: metres → km).
-struct HKMetricMapping {
+nonisolated struct HKMetricMapping {
     let type: HKQuantityType
     let unit: HKUnit
     let scale: Double
 }
 
-private func hkMapping(for metric: WalkMetric) -> HKMetricMapping {
+nonisolated private func hkMapping(for metric: WalkMetric) -> HKMetricMapping {
     switch metric {
     case .steps: HKMetricMapping(type: HKQuantityType(.stepCount), unit: .count(), scale: 1)
     case .minutes: HKMetricMapping(type: HKQuantityType(.appleExerciseTime), unit: .minute(), scale: 1)
@@ -166,7 +166,7 @@ private func hkMapping(for metric: WalkMetric) -> HKMetricMapping {
 }
 
 /// Daily buckets of `metric` over the last `daysBack` days (today included).
-private func metricCollection(
+nonisolated private func metricCollection(
     store: HKHealthStore,
     metric: WalkMetric,
     daysBack: Int
@@ -191,7 +191,7 @@ private func metricCollection(
 }
 
 /// Hourly buckets of `metric` from midnight today through now.
-private func metricHourlyToday(
+nonisolated private func metricHourlyToday(
     store: HKHealthStore,
     metric: WalkMetric
 ) async throws -> [MetricPoint] {
@@ -213,7 +213,7 @@ private func metricHourlyToday(
 /// Shared `HKStatisticsCollectionQuery` bridge: cumulative-sum buckets of
 /// `mapping`'s type from `start` to `end` at `interval`, in its display unit
 /// and zero-filled for empty buckets.
-func statisticsCollection(
+nonisolated func statisticsCollection(
     store: HKHealthStore,
     mapping: HKMetricMapping,
     start: Date,
@@ -255,7 +255,7 @@ func statisticsCollection(
 /// + step samples scoped to that exact workout via
 /// `predicateForObjects(from: workout)` — keeps results clean even when
 /// the user wore their Watch outside the walk window.
-private func fetchWorkoutDetail(
+nonisolated private func fetchWorkoutDetail(
     for summary: WorkoutSummary,
     store: HKHealthStore
 ) async throws -> WorkoutDetail {
@@ -294,7 +294,7 @@ private func fetchWorkoutDetail(
     )
 }
 
-func fetchWorkout(uuid: UUID, store: HKHealthStore) async throws -> HKWorkout? {
+nonisolated func fetchWorkout(uuid: UUID, store: HKHealthStore) async throws -> HKWorkout? {
     let predicate = HKQuery.predicateForObject(with: uuid)
     return try await withCheckedThrowingContinuation { continuation in
         let query = HKSampleQuery(
@@ -321,7 +321,7 @@ func fetchWorkout(uuid: UUID, store: HKHealthStore) async throws -> HKWorkout? {
 /// samples live independently in the HR store. Date-range catches them
 /// either way. `HKError.noDataAvailable` is treated as an empty array,
 /// not an error.
-private func fetchHeartRateSamples(
+nonisolated private func fetchHeartRateSamples(
     in window: DateInterval,
     store: HKHealthStore
 ) async throws -> [HeartRateSample] {
@@ -367,7 +367,7 @@ private func fetchHeartRateSamples(
 /// when the recording app didn't link them to the workout; treat
 /// `HKError.noDataAvailable` as 0 since "0 steps" is the right UI
 /// answer when nothing matched.
-private func fetchStepsCount(
+nonisolated private func fetchStepsCount(
     in window: DateInterval,
     store: HKHealthStore
 ) async throws -> Int {
@@ -403,7 +403,7 @@ private func fetchStepsCount(
 /// real failure — bubble it back as the type-appropriate zero value
 /// instead of letting the sheet show "Détail indisponible". Internal:
 /// also used by HealthKitClient+ActiveMinutes.swift.
-func isNoDataAvailable(_ error: (any Error)?) -> Bool {
+nonisolated func isNoDataAvailable(_ error: (any Error)?) -> Bool {
     guard let hkError = error as? HKError else { return false }
     return hkError.code == .errorNoData
 }
@@ -411,7 +411,7 @@ func isNoDataAvailable(_ error: (any Error)?) -> Bool {
 /// All workouts of a `WorkoutActivityFilter` type (walk, run, hike)
 /// started in the last `daysBack` days (today included), regardless of
 /// which app or device wrote them. Newest first.
-private func recentWorkoutSummaries(
+nonisolated private func recentWorkoutSummaries(
     store: HKHealthStore,
     daysBack: Int
 ) async throws -> [WorkoutSummary] {
@@ -444,7 +444,7 @@ private func recentWorkoutSummaries(
 
 /// Continuation-based bridge to `HKStatisticsQuery`. Sums the cumulative
 /// quantity between midnight today and now.
-private func sumToday(
+nonisolated private func sumToday(
     store: HKHealthStore,
     type: HKQuantityType,
     unit: HKUnit

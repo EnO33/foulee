@@ -216,7 +216,6 @@ private struct RecapShareDays: View {
 }
 
 /// Turns a Bilan into the picture that is shared (issue #410).
-@MainActor
 enum RecapShareRenderer {
     /// Light, default text size, ×3, opaque: the image looks the same from
     /// every device and every setting, and a PNG with no alpha weighs less.

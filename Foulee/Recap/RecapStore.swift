@@ -7,7 +7,6 @@ import Observation
 ///
 /// One read of Santé covers both periods and the two before them: the series
 /// reach back to the start of the month before last, whichever is earlier.
-@MainActor
 @Observable
 final class RecapStore {
     private(set) var recaps: [RecapPeriod.Kind: Recap] = [:]

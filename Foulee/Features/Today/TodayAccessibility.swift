@@ -14,7 +14,7 @@ import Foundation
 ///
 /// Spelled here rather than at each call site so the capture target, which
 /// cannot import app code, has one list to mirror.
-enum TodayAccessibility {
+nonisolated enum TodayAccessibility {
     static let streakCard = "today.card.streak"
     static let weatherCard = "today.card.weather"
 

@@ -5,12 +5,11 @@ import Testing
 
 @Suite("HydrationStore")
 struct HydrationStoreTests {
-    struct Boom: Error, LocalizedError {
+    nonisolated struct Boom: Error, LocalizedError {
         var errorDescription: String? { "Santé a refusé l'écriture" }
     }
 
     @Test("A failed water write surfaces lastError instead of vanishing")
-    @MainActor
     func failedWriteSurfacesLastError() async {
         await withDependencies {
             var client = HealthKitClient.testValue
@@ -26,7 +25,6 @@ struct HydrationStoreTests {
     }
 
     @Test("A denied authorization blocks the save and raises writeDenied")
-    @MainActor
     func deniedAuthorizationBlocksSave() async {
         let didAttemptSave = LockedRef(false)
         await withDependencies {
@@ -45,7 +43,6 @@ struct HydrationStoreTests {
     }
 
     @Test("Refresh exposes the denied write status alongside the intake")
-    @MainActor
     func refreshExposesWriteDenied() async {
         await withDependencies {
             var client = HealthKitClient.testValue
@@ -93,7 +90,7 @@ struct HydrationNotificationCenterTests {
 
     @Test("A throwing water write stamps 'failed' too")
     func failedWriteStampsFailure() async throws {
-        struct Boom: Error {}
+        nonisolated struct Boom: Error {}
         let suiteName = "HydrationNotificationCenterTests"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
