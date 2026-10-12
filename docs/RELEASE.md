@@ -42,6 +42,21 @@ register one App ID per bundle id, each with the capabilities it needs:
 > also create them the first time you build with automatic signing, but
 > registering them up front makes the CI build deterministic.
 
+The `FouleeKit` framework needs no App ID: it is signed with the app that
+embeds it. It is embedded twice, in the iPhone app and in the watch app, under
+two identifiers (`com.eno33.foulee.kit`, `com.eno33.foulee.kit.watch`): App
+Store Connect rejects two bundles with one identifier under an iOS app
+(ITMS-90685). To check an archive before tagging, without signing:
+
+```sh
+xcodebuild archive -workspace Foulee.xcworkspace -scheme Foulee \
+  -destination 'generic/platform=iOS' -archivePath /tmp/Foulee.xcarchive \
+  CODE_SIGNING_ALLOWED=NO
+find /tmp/Foulee.xcarchive -name "*.framework" -o -name "*.appex" -o -name "*.app" \
+  | while read -r b; do /usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$b/Info.plist"; done \
+  | sort | uniq -d   # prints nothing when every identifier is unique
+```
+
 ## 3. Create the app record in App Store Connect
 
 [App Store Connect → Apps → +](https://appstoreconnect.apple.com/apps):

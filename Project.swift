@@ -95,7 +95,13 @@ let project = Project(
             sources: ["FouleeKit/Sources/**"],
             settings: .settings(base: kitMacSigning.merging([
                 // Linked by the widgets and the Live Activity.
-                "APPLICATION_EXTENSION_API_ONLY": "YES"
+                "APPLICATION_EXTENSION_API_ONLY": "YES",
+                // The iPhone app embeds the framework, and so does the watch
+                // app it carries: two bundles under one iOS app. App Store
+                // Connect rejects two bundles with one identifier there
+                // (ITMS-90685), so the watch's copy takes its own.
+                "PRODUCT_BUNDLE_IDENTIFIER[sdk=watchos*]": "\(bundleIdBase).kit.watch",
+                "PRODUCT_BUNDLE_IDENTIFIER[sdk=watchsimulator*]": "\(bundleIdBase).kit.watch"
             ]) { $1 })
         ),
         .target(

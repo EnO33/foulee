@@ -25,6 +25,7 @@ Le code partagé entre les cibles était compilé plusieurs fois. Chaque extensi
 - **`FouleeKitTests`** (Swift Testing) tourne sur le runner lui-même, dans le job CI « Kit ». Il n'y a ni simulateur à démarrer ni app hôte à installer.
 - **`FouleeTests` et `FouleeWatchTests`** gardent ce qui a besoin de l'app : stores, vues, intégrations système.
 - **La cible macOS est signée en local** (`CODE_SIGN_IDENTITY = -`). Elle ne demande aucune équipe, ni en CI ni sur un Mac de développeur.
+- **La copie montre a son propre identifiant** (`com.eno33.foulee.kit.watch`). L'app iPhone embarque le framework, et l'app montre qu'elle contient aussi : App Store Connect refuse deux bundles du même identifiant sous une app iOS (ITMS-90685).
 
 ### D3 — L'API du kit est `public`, et rien de plus
 
