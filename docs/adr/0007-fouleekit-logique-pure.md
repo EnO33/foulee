@@ -40,7 +40,7 @@ Le code partagé entre les cibles était compilé plusieurs fois. Chaque extensi
    - **Recap** : le Bilan (`Recap`, `RecapPeriod`, `RecapWater`, `OutingDay`), avec `Weekday` (Preferences) et `HydrationMath` (Hydration) qu'il utilise. Restent dans l'app le store et la carte de partage, qui dessine en SwiftUI.
    - **Streak** : le calcul de la série (`StreakCalculator`) et son calendrier (`StreakCalendar`, `StreakMonth`, `CalendarDay`, `WeekdayStat`). Le store du calendrier et ses vues restent dans l'app.
    - **Preferences** : `TimeOfDay`, l'heure et les plages horaires des réglages. `UserPreferences` reste dans l'app : c'est un store `@Observable` adossé à `UserDefaults`. `ThemeMode` aussi, qui importe SwiftUI.
-   - Puis Walk.
+   - **Walk** : `WalkSession`, la séance en cours et son estimation d'énergie. Restent dans l'app `ActiveWalkStore`, les clients `Pedometer` et `Altimeter` (swift-dependencies, CoreMotion) et `WalkActivityAttributes` (ActivityKit).
 
 Restent listés dans `Project.swift`, parce qu'ils dépendent d'un framework absent de macOS ou de l'état de l'app :
 
@@ -58,6 +58,10 @@ Restent listés dans `Project.swift`, parce qu'ils dépendent d'un framework abs
 - **Un modèle, un calcul ou un format qui ne dépend que de Foundation** : dans `FouleeKit/Sources/`, avec ses tests dans `FouleeKitTests/`.
 - **Un type d'interface, un store, un client système** : dans l'app ou la montre.
 - **Avant d'ajouter un fichier à une liste de `Project.swift`**, vérifier s'il a sa place dans le kit.
+- **En déplaçant un fichier vers le kit** :
+  - retirer son `import FouleeKit`, sinon il s'importe lui-même ;
+  - ne rendre `public` que ce que l'app utilise, sinon Periphery le signale ;
+  - une valeur par défaut d'une fonction publique ne peut nommer qu'un membre `public` ou `@usableFromInline`, jamais un membre `private`.
 
 ## Conséquences
 
