@@ -1,3 +1,4 @@
+import FouleeKit
 import HealthKit
 import SwiftUI
 import Testing

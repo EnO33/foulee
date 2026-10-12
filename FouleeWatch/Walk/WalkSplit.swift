@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// One kilometre of an outing, and what it cost (issue #301).

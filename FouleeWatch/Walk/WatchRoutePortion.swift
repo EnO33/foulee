@@ -1,4 +1,5 @@
 import CoreLocation
+import FouleeKit
 
 /// One leg's stretch of the route, in the sport it was done as (issue #320).
 struct WatchRoutePortion: Identifiable {

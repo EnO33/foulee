@@ -1,4 +1,5 @@
 import Combine
+import FouleeKit
 import SwiftUI
 
 /// Watch home: today's streak + key numbers, and the "Démarrer" CTA. Replaces

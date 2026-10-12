@@ -91,6 +91,10 @@ open Foulee.xcworkspace
 
 Then pick the **Foulee** scheme and run on an iOS 26 simulator.
 
+Before pushing, `tools/check_build.sh` compiles what CI compiles — SwiftLint,
+the FouleeKit tests on macOS, the iPhone app with its extensions and tests, the
+watch app with its tests — and prints only the errors.
+
 ### Signing (required for WeatherKit)
 
 Code signing with your Apple Developer team is required for **WeatherKit** to authenticate. Without it the midday weather card falls back to `—`.
@@ -111,12 +115,14 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 .
 ├── Project.swift          # Tuist manifest (targets, deps, settings)
 ├── Tuist.swift            # Tuist global config
+├── FouleeKit/             # Shared models and pure logic (iOS, watchOS, macOS)
+├── FouleeKitTests/        # Their tests, on macOS — no simulator
 ├── Foulee/                # iPhone app sources
 │   ├── App/               # Entry point + root view
 │   ├── DesignSystem/      # Colors, typography, glass material, icons
 │   ├── Features/          # Today, Active, Stats, Onboarding, Settings
 │   └── Resources/         # Assets, Info.plist
-├── FouleeTests/           # Unit tests
+├── FouleeTests/           # Unit tests that need the app
 ├── FouleeConnectIQ/       # Garmin Connect IQ app (Monkey C) — not part of the Tuist build
 ├── .github/actions/       # Shared CI steps (project setup, failure reports)
 └── .github/workflows/     # CI (lint + build)
@@ -124,10 +130,11 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 
 ## CI
 
-Every PR runs four jobs: **Lint**, **Connect IQ**, **iOS** and **watchOS**.
-The two platform jobs run in parallel and compile once each
-(`build-for-testing`, then `test-without-building`). The iOS job also runs the
-Periphery dead-code scan on the build's index. **Build & Test** waits for both
+Every PR runs five jobs: **Lint**, **Connect IQ**, **Kit**, **iOS** and
+**watchOS**. **Kit** runs the FouleeKit tests on macOS, with no simulator. The
+two simulator jobs compile once each (`build-for-testing`, then
+`test-without-building`). The iOS job also runs the Periphery dead-code scan on
+the build's index. The three run in parallel; **Build & Test** waits for them
 and is the required check on `main`.
 
 Dependencies update themselves: Dependabot for the GitHub Actions, and the
@@ -205,6 +212,7 @@ the GitHub secrets the workflow needs.
 - **PRs** — small, focused, one PR per task
 - **Style** — SwiftLint + `swift-format` (CI-enforced)
 - **Errors** — no `try`/`catch` blocks; use `throws` + propagation, `Result`, or `do { try await … }` at the highest sensible boundary only
+- **Shared code** — models and pure logic go in `FouleeKit`, tested on macOS; what other targets use is `public` ([ADR 0007](docs/adr/0007-fouleekit-logique-pure.md))
 - **Concurrency** — the iPhone app is main-actor by default: data types, pure logic and system clients are `nonisolated`, heavy async work is `@concurrent` ([ADR 0006](docs/adr/0006-isolation-main-actor-par-defaut.md))
 - **Tests** — never read the real clock: inject it (`@Dependency(\.date)` on the phone, `clock:` on the watch's workout store); a precondition is `try #require(…)`, not a `guard` that records an issue and returns
 - **Positive code** — guard-based early returns, declarative SwiftUI, no flag-based branches when a value-based one will do

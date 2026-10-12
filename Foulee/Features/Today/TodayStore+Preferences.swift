@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// The mirrored copy of the user's preferences: what the store derives from it,

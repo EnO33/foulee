@@ -1,6 +1,7 @@
 // Same as `ActiveWalkStore` and `FouleeApp`: `Activity` predates Sendable
 // annotations, and this type only ever touches it from the main actor.
 @preconcurrency import ActivityKit
+import FouleeKit
 import Foundation
 import os
 import UIKit

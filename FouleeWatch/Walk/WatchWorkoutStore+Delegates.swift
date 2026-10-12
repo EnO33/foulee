@@ -1,3 +1,4 @@
+import FouleeKit
 @preconcurrency import HealthKit
 
 /// The two HealthKit delegates the store answers to.

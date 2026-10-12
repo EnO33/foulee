@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Collapses one outing written by several sources into one row of the 7-day

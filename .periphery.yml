@@ -2,6 +2,7 @@ project: Foulee.xcworkspace
 schemes:
   - Foulee
   - FouleeWatch
+  - FouleeKit
 index_exclude:
   # Tuist-generated asset accessors — not hand-written code.
   - "Derived/**"
@@ -10,9 +11,9 @@ retain_files:
   # Periphery can't see into). Retaining the file keeps it and the components
   # it showcases (e.g. SecondaryButton) from being reported as unused.
   - "**/DesignSystemGallery.swift"
-# Both schemes + every target they build are indexed, so shared code
-# (Foulee/Shared/**) isn't flagged just because its consumer lives in another
-# target. Regenerate the project with `tuist generate` before scanning.
+# Every scheme + every target they build are indexed, so shared code
+# (FouleeKit, Foulee/Shared/**) isn't flagged just because its consumer lives
+# in another target. Regenerate the project with `tuist generate` before scanning.
 #
 # CI runs `periphery scan --baseline .periphery.baseline.json --strict`: the
 # baseline freezes today's findings so only NEW dead code fails a PR. After

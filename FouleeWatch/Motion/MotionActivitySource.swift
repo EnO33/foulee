@@ -1,4 +1,5 @@
 import CoreMotion
+import FouleeKit
 import Foundation
 
 /// The app's only contact with CoreMotion, as four closures.

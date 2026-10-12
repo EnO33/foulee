@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// One thing observed about what the wearer is doing, whatever produced it

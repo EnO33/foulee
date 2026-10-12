@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import SwiftUI
 
 /// Streak view opened from the Série card. Fitness-style: a flame hero, a

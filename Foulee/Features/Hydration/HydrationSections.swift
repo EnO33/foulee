@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Today at a glance (issue #355): a drop filling up to the goal, the litres,

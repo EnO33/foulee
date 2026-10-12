@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Month-by-month view of the streak rings. The chevrons move between months

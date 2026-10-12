@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// One CoreMotion estimate as the history query hands it over (issue #246).

@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Plain bag describing an `HKWorkout` for the summary sheet —

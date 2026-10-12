@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import SwiftUI
 
 /// Detail view for a single workout — pushed onto `RecapScreen`'s

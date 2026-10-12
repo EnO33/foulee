@@ -1,4 +1,5 @@
 @preconcurrency import CoreLocation
+import FouleeKit
 import Foundation
 
 /// Bridges the one-shot `CLLocationManager` fix the weather card needs to

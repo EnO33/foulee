@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Tells a walk from a run by how fast the wearer is moving (issues #267, #331).

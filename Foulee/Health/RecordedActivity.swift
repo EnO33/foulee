@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// What a session already in Santé *was* — the read-side counterpart of

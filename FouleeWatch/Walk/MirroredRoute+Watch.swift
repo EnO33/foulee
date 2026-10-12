@@ -1,4 +1,5 @@
 import CoreLocation
+import FouleeKit
 
 /// The wrist's side of the mirrored map (issue #334): the « Plan » page's
 /// portions, thinned for the phone by the shared rules.

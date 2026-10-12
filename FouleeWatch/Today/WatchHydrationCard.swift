@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// The hydration card: intake against the goal, and « J'ai bu ».

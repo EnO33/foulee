@@ -1,4 +1,5 @@
 import ActivityKit
+import FouleeKit
 import Foundation
 
 /// Shape of the data the Live Activity surfaces. Imported by both the

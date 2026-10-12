@@ -1,4 +1,5 @@
 @preconcurrency import CoreMotion
+import FouleeKit
 import Foundation
 
 // Read by swift-dependencies from any thread; the handler runs on its own queue.

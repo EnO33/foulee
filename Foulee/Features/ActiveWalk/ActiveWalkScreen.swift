@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import SwiftUI
 
 /// Live walk screen — chip "EN COURS" + big timer + progress ring with

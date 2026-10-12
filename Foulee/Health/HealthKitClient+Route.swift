@@ -1,4 +1,5 @@
 import CoreLocation
+import FouleeKit
 import HealthKit
 import os
 

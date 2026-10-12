@@ -1,4 +1,5 @@
 import CoreMotion
+import FouleeKit
 import Foundation
 import Testing
 @testable import Foulee

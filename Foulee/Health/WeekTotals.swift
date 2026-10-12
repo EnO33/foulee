@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// The week so far, Monday to today, for the home's « Semaine » tab (issue

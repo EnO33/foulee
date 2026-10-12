@@ -1,5 +1,6 @@
 import Clocks
 import Dependencies
+import FouleeKit
 import SwiftUI
 import Testing
 @testable import Foulee

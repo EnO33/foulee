@@ -84,6 +84,33 @@ jobs:
       - name: Validate the Connect IQ project (no SDK required)
         run: FouleeConnectIQ/build.sh validate
 
+  # The pure logic and the shared models (issue #425, ADR 0007), tested on the
+  # runner's own macOS: no simulator to install, boot or launch.
+  kit:
+    name: Kit
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare-project
+
+      - name: Test (FouleeKit, macOS)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace Foulee.xcworkspace \
+            -scheme FouleeKit \
+            -destination 'platform=macOS' \
+            -configuration Debug \
+            -derivedDataPath build/dd \
+            -resultBundlePath build/results/kit.xcresult \
+            test | xcbeautify
+
+      - uses: ./.github/actions/report-test-failure
+        if: failure()
+        with:
+          name: kit
+
   # iOS and watchOS run side by side (issue #406). Each compiles once —
   # `build-for-testing`, then `test-without-building` — instead of a `build`
   # followed by a `test` that recompiled everything.
@@ -178,6 +205,21 @@ jobs:
             -workspace Foulee.xcworkspace \
             -scheme FouleeWatch \
             -destination "$DESTINATION" \
+            -configuration Debug \
+            -derivedDataPath build/dd \
+            build-for-testing | xcbeautify
+
+      # The kit's tests run in the Kit job, on macOS. Built here only so the
+      # scan sees what they use: a declaration only its tests reach is
+      # otherwise reported as dead.
+      - name: Index the kit tests for the dead-code scan
+        if: github.event_name == 'pull_request'
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace Foulee.xcworkspace \
+            -scheme FouleeKit \
+            -destination 'platform=macOS' \
             -configuration Debug \
             -derivedDataPath build/dd \
             build-for-testing | xcbeautify
@@ -279,16 +321,16 @@ jobs:
 
   build:
     # Keep this name "Build & Test": it's a required status check in main's
-    # branch protection. The work now happens in the two jobs above; this one
+    # branch protection. The work now happens in the jobs above; this one
     # only reports their outcome, so the protection rule needs no change.
     # `always()`: a skipped aggregator would count as passing — alls-green
     # fails it unless every job it needs succeeded.
     name: Build & Test
-    needs: [ios, watchos]
+    needs: [kit, ios, watchos]
     if: always()
     runs-on: ubuntu-24.04
     steps:
-      - name: Both platforms passed
+      - name: Every platform passed
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}

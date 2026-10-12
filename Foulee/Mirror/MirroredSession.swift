@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// A workout session running on the paired Watch, as the phone sees it

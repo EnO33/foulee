@@ -1,4 +1,5 @@
 import AppIntents
+import FouleeKit
 import SwiftUI
 import WidgetKit
 
