@@ -15,9 +15,10 @@ import SwiftUI
 /// the last row come up clear of it.
 ///
 /// Not a toolbar item either: watchOS draws its bottom-bar buttons round and
-/// glyph-only, and these are the app's capsules. The small control size keeps
-/// the capsule to a sixth of the screen, and a fade to black, rather than an
-/// opaque block, keeps the rows passing beneath readable to the last moment.
+/// glyph-only, and these are the app's capsules, the size of « J'ai bu ». A
+/// fade to black across the whole width, rather than an opaque block, keeps
+/// the rows passing beneath readable to the last moment; narrower than the
+/// screen, it left the tiles' edges standing out on either side.
 extension View {
     func pinnedAction<Action: View>(@ViewBuilder _ action: () -> Action) -> some View {
         modifier(WatchPinnedAction(action: action()))
@@ -34,12 +35,12 @@ private struct WatchPinnedAction<Action: View>: ViewModifier {
             .contentMargins(.bottom, height, for: .scrollContent)
             .overlay(alignment: .bottom) {
                 action
-                    .controlSize(.small)
                     .padding(.horizontal, 2)
                     .padding(.top, 14)
+                    .frame(maxWidth: .infinity)
                     .background(alignment: .bottom) {
                         LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .center)
-                            .ignoresSafeArea(edges: .bottom)
+                            .ignoresSafeArea(edges: [.bottom, .horizontal])
                     }
                     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
             }
