@@ -1,23 +1,22 @@
-import FouleeKit
 import Foundation
 
 /// Immutable-ish snapshot of an in-flight or finished walk. The store mutates
 /// a `var` of this; the view reads it directly.
-nonisolated struct WalkSession: Equatable, Sendable {
-    var startedAt: Date
-    var endedAt: Date?
-    var elapsed: TimeInterval = 0
-    var steps: Int = 0
-    var distanceMeters: Double = 0
+nonisolated public struct WalkSession: Equatable, Sendable {
+    public var startedAt: Date
+    public var endedAt: Date?
+    public var elapsed: TimeInterval = 0
+    public var steps: Int = 0
+    public var distanceMeters: Double = 0
     /// Cumulative elevation gain (metres) measured by the barometer.
-    var elevationGainMeters: Double = 0
+    public var elevationGainMeters: Double = 0
 
     /// What this session is, and what Santé will record it as (issue #223).
     /// Defaults to `.walking`: it is what every session the app ever wrote was
     /// stamped with, so a caller that doesn't set it keeps the old behaviour
     /// rather than getting a surprise. `ActiveWalkStore.start` sets it from the
     /// user's `ActivityMode`.
-    var activity: SessionActivity = .walking
+    public var activity: SessionActivity = .walking
 
     /// True while `activity` is a placeholder the detection replaces at the end
     /// (issue #246).
@@ -32,14 +31,14 @@ nonisolated struct WalkSession: Equatable, Sendable {
     /// rate at every instant, and the honest provisional rate is walking's —
     /// the lower of the two, so a session read mid-flight under-credits rather
     /// than inventing.
-    var isActivityUndecided: Bool = false
+    public var isActivityUndecided: Bool = false
 
     /// Steps measured over each activity's own stretches (issue #247).
     ///
     /// `nil` when the outing was never segmented — an install where motion
     /// recognition is unavailable or refused, or a session that predates it.
     /// The estimate below then falls back to exactly what it always was.
-    var stepsByActivity: [SessionActivity: Int]?
+    public var stepsByActivity: [SessionActivity: Int]?
 
     /// Quick estimate while a Watch HR feed isn't connected — kilocalories per
     /// step, at the rate of the activity those steps were taken at (see
@@ -60,7 +59,7 @@ nonisolated struct WalkSession: Equatable, Sendable {
     ///
     /// A homogeneous outing lands on exactly the figure it always did — one
     /// stretch, one rate, the same multiplication.
-    var estimatedCalories: Int {
+    public var estimatedCalories: Int {
         guard let stepsByActivity, !stepsByActivity.isEmpty else {
             return Int(Double(steps) * activity.kcalPerStep)
         }
@@ -69,7 +68,29 @@ nonisolated struct WalkSession: Equatable, Sendable {
         })
     }
 
-    var distanceKm: Double {
+    public var distanceKm: Double {
         distanceMeters / 1_000
+    }
+
+    public init(
+        startedAt: Date,
+        endedAt: Date? = nil,
+        elapsed: TimeInterval = 0,
+        steps: Int = 0,
+        distanceMeters: Double = 0,
+        elevationGainMeters: Double = 0,
+        activity: SessionActivity = .walking,
+        isActivityUndecided: Bool = false,
+        stepsByActivity: [SessionActivity: Int]? = nil
+    ) {
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+        self.elapsed = elapsed
+        self.steps = steps
+        self.distanceMeters = distanceMeters
+        self.elevationGainMeters = elevationGainMeters
+        self.activity = activity
+        self.isActivityUndecided = isActivityUndecided
+        self.stepsByActivity = stepsByActivity
     }
 }
