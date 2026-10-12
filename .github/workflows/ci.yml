@@ -158,16 +158,26 @@ jobs:
 
       # Periphery scans both schemes. The iPhone app embeds the watch app, so
       # the build above already indexed FouleeWatch; only the watch's test
-      # target is left, and it compiles in seconds on top of that build. The
-      # watchOS job runs those tests — this step only fills in the index.
+      # target is left. The watchOS job runs those tests — this step only fills
+      # in the index.
+      #
+      # A concrete simulator, not `generic/platform=watchOS Simulator`: the
+      # generic destination builds every simulator architecture, so it rebuilt
+      # the whole watch app a second time (6 min 50 s on the Xcode 27 image)
+      # instead of adding the test target to the build above.
       - name: Index the watch tests for the dead-code scan
         if: github.event_name == 'pull_request'
         run: |
           set -o pipefail
+          WATCH_ID=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("Apple Watch"))][0].udid')
+          DESTINATION="platform=watchOS Simulator,id=$WATCH_ID"
+          if [ "$WATCH_ID" = "null" ]; then
+            DESTINATION="generic/platform=watchOS Simulator"
+          fi
           xcodebuild \
             -workspace Foulee.xcworkspace \
             -scheme FouleeWatch \
-            -destination 'generic/platform=watchOS Simulator' \
+            -destination "$DESTINATION" \
             -configuration Debug \
             -derivedDataPath build/dd \
             build-for-testing | xcbeautify
