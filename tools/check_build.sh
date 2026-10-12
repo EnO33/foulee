@@ -59,7 +59,7 @@ fi
 
 pass kit xcodebuild test \
     -workspace Foulee.xcworkspace -scheme FouleeKit \
-    -destination 'platform=macOS' \
+    -destination "platform=macOS,arch=$arch" \
     -derivedDataPath "$out/dd"
 
 pass ios xcodebuild build-for-testing \

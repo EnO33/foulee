@@ -94,13 +94,15 @@ jobs:
 
       - uses: ./.github/actions/prepare-project
 
+      # The architecture is named: « My Mac » matches arm64 and x86_64, and
+      # the bundle, built for the active one only, fails to load under the other.
       - name: Test (FouleeKit, macOS)
         run: |
           set -o pipefail
           xcodebuild \
             -workspace Foulee.xcworkspace \
             -scheme FouleeKit \
-            -destination 'platform=macOS' \
+            -destination 'platform=macOS,arch=arm64' \
             -configuration Debug \
             -derivedDataPath build/dd \
             -resultBundlePath build/results/kit.xcresult \
@@ -219,7 +221,7 @@ jobs:
           xcodebuild \
             -workspace Foulee.xcworkspace \
             -scheme FouleeKit \
-            -destination 'platform=macOS' \
+            -destination 'platform=macOS,arch=arm64' \
             -configuration Debug \
             -derivedDataPath build/dd \
             build-for-testing | xcbeautify
