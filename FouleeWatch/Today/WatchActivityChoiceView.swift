@@ -14,11 +14,16 @@ import SwiftUI
 /// reach it.
 ///
 /// « Annuler » is a real button rather than a swipe: it is the only way back,
-/// so it must be visible — and it is pinned outside the `ScrollView`, exactly
-/// as the phone's `ActivityChoiceScreen` pins its own. Inside it, on a 40 mm
-/// watch, it sat below the bottom of the screen at the default text size and
-/// was gone entirely at the larger ones, leaving a screen whose only visible
-/// controls each start a permanent workout and no way out at all.
+/// so it must be visible. Inside the `ScrollView`, on a 40 mm watch, it sat
+/// below the bottom of the screen at the default text size and was gone
+/// entirely at the larger ones, leaving a screen whose only visible controls
+/// each start a permanent workout and no way out at all.
+///
+/// It is the system's own close button (ADR 0008): `.cancellationAction`, in
+/// the top corner every watchOS sheet keeps it. Pinned under the answers, it
+/// used to stand still while they scrolled, which read as a third control of
+/// another kind; up there it takes none of their room, and on a 40 mm both
+/// answers now fit without scrolling.
 ///
 /// What this screen removes is the *silent* mislabelling, not the mis-tap:
 /// answering starts the session at once and `WatchWorkoutStore.stop()` saves
@@ -30,7 +35,7 @@ struct WatchActivityChoiceView: View {
     var onCancel: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 8) {
                     Text("Marche ou course ?")
@@ -45,9 +50,11 @@ struct WatchActivityChoiceView: View {
                 .padding(.horizontal, 2)
             }
             .scrollBounceBehavior(.basedOnSize)
-            WatchActivityCancelButton(cancel: onCancel)
-                .padding(.horizontal, 2)
-                .padding(.top, 4)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    WatchActivityCancelButton(cancel: onCancel)
+                }
+            }
         }
     }
 }
@@ -80,12 +87,7 @@ struct WatchActivityCancelButton: View {
     var cancel: () -> Void
 
     var body: some View {
-        Button(action: cancel) {
-            Text("Annuler")
-                .font(.footnote.weight(.semibold))
-                .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.bordered)
+        Button("Annuler", systemImage: "xmark", role: .cancel, action: cancel)
     }
 }
 

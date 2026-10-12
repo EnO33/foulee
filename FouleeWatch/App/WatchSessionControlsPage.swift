@@ -1,17 +1,16 @@
 import SwiftUI
 
-/// One page, one job: stop the session (issue #274).
+/// One page, one job: pause or stop the session (issues #274, #384).
 ///
-/// It carries a clock too, at half the size of the one next door. Not
+/// It carries a clock too, at two thirds the size of the one next door. Not
 /// decoration — a page whose only content is a destructive button gives no clue
-/// which session it would end, and the gesture that reaches it (scroll down
-/// from « Séance ») is the same one that used to reach « Arrêter » at the
-/// bottom of the old scroll view. Keeping the elapsed time in view keeps the
-/// two continuous.
+/// which session it would end. Keeping the elapsed time in view keeps the two
+/// pages continuous.
 ///
-/// « Pause » sits above « Arrêter » (issue #384): the one is reached for far
-/// more often than the other, and a stop is the move that cannot be undone, so
-/// it stays the second thing on the page, not the first.
+/// Laid out as the Exercice app lays its own out (ADR 0008): left of
+/// « Séance », two round buttons side by side, « Arrêter » first and « Pause »
+/// beside it, each named underneath. A wearer who knows the Exercice app
+/// reaches for the same place on the same page.
 struct WatchSessionControlsPage: View {
     let metrics: WatchWorkoutMetrics
     var isSaving = false
@@ -24,21 +23,20 @@ struct WatchSessionControlsPage: View {
                 WatchSessionClock(metrics: metrics, size: 22)
                     .foregroundStyle(.secondary)
 
-                Button(action: onTogglePause) {
-                    Label(
-                        metrics.isPaused ? "Reprendre" : "Pause",
-                        systemImage: metrics.isPaused ? "play.fill" : "pause.fill"
+                HStack(alignment: .top, spacing: 16) {
+                    WatchControlButton(
+                        title: "Arrêter",
+                        systemImage: "xmark",
+                        tint: .red,
+                        role: .destructive,
+                        action: onStop
                     )
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                }
-                .tint(metrics.isPaused ? .green : .yellow)
-                .disabled(isSaving)
-
-                Button(role: .destructive, action: onStop) {
-                    Label("Arrêter", systemImage: "stop.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity)
+                    WatchControlButton(
+                        title: metrics.isPaused ? "Reprendre" : "Pause",
+                        systemImage: metrics.isPaused ? "play.fill" : "pause.fill",
+                        tint: metrics.isPaused ? .green : .yellow,
+                        action: onTogglePause
+                    )
                 }
                 // A second tap while the outing saves would read as « it did
                 // not work » (issue #380): the store ignores it, and so does this.
@@ -48,6 +46,39 @@ struct WatchSessionControlsPage: View {
             .padding(.top, 8)
         }
         .accessibilityLabel("Contrôles")
+    }
+}
+
+/// A round control with its name underneath, the shape of the Exercice app's
+/// own (ADR 0008). Shared by the wrist's session and the phone's.
+///
+/// The button is named for VoiceOver and the caption hidden from it, so the
+/// control reads once, as « Arrêter », and a UI test finds it by that name.
+struct WatchControlButton: View {
+    var title: String
+    var systemImage: String
+    var tint: Color
+    var role: ButtonRole?
+    var action: () -> Void
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Button(role: role, action: action) {
+                Image(systemName: systemImage)
+                    .font(.title3.weight(.bold))
+                    .frame(width: 52, height: 52)
+            }
+            .buttonBorderShape(.circle)
+            .tint(tint)
+            .accessibilityLabel(title)
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .accessibilityHidden(true)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

@@ -13,6 +13,13 @@ import SwiftUI
 /// another ten minutes. That question cannot be answered from the session's own
 /// figures.
 ///
+/// The water is here too (issue #281, ADR 0008): the moment someone most
+/// wants to log a glass is the moment they are least able to leave the
+/// session, and the card answers the same question as the bars above it. It
+/// is the home's card, with the same store behind it. `dietaryWater` is not in
+/// `collectedQuantityTypes`, so a glass logged mid-session touches nothing the
+/// `HKLiveWorkoutBuilder` is collecting.
+///
 /// The streak and the goals cost nothing to draw — they are the phone's, read
 /// out of the app group synchronously — so this page appears filled and only
 /// its two bars arrive a moment late.
@@ -37,6 +44,9 @@ struct WatchSessionDayPage: View {
                     value: today.minutes,
                     goal: today.minutesGoal
                 )
+                if today.hydrationEnabled {
+                    WatchHydrationCard(store: today)
+                }
             }
             .padding(.horizontal, 8)
             .padding(.top, 4)

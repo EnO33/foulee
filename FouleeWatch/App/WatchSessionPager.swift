@@ -1,26 +1,26 @@
 import SwiftUI
 
-/// The pages of a live session, left to right (issues #274, #276).
+/// The pages of a live session, left to right (issues #274, #276, ADR 0008).
 ///
-/// Selection binds to **these cases, never to an index**: the set grows
-/// (« Journée » in #280, « Hydratation » in #281) and « Jambes » only appears
-/// once an outing has changed sport, so the position of everything after it
-/// moves at runtime.
+/// Selection binds to **these cases, never to an index**: « Jambes » only
+/// appears once an outing has changed sport, so the position of everything
+/// after it moves at runtime.
 ///
-/// « Contrôles » sits immediately beside « Séance ». The reason is that
-/// stopping must never be more than one gesture away, whatever pages arrive
-/// later — they queue up after it. « Musique » follows (issue #383), where the
-/// Exercice app keeps its own « À l'écoute »: it is reached mid-stride, so it
-/// stays one swipe past the stop. « Plan » comes next (issue #312): it is the
-/// page read while moving, the others are glanced at.
+/// The Exercice app's order: « Contrôles » to the left of « Séance », which is
+/// the page a session opens on, and « Musique » to its right. Stopping and
+/// pausing are one swipe away in one direction, the music one swipe away in
+/// the other, and a wearer who knows the Exercice app finds both where they
+/// expect them. « Plan » follows (issue #312): it is the page read while
+/// moving, the others are glanced at. « Journée » closes the row, with the
+/// water in it (issue #281): the two answered the same question — how is the
+/// day going — on two pages.
 enum WatchSessionPage: Hashable {
-    case session
     case controls
+    case session
     case music
     case route
     case legs
     case day
-    case hydration
 }
 
 /// Live session screen, split into pages (issue #274).
@@ -90,10 +90,10 @@ struct WatchSessionPager: View {
 
     var body: some View {
         TabView(selection: $page) {
-            WatchSessionMetricsPage(metrics: metrics, errorMessage: errorMessage)
-                .tag(WatchSessionPage.session)
             WatchSessionControlsPage(metrics: metrics, isSaving: isSaving, onTogglePause: onTogglePause, onStop: onStop)
                 .tag(WatchSessionPage.controls)
+            WatchSessionMetricsPage(metrics: metrics, errorMessage: errorMessage)
+                .tag(WatchSessionPage.session)
             WatchSessionMusicPage()
                 .tag(WatchSessionPage.music)
             WatchSessionRoutePage(route: route, metrics: metrics)
@@ -104,10 +104,6 @@ struct WatchSessionPager: View {
             }
             WatchSessionDayPage(today: today)
                 .tag(WatchSessionPage.day)
-            if today.hydrationEnabled {
-                WatchSessionHydrationPage(today: today)
-                    .tag(WatchSessionPage.hydration)
-            }
         }
         .tabViewStyle(.page)
         // Each kilometre, over whatever page is up (issue #382).
