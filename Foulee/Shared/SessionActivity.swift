@@ -13,7 +13,7 @@ import Foundation
 ///
 /// Shared with the watch target (see Project.swift): the watch writes its own
 /// workouts and needs the same vocabulary.
-enum SessionActivity: String, Codable, Sendable, CaseIterable {
+nonisolated enum SessionActivity: String, Codable, Sendable, CaseIterable {
     case walking
     case running
 

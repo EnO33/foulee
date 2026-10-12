@@ -1,7 +1,8 @@
 @preconcurrency import CoreMotion
 import Foundation
 
-extension Pedometer {
+// Read by swift-dependencies from any thread.
+nonisolated extension Pedometer {
     /// Real CoreMotion-backed implementation. One shared `CMPedometer` instance
     /// — `stop()` halts updates without invalidating the stream's continuation
     /// so callers can decide whether to restart.

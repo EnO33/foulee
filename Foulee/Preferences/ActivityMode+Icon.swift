@@ -21,7 +21,7 @@
 /// happened when #222 and #223 were developed in parallel. The app target
 /// picks this file up through its `Foulee/**` glob; every other target lists
 /// its sources one by one (see Project.swift).
-extension ActivityMode {
+nonisolated extension ActivityMode {
     var icon: String {
         switch self {
         case .walking: ActivityGlyph.walk

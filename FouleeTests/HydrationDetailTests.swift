@@ -68,7 +68,6 @@ struct HydrationDetailTests {
     // MARK: - Store
 
     @Test("Today's glasses come newest first")
-    @MainActor
     func samplesNewestFirst() async {
         let morning = WaterSample(id: UUID(), date: day(0).addingTimeInterval(8 * 3_600), milliliters: 250, sourceName: "Foulée")
         let noon = WaterSample(id: UUID(), date: day(0).addingTimeInterval(12 * 3_600), milliliters: 500, sourceName: "Apple Watch")
@@ -87,7 +86,6 @@ struct HydrationDetailTests {
     }
 
     @Test("The screen reads today's glasses and the week in one go")
-    @MainActor
     func storeLoads() async {
         let glass = WaterSample(id: UUID(), date: saturday, milliliters: 250, sourceName: "Foulée")
         let asked = LockedRef<[Int]>([])
@@ -117,9 +115,8 @@ struct HydrationDetailTests {
     }
 
     @Test("A refused read is said, not shown as an empty week")
-    @MainActor
     func storeFailure() async {
-        struct Refused: Error {}
+        nonisolated struct Refused: Error {}
         await withDependencies {
             var client = HealthKitClient.testValue
             client.waterToday = { throw Refused() }

@@ -5,7 +5,7 @@ import Foundation
 /// Shared with the watch target (see Project.swift): since issue #316 both
 /// platforms write keys from this list, and one spelling is the only way the
 /// phone can be sure to read back what the wrist wrote.
-enum FouleeWorkoutMetadata {
+nonisolated enum FouleeWorkoutMetadata {
     // A walk's *own* measured totals. We don't write step / distance / energy
     // **samples** from the phone (they'd double-count the daily totals the
     // Today screen sums back from HealthKit), so these keys let the résumé and
@@ -29,7 +29,7 @@ enum FouleeWorkoutMetadata {
 /// five records in Santé that nothing ties together. Contiguity is not enough
 /// to tie them back up: two outings can follow each other within seconds, and
 /// a leg lost to a crash leaves a gap inside one. This is the exact link.
-struct OutingLeg: Hashable, Sendable {
+nonisolated struct OutingLeg: Hashable, Sendable {
     /// Drawn once when the outing starts, shared by every leg of it.
     var outingID: UUID
     /// 0 for the first leg, then one more per change of sport.

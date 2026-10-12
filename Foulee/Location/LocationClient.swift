@@ -5,13 +5,13 @@ import Foundation
 /// returns `nil` when authorization is denied or no fix is available within
 /// a reasonable window — never throws on the happy-path "the user said no".
 /// `routeUpdates()` streams fixes while a walk is in progress for the map.
-struct LocationClient: Sendable {
+nonisolated struct LocationClient: Sendable {
     var requestWhenInUse: @Sendable () async -> Bool
     var currentLocation: @Sendable () async -> Coordinate?
     var routeUpdates: @Sendable () -> AsyncStream<Coordinate>
 }
 
-extension LocationClient: DependencyKey {
+nonisolated extension LocationClient: DependencyKey {
     static let previewValue = LocationClient(
         requestWhenInUse: { true },
         currentLocation: { Coordinate(latitude: 48.8566, longitude: 2.3522) },
@@ -44,7 +44,7 @@ extension LocationClient: DependencyKey {
     )
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var location: LocationClient {
         get { self[LocationClient.self] }
         set { self[LocationClient.self] = newValue }

@@ -5,10 +5,9 @@ import Testing
 
 /// The water side of the Bilan (issue #356).
 @Suite("Recap water")
-@MainActor
 struct RecapWaterTests {
     private let calendar = Calendar.iso8601Monday
-    private struct Refused: Error {}
+    nonisolated private struct Refused: Error {}
 
     private func day(_ month: Int, _ day: Int, hour: Int = 0) -> Date {
         calendar.date(from: DateComponents(year: 2026, month: month, day: day, hour: hour))!

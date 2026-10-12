@@ -10,7 +10,7 @@ import Foundation
 /// the *same* wall-clock slots and appear to move together. Outside the window
 /// a single wake is requested at the next window start, so none of the budget
 /// is burnt overnight when nobody is looking.
-enum WidgetRefresh {
+nonisolated enum WidgetRefresh {
     /// Daytime cadence in minutes. The realistic floor is ~10-15: asking for
     /// less just gets throttled once the daily budget runs out. Tunable in one
     /// place if end-of-day gaps show up.

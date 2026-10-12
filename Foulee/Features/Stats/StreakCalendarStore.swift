@@ -5,7 +5,6 @@ import Observation
 /// Loads the day history behind the streak rings and derives the browsable
 /// months + current/record streaks. Mirrors the other stores' single error
 /// boundary.
-@MainActor
 @Observable
 final class StreakCalendarStore {
     /// How many calendar months the rings browser can page back through.

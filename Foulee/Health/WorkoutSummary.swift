@@ -2,7 +2,7 @@ import Foundation
 
 /// Plain bag describing an `HKWorkout` for the summary sheet —
 /// keeps `HKWorkout` (non-`Sendable`, framework-specific) out of view code.
-struct WorkoutSummary: Equatable, Hashable, Sendable, Identifiable {
+nonisolated struct WorkoutSummary: Equatable, Hashable, Sendable, Identifiable {
     var id: UUID
     var startedAt: Date
     var endedAt: Date
@@ -38,7 +38,7 @@ struct WorkoutSummary: Equatable, Hashable, Sendable, Identifiable {
     var legs: [WorkoutSummary] = []
 }
 
-extension WorkoutSummary {
+nonisolated extension WorkoutSummary {
     /// Every activity the row covers, in the order they were first done.
     ///
     /// One for an ordinary row. For a regrouped outing, each sport once:

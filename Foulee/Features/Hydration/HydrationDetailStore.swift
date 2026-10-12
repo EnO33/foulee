@@ -5,7 +5,6 @@ import Observation
 /// Loads the Hydratation screen (issue #355): today's glasses one by one, and
 /// the week so far. The intake itself stays `HydrationStore`'s, shared
 /// with the home card; this one only adds what the screen alone shows.
-@MainActor
 @Observable
 final class HydrationDetailStore {
     /// Today's glasses, newest first: the one just drunk is the one looked

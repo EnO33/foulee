@@ -12,7 +12,6 @@ import Testing
 /// first and the two copies land in different buckets, where neither can ever
 /// see the overlap.
 @Suite("Bilan — jours et sorties")
-@MainActor
 struct OutingDayTests {
     /// 2024-05-28 12:00 UTC. The calendar below is pinned to GMT so "just
     /// before midnight" means the same thing on CI as on a developer's machine.

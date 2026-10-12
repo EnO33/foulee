@@ -1,7 +1,7 @@
 import Foundation
 
 /// How a single day reads on the streak calendar.
-enum DayStatus: Equatable, Sendable {
+nonisolated enum DayStatus: Equatable, Sendable {
     case done    // active day, goal met
     case missed  // active day, goal not met
     case rest    // not one of the user's active weekdays
@@ -9,7 +9,7 @@ enum DayStatus: Equatable, Sendable {
 }
 
 /// One cell of the streak calendar.
-struct CalendarDay: Identifiable, Equatable, Sendable {
+nonisolated struct CalendarDay: Identifiable, Equatable, Sendable {
     let date: Date
     let status: DayStatus
     /// Exercise minutes that day (drives the inner activity ring + day detail).
@@ -22,7 +22,7 @@ struct CalendarDay: Identifiable, Equatable, Sendable {
 /// One calendar month laid out for the rings browser: weekday-aligned cells
 /// (leading `nil`s pad the first week, trailing `nil`s pad to a fixed 6 rows so
 /// pages don't change height), the month's title, and a few derived stats.
-struct StreakMonth: Identifiable, Equatable, Sendable {
+nonisolated struct StreakMonth: Identifiable, Equatable, Sendable {
     let monthStart: Date
     let title: String
     let cells: [CalendarDay?]
@@ -47,7 +47,7 @@ struct StreakMonth: Identifiable, Equatable, Sendable {
 
 /// Success rate for one weekday across the loaded history (Fitness-style
 /// "which days are you most regular" breakdown).
-struct WeekdayStat: Identifiable, Equatable, Sendable {
+nonisolated struct WeekdayStat: Identifiable, Equatable, Sendable {
     let weekday: Weekday
     /// 0…100 — share of that weekday's active days whose goal was met.
     let rate: Int
@@ -58,7 +58,7 @@ struct WeekdayStat: Identifiable, Equatable, Sendable {
 
 /// Pure builder for the streak rings — the last `count` calendar months, each
 /// weekday-aligned (Monday first) for a 7-column grid.
-enum StreakCalendar {
+nonisolated enum StreakCalendar {
     /// The last `count` calendar months, oldest → newest (current month last).
     /// Each month's `cells` start with leading `nil`s so the 1st lands under its
     /// weekday column, and are padded with trailing `nil`s to exactly 6 rows

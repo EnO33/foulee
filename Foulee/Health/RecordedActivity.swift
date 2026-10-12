@@ -17,7 +17,7 @@ import Foundation
 /// unnoticeable at once. Showing the type fixes nothing by itself; it turns an
 /// invisible error into a *noticeable* one, which the owner can then correct by
 /// hand in Santé.
-enum RecordedActivity: String, Equatable, Hashable, Sendable, CaseIterable {
+nonisolated enum RecordedActivity: String, Equatable, Hashable, Sendable, CaseIterable {
     case walking
     case running
     case hiking

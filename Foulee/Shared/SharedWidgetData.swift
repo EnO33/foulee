@@ -8,7 +8,7 @@ import Foundation
 /// whenever it refreshes, and the widgets read it. The app-group container is
 /// readable from the widget process and stays available after the first unlock,
 /// so the Lock Screen keeps showing the last known values.
-struct WidgetSnapshot: Codable, Sendable {
+nonisolated struct WidgetSnapshot: Codable, Sendable {
     var steps: Int
     var stepsGoal: Int
     var minutes: Int
@@ -222,7 +222,7 @@ struct WidgetSnapshot: Codable, Sendable {
 }
 
 /// Read/write the widget snapshot in the shared app-group container.
-enum SharedStore {
+nonisolated enum SharedStore {
     static let suiteName = "group.com.eno33.foulee"
 
     #if DEBUG
@@ -278,7 +278,7 @@ enum SharedStore {
 
 /// Bridge to the platform-neutral projection input (`WidgetTimelineBuilder`
 /// compiles into the watch widget target, this type does not).
-extension WidgetSnapshot {
+nonisolated extension WidgetSnapshot {
     var counters: WidgetCounters {
         WidgetCounters(
             steps: steps, stepsGoal: stepsGoal,

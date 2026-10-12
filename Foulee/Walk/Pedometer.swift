@@ -3,7 +3,7 @@ import Foundation
 
 /// Sample emitted by `Pedometer.startUpdates(from:)` each time CoreMotion
 /// has a fresh delta.
-struct PedometerSample: Equatable, Sendable {
+nonisolated struct PedometerSample: Equatable, Sendable {
     var steps: Int
     var distanceMeters: Double
 }
@@ -11,7 +11,7 @@ struct PedometerSample: Equatable, Sendable {
 /// CoreMotion's `CMPedometer` wrapped as a struct-of-closures for DI parity
 /// with `HealthKitClient`. `startUpdates(from:)` returns an `AsyncStream` so
 /// the store can `for-await` cleanly and cancel on session stop.
-struct Pedometer: Sendable {
+nonisolated struct Pedometer: Sendable {
     var startUpdates: @Sendable (_ from: Date) -> AsyncStream<PedometerSample>
     var stop: @Sendable () -> Void
     /// Steps recorded over a past interval, or `nil` when the device cannot
@@ -29,7 +29,7 @@ struct Pedometer: Sendable {
     var steps: @Sendable (_ from: Date, _ to: Date) async -> Int?
 }
 
-extension Pedometer: DependencyKey {
+nonisolated extension Pedometer: DependencyKey {
     static let previewValue = Pedometer(
         startUpdates: { _ in
             AsyncStream { continuation in
@@ -58,7 +58,7 @@ extension Pedometer: DependencyKey {
     )
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var pedometer: Pedometer {
         get { self[Pedometer.self] }
         set { self[Pedometer.self] = newValue }

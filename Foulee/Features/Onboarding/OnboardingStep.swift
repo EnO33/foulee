@@ -14,7 +14,7 @@ import Foundation
 /// fails the build until it has a screen), the clamp becomes "there is no
 /// next case", and the indicator counts `allCases` instead of hardcoding a
 /// total. Adding or reordering a step is now a single edit here.
-enum OnboardingStep: Int, CaseIterable {
+nonisolated enum OnboardingStep: Int, CaseIterable {
     case welcome
     case activity
     case goal

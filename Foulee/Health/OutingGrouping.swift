@@ -14,7 +14,7 @@ import Foundation
 /// overlap rule does the rest.
 ///
 /// Pure and total: same input, same output, always.
-enum OutingGrouping {
+nonisolated enum OutingGrouping {
     /// How far apart two legs may be and still read as one outing, when the
     /// watch did not say so.
     ///

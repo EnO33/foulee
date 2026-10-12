@@ -5,7 +5,6 @@ import UserNotifications
 
 /// The Réglages notifications page reads what iOS allows (issue #394).
 @Suite("Notification permission")
-@MainActor
 struct NotificationPermissionTests {
     @Test("Every system status maps to what the page must show", arguments: [
         (UNAuthorizationStatus.notDetermined, NotificationPermission.notDetermined),

@@ -28,7 +28,7 @@ import Foundation
 ///
 /// Pure Foundation so it compiles into both the app and the widget
 /// extension (see Project.swift).
-enum ActiveMinutes {
+nonisolated enum ActiveMinutes {
     /// Minutes in a civil day — upper bound for any daily total.
     static let dailyCap = 1_440
 
@@ -37,7 +37,7 @@ enum ActiveMinutes {
 
     /// The two facts about a workout the merge needs, decoupled from
     /// `HKWorkout` so the math stays pure and testable.
-    struct WorkoutInterval: Equatable, Sendable {
+    nonisolated struct WorkoutInterval: Equatable, Sendable {
         var start: Date
         var duration: TimeInterval
     }

@@ -3,7 +3,7 @@ import Foundation
 
 /// The seeded water (issue #355): today's glasses, which add up to `waterML`,
 /// and the six days before for the Hydratation screen's week.
-extension ScreenshotSeed {
+nonisolated extension ScreenshotSeed {
     private struct Glass {
         /// Minutes after midnight.
         var minutes: Int

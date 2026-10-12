@@ -10,7 +10,7 @@ import CoreLocation
 ///
 /// Shared: the watch thins its route for the phone (#334), the phone its route
 /// for the watch (#342), by the same rules.
-extension MirroredRoutePortion {
+nonisolated extension MirroredRoutePortion {
     /// The spacing to aim for. A GPS fix is good to a few metres; anything
     /// finer than this only redraws noise.
     static let minimumSpacing: CLLocationDistance = 10

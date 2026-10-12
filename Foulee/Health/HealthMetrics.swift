@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Kept independent of HKQuantity so previews and tests can build these
 /// without touching the real HealthKit framework.
-struct HealthMetrics: Equatable, Sendable {
+nonisolated struct HealthMetrics: Equatable, Sendable {
     var steps: Int
     var distanceKm: Double
     var activeMinutes: Int

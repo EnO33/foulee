@@ -13,7 +13,7 @@ import SwiftUI
 /// System colours, so each one already has its dark-mode variant. And never the
 /// colour alone: every place that paints a sport also names it, with a glyph or
 /// a label.
-enum ActivityPalette {
+nonisolated enum ActivityPalette {
     static let walk = Color.cyan
     static let run = Color.orange
     static let hike = Color.green

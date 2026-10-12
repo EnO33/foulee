@@ -13,7 +13,7 @@ import Foundation
 /// the boundary, `MovementClassifier` divides by wall time,
 /// `WatchWorkoutSegment.elapsed(at:)` is wall time). That is a session-engine
 /// change, not a button.
-enum MirrorCommand: String, Codable, Sendable {
+nonisolated enum MirrorCommand: String, Codable, Sendable {
     /// End the outing, save it, and show the recap — the whole of
     /// `WatchWorkoutStore.stop()`.
     ///

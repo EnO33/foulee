@@ -3,7 +3,7 @@ import Foundation
 /// Scalar inputs to the projection — deliberately not `WidgetSnapshot`, so
 /// the builder compiles into the watch widget target (which has no snapshot
 /// type) and both platforms share one projection policy.
-struct WidgetCounters: Equatable, Sendable {
+nonisolated struct WidgetCounters: Equatable, Sendable {
     var steps: Int
     var stepsGoal: Int
     var minutes: Int
@@ -16,7 +16,7 @@ struct WidgetCounters: Equatable, Sendable {
 /// into a widget timeline so the display keeps moving between two reloads.
 /// Steps and minutes are (conservatively) projected; distance and calories are
 /// carried through flat — they don't progress predictably enough to fake.
-struct WidgetProjectedValue: Equatable, Sendable {
+nonisolated struct WidgetProjectedValue: Equatable, Sendable {
     let date: Date
     let steps: Int
     let minutes: Int
@@ -30,7 +30,7 @@ struct WidgetProjectedValue: Equatable, Sendable {
 /// reloads, so the daily WidgetKit budget is untouched. The projection is
 /// deliberately conservative: bounded, monotonically non-decreasing, and
 /// never past local midnight (the zeroed reset entry must stay last).
-enum WidgetTimelineBuilder {
+nonisolated enum WidgetTimelineBuilder {
     /// Spacing between interpolated entries.
     static let entryStepMinutes = 2
     /// Hard cap so a timeline built long before the next refresh (overnight,

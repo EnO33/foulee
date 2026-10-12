@@ -6,7 +6,7 @@ import Testing
 /// Taking a glass back (issue #354).
 @Suite("Hydration undo", .serialized)
 struct HydrationUndoTests {
-    struct Refused: Error {}
+    nonisolated struct Refused: Error {}
 
     private func scratchDefaults() throws -> UserDefaults {
         let name = "HydrationUndoTests"
@@ -44,7 +44,6 @@ struct HydrationUndoTests {
     }
 
     @Test("Undo deletes the glass's own sample and re-reads the intake")
-    @MainActor
     func storeDeletesTheSample() async {
         let sample = UUID()
         let deleted = LockedRef<[UUID]>([])
@@ -64,7 +63,6 @@ struct HydrationUndoTests {
     }
 
     @Test("A refused delete says so and leaves the intake alone")
-    @MainActor
     func refusedDelete() async {
         await withDependencies {
             var client = HealthKitClient.testValue

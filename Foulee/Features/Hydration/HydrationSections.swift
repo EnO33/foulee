@@ -62,7 +62,7 @@ struct HydrationTodayHero: View {
 }
 
 /// A water drop: a point on top, a round belly below.
-private struct DropShape: Shape {
+nonisolated private struct DropShape: Shape {
     func path(in rect: CGRect) -> Path {
         let radius = rect.width / 2
         let center = CGPoint(x: rect.midX, y: rect.maxY - radius)

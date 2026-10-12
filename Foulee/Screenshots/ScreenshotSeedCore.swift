@@ -20,7 +20,10 @@ import Foundation
 ///
 /// Nothing here reads the wall clock: every value is a constant or a pure
 /// function of a day offset counted from `instant`.
-enum ScreenshotSeed {
+///
+/// nonisolated: the dependency doubles read it from `@Sendable` closures, and the
+/// watch target (no default isolation) compiles this file too.
+nonisolated enum ScreenshotSeed {
     /// Thursday 14 May 2026, 14:35 — an ordinary active weekday, mid-afternoon,
     /// after the walk window has closed, so the hero card shows the finished
     /// state ("Sortie terminée") rather than a countdown.

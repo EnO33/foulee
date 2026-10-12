@@ -10,8 +10,8 @@ import Foundation
 /// Under ADR 0003 D2: **a complete, dated state, never a delta.** A message
 /// lost on the way is corrected by the next one; the wrist keeps the newest by
 /// `sentAt`.
-struct PhoneSessionSnapshot: Equatable, Sendable {
-    enum Phase: String, Codable, Sendable {
+nonisolated struct PhoneSessionSnapshot: Equatable, Sendable {
+    nonisolated enum Phase: String, Codable, Sendable {
         case active
         case paused
         /// The phone stopped. Sent once, so the wrist lets go at once rather
@@ -37,7 +37,7 @@ struct PhoneSessionSnapshot: Equatable, Sendable {
     }
 }
 
-extension PhoneSessionSnapshot: Codable {
+nonisolated extension PhoneSessionSnapshot: Codable {
     private enum CodingKeys: String, CodingKey {
         case sentAt, activity, phase, elapsed, steps, distanceMeters, activeCalories, route
     }
@@ -59,7 +59,7 @@ extension PhoneSessionSnapshot: Codable {
 }
 
 /// What the wrist can ask of the phone's session (issue #342).
-enum PhoneSessionCommand: String, Codable, Sendable {
+nonisolated enum PhoneSessionCommand: String, Codable, Sendable {
     case pause
     case resume
     case stop
@@ -67,7 +67,7 @@ enum PhoneSessionCommand: String, Codable, Sendable {
 
 /// The WatchConnectivity keys of the phone's session (issue #342). One
 /// spelling, read by both apps.
-enum PhoneSessionKey {
+nonisolated enum PhoneSessionKey {
     /// Application context and live message: the latest `PhoneSessionSnapshot`.
     /// Absent from the context when there is no session.
     static let snapshot = "phoneSession"

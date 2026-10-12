@@ -24,7 +24,7 @@ import Foundation
 /// - `readFloor` returns the day's high-water contribution, gated on the local
 ///   day alone. It is what the counters actually display, and it deliberately
 ///   outlives the freshness horizon — see `GarminSnapshotOverlay.Floor`.
-enum GarminSnapshotStore {
+nonisolated enum GarminSnapshotStore {
     private static let key = "garmin.connectiq.snapshot"
     private static let floorKey = "garmin.connectiq.overlayFloor"
     private static let outcomeKey = "garmin.connectiq.lastOutcome"

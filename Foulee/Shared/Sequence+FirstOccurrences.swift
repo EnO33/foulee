@@ -1,4 +1,4 @@
-extension Sequence where Element: Equatable {
+nonisolated extension Sequence where Element: Equatable {
     /// Each element once, where it first appears: walk, run, walk, run →
     /// walk, run.
     ///

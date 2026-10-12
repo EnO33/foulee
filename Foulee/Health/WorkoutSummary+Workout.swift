@@ -1,6 +1,6 @@
 import HealthKit
 
-extension WorkoutSummary {
+nonisolated extension WorkoutSummary {
     /// Map an `HKWorkout` to the view-facing summary. For sessions Foulée
     /// recorded on the phone, steps / distance come from our own metadata (we
     /// don't write those as samples — they'd double-count the daily totals);

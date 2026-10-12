@@ -30,10 +30,11 @@ struct ActivityModeNeutralityTests {
     /// A live 3-day streak (today included) in front of an older 5-day run, so
     /// `current` and `best` differ and neither is 0 — two zeros would compare
     /// equal whatever the mode did.
-    private static let walkedOffsets = [0, 1, 2, 5, 6, 7, 8, 9]
+    ///
+    /// nonisolated: read from a `@Sendable` history closure.
+    nonisolated private static let walkedOffsets = [0, 1, 2, 5, 6, 7, 8, 9]
 
     @Test("Streak, record and calendar are identical under walking, running and both")
-    @MainActor
     func everyModeAnswersTheSame() async throws {
         let baseline = try await outputs(for: .walking)
         // The fixture has to be worth comparing before the comparison means
@@ -53,7 +54,6 @@ struct ActivityModeNeutralityTests {
     /// then names the surface that moved, and the dead-code scan can see every
     /// property being read (an assign-only property whose only reader is a
     /// synthesized `Equatable` fails the build).
-    @MainActor
     private func expect(_ measured: StreakOutputs, matches baseline: StreakOutputs, mode: ActivityMode) {
         let culprit = mode.rawValue
         #expect(measured.streak == baseline.streak, "\(culprit) moved the streak")
@@ -85,7 +85,6 @@ struct ActivityModeNeutralityTests {
         var historyWindows: [Int]
     }
 
-    @MainActor
     private func outputs(for mode: ActivityMode) async throws -> StreakOutputs {
         let suiteName = "ActivityModeNeutrality-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))

@@ -9,12 +9,12 @@ import WidgetKit
 /// needs. Publishing the watch app to the Connect IQ store (#190), reading
 /// hydration from the watch, and any UI beyond the numbers already on screen
 /// are all out — nothing here adds a screen or a setting.
-enum GarminSnapshotIngestion {
+nonisolated enum GarminSnapshotIngestion {
     /// What became of a decoded snapshot. A value rather than a log line: this
     /// target has no logger by rule, and a refusal that leaves no trace at all
     /// is how a wrong watch clock could silently cost a user the whole feature
     /// (`GarminSnapshotStore.lastOutcome` keeps the latest one).
-    enum Outcome: String, Equatable, Sendable {
+    nonisolated enum Outcome: String, Equatable, Sendable {
         case accepted
         case otherDay
         case tooOld
@@ -85,6 +85,9 @@ enum GarminSnapshotIngestion {
     }
 
     /// Drains the client's snapshot stream for the lifetime of the process.
+    /// `@concurrent`: started from the app's main-actor launch `Task`, but the
+    /// decoding, defaults writes and HealthKit refresh belong off the main actor.
+    @concurrent
     static func run(_ snapshots: AsyncStream<GarminDailySnapshot>) async {
         for await snapshot in snapshots where accept(snapshot) == .accepted {
             await publish()

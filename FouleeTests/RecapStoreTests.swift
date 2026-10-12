@@ -6,10 +6,9 @@ import Testing
 /// Loading the Bilan (issues #344, #350): one read of Santé for both periods
 /// and their outings.
 @Suite("Recap store")
-@MainActor
 struct RecapStoreTests {
     private let calendar = Calendar.iso8601Monday
-    private struct Denied: Error {}
+    nonisolated private struct Denied: Error {}
 
     private var saturday: Date {
         calendar.date(from: DateComponents(year: 2026, month: 10, day: 10, hour: 12))!

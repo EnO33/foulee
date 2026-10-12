@@ -11,13 +11,13 @@ import os
 /// `@unchecked Sendable` because an `NSObject` subclass can never be checked
 /// `Sendable` (issue #405); the mutable state it shares is behind
 /// `pending`'s lock, and `isMuted` is written once, before any delivery.
-final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
+nonisolated final class PhoneWatchSync: NSObject, WCSessionDelegate, @unchecked Sendable {
     static let shared = PhoneWatchSync()
 
     /// Everything the context carries. One value, because
     /// `updateApplicationContext` **replaces** the whole dictionary: sending
     /// the session alone would wipe the synced prefs off the wrist.
-    struct Context: Sendable {
+    nonisolated struct Context: Sendable {
         var payload: WatchSyncPayload?
         var session: PhoneSessionSnapshot?
 

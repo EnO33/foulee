@@ -15,7 +15,6 @@ import Testing
 /// The tree is walked with `ViewTreeProbe` rather than testing a stand-in, so
 /// what is asserted is the screen that ships, `@State` store and all.
 @Suite("Activity decision (iPhone)")
-@MainActor
 struct ActivityPickerTests {
     private let start = Date(timeIntervalSince1970: 1_700_000_000)
 

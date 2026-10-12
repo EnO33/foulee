@@ -2,7 +2,7 @@ import Foundation
 
 /// One day of a recap and the outings filed under it — what the Bilan shows
 /// when a day is picked (issues #218, #317, #348, #350).
-struct OutingDay: Identifiable, Equatable, Sendable {
+nonisolated struct OutingDay: Identifiable, Equatable, Sendable {
     let day: Date
     let workouts: [WorkoutSummary]
 

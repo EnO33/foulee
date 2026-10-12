@@ -40,10 +40,12 @@ import os
 ///
 /// Any other wake (hourly steps, water, the BGAppRefresh task) skips and keeps
 /// the stored streak.
-enum BackgroundStreakRefresh {
+///
+/// `nonisolated`: only ever runs from HealthKit background wakes.
+nonisolated enum BackgroundStreakRefresh {
     /// What woke the observer. Only the workout type is worth a recompute on
     /// its own; steps, water and the BGAppRefresh task share `.other`.
-    enum Wake: Sendable {
+    nonisolated enum Wake: Sendable {
         case workout
         case other
     }
@@ -62,7 +64,7 @@ enum BackgroundStreakRefresh {
     /// accessor, so the values are read straight from the same defaults keys it
     /// writes — same approach as the hydration observer (issue #169) — with the
     /// same fallbacks.
-    struct Preferences: Sendable {
+    nonisolated struct Preferences: Sendable {
         var goalMinutes: Int
         var activeDays: Set<Weekday>
         /// Not a streak input, and it never will be: the streak is
@@ -162,7 +164,7 @@ enum BackgroundStreakRefresh {
     /// Everything the decision looks at: the streak the shared snapshot
     /// carries, what this wake just measured, and when the last recompute
     /// landed.
-    struct Trigger: Sendable {
+    nonisolated struct Trigger: Sendable {
         /// Day stamp of the stored snapshot (nil on snapshots from older
         /// builds — treated as another day).
         var storedDay: Date?
@@ -209,7 +211,7 @@ enum BackgroundStreakRefresh {
 /// 379-bucket queries, exactly the cost the throttle exists to avoid. A wake
 /// that can't claim it keeps the stored streak. Same shape as
 /// `backgroundObserversStarted`.
-private let recomputeInFlight = OSAllocatedUnfairLock(initialState: false)
+nonisolated private let recomputeInFlight = OSAllocatedUnfairLock(initialState: false)
 
 /// The streak to publish with this wake's snapshot, or nil to keep the stored
 /// one — either the wake can't have changed it, another wake is already
@@ -219,7 +221,7 @@ private let recomputeInFlight = OSAllocatedUnfairLock(initialState: false)
 /// Same history window, same merge and the same `StreakCalculator` entry point
 /// as `TodayStore.makeSnapshot`, so the background value can't drift from the
 /// one the app shows.
-func recomputedBackgroundStreak(
+nonisolated func recomputedBackgroundStreak(
     store: HKHealthStore,
     storedDay: Date?,
     storedMinutes: Int,
@@ -268,7 +270,7 @@ func recomputedBackgroundStreak(
 /// HealthKit its completion handler back on time. A HealthKit continuation
 /// can't be interrupted: the query the deadline abandoned finishes unobserved
 /// and the next wake retries.
-private func historyWithinDeadline(store: HKHealthStore) async -> [DailyMinutes]? {
+nonisolated private func historyWithinDeadline(store: HKHealthStore) async -> [DailyMinutes]? {
     let settled = OSAllocatedUnfairLock(initialState: false)
     return await withCheckedContinuation { continuation in
         @Sendable func settle(_ history: [DailyMinutes]?) {

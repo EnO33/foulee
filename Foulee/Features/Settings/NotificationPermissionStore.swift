@@ -25,7 +25,6 @@ enum NotificationPermission: Equatable {
 /// Reads — and on request asks for — the system notification permission,
 /// through `NotificationsClient` so the page never touches
 /// `UNUserNotificationCenter` itself.
-@MainActor
 @Observable
 final class NotificationPermissionStore {
     private(set) var permission = NotificationPermission.unknown

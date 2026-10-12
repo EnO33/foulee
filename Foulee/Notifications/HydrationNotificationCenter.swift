@@ -14,7 +14,8 @@ import WidgetKit
 /// `@unchecked Sendable` because an `NSObject` subclass can never be checked
 /// `Sendable` (issue #405); it only holds immutable, `Sendable`
 /// references.
-final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
+/// `nonisolated`: the delegate is called on the notification center's queue.
+nonisolated final class HydrationNotificationCenter: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     static let shared = HydrationNotificationCenter()
 
     /// Injected so the action path is testable. `@Dependency` is unusable

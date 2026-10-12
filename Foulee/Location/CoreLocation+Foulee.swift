@@ -6,7 +6,7 @@ import CoreLocation
 /// compile it: the phone's `LocationClient` and the watch's route store read
 /// the same fixes, and spelling the conversion out at each call site is how
 /// two of them ended up disagreeing about which field is which.
-extension Coordinate {
+nonisolated extension Coordinate {
     init(_ coordinate: CLLocationCoordinate2D) {
         self.init(latitude: coordinate.latitude, longitude: coordinate.longitude)
     }
@@ -16,7 +16,7 @@ extension Coordinate {
     }
 }
 
-extension CLAuthorizationStatus {
+nonisolated extension CLAuthorizationStatus {
     /// Whether this status lets the app read a position at all.
     var allowsLocation: Bool {
         self == .authorizedWhenInUse || self == .authorizedAlways

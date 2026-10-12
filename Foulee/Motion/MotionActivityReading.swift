@@ -21,7 +21,7 @@ import Foundation
 /// `unrecognised` exists because a future OS could add a level, and folding an
 /// unknown value into `low` would claim the device said something it did not.
 /// It sorts *below* `low`, so any threshold rejects it.
-enum MotionActivityConfidence: Int, CaseIterable, Comparable, Sendable {
+nonisolated enum MotionActivityConfidence: Int, CaseIterable, Comparable, Sendable {
     case unrecognised = -1
     case low = 0
     case medium = 1
@@ -38,7 +38,7 @@ enum MotionActivityConfidence: Int, CaseIterable, Comparable, Sendable {
 /// car). Both mean the same thing here, and what to *do* about it differs by
 /// platform: the watch keeps the current activity, the phone falls back to
 /// walking. Neither decision is taken in this file.
-enum MotionActivityReading: Equatable, Sendable {
+nonisolated enum MotionActivityReading: Equatable, Sendable {
     case activity(SessionActivity)
     case noEvidence
 

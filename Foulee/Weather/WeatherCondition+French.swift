@@ -4,7 +4,7 @@ import WeatherKit
 /// French labels + walk-friendly advice for the handful of `WeatherCondition`
 /// cases the user will realistically see at midday in metropolitan France.
 /// Falls back to a long-dash for exotic ones (volcanic ash, hot, …).
-enum WeatherSummary {
+nonisolated enum WeatherSummary {
     static func describe(
         condition: WeatherCondition,
         temperatureCelsius: Double

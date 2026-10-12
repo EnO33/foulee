@@ -7,7 +7,7 @@ import Foundation
 /// One closure, because there is only one thing the phone can do here: listen.
 /// It does not own the session, cannot start one, and — until issue #282 —
 /// cannot stop one either.
-struct MirroredWorkoutClient: Sendable {
+nonisolated struct MirroredWorkoutClient: Sendable {
     /// Every mirror the Watch offers, and every one that closes.
     ///
     /// Consuming this **registers `workoutSessionMirroringStartHandler`**, and
@@ -29,7 +29,7 @@ struct MirroredWorkoutClient: Sendable {
     var isWatchAppInstalled: @Sendable () -> Bool
 }
 
-extension MirroredWorkoutClient: DependencyKey {
+nonisolated extension MirroredWorkoutClient: DependencyKey {
     /// Nothing, and never anything. A preview has no paired watch, and a mirror
     /// that arrived out of nowhere would be a screen no user could reach.
     static let previewValue = MirroredWorkoutClient(
@@ -47,7 +47,7 @@ extension MirroredWorkoutClient: DependencyKey {
     )
 }
 
-extension DependencyValues {
+nonisolated extension DependencyValues {
     var mirroredWorkout: MirroredWorkoutClient {
         get { self[MirroredWorkoutClient.self] }
         set { self[MirroredWorkoutClient.self] = newValue }

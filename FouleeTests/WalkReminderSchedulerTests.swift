@@ -22,7 +22,6 @@ struct WalkReminderSchedulerTests {
     }
 
     @Test("Produces exactly one reminder per active day, sorted Mon → Sun")
-    @MainActor
     func remindersPerActiveDay() {
         let prefs = UserPreferences(defaults: cleanDefaults())
         prefs.activeDays = [.tuesday, .friday, .monday]
@@ -36,7 +35,6 @@ struct WalkReminderSchedulerTests {
     }
 
     @Test("Sync sends the computed schedule to the notifications client")
-    @MainActor
     func syncCallsClient() async {
         let captured = LockedRef<[WalkReminder]>([])
         await withDependencies {
@@ -59,7 +57,6 @@ struct WalkReminderSchedulerTests {
     }
 
     @Test("Disabling notifications produces an empty schedule")
-    @MainActor
     func disabledFlagEmptiesSchedule() {
         let prefs = UserPreferences(defaults: cleanDefaults())
         prefs.notificationsEnabled = false
@@ -68,9 +65,8 @@ struct WalkReminderSchedulerTests {
     }
 
     @Test("A throwing client is swallowed at the scheduler boundary")
-    @MainActor
     func syncSwallowsErrors() async {
-        struct Boom: Error {}
+        nonisolated struct Boom: Error {}
         await withDependencies {
             $0.notifications = NotificationsClient(
                 requestAuthorization: { true },
@@ -85,7 +81,6 @@ struct WalkReminderSchedulerTests {
     }
 
     @Test("Sync requests notification authorization when reminders are enabled")
-    @MainActor
     func syncRequestsAuthorizationWhenEnabled() async {
         let requested = LockedRef<Bool>(false)
         await withDependencies {
@@ -103,7 +98,6 @@ struct WalkReminderSchedulerTests {
     }
 
     @Test("Sync does not prompt when reminders are disabled")
-    @MainActor
     func syncSkipsAuthorizationWhenDisabled() async {
         let requested = LockedRef<Bool>(false)
         await withDependencies {
@@ -121,7 +115,6 @@ struct WalkReminderSchedulerTests {
     }
 
     @Test("snooze(after:) forwards the interval to the client and absorbs throws")
-    @MainActor
     func snoozeForwardsInterval() async {
         let captured = LockedRef<TimeInterval?>(nil)
         await withDependencies {
@@ -137,9 +130,8 @@ struct WalkReminderSchedulerTests {
     }
 
     @Test("snooze swallows scheduling errors")
-    @MainActor
     func snoozeSwallowsErrors() async {
-        struct Boom: Error {}
+        nonisolated struct Boom: Error {}
         await withDependencies {
             $0.notifications = NotificationsClient(
                 requestAuthorization: { true },

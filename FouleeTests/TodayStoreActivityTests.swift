@@ -18,7 +18,6 @@ import Testing
 struct TodayStoreActivityTests {
     /// Runs `body` with preferences backed by a throwaway suite, so nothing
     /// leaks into `.standard` or between suites running in parallel.
-    @MainActor
     private func withPreferences(_ body: (UserPreferences) async throws -> Void) async throws {
         let suiteName = "TodayStoreActivityTests-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
@@ -27,7 +26,6 @@ struct TodayStoreActivityTests {
     }
 
     @Test("A running user starts a run, a walking user a walk, a « les deux » user is asked")
-    @MainActor
     func startIntentFollowsThePreference() async throws {
         try await withPreferences { preferences in
             let store = TodayStore()
@@ -57,7 +55,6 @@ struct TodayStoreActivityTests {
     }
 
     @Test("The Watch payload carries the mode, not a default")
-    @MainActor
     func watchPayloadCarriesTheActivityMode() async throws {
         try await withDependencies {
             // Publication reads the clock unconditionally since #214.
@@ -83,7 +80,6 @@ struct TodayStoreActivityTests {
     }
 
     @Test("The app-group snapshot carries the mode, so the widgets can draw it")
-    @MainActor
     func widgetSnapshotCarriesTheActivityMode() async throws {
         try await withDependencies {
             $0.date = .constant(.now)
@@ -118,7 +114,6 @@ struct TodayStoreActivityTests {
     }
 
     @Test("Switching only the activity mode re-syncs the Today screen")
-    @MainActor
     func theModeIsPartOfTheTodayScreenTaskKey() async throws {
         try await withPreferences { preferences in
             // `TodayScreen` calls `apply` from `.task(id: todayPreferencesKey(…))`,
@@ -140,7 +135,6 @@ struct TodayStoreActivityTests {
     }
 
     @Test("Switching only the activity mode counts as a change worth publishing")
-    @MainActor
     func changingOnlyTheActivityModeIsNoticed() async throws {
         try await withPreferences { preferences in
             preferences.activityMode = .walking

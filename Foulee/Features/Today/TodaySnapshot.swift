@@ -3,7 +3,7 @@ import Foundation
 /// Everything the Today screen renders in one value: today's metrics, the
 /// goals they're measured against, the streak, the midday weather and the
 /// current week's minutes. `TodayStore` builds it from HealthKit + WeatherKit.
-struct TodaySnapshot: Equatable {
+nonisolated struct TodaySnapshot: Equatable {
     var date: Date
     var steps: Int
     var stepsGoal: Int
@@ -22,7 +22,8 @@ struct TodaySnapshot: Equatable {
     var isRestDay: Bool = false
 }
 
-struct WeatherSnapshot: Equatable {
+// nonisolated: built inside `WeatherClient`'s `@Sendable` closures, off the main actor.
+nonisolated struct WeatherSnapshot: Equatable {
     var temperatureCelsius: Int
     var condition: String
     var advice: String

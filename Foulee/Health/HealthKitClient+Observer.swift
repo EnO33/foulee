@@ -4,7 +4,8 @@
 /// of `types` (and once shortly after starting, which also unsticks the very
 /// first load). Foreground-only — no background-delivery entitlement needed.
 /// Drives `HealthKitClient.observeChanges` so the Today dashboard updates live.
-func healthChangeStream(store: HKHealthStore, types: [HKQuantityType]) -> AsyncStream<Void> {
+/// `nonisolated`: the observer handler runs on a HealthKit background queue.
+nonisolated func healthChangeStream(store: HKHealthStore, types: [HKQuantityType]) -> AsyncStream<Void> {
     AsyncStream { continuation in
         let queries = types.map { type in
             HKObserverQuery(sampleType: type, predicate: nil) { _, completion, _ in

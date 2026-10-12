@@ -3,7 +3,6 @@ import Testing
 @testable import Foulee
 
 @Suite("UserPreferences")
-@MainActor
 struct UserPreferencesTests {
     @Test("Fresh defaults expose the documented onboarding values")
     func defaults() {
