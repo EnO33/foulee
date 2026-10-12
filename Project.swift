@@ -108,7 +108,11 @@ let project = Project(
             dependencies: [
                 .target(name: "FouleeKit")
             ],
-            settings: .settings(base: kitMacSigning)
+            settings: .settings(base: kitMacSigning.merging([
+                // No host app embeds the framework on macOS: the bundle finds
+                // it next to itself, in the build products directory.
+                "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@loader_path/../../.."]
+            ]) { $1 })
         ),
         .target(
             name: "Foulee",
