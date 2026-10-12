@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 extension RecordedActivity {

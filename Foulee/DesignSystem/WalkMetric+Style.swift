@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Each metric's icon and colour, in one place (issue #366): the home's tiles,

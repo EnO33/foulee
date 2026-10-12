@@ -6,7 +6,7 @@ import Foundation
 /// without a store and can't drift with the framework. Nothing here ever
 /// *blocks*: a wrong verdict only changes which hint the Today screen shows —
 /// the app stays fully functional either way.
-nonisolated enum GarminSource {
+nonisolated public enum GarminSource {
     /// Device families Garmin Connect uses as the *source name* when samples
     /// are attributed to the watch itself ("Forerunner 965") instead of to the
     /// phone app ("Garmin Connect"). Matched on whole, diacritic-folded words
@@ -23,7 +23,7 @@ nonisolated enum GarminSource {
     /// Whether a Health source is a Garmin one. `name` is what the Santé app
     /// shows ("Garmin Connect", "Forerunner 965"), `bundleIdentifier` the
     /// writing app's id ("com.garmin.connect.mobile").
-    static func isGarmin(sourceName: String, bundleIdentifier: String) -> Bool {
+    public static func isGarmin(sourceName: String, bundleIdentifier: String) -> Bool {
         let name = folded(sourceName)
         let bundle = folded(bundleIdentifier)
         if bundle.contains("garmin") || name.contains("garmin") { return true }
@@ -48,12 +48,22 @@ nonisolated enum GarminSource {
 /// What the HealthKit detection found about the watches writing into Santé.
 /// The all-false default means "nothing detected", which keeps every adapted
 /// hint off — the safe state.
-nonisolated struct GarminStatus: Equatable, Sendable {
-    var hasGarminSource = false
-    var hasAppleWatchData = false
+nonisolated public struct GarminStatus: Equatable, Sendable {
+    public var hasGarminSource = false
+    public var hasAppleWatchData = false
     /// Newest sample written by a Garmin source *today*, when there is one.
     /// `nil` means Garmin has pushed nothing since midnight.
-    var latestGarminSample: Date?
+    public var latestGarminSample: Date?
+
+    public init(
+        hasGarminSource: Bool = false,
+        hasAppleWatchData: Bool = false,
+        latestGarminSample: Date? = nil
+    ) {
+        self.hasGarminSource = hasGarminSource
+        self.hasAppleWatchData = hasAppleWatchData
+        self.latestGarminSample = latestGarminSample
+    }
 }
 
 /// Freshness rule behind the "Ouvre Garmin Connect pour synchroniser" hint.
@@ -62,14 +72,14 @@ nonisolated struct GarminStatus: Equatable, Sendable {
 /// is normal, not a bug. The rule is deliberately conservative: the hint only
 /// shows in a Garmin-only setup, during the day, once the gap is long enough
 /// that opening Garmin Connect really is the useful move.
-nonisolated enum GarminFreshness {
+nonisolated public enum GarminFreshness {
     /// A gap this long during the day means the day's numbers are behind.
-    static let staleAfter: TimeInterval = 4 * 60 * 60
+    public static let staleAfter: TimeInterval = 4 * 60 * 60
 
     /// Hours during which the hint may appear. Nothing before 11:00 (an empty
     /// morning is normal, and the app's walk window is midday) and nothing in
     /// the evening — nagging at 23:00 wouldn't help anyone.
-    static let daytimeHours = 11..<21
+    public static let daytimeHours = 11..<21
 
     /// Whether the Today screen should show the sync hint.
     ///
@@ -80,7 +90,7 @@ nonisolated enum GarminFreshness {
     /// - The reference instant is the newest Garmin sample of the day, floored
     ///   at midnight: "nothing since midnight" is exactly the case the hint is
     ///   for, and a sample dated in the future (clock skew) can't trigger it.
-    static func needsSyncHint(
+    public static func needsSyncHint(
         status: GarminStatus,
         now: Date,
         calendar: Calendar = .current

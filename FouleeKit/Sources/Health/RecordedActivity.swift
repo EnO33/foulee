@@ -18,7 +18,7 @@ import Foundation
 /// unnoticeable at once. Showing the type fixes nothing by itself; it turns an
 /// invisible error into a *noticeable* one, which the owner can then correct by
 /// hand in Santé.
-nonisolated enum RecordedActivity: String, Equatable, Hashable, Sendable, CaseIterable {
+nonisolated public enum RecordedActivity: String, Equatable, Hashable, Sendable, CaseIterable {
     case walking
     case running
     case hiking
@@ -34,7 +34,7 @@ nonisolated enum RecordedActivity: String, Equatable, Hashable, Sendable, CaseIt
 
     /// How the résumé and the detail name it, in the vocabulary established by
     /// #222: the same « Marche » and « Course » the pickers use.
-    var label: String {
+    public var label: String {
         switch self {
         case .walking: "Marche"
         case .running: "Course"
@@ -47,7 +47,7 @@ nonisolated enum RecordedActivity: String, Equatable, Hashable, Sendable, CaseIt
     ///
     /// `.other` keeps the neutral walk-and-run glyph the two screens used for
     /// every row before this issue — the right drawing for « we were not told ».
-    var icon: String {
+    public var icon: String {
         switch self {
         case .walking: ActivityGlyph.walk
         case .running: ActivityGlyph.run

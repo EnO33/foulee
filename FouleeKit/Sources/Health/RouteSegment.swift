@@ -5,11 +5,11 @@ import Foundation
 ///
 /// The detail map draws one line per segment, each in its activity's colour,
 /// so walk → run → walk reads on the map the way it reads on the timeline.
-nonisolated struct RouteSegment: Equatable, Sendable, Identifiable {
+nonisolated public struct RouteSegment: Equatable, Sendable, Identifiable {
     /// The leg's workout id — one segment per leg, never more.
-    var id: UUID
-    var activity: RecordedActivity
-    var coordinates: [Coordinate]
+    public var id: UUID
+    public var activity: RecordedActivity
+    public var coordinates: [Coordinate]
 
     /// The workouts whose routes make up `summary`'s map: every leg of a
     /// regrouped outing (#317), or the session itself.
@@ -18,7 +18,17 @@ nonisolated struct RouteSegment: Equatable, Sendable, Identifiable {
     /// to a crash — is simply absent from the result, which leaves a **gap** on
     /// the map. Joining its neighbours across it would draw a straight line
     /// nobody walked.
-    static func sources(of summary: WorkoutSummary) -> [WorkoutSummary] {
+    public static func sources(of summary: WorkoutSummary) -> [WorkoutSummary] {
         summary.legs.isEmpty ? [summary] : summary.legs
+    }
+
+    public init(
+        id: UUID,
+        activity: RecordedActivity,
+        coordinates: [Coordinate]
+    ) {
+        self.id = id
+        self.activity = activity
+        self.coordinates = coordinates
     }
 }

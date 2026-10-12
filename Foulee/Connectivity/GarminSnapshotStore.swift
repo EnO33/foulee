@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Where the Connect IQ channel keeps its state between two BLE deliveries

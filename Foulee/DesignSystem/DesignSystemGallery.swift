@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// One-stop visual gallery of the design system — pure SwiftUI previews,

@@ -4,28 +4,28 @@ import Foundation
 /// in the 7-day résumé. `WorkoutSummary` carries the row-level fields;
 /// `heartRateSamples` and `stepsCount` are the extra signals we pull
 /// from HealthKit on demand.
-nonisolated struct WorkoutDetail: Equatable, Sendable {
-    var summary: WorkoutSummary
-    var heartRateSamples: [HeartRateSample]
-    var stepsCount: Int
+nonisolated public struct WorkoutDetail: Equatable, Sendable {
+    public var summary: WorkoutSummary
+    public var heartRateSamples: [HeartRateSample]
+    public var stepsCount: Int
     /// The outing's route, one segment per leg that has one (#319). Empty when
     /// nothing was recorded or Foulée may not read it — the detail then has no
     /// map. Defaulted so existing initialisers compile.
-    var route: [RouteSegment] = []
+    public var route: [RouteSegment] = []
 
-    var averageHeartRate: Int? {
+    public var averageHeartRate: Int? {
         guard !heartRateSamples.isEmpty else { return nil }
         let total = heartRateSamples.reduce(0) { $0 + $1.bpm }
         return total / heartRateSamples.count
     }
 
-    var maxHeartRate: Int? {
+    public var maxHeartRate: Int? {
         heartRateSamples.map(\.bpm).max()
     }
 
     /// The reading closest to `date`, for the finger on the curve (#319).
     /// Samples arrive sorted by date, so a binary search finds it.
-    func heartRate(nearest date: Date) -> HeartRateSample? {
+    public func heartRate(nearest date: Date) -> HeartRateSample? {
         let samples = heartRateSamples
         guard !samples.isEmpty else { return nil }
         var low = 0
@@ -40,21 +40,43 @@ nonisolated struct WorkoutDetail: Equatable, Sendable {
         return date.timeIntervalSince(before.date) <= after.date.timeIntervalSince(date) ? before : after
     }
 
-    var minHeartRate: Int? {
+    public var minHeartRate: Int? {
         heartRateSamples.map(\.bpm).min()
     }
 
     /// Minutes per kilometer. `nil` when distance is zero.
-    var paceMinPerKm: Double? {
+    public var paceMinPerKm: Double? {
         guard summary.distanceKm > 0 else { return nil }
         let minutes = summary.durationSeconds / 60
         return minutes / summary.distanceKm
     }
+
+    public init(
+        summary: WorkoutSummary,
+        heartRateSamples: [HeartRateSample],
+        stepsCount: Int,
+        route: [RouteSegment] = []
+    ) {
+        self.summary = summary
+        self.heartRateSamples = heartRateSamples
+        self.stepsCount = stepsCount
+        self.route = route
+    }
 }
 
 /// Single heart-rate reading during a workout.
-nonisolated struct HeartRateSample: Equatable, Sendable, Identifiable {
-    var id: UUID
-    var date: Date
-    var bpm: Int
+nonisolated public struct HeartRateSample: Equatable, Sendable, Identifiable {
+    public var id: UUID
+    public var date: Date
+    public var bpm: Int
+
+    public init(
+        id: UUID,
+        date: Date,
+        bpm: Int
+    ) {
+        self.id = id
+        self.date = date
+        self.bpm = bpm
+    }
 }
