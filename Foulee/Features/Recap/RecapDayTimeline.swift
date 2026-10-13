@@ -20,12 +20,19 @@ struct RecapDayTimeline: View {
             header
             if workouts.isEmpty {
                 HStack(spacing: 12) {
-                    Image(systemName: ring.isPlanned ? "moon.zzz" : "cup.and.saucer")
+                    Image(systemName: emptyIcon)
                         .scaledSystemFont(size: 18)
                         .foregroundStyle(.secondary)
-                    Text(ring.isPlanned ? "Aucune séance enregistrée" : "Jour de repos : rien de prévu")
-                        .font(FouleeFont.footnote)
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(emptyTitle)
+                            .font(FouleeFont.footnote)
+                            .foregroundStyle(.secondary)
+                        if let emptyHint {
+                            Text(emptyHint)
+                                .font(FouleeFont.footnote.weight(.semibold))
+                                .foregroundStyle(FouleeColor.accentMid)
+                        }
+                    }
                     Spacer()
                 }
                 .padding(14)
@@ -114,6 +121,30 @@ struct RecapDayTimeline: View {
         }
         .padding(14)
         .fouleeGlass(cornerRadius: 20)
+    }
+
+    // MARK: - A day without an outing (issue #443)
+
+    private var isToday: Bool {
+        Calendar.current.isDate(outings.day, inSameDayAs: date.now)
+    }
+
+    private var emptyIcon: String {
+        guard ring.isPlanned else { return "cup.and.saucer" }
+        return isToday ? FouleeIcon.mixedCardio : "moon.zzz"
+    }
+
+    /// Today is still open: it is « pas encore », not « aucune ».
+    private var emptyTitle: String {
+        guard ring.isPlanned else { return "Jour de repos : rien de prévu" }
+        return isToday ? "Pas encore de sortie aujourd'hui" : "Aucune séance enregistrée"
+    }
+
+    /// What is left to do today, the question the Bilan is opened with at
+    /// midday. Nothing on a past day: it can no longer change.
+    private var emptyHint: String? {
+        guard isToday, ring.isPlanned, ring.minutes < goalMinutes else { return nil }
+        return "Encore \(durationText(minutes: goalMinutes - ring.minutes)) pour ton objectif"
     }
 
     private var title: String {

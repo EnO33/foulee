@@ -114,4 +114,26 @@ extension OutingDayTests {
         #expect(rows.count == 1)
         #expect(rows.first?.legs.count == 2)
     }
+
+    // MARK: - The day the Bilan opens on (issue #443)
+
+    @Test("A period that holds today opens on today, even with no outing yet")
+    func opensOnToday() {
+        let days = Self.week.days(calendar: Self.calendar)
+        let today = Self.calendar.startOfDay(for: Self.now)
+        #expect(OutingDay.initialSelection(among: days, today: Self.now, calendar: Self.calendar) == today)
+    }
+
+    @Test("A past period opens on its last day")
+    func pastPeriodOpensOnItsLastDay() throws {
+        let days = Self.week.days(calendar: Self.calendar)
+        let nextWeek = try #require(Self.calendar.date(byAdding: .day, value: 10, to: Self.now))
+        #expect(OutingDay.initialSelection(among: days, today: nextWeek, calendar: Self.calendar) == days.last)
+    }
+
+    @Test("A period without days selects nothing")
+    func noDaysNoSelection() {
+        #expect(OutingDay.initialSelection(among: [], today: Self.now, calendar: Self.calendar) == nil)
+    }
 }
+

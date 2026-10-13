@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363)
+- **Issues** : [#443](https://github.com/EnO33/foulee/issues/443), [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363)
 
 ## Contexte
 
@@ -122,6 +122,11 @@ L'hydratation (D7 et ADR 0005, D3) suit la même semaine : la moyenne et les jou
 - **Ce qui ne part jamais** : ni carte ni parcours, ni heure de sortie, ni fréquence cardiaque, ni hydratation. Une image envoyée à des amis dit comment s'est passée la période, pas où ni quand on sort.
 - **Le même rendu pour tous** : clair, taille de texte par défaut, échelle ×3, fond opaque, sans matériau ni animation (`RecapShareRenderer`). Les réglages de l'appareil de la personne qui partage ne changent pas l'image.
 - **Le bouton n'apparaît que si la période contient de l'activité** : une période vide n'a rien à montrer.
+
+### D10 — Le Bilan s'ouvre sur aujourd'hui (#443)
+
+- **Dans la période en cours, le jour sélectionné à l'ouverture est aujourd'hui**, qu'il ait une sortie ou non (`OutingDay.initialSelection`, pur et testé). Une période passée s'ouvre sur son dernier jour. Avant, c'était le dernier jour avec une sortie : à midi, avant de partir, on tombait sur hier.
+- **Aujourd'hui sans sortie dit « Pas encore »**, pas « Aucune » : la journée est encore ouverte. Un jour prévu ajoute le reste à faire (« Encore 18 min pour ton objectif »), la question avec laquelle on ouvre le Bilan à midi. Un jour passé sans sortie reste « Aucune séance enregistrée », un jour de repos « Jour de repos : rien de prévu ».
 
 ## Ce qui reste ouvert
 
