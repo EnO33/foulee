@@ -36,8 +36,8 @@ nonisolated public struct RecapPeriod: Hashable, Sendable {
     public var end: Date
 
     /// How far back the Bilan pages (issue #444): this month and the eleven
-    /// before it, the year the streak calendar used to show.
-    public static let historyMonths = 12
+    /// before it — the streak's own year, whose totals close the Bilan (#445).
+    public static let historyMonths = StreakCalculator.historyMonths
 
     /// The period the Bilan opens on for `kind` at `now`: the one in progress,
     /// through today (issues #363, #444).

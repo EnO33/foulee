@@ -7,12 +7,12 @@ import Testing
 /// The running work's contract, and the one acceptance criterion of #220 that
 /// isn't visible on screen: **no existing user's history may move.**
 /// `ActivityMode` steers what the app proposes; the streak, the record and the
-/// calendar count exercise minutes across every activity type, so all three
+/// Bilan's year count exercise minutes across every activity type, so all three
 /// must answer the same thing under `.walking`, `.running` and `.both`.
 ///
 /// Pinned by output rather than by construction, because there is nothing
-/// structural left to assert: `StreakCalculator`, `StreakCalendar` and
-/// `StreakCalendarStore` take no activity parameter at all, and
+/// structural left to assert: `StreakCalculator`, `StreakSummary` and
+/// `RecapStore` take no activity parameter at all, and
 /// `TodayStore.apply(preferences:)` mirrors every preference *except* this
 /// one. So the suite drives the real stores over one fixture, once per mode,
 /// and compares everything they publish. Wiring the mode into any of them
@@ -35,16 +35,16 @@ struct ActivityModeNeutralityTests {
     /// nonisolated: read from a `@Sendable` history closure.
     nonisolated private static let walkedOffsets = [0, 1, 2, 5, 6, 7, 8, 9]
 
-    @Test("Streak, record and calendar are identical under walking, running and both")
+    @Test("Streak, record and year are identical under walking, running and both")
     func everyModeAnswersTheSame() async throws {
         let baseline = try await outputs(for: .walking)
         // The fixture has to be worth comparing before the comparison means
         // anything: a store answering 0 everywhere would pass silently.
         #expect(baseline.streak == 3)
         #expect(baseline.bestStreak == 5)
-        #expect(baseline.calendarStreak == 3)
-        #expect(baseline.calendarBest == 5)
-        #expect(!baseline.days.isEmpty)
+        #expect(baseline.bilanStreak == 3)
+        #expect(baseline.bilanBest == 5)
+        #expect(baseline.year?.walks == 8)
 
         for mode in ActivityMode.allCases where mode != .walking {
             expect(try await outputs(for: mode), matches: baseline, mode: mode)
@@ -60,28 +60,21 @@ struct ActivityModeNeutralityTests {
         #expect(measured.streak == baseline.streak, "\(culprit) moved the streak")
         #expect(measured.bestStreak == baseline.bestStreak, "\(culprit) moved the record")
         #expect(measured.weekMinutes == baseline.weekMinutes, "\(culprit) moved the week bars")
-        #expect(measured.calendarStreak == baseline.calendarStreak, "\(culprit) moved the calendar's streak")
-        #expect(measured.calendarBest == baseline.calendarBest, "\(culprit) moved the calendar's record")
+        #expect(measured.bilanStreak == baseline.bilanStreak, "\(culprit) moved the Bilan's streak")
+        #expect(measured.bilanBest == baseline.bilanBest, "\(culprit) moved the Bilan's record")
         #expect(measured.historyWindows == baseline.historyWindows, "\(culprit) changed the history read")
-        #expect(measured.days.count == baseline.days.count, "\(culprit) resized the calendar")
-        // Name the first day that drifted rather than dumping twelve months
-        // of cells: one differing day identifies the bug.
-        let drift = zip(measured.days, baseline.days)
-            .first { $0.0 != $0.1 }
-            .map { "\($0.0) ≠ \($0.1)" }
-        #expect(drift == nil, "\(culprit) moved a calendar day: \(drift ?? "")")
+        #expect(measured.year == baseline.year, "\(culprit) moved the Bilan's year")
     }
 
     /// Everything the streak surfaces publish for one mode: the home card's
-    /// counts and week bars, the calendar sheet's counts, and every real day
-    /// of its month grid (status and minutes included).
+    /// counts and week bars, and the Bilan's streak and year (#445).
     private struct StreakOutputs {
         var streak: Int
         var bestStreak: Int
         var weekMinutes: [Int]
-        var calendarStreak: Int
-        var calendarBest: Int
-        var days: [CalendarDay]
+        var bilanStreak: Int
+        var bilanBest: Int
+        var year: StreakSummary?
         /// Day counts the history read was asked for, in order.
         var historyWindows: [Int]
     }
@@ -108,19 +101,15 @@ struct ActivityModeNeutralityTests {
             let today = TodayStore()
             today.apply(preferences: preferences)
             await today.refresh()
-            let calendar = StreakCalendarStore(
-                goalMinutes: preferences.minutesGoal,
-                goalSteps: preferences.stepsGoal,
-                activeDays: preferences.activeDays
-            )
-            await calendar.load()
+            let bilan = RecapStore()
+            await bilan.load(goalMinutes: preferences.minutesGoal, activeDays: preferences.activeDays, withHistory: true)
             return StreakOutputs(
                 streak: today.snapshot?.streak ?? -1,
                 bestStreak: today.snapshot?.bestStreak ?? -1,
                 weekMinutes: today.snapshot?.weekMinutes ?? [],
-                calendarStreak: calendar.currentStreak,
-                calendarBest: calendar.bestStreak,
-                days: calendar.months.flatMap { $0.cells.compactMap { $0 } },
+                bilanStreak: bilan.streak?.current ?? -1,
+                bilanBest: bilan.streak?.best ?? -1,
+                year: bilan.streak,
                 historyWindows: windows.value
             )
         }

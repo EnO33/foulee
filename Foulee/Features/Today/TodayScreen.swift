@@ -18,7 +18,6 @@ struct TodayScreen: View {
     @State private var isShowingSettings = false
     @State private var selectedMetric: WalkMetric?
     @State private var isShowingWeather = false
-    @State private var isShowingStreak = false
     @State private var scrollToHydration = false
 
     @Environment(UserPreferences.self) private var preferences
@@ -117,14 +116,6 @@ struct TodayScreen: View {
                     }
                         .preferredColorScheme(preferredScheme)
                 }
-            }
-            .sheet(isPresented: $isShowingStreak) {
-                StreakCalendarSheet(
-                    goalMinutes: store.minutesGoal,
-                    goalSteps: preferences.stepsGoal,
-                    activeDays: preferences.activeDays
-                ) { isShowingStreak = false }
-                .preferredColorScheme(preferredScheme)
             }
             .modifier(RecapPresentation(
                 goalMinutes: store.minutesGoal,
@@ -257,8 +248,9 @@ struct TodayScreen: View {
                     .minimumScaleFactor(0.8)
             }
             Spacer()
+            // The streak lives in the Bilan, on the month in progress (#445).
             TodayStreakBadge(streak: snapshot.streak, bestStreak: snapshot.bestStreak) {
-                isShowingStreak = true
+                RecapRouter.shared.open(.month)
             }
             Button { isShowingSettings = true } label: {
                 Image(systemName: "gearshape.fill")
