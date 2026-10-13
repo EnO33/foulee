@@ -136,4 +136,3 @@ extension OutingDayTests {
         #expect(OutingDay.initialSelection(among: [], today: Self.now, calendar: Self.calendar) == nil)
     }
 }
-
