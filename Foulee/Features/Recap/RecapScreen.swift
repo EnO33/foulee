@@ -1,3 +1,4 @@
+import Dependencies
 import FouleeKit
 import SwiftUI
 
@@ -108,8 +109,11 @@ private struct RecapContent: View {
     let water: RecapWater?
 
     @State private var isRevealed = false
-    /// The day whose outings are laid out: the latest with one, else the last.
+    /// The day whose outings are laid out: today in the period in progress,
+    /// outing or not, else the period's last day (issue #443).
     @State private var selectedDay: Date?
+
+    @Dependency(\.date) private var date
 
     private var isWeek: Bool { recap.period.kind == .week }
 
@@ -145,7 +149,7 @@ private struct RecapContent: View {
                 .frame(maxWidth: .infinity)
         }
         .onAppear {
-            selectedDay = (outings.last { !$0.workouts.isEmpty } ?? outings.last)?.day
+            selectedDay = OutingDay.initialSelection(among: outings.map(\.day), today: date.now)
             withAnimation(.easeOut(duration: 0.8).delay(0.15)) { isRevealed = true }
         }
     }

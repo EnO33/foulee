@@ -30,4 +30,18 @@ nonisolated public struct OutingDay: Identifiable, Equatable, Sendable {
             OutingDay(day: day, workouts: (byDay[day] ?? []).sorted { $0.startedAt > $1.startedAt })
         }
     }
+
+    /// The day the Bilan opens on (issue #443): today when the period holds
+    /// it, outing or not, and otherwise the period's last day.
+    ///
+    /// Not the last day with an outing, as it used to be. Before the day's
+    /// walk that was yesterday, at the very moment the wearer opens the app to
+    /// see what is left to do today.
+    public static func initialSelection(
+        among days: [Date],
+        today: Date,
+        calendar: Calendar = .iso8601Monday
+    ) -> Date? {
+        days.first { calendar.isDate($0, inSameDayAs: today) } ?? days.last
+    }
 }
