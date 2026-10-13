@@ -87,8 +87,44 @@ struct RecapStoreTests {
             let september = RecapPeriod.monthSoFar(at: saturday, calendar: calendar).earlier(calendar: calendar)
             #expect(store.content(for: september)?.recap.days.count == 30)
             #expect(store.content(for: september)?.outings.allSatisfy(\.workouts.isEmpty) == true)
+            // The card on the home reads no streak.
+            #expect(store.streak == nil)
             #expect(store.lastError == nil)
             #expect(!store.isLoading)
+        }
+    }
+
+    /// The record is the home's only if both read the same history (#176):
+    /// the screen reads `StreakCalculator.historyWindowDays`, deeper than the
+    /// 375 days its periods need (#445).
+    @Test("With the history, the streak comes from the home's window")
+    func streakWithHistory() async {
+        let asked = LockedRef<[Int]>([])
+        let today = calendar.startOfDay(for: saturday)
+        let walked = (0..<3).map { DailyMinutes(date: calendar.date(byAdding: .day, value: -$0, to: today)!, minutes: 30) }
+        await withDependencies {
+            $0.date = .constant(saturday)
+            $0.healthKit = HealthKitClient(
+                requestAuthorization: { true },
+                todayMetrics: { .zero },
+                saveWorkout: { _ in },
+                dailyMinutes: { daysBack in
+                    asked.set(asked.value + [daysBack])
+                    return walked
+                },
+                recentWorkouts: { _ in [] },
+                workoutDetail: { WorkoutDetail(summary: $0, heartRateSamples: [], stepsCount: 0) },
+                metricSeries: { _, _ in [] }
+            )
+        } operation: {
+            let store = RecapStore()
+            await store.load(goalMinutes: 20, activeDays: Set(Weekday.allCases), withHistory: true)
+
+            #expect(asked.value == [StreakCalculator.historyWindowDays])
+            #expect(store.streak?.current == 3)
+            #expect(store.streak?.best == 3)
+            #expect(store.streak?.walks == 3)
+            #expect(store.streak?.minutes == 90)
         }
     }
 

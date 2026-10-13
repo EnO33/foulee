@@ -20,10 +20,12 @@ round, an outing started on the iPhone is **shown on the Watch** — figures,
 route, and pause / stop buttons — while the iPhone keeps recording it as one
 workout: see [ADR 0003](docs/adr/0003-seance-partagee-iphone-watch.md) (French).
 
-The **Bilan** reviews the week so far, Monday first, and the last month —
-minutes, steps, distance, outings, the days the goal was met, the change from
-the period before, and the water drunk when hydration is on. A tap on a day
-lays out its outings on a timeline. The Bilan can be shared as an image —
+The **Bilan** opens on the streak and its record, then reviews the week or
+the month in progress — minutes, steps, distance, outings, the days the goal
+was met, the change from the period before, and the water drunk when hydration
+is on — and pages back a week or a month at a time over twelve months, whose
+totals and most regular weekdays close it. A tap on a day lays out its outings
+on a timeline; the streak badge on the home opens it on the month. The Bilan can be shared as an image —
 square or story — with the period's headline figures and nothing that says
 where or when you go out. A notification announces it every Sunday
 evening and every 1st of the month: see

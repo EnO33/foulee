@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363), [#443](https://github.com/EnO33/foulee/issues/443), [#444](https://github.com/EnO33/foulee/issues/444)
+- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363), [#443](https://github.com/EnO33/foulee/issues/443), [#444](https://github.com/EnO33/foulee/issues/444), [#445](https://github.com/EnO33/foulee/issues/445)
 
 ## Contexte
 
@@ -21,7 +21,7 @@ Une semaine, du lundi au dimanche (calendrier ISO, comme toutes les semaines de 
 
 Le récap est calculé (`Recap.make`, pur et testé) à partir de ce que l'app lit déjà dans Santé :
 
-- les **minutes** viennent des minutes quotidiennes fusionnées (`dailyMinutes`), les mêmes que la série et le calendrier ;
+- les **minutes** viennent des minutes quotidiennes fusionnées (`dailyMinutes`), les mêmes que la série ;
 - les **pas, la distance et les kcal** viennent des séries quotidiennes (`metricSeries`), les mêmes que les écrans de statistiques ;
 - les **sorties** sont comptées comme dans le résumé : les portions d'une même sortie sont regroupées (`OutingGrouping`), puis les doublons retirés (`WorkoutDeduplication`).
 
@@ -141,6 +141,15 @@ L'hydratation (D7 et ADR 0005, D3) suit la même semaine : la moyenne et les jou
 - **Les jours à venir du mois sont en piste pâle**, comme ceux de la semaine.
 - **L'état vide dit « pas encore » tant que la période est ouverte**, « pas » une fois finie.
 - **La notification du 1er ouvre le mois qui vient de finir** (`RecapNotification.request`, `RecapRequest`) : ce jour-là, le mois en cours n'a qu'un jour. Celle du dimanche soir ouvre la semaine en cours, presque entière.
+
+### D12 — La série vit dans le Bilan (#445)
+
+- **Un seul écran pour une seule question**, « où j'en suis » : la feuille Série (anneaux du mois, record, totaux sur 12 mois) et le Bilan feuilletaient les mêmes mois avec deux langages d'anneaux. La feuille disparaît (`StreakCalendarSheet`, `StreakMonthBrowser`, `StreakMonthRings`, `StreakCalendarStore`) ; ce qu'elle montrait passe dans le Bilan.
+- **La série ouvre le Bilan** : flamme, jours d'affilée, « Plus que N jours pour ton record » et sa barre (`RecapStreakHeader`). Elle ne change pas avec la page : c'est l'état d'aujourd'hui.
+- **L'année le ferme** : « Sur 12 mois » (objectifs tenus, temps d'activité, réussite) et « Tes jours les plus réguliers » (`RecapYear`). Ses 12 mois sont ceux que le Bilan feuillette (`RecapPeriod.historyMonths` vaut `StreakCalculator.historyMonths`).
+- **Le badge de série de l'accueil ouvre le Bilan sur le mois en cours.**
+- **Un seul langage d'anneaux**, celui du Bilan : les minutes vers l'objectif. Les pas restent dans la comparaison et le détail du jour.
+- **Le calcul est pur et testé** (`StreakSummary.make`, FouleeKit) et lit la même histoire que l'accueil : avec l'historique, `RecapStore` lit au moins `StreakCalculator.historyWindowDays`, sinon le record du Bilan serait le meilleur des jours lus (#176).
 
 ## Ce qui reste ouvert
 

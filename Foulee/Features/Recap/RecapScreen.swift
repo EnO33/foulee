@@ -2,11 +2,13 @@ import Dependencies
 import FouleeKit
 import SwiftUI
 
-/// The Bilan: the week or the month (issues #344, #346, #350, #363, #444).
+/// The Bilan: the streak, the week or the month, and the year (issues #344,
+/// #346, #350, #363, #444, #445).
 ///
-/// Read top to bottom like a story: what the period meant (the verdict and
-/// the goal ring), how it went day by day — a tap on a day lays out its
-/// outings — how it compares with the one before, and its high points.
+/// Read top to bottom like a story: the streak and its record, then what the
+/// period meant (the verdict and the goal ring), how it went day by day — a
+/// tap on a day lays out its outings — how it compares with the one before,
+/// and its high points; the year's totals and most regular weekdays close it.
 /// Everything fills in as the screen opens.
 ///
 /// It opens on the period in progress and pages back a week or a month at a
@@ -75,6 +77,10 @@ struct RecapScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     SheetHeader(eyebrow: "Récap", title: "Ton bilan")
+                    if let streak = store.streak {
+                        RecapStreakHeader(streak: streak)
+                            .transition(.opacity)
+                    }
                     Picker("Période", selection: $kind.animation(.snappy)) {
                         ForEach(RecapPeriod.Kind.allCases) { Text($0.label).tag($0) }
                     }
@@ -104,6 +110,14 @@ struct RecapScreen: View {
                         Label("Impossible de lire tes données Santé pour le moment.", systemImage: "exclamationmark.triangle")
                             .font(FouleeFont.callout)
                             .foregroundStyle(.secondary)
+                    }
+                    // The year doesn't page with the period: it stays put.
+                    if let streak = store.streak {
+                        RecapYear(streak: streak)
+                    }
+                    if content != nil {
+                        healthAppLink
+                            .frame(maxWidth: .infinity)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -141,6 +155,19 @@ struct RecapScreen: View {
         guard let target else { return }
         arrival = step < 0 ? .leading : .trailing
         withAnimation(.snappy) { shown[kind] = target }
+    }
+
+    private var healthAppLink: some View {
+        Button {
+            if let url = URL(string: "x-apple-health://") {
+                UIApplication.shared.open(url)
+            }
+        } label: {
+            Label("Voir dans Santé", systemImage: "heart.fill")
+                .font(FouleeFont.footnote.weight(.semibold))
+                .foregroundStyle(FouleeColor.accentMid)
+        }
+        .buttonStyle(.pressable)
     }
 
     /// Share (issue #410) beside the close button — only once there is a
@@ -239,8 +266,6 @@ private struct RecapContent: View {
                     RecapHydration(water: water, isRevealed: isRevealed)
                 }
             }
-            healthAppLink
-                .frame(maxWidth: .infinity)
         }
         .onAppear {
             selectedDay = OutingDay.initialSelection(among: outings.map(\.day), today: date.now)
@@ -281,18 +306,5 @@ private struct RecapContent: View {
         }
         .font(FouleeFont.caption)
         .labelStyle(.titleAndIcon)
-    }
-
-    private var healthAppLink: some View {
-        Button {
-            if let url = URL(string: "x-apple-health://") {
-                UIApplication.shared.open(url)
-            }
-        } label: {
-            Label("Voir dans Santé", systemImage: "heart.fill")
-                .font(FouleeFont.footnote.weight(.semibold))
-                .foregroundStyle(FouleeColor.accentMid)
-        }
-        .buttonStyle(.pressable)
     }
 }

@@ -4,15 +4,15 @@ import Foundation
 
 /// The seeded twelve months of history, and everything the app derives from it.
 ///
-/// One generator, several readings: the streak, the calendar rings, the daily
+/// One generator, several readings: the streak, the Bilan's rings, the daily
 /// charts and the résumé all come out of `minutes(offset:)`, so the number on
-/// the hero card is arithmetically the same number the calendar sheet counts.
+/// the hero card is arithmetically the same number the Bilan counts.
 /// Nothing is hard-coded twice, and nothing reads the wall clock — `offset` is
 /// counted from `ScreenshotSeed.instant`.
 nonisolated extension ScreenshotSeed {
     /// Days of history the seed answers for — the window every streak surface
     /// fetches, so the record shown on the home is computed over exactly the
-    /// months the calendar sheet browses.
+    /// months the Bilan pages through.
     static var historyDays: Int { StreakCalculator.historyWindowDays }
 
     /// Length of the ordinary runs further back, so the record stands out.

@@ -9,8 +9,8 @@ import Foundation
 /// every weekday keeps the "every single day" behaviour (used by the widgets,
 /// which don't know the user's chosen days).
 nonisolated public enum StreakCalculator {
-    /// Months of history every streak surface covers — the calendar sheet's
-    /// browsable months (`StreakCalendarStore.monthsBack` mirrors this).
+    /// Months of history every streak surface covers — the months the Bilan
+    /// pages through (`RecapPeriod.historyMonths`) and totals (`StreakSummary`).
     public static let historyMonths = 12
 
     /// Day window to fetch so `historyMonths` are fully covered: a 31-day

@@ -3,9 +3,10 @@ import FouleeKit
 import Foundation
 import Observation
 
-/// Loads the Bilan (issues #344, #350, #363, #444): the recap of the week and
-/// the month in progress, their outings day by day, and — for the screen that
-/// pages back — every period of the last twelve months.
+/// Loads the Bilan (issues #344, #350, #363, #444, #445): the recap of the
+/// week and the month in progress, their outings day by day, and — for the
+/// screen that pages back — every period of the last twelve months, with the
+/// streak and the year's totals.
 ///
 /// One read of Santé covers it all: the series reach back to the start of the
 /// earliest period compared. Paging reads nothing more; each period is worked
@@ -18,6 +19,9 @@ final class RecapStore {
     /// Each period's water (issue #356); empty while hydration is off, or when
     /// the water could not be read — the recap stands without it.
     private(set) var water: [RecapPeriod.Kind: RecapWater] = [:]
+    /// The streak, its record and the year behind them (issue #445); only
+    /// read with the history.
+    private(set) var streak: StreakSummary?
     private(set) var isLoading = false
     private(set) var lastError: String?
 
@@ -35,15 +39,17 @@ final class RecapStore {
     /// `waterGoalML` is the hydration goal, `nil` while hydration is off.
     ///
     /// `withHistory` reaches back `RecapPeriod.historyMonths` for the screen
-    /// that pages (issue #444); the home's card only needs the periods in
-    /// progress, and reads no further.
+    /// that pages (issue #444), and at least `StreakCalculator.historyWindowDays`
+    /// so its record is the home's (issue #445); the home's card only needs the
+    /// periods in progress, and reads no further.
     func load(goalMinutes: Int, activeDays: Set<Weekday>, waterGoalML: Int? = nil, withHistory: Bool = false) async {
         isLoading = true
         defer { isLoading = false }
         let now = date.now
         let periods = RecapPeriod.Kind.allCases.map { RecapPeriod.current($0, at: now) }
         let reach = withHistory ? periods + RecapPeriod.Kind.allCases.map { RecapPeriod.earliest($0, at: now) } : periods
-        let daysBack = Self.daysBack(covering: reach, from: now)
+        let covered = Self.daysBack(covering: reach, from: now)
+        let daysBack = withHistory ? max(covered, StreakCalculator.historyWindowDays) : covered
         // Alongside the recap's own read, and never in its way.
         async let waterSeries = Self.readWater(from: healthKit, daysBack: daysBack, isEnabled: waterGoalML != nil)
         do {
@@ -62,6 +68,9 @@ final class RecapStore {
             water = Dictionary(uniqueKeysWithValues: contents.compactMap { content in
                 content.water.map { (content.recap.period.kind, $0) }
             })
+            streak = withHistory
+                ? StreakSummary.make(history: inputs.minutes, goalMinutes: goalMinutes, activeDays: activeDays, today: now)
+                : nil
             lastError = nil
         } catch {
             lastError = error.localizedDescription
