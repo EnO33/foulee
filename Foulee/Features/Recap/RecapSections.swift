@@ -37,18 +37,15 @@ struct RecapHero: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Objectif tenu \(recap.goalDaysMet) jours sur \(recap.goalDaysPlanned)")
 
+            // No period name here: the navigator right above says it (#444).
+            // No change beside the minutes either: unlabelled, « -69 % » read
+            // as a verdict on today (#454). The comparison has its own section.
             VStack(alignment: .leading, spacing: 6) {
-                Text(recap.period.title)
-                    .font(FouleeFont.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(durationText(minutes: isRevealed ? recap.totals.minutes : 0))
-                        .scaledNumericFont(size: 34)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .contentTransition(.numericText())
-                    RecapChangeChip(old: Double(recap.previous.minutes), new: Double(recap.totals.minutes))
-                }
+                Text(durationText(minutes: isRevealed ? recap.totals.minutes : 0))
+                    .scaledNumericFont(size: 34)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .contentTransition(.numericText())
                 Text(verdictText)
                     .font(FouleeFont.callout.weight(.semibold))
                     .fixedSize(horizontal: false, vertical: true)
@@ -80,8 +77,14 @@ struct RecapHero: View {
 /// This period against the one before (issue #346), one measure per row: two
 /// bars on a shared scale — this period in the measure's colour, the one
 /// before in grey — and the change.
+///
+/// It names the days it compares with (#454). A period still in progress is
+/// never shown as a drop it may yet make up: behind, a row says what is left
+/// to match; ahead, it keeps its rise.
 struct RecapComparison: View {
     let recap: Recap
+    /// Whether today falls in the period.
+    let isInProgress: Bool
     var isRevealed = true
 
     private struct Row: Identifiable {
@@ -112,6 +115,9 @@ struct RecapComparison: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            Text(recap.period.previous().span)
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
             ForEach(rows) { row in
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
@@ -122,18 +128,44 @@ struct RecapComparison: View {
                         Spacer()
                         Text(row.text(row.now))
                             .font(FouleeFont.callout.weight(.bold).monospacedDigit())
-                        RecapChangeChip(old: row.before, new: row.now)
+                        if remaining(in: row) == nil {
+                            RecapChangeChip(old: row.before, new: row.now)
+                        }
                     }
                     bar(row.now, of: row, style: row.tint)
                     bar(row.before, of: row, style: AnyShapeStyle(Color.gray.opacity(0.35)))
-                    Text("Avant : \(row.text(row.before))")
-                        .font(FouleeFont.caption)
-                        .foregroundStyle(.secondary)
+                    caption(for: row)
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(row.label) : \(row.text(row.now)), contre \(row.text(row.before)) avant")
+                .accessibilityLabel(accessibilityText(for: row))
             }
         }
+    }
+
+    /// What is left to match the period before, for a period in progress
+    /// behind it.
+    private func remaining(in row: Row) -> Double? {
+        isInProgress ? Recap.remaining(from: row.now, toMatch: row.before) : nil
+    }
+
+    private func caption(for row: Row) -> some View {
+        HStack(spacing: 8) {
+            Text("Avant : \(row.text(row.before))")
+                .foregroundStyle(.secondary)
+            if let left = remaining(in: row) {
+                Spacer(minLength: 0)
+                Text("Encore \(row.text(left)) pour égaler")
+                    .fontWeight(.semibold)
+                    .foregroundStyle(FouleeColor.accentMid)
+            }
+        }
+        .font(FouleeFont.caption)
+    }
+
+    private func accessibilityText(for row: Row) -> String {
+        let base = "\(row.label) : \(row.text(row.now)), contre \(row.text(row.before)) avant"
+        guard let left = remaining(in: row) else { return base }
+        return "\(base). Encore \(row.text(left)) pour égaler"
     }
 
     /// A bar on the row's shared scale: the larger of the two values fills it.

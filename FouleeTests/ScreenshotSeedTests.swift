@@ -109,21 +109,16 @@ struct ScreenshotSeedTests {
 
     // MARK: - The other screens read the same history
 
-    @Test("The calendar sheet answers the same streak as the home card")
-    func calendarSheetAgreesWithHome() async {
+    @Test("The Bilan answers the same streak as the home card")
+    func bilanAgreesWithHome() async {
         await withDependencies {
             $0.date = .constant(ScreenshotSeed.instant)
             $0.healthKit = ScreenshotDoubles.healthKit
         } operation: {
-            let store = StreakCalendarStore(
-                goalMinutes: ScreenshotSeed.minutesGoal,
-                goalSteps: ScreenshotSeed.stepsGoal,
-                activeDays: Weekday.workWeek
-            )
-            await store.load()
-            #expect(store.currentStreak == ScreenshotSeed.currentStreak)
-            #expect(store.bestStreak == ScreenshotSeed.bestStreak)
-            #expect(store.months.count == StreakCalendarStore.monthsBack)
+            let store = RecapStore()
+            await store.load(goalMinutes: ScreenshotSeed.minutesGoal, activeDays: Weekday.workWeek, withHistory: true)
+            #expect(store.streak?.current == ScreenshotSeed.currentStreak)
+            #expect(store.streak?.best == ScreenshotSeed.bestStreak)
             #expect(store.lastError == nil)
         }
     }

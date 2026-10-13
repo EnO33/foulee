@@ -53,9 +53,13 @@ final class ScreenshotCaptureTests: XCTestCase {
 
     // MARK: - Steps
 
+    /// The streak badge opens the Bilan on the month in progress (#445): the
+    /// streak at its head, the month's rings below.
     private func captureStreak(_ app: XCUIApplication) {
-        tapWhenReady(app.buttons[ScreenshotCapture.Card.streak], "Streak card")
-        waitForScreen(app.staticTexts["SÉRIE ACTUELLE"], "Streak calendar sheet")
+        tapWhenReady(app.buttons[ScreenshotCapture.Card.streak], "Streak badge")
+        waitForScreen(app.staticTexts["SÉRIE ACTUELLE"], "Bilan streak")
+        // The link only shows once the month has loaded.
+        waitForScreen(app.buttons["Voir dans Santé"], "Bilan month")
         capture("04_streak")
         close(app)
     }

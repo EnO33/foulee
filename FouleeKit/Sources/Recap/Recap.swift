@@ -173,6 +173,13 @@ nonisolated public struct Recap: Equatable, Sendable {
         return (new - old) / old
     }
 
+    /// What is left for `new` to match `old`, or `nil` once it has: how a
+    /// period still in progress reads against the one before, rather than as
+    /// a drop it may yet make up (issue #454).
+    public static func remaining(from new: Double, toMatch old: Double) -> Double? {
+        old > new ? old - new : nil
+    }
+
     public init(
         period: RecapPeriod,
         totals: Totals,

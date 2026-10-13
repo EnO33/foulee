@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#443](https://github.com/EnO33/foulee/issues/443), [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363)
+- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363), [#443](https://github.com/EnO33/foulee/issues/443), [#444](https://github.com/EnO33/foulee/issues/444), [#445](https://github.com/EnO33/foulee/issues/445), [#454](https://github.com/EnO33/foulee/issues/454)
 
 ## Contexte
 
@@ -12,6 +12,8 @@ L'accueil suit la journée en cours et les 7 derniers jours, mais rien ne fait l
 ### D1 — Le récap porte sur la dernière période terminée
 
 > **Amendée par D6** pour la semaine : elle couvre désormais les 7 derniers jours glissants. Le mois reste le dernier mois terminé.
+>
+> **Amendée par D11** : le Bilan s'ouvre sur la semaine et le mois **en cours**, et remonte le temps période par période. Seule la notification du 1er ouvre encore le mois terminé.
 
 Une semaine, du lundi au dimanche (calendrier ISO, comme toutes les semaines de l'app), ou un mois civil. Jamais la période en cours : un récap est un bilan, pas un suivi, et l'accueil fait déjà le suivi. Le lundi, le récap de la semaine est celui de la semaine qui s'est terminée la veille ; le 1er, celui du mois qui vient de finir.
 
@@ -19,7 +21,7 @@ Une semaine, du lundi au dimanche (calendrier ISO, comme toutes les semaines de 
 
 Le récap est calculé (`Recap.make`, pur et testé) à partir de ce que l'app lit déjà dans Santé :
 
-- les **minutes** viennent des minutes quotidiennes fusionnées (`dailyMinutes`), les mêmes que la série et le calendrier ;
+- les **minutes** viennent des minutes quotidiennes fusionnées (`dailyMinutes`), les mêmes que la série ;
 - les **pas, la distance et les kcal** viennent des séries quotidiennes (`metricSeries`), les mêmes que les écrans de statistiques ;
 - les **sorties** sont comptées comme dans le résumé : les portions d'une même sortie sont regroupées (`OutingGrouping`), puis les doublons retirés (`WorkoutDeduplication`).
 
@@ -45,7 +47,7 @@ La première version (#344) alignait des chiffres, un graphique en barres et qua
 
 1. **Le sens d'abord.** Un grand anneau « objectifs tenus », le total de minutes et une phrase de bilan (`Recap.Verdict`, pur et testé). L'ordre de priorité est : période vide, puis parfaite, puis régulière (70 % des jours prévus), puis en progrès. La régularité passe avant le volume, parce que la série est ce dont l'app parle.
 2. **Le jour par jour en anneaux** : sept pour une semaine, un calendrier pour un mois. C'est le même langage que l'anneau d'activité de l'accueil et l'anneau intérieur du calendrier de série : un même jour se lit pareil partout. Un jour de repos sans activité est un cercle pointillé, jamais un anneau vide, car il n'a pas été manqué.
-3. **La comparaison en barres** : deux barres par mesure, sur une échelle commune. Cette période prend la couleur de la mesure, la précédente est en gris neutre, avec l'écart chiffré. L'écart a une flèche en plus de sa couleur, pour que le sens ne repose jamais sur la couleur seule.
+3. **La comparaison en barres** : deux barres par mesure, sur une échelle commune. Cette période prend la couleur de la mesure, la précédente est en gris neutre, avec l'écart chiffré (ou ce qu'il reste pour égaler, D13). L'écart a une flèche en plus de sa couleur, pour que le sens ne repose jamais sur la couleur seule.
 4. **Les temps forts** : le meilleur jour et l'énergie dépensée.
 
 Les anneaux et les barres se remplissent à l'ouverture. Changer de période rejoue l'animation.
@@ -127,6 +129,36 @@ L'hydratation (D7 et ADR 0005, D3) suit la même semaine : la moyenne et les jou
 
 - **Dans la période en cours, le jour sélectionné à l'ouverture est aujourd'hui**, qu'il ait une sortie ou non (`OutingDay.initialSelection`, pur et testé). Une période passée s'ouvre sur son dernier jour. Avant, c'était le dernier jour avec une sortie : à midi, avant de partir, on tombait sur hier.
 - **Aujourd'hui sans sortie dit « Pas encore »**, pas « Aucune » : la journée est encore ouverte. Un jour prévu ajoute le reste à faire (« Encore 18 min pour ton objectif »), la question avec laquelle on ouvre le Bilan à midi. Un jour passé sans sortie reste « Aucune séance enregistrée », un jour de repos « Jour de repos : rien de prévu ».
+
+### D11 — Le Bilan remonte le temps (#444)
+
+- **On s'ouvre sur la période en cours**, semaine ou mois : du lundi ou du 1er jusqu'à aujourd'hui (`RecapPeriod.current`, `monthSoFar`). Le dernier mois terminé, figé, ne contenait jamais aujourd'hui, et la Série montrait déjà le mois en cours : deux réponses à la même question.
+- **Un balayage horizontal change de page**, vers la gauche pour avancer, vers la droite pour reculer, comme le calendrier. Des chevrons de part et d'autre du nom de la période font la même chose : VoiceOver les lit, et ils montrent qu'il y a où aller. Le nom de la période quitte l'anneau du haut, qui le répétait.
+- **Le balayage est un pan UIKit** (`HorizontalSwipeGesture`) qui ne démarre que si le doigt part nettement de côté, et reconnu en même temps que le défilement. Un `DragGesture` SwiftUI sur le contenu entrait en concurrence avec le pan du défilement : au bout de quelques secondes, le défilement se figeait.
+- **Reculer montre la période entière d'avant** (`earlier`), avancer s'arrête à la période en cours (`later`). L'historique remonte à 12 mois, celui-ci compris (`historyMonths`, `earliest`, `hasEarlier`), ce que montrait le calendrier de la Série.
+- **Une seule lecture de Santé** couvre les 12 mois et la période d'avant la plus ancienne (`RecapStore.load(withHistory:)`). Chaque page est calculée à sa première ouverture (`content(for:)`) et gardée : changer de page ne relit rien. La carte de l'accueil, elle, ne lit que les périodes en cours.
+- **Le mois en cours se compare aux mêmes jours du mois d'avant**, comme la semaine (D8) : le 12 contre les 12 premiers jours, coupés à la fin d'un mois plus court. Un mois entier se compare toujours au mois entier d'avant.
+- **Les jours à venir du mois sont en piste pâle**, comme ceux de la semaine.
+- **L'état vide dit « pas encore » tant que la période est ouverte**, « pas » une fois finie.
+- **La notification du 1er ouvre le mois qui vient de finir** (`RecapNotification.request`, `RecapRequest`) : ce jour-là, le mois en cours n'a qu'un jour. Celle du dimanche soir ouvre la semaine en cours, presque entière.
+
+### D12 — La série vit dans le Bilan (#445)
+
+- **Un seul écran pour une seule question**, « où j'en suis » : la feuille Série (anneaux du mois, record, totaux sur 12 mois) et le Bilan feuilletaient les mêmes mois avec deux langages d'anneaux. La feuille disparaît (`StreakCalendarSheet`, `StreakMonthBrowser`, `StreakMonthRings`, `StreakCalendarStore`) ; ce qu'elle montrait passe dans le Bilan.
+- **La série ouvre le Bilan** : flamme, jours d'affilée, « Plus que N jours pour ton record » et sa barre (`RecapStreakHeader`). Elle ne change pas avec la page : c'est l'état d'aujourd'hui.
+- **L'année le ferme** : « Sur 12 mois » (objectifs tenus, temps d'activité, réussite) et « Tes jours les plus réguliers » (`RecapYear`). Ses 12 mois sont ceux que le Bilan feuillette (`RecapPeriod.historyMonths` vaut `StreakCalculator.historyMonths`).
+- **Le badge de série de l'accueil ouvre le Bilan sur le mois en cours.**
+- **Un seul langage d'anneaux**, celui du Bilan : les minutes vers l'objectif. Les pas restent dans la comparaison et le détail du jour.
+- **Le calcul est pur et testé** (`StreakSummary.make`, FouleeKit) et lit la même histoire que l'accueil : avec l'historique, `RecapStore` lit au moins `StreakCalculator.historyWindowDays`, sinon le record du Bilan serait le meilleur des jours lus (#176).
+
+### D13 — Une comparaison qui dit à quoi elle compare (#454)
+
+Retour de test : « -69 % » à côté des minutes se lisait comme un jugement sur aujourd'hui. C'était la semaine en cours contre les mêmes jours de la semaine d'avant (D8), mais rien ne le disait, et en début de semaine la pastille était presque toujours en baisse.
+
+- **La comparaison n'est que dans sa section.** L'écart quitte le total de minutes : tête du Bilan, carte de l'accueil, image partagée. Seule dans sa section, elle peut dire à quoi elle compare.
+- **Le titre nomme la plage** : « Par rapport aux mêmes jours de la semaine d'avant » tant que la période est en cours, « Par rapport à la semaine d'avant » une fois finie (de même pour le mois). Les dates comparées suivent, en clair (`RecapPeriod.span` : « Du 28 sept. au 29 sept. », « Le 28 sept. »).
+- **Une période en cours ne se juge pas en baisse.** Derrière la période d'avant, une mesure dit ce qu'il reste pour l'égaler (« Encore 32 min pour égaler », `Recap.remaining`) au lieu d'un pourcentage en baisse : c'est encore faisable, et c'est la question qu'on se pose. Devant, elle garde sa hausse. Une période finie garde ses pourcentages dans les deux sens.
+- **L'hydratation garde son écart** : c'est une moyenne par jour, juste à toute date de la période.
 
 ## Ce qui reste ouvert
 

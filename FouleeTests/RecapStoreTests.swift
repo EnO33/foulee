@@ -15,11 +15,22 @@ struct RecapStoreTests {
         calendar.date(from: DateComponents(year: 2026, month: 10, day: 10, hour: 12))!
     }
 
-    /// The month before last starts on 1 August: 71 days back, today included.
+    /// The month so far is compared with the first days of September (#444):
+    /// 40 days back, today included.
     @Test("The read reaches back to the start of the earliest period compared")
     func daysBack() {
         let periods = RecapPeriod.Kind.allCases.map { RecapPeriod.current($0, at: saturday, calendar: calendar) }
-        #expect(RecapStore.daysBack(covering: periods, from: saturday, calendar: calendar) == 71)
+        #expect(RecapStore.daysBack(covering: periods, from: saturday, calendar: calendar) == 40)
+    }
+
+    /// The earliest month is November 2025, compared with October 2025: the
+    /// read starts on 1 October 2025, 375 days back (#444).
+    @Test("With the history, the read reaches back twelve months and the month before")
+    func daysBackWithHistory() {
+        let periods = RecapPeriod.Kind.allCases.flatMap {
+            [RecapPeriod.current($0, at: saturday, calendar: calendar), RecapPeriod.earliest($0, at: saturday, calendar: calendar)]
+        }
+        #expect(RecapStore.daysBack(covering: periods, from: saturday, calendar: calendar) == 375)
     }
 
     @Test("Both recaps and their outings come from the same read")
@@ -54,7 +65,7 @@ struct RecapStoreTests {
             let store = RecapStore()
             await store.load(goalMinutes: 20, activeDays: Set(Weekday.allCases))
 
-            #expect(asked.value == [71])
+            #expect(asked.value == [40])
             // The week so far: Monday 5 → Saturday 10 October (#363).
             let week = store.recaps[.week]
             #expect(week?.days.count == 6)
@@ -62,16 +73,58 @@ struct RecapStoreTests {
             #expect(week?.days.last?.date == calendar.startOfDay(for: saturday))
             #expect(week?.totals.minutes == 30)
             #expect(week?.goalDaysMet == 1)
-            #expect(store.recaps[.month]?.totals.minutes == 0)
+            // The month so far, 1 → 10 October (#444), holds Thursday's walk.
+            #expect(store.recaps[.month]?.totals.minutes == 30)
 
             // Outings line up with the recap's days, oldest first.
             let days = store.outings[.week] ?? []
             #expect(days.map(\.day) == week?.days.map(\.date))
             #expect(days[3].workouts == [walk])
-            #expect(store.outings[.month]?.count == 30)
-            #expect(store.outings[.month]?.allSatisfy(\.workouts.isEmpty) == true)
+            #expect(store.outings[.month]?.count == 10)
+            #expect(store.outings[.month]?.flatMap(\.workouts) == [walk])
+
+            // A past period comes from the same read, worked out on demand.
+            let september = RecapPeriod.monthSoFar(at: saturday, calendar: calendar).earlier(calendar: calendar)
+            #expect(store.content(for: september)?.recap.days.count == 30)
+            #expect(store.content(for: september)?.outings.allSatisfy(\.workouts.isEmpty) == true)
+            // The card on the home reads no streak.
+            #expect(store.streak == nil)
             #expect(store.lastError == nil)
             #expect(!store.isLoading)
+        }
+    }
+
+    /// The record is the home's only if both read the same history (#176):
+    /// the screen reads `StreakCalculator.historyWindowDays`, deeper than the
+    /// 375 days its periods need (#445).
+    @Test("With the history, the streak comes from the home's window")
+    func streakWithHistory() async {
+        let asked = LockedRef<[Int]>([])
+        let today = calendar.startOfDay(for: saturday)
+        let walked = (0..<3).map { DailyMinutes(date: calendar.date(byAdding: .day, value: -$0, to: today)!, minutes: 30) }
+        await withDependencies {
+            $0.date = .constant(saturday)
+            $0.healthKit = HealthKitClient(
+                requestAuthorization: { true },
+                todayMetrics: { .zero },
+                saveWorkout: { _ in },
+                dailyMinutes: { daysBack in
+                    asked.set(asked.value + [daysBack])
+                    return walked
+                },
+                recentWorkouts: { _ in [] },
+                workoutDetail: { WorkoutDetail(summary: $0, heartRateSamples: [], stepsCount: 0) },
+                metricSeries: { _, _ in [] }
+            )
+        } operation: {
+            let store = RecapStore()
+            await store.load(goalMinutes: 20, activeDays: Set(Weekday.allCases), withHistory: true)
+
+            #expect(asked.value == [StreakCalculator.historyWindowDays])
+            #expect(store.streak?.current == 3)
+            #expect(store.streak?.best == 3)
+            #expect(store.streak?.walks == 3)
+            #expect(store.streak?.minutes == 90)
         }
     }
 

@@ -65,7 +65,8 @@ struct RecapWaterTests {
             #expect(store.water[.week]?.goalDaysMet == 1)
             #expect(store.water[.week]?.dayCount == 6)
             #expect(store.water[.week]?.averageML == 350)
-            #expect(store.water[.month]?.averageML == 0)
+            // The month so far, 1 → 10 October (#444): 2 100 mL over 10 days.
+            #expect(store.water[.month]?.averageML == 210)
         }
     }
 

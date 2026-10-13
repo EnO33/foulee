@@ -73,22 +73,101 @@ struct RecapTests {
         #expect(sunday.days(calendar: calendar).count == 7)
     }
 
-    @Test("A whole week compares with the whole week before; a month has no days to come")
+    @Test("A whole week or month has no days to come")
     func wholePeriods() {
         let week = RecapPeriod.lastCompleted(.week, before: day(2026, 10, 10, hour: 12), calendar: calendar)
         #expect(week.daysToCome(calendar: calendar).isEmpty)
         #expect(september.daysToCome(calendar: calendar).isEmpty)
     }
 
-    /// What the Bilan opens on (issues #350, #363).
-    @Test("The Bilan shows the week so far and the last finished month")
+    /// What the Bilan opens on (issues #350, #363, #444).
+    @Test("The Bilan opens on the week so far and the month so far")
     func currentPeriods() {
         let saturday = day(2026, 10, 10, hour: 18)
         let week = RecapPeriod.current(.week, at: saturday, calendar: calendar)
         #expect(week == RecapPeriod.weekSoFar(at: saturday, calendar: calendar))
         let month = RecapPeriod.current(.month, at: saturday, calendar: calendar)
-        #expect(month.start == day(2026, 9, 1))
-        #expect(month.end == day(2026, 10, 1))
+        #expect(month.start == day(2026, 10, 1))
+        #expect(month.end == day(2026, 10, 11))
+        #expect(month.isInProgress(at: saturday))
+    }
+
+    /// Twenty-one pale days after the 10th, through the 31st.
+    @Test("A month in progress has the rest of the month to come")
+    func monthDaysToCome() {
+        let month = RecapPeriod.monthSoFar(at: day(2026, 10, 10, hour: 18), calendar: calendar)
+        let toCome = month.daysToCome(calendar: calendar)
+        #expect(toCome.count == 21)
+        #expect(toCome.first == day(2026, 10, 11))
+        #expect(toCome.last == day(2026, 10, 31))
+    }
+
+    /// The 10th against the 10 first days of September, never against a
+    /// whole month it could only fall short of.
+    @Test("A month in progress compares with the same days of the month before")
+    func monthSoFarComparesTheSameDays() {
+        let previous = RecapPeriod.monthSoFar(at: day(2026, 10, 10, hour: 18), calendar: calendar).previous(calendar: calendar)
+        #expect(previous.start == day(2026, 9, 1))
+        #expect(previous.end == day(2026, 9, 11))
+    }
+
+    /// 30 March in progress: the month before has 28 days, and the
+    /// comparison stops at its end rather than spilling into March.
+    @Test("The comparison of a long month stops at the end of a short one")
+    func monthSoFarComparisonIsCut() {
+        let previous = RecapPeriod.monthSoFar(at: day(2027, 3, 30, hour: 18), calendar: calendar).previous(calendar: calendar)
+        #expect(previous.start == day(2027, 2, 1))
+        #expect(previous.end == day(2027, 3, 1))
+    }
+
+    @Test("A whole month still compares with the whole month before")
+    func wholeMonthComparesTheWholeMonthBefore() {
+        let previous = september.previous(calendar: calendar)
+        #expect(previous.start == day(2026, 8, 1))
+        #expect(previous.end == day(2026, 9, 1))
+    }
+
+    // MARK: - Paging (issue #444)
+
+    @Test("Paging back from the week so far shows the whole week before")
+    func earlierWeek() {
+        let week = RecapPeriod.weekSoFar(at: day(2026, 10, 10, hour: 18), calendar: calendar)
+        let before = week.earlier(calendar: calendar)
+        #expect(before.start == day(2026, 9, 28))
+        #expect(before.end == day(2026, 10, 5))
+        #expect(!before.isInProgress(at: day(2026, 10, 10, hour: 18)))
+    }
+
+    @Test("Paging back from the month so far shows the whole month before")
+    func earlierMonth() {
+        let month = RecapPeriod.monthSoFar(at: day(2026, 10, 10, hour: 18), calendar: calendar)
+        #expect(month.earlier(calendar: calendar) == september)
+    }
+
+    @Test("Paging forward lands on the period in progress, cut at today, and stops there")
+    func laterStopsAtToday() throws {
+        let now = day(2026, 10, 10, hour: 18)
+        let forward = try #require(september.later(at: now, calendar: calendar))
+        #expect(forward == RecapPeriod.monthSoFar(at: now, calendar: calendar))
+        #expect(forward.later(at: now, calendar: calendar) == nil)
+
+        let august = september.earlier(calendar: calendar)
+        #expect(august.later(at: now, calendar: calendar) == september)
+    }
+
+    /// November 2025 through October 2026: twelve months, this one included.
+    @Test("The history reaches back twelve months, this one included")
+    func history() {
+        let now = day(2026, 10, 10, hour: 18)
+        let earliestMonth = RecapPeriod.earliest(.month, at: now, calendar: calendar)
+        #expect(earliestMonth.start == day(2025, 11, 1))
+        #expect(!earliestMonth.hasEarlier(at: now, calendar: calendar))
+        #expect(earliestMonth.later(at: now, calendar: calendar)?.hasEarlier(at: now, calendar: calendar) == true)
+
+        // The week that holds 1 November 2025, a Saturday.
+        let earliestWeek = RecapPeriod.earliest(.week, at: now, calendar: calendar)
+        #expect(earliestWeek.start == day(2025, 10, 27))
+        #expect(!earliestWeek.hasEarlier(at: now, calendar: calendar))
     }
 
     // MARK: - Totals
@@ -219,14 +298,5 @@ struct RecapTests {
         #expect(recap(met: 1, planned: 5, minutes: 100, before: 50).verdict == .improving)
         #expect(recap(met: 1, planned: 5, minutes: 40, before: 50).verdict == .started)
         #expect(recap(met: 1, planned: 5, minutes: 40, before: 0).verdict == .started)
-    }
-
-    // MARK: - Change
-
-    @Test("A change is a fraction of what came before, and nothing without a before")
-    func change() {
-        #expect(Recap.change(from: 100, to: 112) == 0.12)
-        #expect(Recap.change(from: 100, to: 50) == -0.5)
-        #expect(Recap.change(from: 0, to: 50) == nil)
     }
 }

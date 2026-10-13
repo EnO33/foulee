@@ -109,7 +109,7 @@ let shots: [Shot] = [
     Shot(family: .iphone, file: "01_onboarding", lines: ["Bouge un peu,", "chaque jour"]),
     Shot(family: .iphone, file: "02_home", lines: ["Ta journée,", "en un coup d'œil"], scrolls: true),
     Shot(family: .iphone, file: "03_session", lines: ["Suis ta sortie", "en direct"]),
-    Shot(family: .iphone, file: "04_streak", lines: ["Garde ta", "série vivante"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "04_streak", lines: ["Ta série,", "mois après mois"], scrolls: true, trimTop: sheetDimBand),
     Shot(family: .iphone, file: "05_stats", lines: ["Visualise", "tes progrès"], scrolls: true),
     Shot(family: .iphone, file: "06_minutes", lines: ["Chaque métrique", "compte"], scrolls: true),
     Shot(family: .iphone, file: "07_hydration", lines: ["Ton eau,", "verre après verre"], scrolls: true, trimTop: sheetDimBand),
@@ -122,7 +122,7 @@ let shots: [Shot] = [
     Shot(family: .ipad, sourceFamily: .iphone, file: "01_onboarding", lines: ["Bouge un peu,", "chaque jour"]),
     Shot(family: .ipad, sourceFamily: .iphone, file: "02_home", lines: ["Ta journée,", "en un coup d'œil"], scrolls: true),
     Shot(family: .ipad, sourceFamily: .iphone, file: "03_session", lines: ["Suis ta sortie", "en direct"]),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "04_streak", lines: ["Garde ta", "série vivante"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "04_streak", lines: ["Ta série,", "mois après mois"], scrolls: true, trimTop: sheetDimBand),
     Shot(family: .ipad, sourceFamily: .iphone, file: "05_stats", lines: ["Visualise", "tes progrès"], scrolls: true),
     Shot(family: .ipad, sourceFamily: .iphone, file: "07_hydration", lines: ["Ton eau,", "verre après verre"], scrolls: true, trimTop: sheetDimBand),
 

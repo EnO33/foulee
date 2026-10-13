@@ -170,13 +170,13 @@ struct TodayVerdictRevisabilityTests {
     }
 }
 
-/// The calendar sheet re-derives every cell from a freshly fetched history on
-/// each `load()`, so a late burst repairs the ring the same way it repairs the
+/// The Bilan re-derives its streak and its year from a freshly fetched history
+/// on each `load()`, so a late burst repairs them the same way it repairs the
 /// home card.
-@Suite("Streak calendar late repair")
-struct StreakCalendarLateDataTests {
-    @Test("Yesterday's cell flips from missed to done when its minutes land late")
-    func yesterdayCellRepairs() async throws {
+@Suite("Bilan streak late repair")
+struct RecapStreakLateDataTests {
+    @Test("Yesterday counts once its minutes land late")
+    func yesterdayRepairs() async throws {
         let calendar = Calendar.current
         // One instant for the fixture and for the store, so "yesterday" means
         // the same day on both sides even if the suite straddles midnight.
@@ -188,28 +188,17 @@ struct StreakCalendarLateDataTests {
             $0.date = .constant(now)
             $0.healthKit.dailyMinutes = { _ in history.value }
         } operation: {
-            let store = StreakCalendarStore(
-                goalMinutes: 20,
-                goalSteps: 6_000,
-                activeDays: Set(Weekday.allCases)
-            )
-            await store.load()
-            #expect(Self.cell(for: yesterday, in: store)?.status == .missed)
-            #expect(store.currentStreak == 0)
+            let store = RecapStore()
+            await store.load(goalMinutes: 20, activeDays: Set(Weekday.allCases), withHistory: true)
+            #expect(store.streak?.walks == 0)
+            #expect(store.streak?.current == 0)
 
             history.set([DailyMinutes(date: yesterday, minutes: 25)])
-            await store.load()
-            let repaired = Self.cell(for: yesterday, in: store)
-            #expect(repaired?.status == .done)
-            #expect(repaired?.minutes == 25)
-            #expect(store.currentStreak == 1)
+            await store.load(goalMinutes: 20, activeDays: Set(Weekday.allCases), withHistory: true)
+            #expect(store.streak?.walks == 1)
+            #expect(store.streak?.minutes == 25)
+            #expect(store.streak?.current == 1)
         }
-    }
-
-    private static func cell(for day: Date, in store: StreakCalendarStore) -> CalendarDay? {
-        store.months
-            .flatMap { month in month.cells.compactMap { $0 } }
-            .first { Calendar.current.isDate($0.date, inSameDayAs: day) }
     }
 }
 
