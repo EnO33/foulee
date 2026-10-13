@@ -20,6 +20,9 @@ round, an outing started on the iPhone is **shown on the Watch** — figures,
 route, and pause / stop buttons — while the iPhone keeps recording it as one
 workout: see [ADR 0003](docs/adr/0003-seance-partagee-iphone-watch.md) (French).
 
+In an outing's detail, the map numbers each kilometre along the route and
+marks which way it ran — a loop's start and finish meet, its arrows don't.
+
 The **Bilan** opens on the streak and its record, then reviews the week or
 the month in progress — minutes, steps, distance, outings, the days the goal
 was met, the change from the period before, and the water drunk when hydration
