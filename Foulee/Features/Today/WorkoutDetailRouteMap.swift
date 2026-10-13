@@ -14,6 +14,10 @@ import SwiftUI
 /// distance, pace. A tap rather than a drag, because dragging is what moves
 /// the map.
 ///
+/// **A numbered pastille at each kilometre, an arrow between two** (#452), so
+/// a loop — whose start and finish meet — still says which way it went. Full
+/// screen, the arrows turn with the map.
+///
 /// Absent when no leg has a route: the detail says nothing rather than
 /// showing an empty map.
 struct WorkoutDetailRouteMap: View {
@@ -22,10 +26,14 @@ struct WorkoutDetailRouteMap: View {
 
     @State private var isExpanded = false
     @State private var selectedID: UUID?
+    /// The full-screen map's heading, which the arrows make up for.
+    @State private var heading: Double = 0
 
     /// Built once: the conversion walks every point of the route.
     private let strokes: [RouteLines.Stroke]
     private let activities: [RecordedActivity]
+    private let kilometres: [RouteMarks.Mark]
+    private let arrows: [RouteMarks.Mark]
 
     init(route: [RouteSegment], legs: [WorkoutSummary]) {
         self.legs = legs
@@ -37,6 +45,8 @@ struct WorkoutDetailRouteMap: View {
             )
         }
         self.activities = route.map(\.activity).firstOccurrences
+        self.kilometres = RouteMarks.kilometres(along: route.map(\.coordinates))
+        self.arrows = RouteMarks.arrows(along: route.map(\.coordinates))
     }
 
     var body: some View {
@@ -67,6 +77,18 @@ struct WorkoutDetailRouteMap: View {
     private func map(interactive: Bool) -> some View {
         Map(initialPosition: .automatic, interactionModes: interactive ? .all : []) {
             RouteLines(strokes: strokes, highlighted: interactive ? selectedID : nil)
+            ForEach(Array(arrows.enumerated()), id: \.offset) { _, arrow in
+                Annotation("", coordinate: arrow.coordinate.locationCoordinate, anchor: .center) {
+                    RouteArrow(bearing: arrow.bearing - (interactive ? heading : 0))
+                }
+                .annotationTitles(.hidden)
+            }
+            ForEach(Array(kilometres.enumerated()), id: \.offset) { index, mark in
+                Annotation("Kilomètre \(index + 1)", coordinate: mark.coordinate.locationCoordinate, anchor: .center) {
+                    KilometrePastille(number: index + 1)
+                }
+                .annotationTitles(.hidden)
+            }
             if let end = strokes.last?.coordinates.last {
                 Annotation("Arrivée", coordinate: end) {
                     Image(systemName: "flag.checkered")
@@ -153,6 +175,7 @@ struct WorkoutDetailRouteMap: View {
         ZStack(alignment: .topTrailing) {
             MapReader { proxy in
                 map(interactive: true)
+                    .onMapCameraChange(frequency: .continuous) { heading = $0.camera.heading }
                     // Simultaneous, not `onTapGesture`: the map's own
                     // recognisers (pan, double-tap zoom) win over a plain tap
                     // handler, which then never fires — verified by driving the
@@ -171,5 +194,37 @@ struct WorkoutDetailRouteMap: View {
             }
             SheetCloseButton(accessibilityLabel: "Fermer la carte") { isExpanded = false }
         }
+    }
+}
+
+/// A kilometre's number on the route (#452), in the finish flag's colours.
+private struct KilometrePastille: View {
+    let number: Int
+
+    var body: some View {
+        Text("\(number)")
+            .font(.system(size: 10, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(.white)
+            .padding(.horizontal, 4)
+            .frame(minWidth: 18, minHeight: 18)
+            .background(Color.black.opacity(0.75), in: Capsule())
+            .overlay(Capsule().stroke(.white, lineWidth: 1.5))
+            .accessibilityLabel("Kilomètre \(number)")
+    }
+}
+
+/// Which way the route runs (#452): `bearing` in degrees clockwise from the
+/// top of the map.
+private struct RouteArrow: View {
+    let bearing: Double
+
+    var body: some View {
+        Image(systemName: "arrowtriangle.up.fill")
+            .font(.system(size: 9, weight: .bold))
+            .foregroundStyle(.white)
+            .shadow(color: .black.opacity(0.45), radius: 1.5)
+            .rotationEffect(.degrees(bearing))
+            .accessibilityHidden(true)
     }
 }
