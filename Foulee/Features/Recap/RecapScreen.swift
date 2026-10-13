@@ -125,7 +125,7 @@ struct RecapScreen: View {
                 .padding(.bottom, 40)
                 // Alongside the vertical scroll, never instead of it: only a
                 // drag clearly sideways turns the page.
-                .simultaneousGesture(swipe)
+                .gesture(HorizontalSwipeGesture { page(by: $0 == .left ? 1 : -1) })
             }
             .overlay(alignment: .topTrailing) { cornerButtons }
             .toolbar(.hidden, for: .navigationBar)
@@ -144,18 +144,9 @@ struct RecapScreen: View {
         }
     }
 
-    /// A swipe to the left goes forward in time, to the right back: the
-    /// calendar's own direction, and the streak's chevrons'.
-    private var swipe: some Gesture {
-        DragGesture(minimumDistance: 24)
-            .onEnded { value in
-                let dx = value.translation.width
-                guard abs(dx) > 60, abs(dx) > abs(value.translation.height) * 2 else { return }
-                page(by: dx < 0 ? 1 : -1)
-            }
-    }
-
-    /// One page back (`-1`) or forward (`1`), within the history.
+    /// One page back (`-1`) or forward (`1`), within the history. A swipe to
+    /// the left goes forward in time, to the right back: the calendar's own
+    /// direction.
     private func page(by step: Int) {
         let now = date.now
         let target = step < 0
