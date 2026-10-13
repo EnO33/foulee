@@ -2,12 +2,16 @@ import Dependencies
 import FouleeKit
 import SwiftUI
 
-/// The Bilan: the week so far or the last month (issues #344, #346, #350, #363).
+/// The Bilan: the week or the month (issues #344, #346, #350, #363, #444).
 ///
 /// Read top to bottom like a story: what the period meant (the verdict and
 /// the goal ring), how it went day by day — a tap on a day lays out its
 /// outings — how it compares with the one before, and its high points.
 /// Everything fills in as the screen opens.
+///
+/// It opens on the period in progress and pages back a week or a month at a
+/// time, by a horizontal swipe or the chevrons either side of the period's
+/// name, as far as `RecapPeriod.historyMonths` (issue #444).
 struct RecapScreen: View {
     let goalMinutes: Int
     let activeDays: Set<Weekday>
@@ -16,24 +20,48 @@ struct RecapScreen: View {
     var onClose: () -> Void
 
     @State private var kind: RecapPeriod.Kind
+    /// The page on screen for each kind: switching between Semaine and Mois
+    /// comes back to where each was left.
+    @State private var shown: [RecapPeriod.Kind: RecapPeriod]
+    /// The side the next page slides in from.
+    @State private var arrival: Edge = .trailing
     @State private var store = RecapStore()
     @State private var isSharing = false
     /// A sheet presented from a sheet doesn't inherit the theme.
     @Environment(\.colorScheme) private var colorScheme
 
-    /// The recap on screen, when there is something in it to share.
-    private var shareable: Recap? {
-        store.recaps[kind].flatMap { $0.isEmpty ? nil : $0 }
+    @Dependency(\.date) private var date
+
+    /// The period on screen.
+    private var period: RecapPeriod {
+        shown[kind] ?? RecapPeriod.current(kind, at: date.now)
     }
 
+    private var content: RecapPeriodContent? {
+        store.content(for: period)
+    }
+
+    /// The recap on screen, when there is something in it to share.
+    private var shareable: Recap? {
+        content.flatMap { $0.recap.isEmpty ? nil : $0.recap }
+    }
+
+    /// `period` opens a given page — the month just ended, from the
+    /// notification of the 1st (issue #444); `nil` opens the one in progress.
     init(
         kind: RecapPeriod.Kind,
+        period: RecapPeriod? = nil,
         goalMinutes: Int,
         activeDays: Set<Weekday>,
         waterGoalML: Int?,
         onClose: @escaping () -> Void
     ) {
-        _kind = State(initialValue: kind)
+        @Dependency(\.date) var date
+        let now = date.now
+        var shown = Dictionary(uniqueKeysWithValues: RecapPeriod.Kind.allCases.map { ($0, RecapPeriod.current($0, at: now)) })
+        if let period { shown[period.kind] = period }
+        _kind = State(initialValue: period?.kind ?? kind)
+        _shown = State(initialValue: shown)
         self.goalMinutes = goalMinutes
         self.activeDays = activeDays
         self.waterGoalML = waterGoalML
@@ -51,13 +79,23 @@ struct RecapScreen: View {
                         ForEach(RecapPeriod.Kind.allCases) { Text($0.label).tag($0) }
                     }
                     .pickerStyle(.segmented)
+                    RecapPeriodNavigator(
+                        title: period.title,
+                        earlier: period.hasEarlier(at: date.now) ? { page(by: -1) } : nil,
+                        later: period.later(at: date.now) != nil ? { page(by: 1) } : nil
+                    )
 
-                    if let recap = store.recaps[kind] {
-                        // Keyed on the period, so switching replays the reveal
-                        // and starts again from its own day.
-                        RecapContent(recap: recap, outings: store.outings[kind] ?? [], water: store.water[kind])
-                            .id(kind)
-                            .transition(.opacity)
+                    if let content {
+                        // Keyed on the period, so paging replays the reveal and
+                        // starts again from its own day.
+                        RecapContent(
+                            recap: content.recap,
+                            outings: content.outings,
+                            water: content.water,
+                            isInProgress: period.isInProgress(at: date.now)
+                        )
+                        .id(period)
+                        .transition(.push(from: arrival))
                     } else if store.isLoading {
                         ProgressView()
                             .frame(maxWidth: .infinity)
@@ -71,19 +109,38 @@ struct RecapScreen: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 28)
                 .padding(.bottom, 40)
+                // Alongside the vertical scroll, never instead of it: only a
+                // drag clearly sideways turns the page.
+                .gesture(HorizontalSwipeGesture { page(by: $0 == .left ? 1 : -1) })
             }
             .overlay(alignment: .topTrailing) { cornerButtons }
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: WorkoutSummary.self) { WorkoutDetailSheet(summary: $0) }
         }
         .presentationBackground { SheetBackground() }
-        .task { await store.load(goalMinutes: goalMinutes, activeDays: activeDays, waterGoalML: waterGoalML) }
+        .sensoryFeedback(.selection, trigger: period)
+        .task {
+            await store.load(goalMinutes: goalMinutes, activeDays: activeDays, waterGoalML: waterGoalML, withHistory: true)
+        }
         .sheet(isPresented: $isSharing) {
             if let shareable {
                 RecapShareSheet(recap: shareable) { isSharing = false }
                     .preferredColorScheme(colorScheme)
             }
         }
+    }
+
+    /// One page back (`-1`) or forward (`1`), within the history. A swipe to
+    /// the left goes forward in time, to the right back: the calendar's own
+    /// direction.
+    private func page(by step: Int) {
+        let now = date.now
+        let target = step < 0
+            ? (period.hasEarlier(at: now) ? period.earlier() : nil)
+            : period.later(at: now)
+        guard let target else { return }
+        arrival = step < 0 ? .leading : .trailing
+        withAnimation(.snappy) { shown[kind] = target }
     }
 
     /// Share (issue #410) beside the close button — only once there is a
@@ -102,11 +159,48 @@ struct RecapScreen: View {
     }
 }
 
+/// The period's name between a chevron back and a chevron forward (issue
+/// #444). The swipe does the same; the chevrons are what VoiceOver reads, and
+/// what says there is somewhere to go. A `nil` action greys its chevron out.
+private struct RecapPeriodNavigator: View {
+    let title: String
+    let earlier: (() -> Void)?
+    let later: (() -> Void)?
+
+    var body: some View {
+        HStack {
+            chevron("chevron.left", label: "Période précédente", action: earlier)
+            Spacer(minLength: 0)
+            Text(title)
+                .font(FouleeFont.headline)
+                .contentTransition(.opacity)
+            Spacer(minLength: 0)
+            chevron("chevron.right", label: "Période suivante", action: later)
+        }
+    }
+
+    private func chevron(_ icon: String, label: String, action: (() -> Void)?) -> some View {
+        Button { action?() } label: {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(.primary)
+                .frame(width: 34, height: 34)
+                .background(.ultraThinMaterial, in: Circle())
+        }
+        .buttonStyle(.pressable)
+        .disabled(action == nil)
+        .opacity(action == nil ? 0.3 : 1)
+        .accessibilityLabel(label)
+    }
+}
+
 /// One recap, laid out.
 private struct RecapContent: View {
     let recap: Recap
     let outings: [OutingDay]
     let water: RecapWater?
+    /// Whether today falls in the period: its empty state says « pas encore ».
+    let isInProgress: Bool
 
     @State private var isRevealed = false
     /// The day whose outings are laid out: today in the period in progress,
@@ -135,7 +229,7 @@ private struct RecapContent: View {
                         .id(day.day)
                         .transition(.opacity)
                 }
-                GlassSection(isWeek ? "Par rapport à la semaine dernière" : "Par rapport au mois d'avant") {
+                GlassSection(isWeek ? "Par rapport à la semaine d'avant" : "Par rapport au mois d'avant") {
                     RecapComparison(recap: recap, isRevealed: isRevealed)
                 }
                 RecapHighlights(recap: recap)
@@ -156,18 +250,26 @@ private struct RecapContent: View {
 
     private var emptyState: some View {
         ContentUnavailableView {
-            Label(
-                isWeek ? "Pas encore d'activité cette semaine" : "Pas d'activité ce mois-là",
-                systemImage: "figure.walk"
-            )
+            Label(emptyTitle, systemImage: "figure.walk")
         } description: {
-            Text(isWeek
+            Text(isInProgress
                 ? "Une sortie, même courte, et ton bilan prend vie, jour après jour."
-                : "Rien n'a été enregistré dans Santé sur ce mois.")
+                : "Rien n'a été enregistré dans Santé sur \(isWeek ? "cette semaine" : "ce mois").")
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
         .fouleeGlass(cornerRadius: 22)
+    }
+
+    /// « Pas encore » while the period is open (issue #444), « pas » once it
+    /// is over and nothing can change.
+    private var emptyTitle: String {
+        switch (isWeek, isInProgress) {
+        case (true, true): "Pas encore d'activité cette semaine"
+        case (true, false): "Pas d'activité cette semaine-là"
+        case (false, true): "Pas encore d'activité ce mois-ci"
+        case (false, false): "Pas d'activité ce mois-là"
+        }
     }
 
     private var legend: some View {

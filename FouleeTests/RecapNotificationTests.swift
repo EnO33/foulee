@@ -48,7 +48,18 @@ struct RecapNotificationTests {
     func routerTakesOnce() {
         let router = RecapRouter()
         router.open(.month)
-        #expect(router.take() == .month)
+        #expect(router.take() == RecapRequest(kind: .month))
         #expect(router.take() == nil)
+    }
+
+    /// The 1st, the month in progress is a day old: the notification opens
+    /// the month that just ended (#444). Sunday evening, the week in progress.
+    @Test("The month's notification opens the month that ended, the week's the week in progress")
+    func notificationsOpenTheRightPage() {
+        let first = Calendar.iso8601Monday.date(from: DateComponents(year: 2026, month: 10, day: 1, hour: 9))!
+        let month = RecapNotification.request(for: .month).period(at: first)
+        #expect(month?.start == Calendar.iso8601Monday.date(from: DateComponents(year: 2026, month: 9, day: 1)))
+        #expect(month?.end == Calendar.iso8601Monday.date(from: DateComponents(year: 2026, month: 10, day: 1)))
+        #expect(RecapNotification.request(for: .week).period(at: first) == nil)
     }
 }

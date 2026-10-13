@@ -37,10 +37,8 @@ struct RecapHero: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Objectif tenu \(recap.goalDaysMet) jours sur \(recap.goalDaysPlanned)")
 
+            // No period name here: the navigator right above says it (#444).
             VStack(alignment: .leading, spacing: 6) {
-                Text(recap.period.title)
-                    .font(FouleeFont.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(durationText(minutes: isRevealed ? recap.totals.minutes : 0))
                         .scaledNumericFont(size: 34)

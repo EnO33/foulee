@@ -47,11 +47,32 @@ nonisolated enum RecapNotification {
         }
     }
 
+    /// What a tap opens (issue #444). Sunday evening, the week in progress,
+    /// almost whole. The 1st, the month that just ended: the month in
+    /// progress is a day old and says nothing yet.
+    static func request(for kind: RecapPeriod.Kind) -> RecapRequest {
+        RecapRequest(kind: kind, lastCompleted: kind == .month)
+    }
+
     static func body(for kind: RecapPeriod.Kind) -> String {
         switch kind {
         case .week: "Ton récap de la semaine est prêt : minutes, pas et objectifs tenus."
         case .month: "Ton récap du mois est prêt : minutes, pas et objectifs tenus."
         }
+    }
+}
+
+/// A recap to open (issue #444): its kind, and whether on the period in
+/// progress or the last finished one.
+nonisolated struct RecapRequest: Hashable, Identifiable {
+    let kind: RecapPeriod.Kind
+    var lastCompleted = false
+
+    var id: Self { self }
+
+    /// The page to open on, `nil` for the period in progress.
+    func period(at now: Date) -> RecapPeriod? {
+        lastCompleted ? RecapPeriod.lastCompleted(kind, before: now) : nil
     }
 }
 
@@ -61,14 +82,18 @@ nonisolated enum RecapNotification {
 final class RecapRouter {
     static let shared = RecapRouter()
 
-    private(set) var pending: RecapPeriod.Kind?
+    private(set) var pending: RecapRequest?
 
     func open(_ kind: RecapPeriod.Kind) {
-        pending = kind
+        open(RecapRequest(kind: kind))
+    }
+
+    func open(_ request: RecapRequest) {
+        pending = request
     }
 
     /// Read and clear, so a rebuild of the home does not open it twice.
-    func take() -> RecapPeriod.Kind? {
+    func take() -> RecapRequest? {
         defer { pending = nil }
         return pending
     }

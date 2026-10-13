@@ -93,8 +93,6 @@ struct RecapDaysView: View {
     @Binding var selection: Date?
     var isRevealed = true
 
-    private static let weekdayLetters = ["L", "M", "M", "J", "V", "S", "D"]
-
     var body: some View {
         switch recap.period.kind {
         case .week: week
@@ -146,8 +144,10 @@ struct RecapDaysView: View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
         let leading = recap.days.first.map { Self.mondayOffset(of: $0.date) } ?? 0
         return LazyVGrid(columns: columns, spacing: 6) {
-            ForEach(Array(Self.weekdayLetters.enumerated()), id: \.offset) { _, letter in
-                Text(letter)
+            // Keyed by weekday, not by position: the blanks below are keyed by
+            // position, and two children of a grid can't share an id.
+            ForEach(Weekday.allCases, id: \.self) { weekday in
+                Text(weekday.shortLabel)
                     .font(FouleeFont.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
@@ -166,6 +166,17 @@ struct RecapDaysView: View {
                         }
                         .animation(.easeOut(duration: 0.6).delay(Double(index) * 0.012), value: isRevealed)
                 }
+            }
+            // The rest of a month in progress (issue #444), like the week's.
+            ForEach(Array(recap.period.daysToCome().enumerated()), id: \.element) { offset, date in
+                UpcomingDayRing(lineWidth: 3)
+                    .overlay {
+                        Text("\(recap.days.count + offset + 1)")
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(Self.dayFormatter.string(from: date)) : à venir")
             }
         }
     }
