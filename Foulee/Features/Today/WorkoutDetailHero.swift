@@ -21,7 +21,9 @@ struct WorkoutDetailHero: View {
                 .font(FouleeFont.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .tracking(1.1)
-            Text(durationText)
+            // The session clock's own format: hours once past the hour,
+            // « 1:06:31 », never « 66:31 ».
+            Text(detail.summary.durationSeconds.walkClockText)
                 .scaledNumericFont(size: 44)
             Text("\(detail.summary.activityLabel) · \(detail.summary.timeRangeText) · \(detail.summary.sourceName)")
                 .font(FouleeFont.footnote)
@@ -47,12 +49,5 @@ struct WorkoutDetailHero: View {
         if calendar.isDateInToday(date) { return "Aujourd'hui" }
         if calendar.isDateInYesterday(date) { return "Hier" }
         return Self.dayFormatter.string(from: date).uppercased()
-    }
-
-    private var durationText: String {
-        let total = Int(detail.summary.durationSeconds)
-        let minutes = total / 60
-        let secs = total % 60
-        return String(format: "%d:%02d", minutes, secs)
     }
 }
