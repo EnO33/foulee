@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363), [#443](https://github.com/EnO33/foulee/issues/443), [#444](https://github.com/EnO33/foulee/issues/444), [#445](https://github.com/EnO33/foulee/issues/445)
+- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363), [#443](https://github.com/EnO33/foulee/issues/443), [#444](https://github.com/EnO33/foulee/issues/444), [#445](https://github.com/EnO33/foulee/issues/445), [#454](https://github.com/EnO33/foulee/issues/454)
 
 ## Contexte
 
@@ -47,7 +47,7 @@ La première version (#344) alignait des chiffres, un graphique en barres et qua
 
 1. **Le sens d'abord.** Un grand anneau « objectifs tenus », le total de minutes et une phrase de bilan (`Recap.Verdict`, pur et testé). L'ordre de priorité est : période vide, puis parfaite, puis régulière (70 % des jours prévus), puis en progrès. La régularité passe avant le volume, parce que la série est ce dont l'app parle.
 2. **Le jour par jour en anneaux** : sept pour une semaine, un calendrier pour un mois. C'est le même langage que l'anneau d'activité de l'accueil et l'anneau intérieur du calendrier de série : un même jour se lit pareil partout. Un jour de repos sans activité est un cercle pointillé, jamais un anneau vide, car il n'a pas été manqué.
-3. **La comparaison en barres** : deux barres par mesure, sur une échelle commune. Cette période prend la couleur de la mesure, la précédente est en gris neutre, avec l'écart chiffré. L'écart a une flèche en plus de sa couleur, pour que le sens ne repose jamais sur la couleur seule.
+3. **La comparaison en barres** : deux barres par mesure, sur une échelle commune. Cette période prend la couleur de la mesure, la précédente est en gris neutre, avec l'écart chiffré (ou ce qu'il reste pour égaler, D13). L'écart a une flèche en plus de sa couleur, pour que le sens ne repose jamais sur la couleur seule.
 4. **Les temps forts** : le meilleur jour et l'énergie dépensée.
 
 Les anneaux et les barres se remplissent à l'ouverture. Changer de période rejoue l'animation.
@@ -150,6 +150,15 @@ L'hydratation (D7 et ADR 0005, D3) suit la même semaine : la moyenne et les jou
 - **Le badge de série de l'accueil ouvre le Bilan sur le mois en cours.**
 - **Un seul langage d'anneaux**, celui du Bilan : les minutes vers l'objectif. Les pas restent dans la comparaison et le détail du jour.
 - **Le calcul est pur et testé** (`StreakSummary.make`, FouleeKit) et lit la même histoire que l'accueil : avec l'historique, `RecapStore` lit au moins `StreakCalculator.historyWindowDays`, sinon le record du Bilan serait le meilleur des jours lus (#176).
+
+### D13 — Une comparaison qui dit à quoi elle compare (#454)
+
+Retour de test : « -69 % » à côté des minutes se lisait comme un jugement sur aujourd'hui. C'était la semaine en cours contre les mêmes jours de la semaine d'avant (D8), mais rien ne le disait, et en début de semaine la pastille était presque toujours en baisse.
+
+- **La comparaison n'est que dans sa section.** L'écart quitte le total de minutes : tête du Bilan, carte de l'accueil, image partagée. Seule dans sa section, elle peut dire à quoi elle compare.
+- **Le titre nomme la plage** : « Par rapport aux mêmes jours de la semaine d'avant » tant que la période est en cours, « Par rapport à la semaine d'avant » une fois finie (de même pour le mois). Les dates comparées suivent, en clair (`RecapPeriod.span` : « Du 28 sept. au 29 sept. », « Le 28 sept. »).
+- **Une période en cours ne se juge pas en baisse.** Derrière la période d'avant, une mesure dit ce qu'il reste pour l'égaler (« Encore 32 min pour égaler », `Recap.remaining`) au lieu d'un pourcentage en baisse : c'est encore faisable, et c'est la question qu'on se pose. Devant, elle garde sa hausse. Une période finie garde ses pourcentages dans les deux sens.
+- **L'hydratation garde son écart** : c'est une moyenne par jour, juste à toute date de la période.
 
 ## Ce qui reste ouvert
 

@@ -89,14 +89,13 @@ struct RecapShareImage: View {
             }
             .frame(width: format.isStory ? 100 : 84, height: format.isStory ? 100 : 84)
             VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(card.minutes)
-                        .font(.system(size: format.isStory ? 44 : 38, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                    RecapChangeChip(old: Double(recap.previous.minutes), new: Double(recap.totals.minutes))
-                }
+                // No change beside the minutes (#454): on an image, nothing
+                // says what it would be compared with.
+                Text(card.minutes)
+                    .font(.system(size: format.isStory ? 44 : 38, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 Text("d'activité")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.secondary)
