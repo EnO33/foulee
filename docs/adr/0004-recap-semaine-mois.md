@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#443](https://github.com/EnO33/foulee/issues/443), [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363)
+- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363), [#443](https://github.com/EnO33/foulee/issues/443), [#444](https://github.com/EnO33/foulee/issues/444)
 
 ## Contexte
 
@@ -12,6 +12,8 @@ L'accueil suit la journée en cours et les 7 derniers jours, mais rien ne fait l
 ### D1 — Le récap porte sur la dernière période terminée
 
 > **Amendée par D6** pour la semaine : elle couvre désormais les 7 derniers jours glissants. Le mois reste le dernier mois terminé.
+>
+> **Amendée par D11** : le Bilan s'ouvre sur la semaine et le mois **en cours**, et remonte le temps période par période. Seule la notification du 1er ouvre encore le mois terminé.
 
 Une semaine, du lundi au dimanche (calendrier ISO, comme toutes les semaines de l'app), ou un mois civil. Jamais la période en cours : un récap est un bilan, pas un suivi, et l'accueil fait déjà le suivi. Le lundi, le récap de la semaine est celui de la semaine qui s'est terminée la veille ; le 1er, celui du mois qui vient de finir.
 
@@ -127,6 +129,17 @@ L'hydratation (D7 et ADR 0005, D3) suit la même semaine : la moyenne et les jou
 
 - **Dans la période en cours, le jour sélectionné à l'ouverture est aujourd'hui**, qu'il ait une sortie ou non (`OutingDay.initialSelection`, pur et testé). Une période passée s'ouvre sur son dernier jour. Avant, c'était le dernier jour avec une sortie : à midi, avant de partir, on tombait sur hier.
 - **Aujourd'hui sans sortie dit « Pas encore »**, pas « Aucune » : la journée est encore ouverte. Un jour prévu ajoute le reste à faire (« Encore 18 min pour ton objectif »), la question avec laquelle on ouvre le Bilan à midi. Un jour passé sans sortie reste « Aucune séance enregistrée », un jour de repos « Jour de repos : rien de prévu ».
+
+### D11 — Le Bilan remonte le temps (#444)
+
+- **On s'ouvre sur la période en cours**, semaine ou mois : du lundi ou du 1er jusqu'à aujourd'hui (`RecapPeriod.current`, `monthSoFar`). Le dernier mois terminé, figé, ne contenait jamais aujourd'hui, et la Série montrait déjà le mois en cours : deux réponses à la même question.
+- **Un balayage horizontal change de page**, vers la gauche pour avancer, vers la droite pour reculer, comme le calendrier. Des chevrons de part et d'autre du nom de la période font la même chose : VoiceOver les lit, et ils montrent qu'il y a où aller. Le nom de la période quitte l'anneau du haut, qui le répétait.
+- **Reculer montre la période entière d'avant** (`earlier`), avancer s'arrête à la période en cours (`later`). L'historique remonte à 12 mois, celui-ci compris (`historyMonths`, `earliest`, `hasEarlier`), ce que montrait le calendrier de la Série.
+- **Une seule lecture de Santé** couvre les 12 mois et la période d'avant la plus ancienne (`RecapStore.load(withHistory:)`). Chaque page est calculée à sa première ouverture (`content(for:)`) et gardée : changer de page ne relit rien. La carte de l'accueil, elle, ne lit que les périodes en cours.
+- **Le mois en cours se compare aux mêmes jours du mois d'avant**, comme la semaine (D8) : le 12 contre les 12 premiers jours, coupés à la fin d'un mois plus court. Un mois entier se compare toujours au mois entier d'avant.
+- **Les jours à venir du mois sont en piste pâle**, comme ceux de la semaine.
+- **L'état vide dit « pas encore » tant que la période est ouverte**, « pas » une fois finie.
+- **La notification du 1er ouvre le mois qui vient de finir** (`RecapNotification.request`, `RecapRequest`) : ce jour-là, le mois en cours n'a qu'un jour. Celle du dimanche soir ouvre la semaine en cours, presque entière.
 
 ## Ce qui reste ouvert
 

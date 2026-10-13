@@ -167,6 +167,17 @@ struct RecapDaysView: View {
                         .animation(.easeOut(duration: 0.6).delay(Double(index) * 0.012), value: isRevealed)
                 }
             }
+            // The rest of a month in progress (issue #444), like the week's.
+            ForEach(Array(recap.period.daysToCome().enumerated()), id: \.element) { offset, date in
+                UpcomingDayRing(lineWidth: 3)
+                    .overlay {
+                        Text("\(recap.days.count + offset + 1)")
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(Self.dayFormatter.string(from: date)) : à venir")
+            }
         }
     }
 

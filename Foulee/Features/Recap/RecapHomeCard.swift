@@ -1,3 +1,4 @@
+import Dependencies
 import FouleeKit
 import SwiftUI
 
@@ -97,12 +98,20 @@ struct RecapPresentation: ViewModifier {
     let colorScheme: ColorScheme?
     var router: RecapRouter = .shared
 
-    @State private var selection: RecapPeriod.Kind?
+    @State private var selection: RecapRequest?
+
+    @Dependency(\.date) private var date
 
     func body(content: Content) -> some View {
         content
-            .sheet(item: $selection) { kind in
-                RecapScreen(kind: kind, goalMinutes: goalMinutes, activeDays: activeDays, waterGoalML: waterGoalML) {
+            .sheet(item: $selection) { request in
+                RecapScreen(
+                    kind: request.kind,
+                    period: request.period(at: date.now),
+                    goalMinutes: goalMinutes,
+                    activeDays: activeDays,
+                    waterGoalML: waterGoalML
+                ) {
                     selection = nil
                 }
                 .preferredColorScheme(colorScheme)
@@ -112,7 +121,7 @@ struct RecapPresentation: ViewModifier {
     }
 
     private func openPending() {
-        guard let kind = router.take() else { return }
-        selection = kind
+        guard let request = router.take() else { return }
+        selection = request
     }
 }

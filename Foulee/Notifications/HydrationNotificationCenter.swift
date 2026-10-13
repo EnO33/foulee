@@ -54,7 +54,7 @@ nonisolated final class HydrationNotificationCenter: NSObject, UNUserNotificatio
         if let kind = RecapNotification.kind(fromIdentifier: response.notification.request.identifier) {
             let completion = UncheckedSendableBox(completionHandler)
             Task { @MainActor in
-                RecapRouter.shared.open(kind)
+                RecapRouter.shared.open(RecapNotification.request(for: kind))
                 completion.value()
             }
             return
