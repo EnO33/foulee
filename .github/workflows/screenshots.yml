@@ -100,6 +100,18 @@ jobs:
                 --out "$out/$name/$(basename "$png" .png).jpg" >/dev/null
             done
           done
+          # The store sets at their native size too, under full/: the marketing
+          # material (App Store boards, app preview) is built from them, and the
+          # artifact's archive is not reachable from every environment.
+          for name in iphone-6.9 watch; do
+            set="appstore-screenshots/raw/$name/"
+            [ -d "$set" ] || continue
+            mkdir -p "$out/full/$name"
+            for png in "$set"*.png; do
+              sips -s format jpeg -s formatOptions 90 "$png" \
+                --out "$out/full/$name/$(basename "$png" .png).jpg" >/dev/null
+            done
+          done
           cd "$out"
           {
             echo "# Captures"

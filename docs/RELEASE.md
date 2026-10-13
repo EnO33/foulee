@@ -265,7 +265,10 @@ tested on. It also runs on a pull request that touches the capture tooling.
 - Every set, downsized to JPEG, is also pushed to the orphan **`captures`**
   branch, which each run overwrites: browse it on GitHub without unzipping
   anything. It shares no history with `main`, so the rule that captures are not
-  versioned (#72) still holds for the code.
+  versioned (#72) still holds for the code. The two store sets (`iphone-6.9`,
+  `watch`) are also there at their native size, under `full/`: the App Store
+  boards and the app preview are built from them, and the artifact's archive is
+  not reachable from every environment.
 
 Locally, the same review sets come from two options of the script, which refuse
 the default set name so they can never overwrite a store set:
