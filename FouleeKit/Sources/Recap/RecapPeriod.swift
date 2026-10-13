@@ -174,12 +174,19 @@ nonisolated public struct RecapPeriod: Hashable, Sendable {
     /// « Du 29 sept. au 5 oct. » for a week, « Septembre 2026 » for a month.
     public var title: String {
         switch kind {
-        case .week:
-            let last = end.addingTimeInterval(-1)
-            return "Du \(Self.dayFormatter.string(from: start)) au \(Self.dayFormatter.string(from: last))"
-        case .month:
-            return Self.monthFormatter.string(from: start).capitalized(with: Self.french)
+        case .week: span
+        case .month: Self.monthFormatter.string(from: start).capitalized(with: Self.french)
         }
+    }
+
+    /// The days themselves, whatever the kind: « Du 1 sept. au 13 sept. », or
+    /// « Le 5 oct. » for a single day — what a comparison is made with (issue
+    /// #454).
+    public var span: String {
+        let last = end.addingTimeInterval(-1)
+        let first = Self.dayFormatter.string(from: start)
+        guard !Calendar.iso8601Monday.isDate(start, inSameDayAs: last) else { return "Le \(first)" }
+        return "Du \(first) au \(Self.dayFormatter.string(from: last))"
     }
 
     private static func period(_ kind: Kind, containing date: Date, calendar: Calendar) -> RecapPeriod {

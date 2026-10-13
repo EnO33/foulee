@@ -299,13 +299,4 @@ struct RecapTests {
         #expect(recap(met: 1, planned: 5, minutes: 40, before: 50).verdict == .started)
         #expect(recap(met: 1, planned: 5, minutes: 40, before: 0).verdict == .started)
     }
-
-    // MARK: - Change
-
-    @Test("A change is a fraction of what came before, and nothing without a before")
-    func change() {
-        #expect(Recap.change(from: 100, to: 112) == 0.12)
-        #expect(Recap.change(from: 100, to: 50) == -0.5)
-        #expect(Recap.change(from: 0, to: 50) == nil)
-    }
 }

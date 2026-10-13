@@ -256,8 +256,8 @@ private struct RecapContent: View {
                         .id(day.day)
                         .transition(.opacity)
                 }
-                GlassSection(isWeek ? "Par rapport à la semaine d'avant" : "Par rapport au mois d'avant") {
-                    RecapComparison(recap: recap, isRevealed: isRevealed)
+                GlassSection(comparisonTitle) {
+                    RecapComparison(recap: recap, isInProgress: isInProgress, isRevealed: isRevealed)
                 }
                 RecapHighlights(recap: recap)
             }
@@ -284,6 +284,17 @@ private struct RecapContent: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
         .fouleeGlass(cornerRadius: 22)
+    }
+
+    /// Says what the comparison is with (#454): the same days of the period
+    /// before while this one is open, the whole of it once it is over.
+    private var comparisonTitle: String {
+        switch (isWeek, isInProgress) {
+        case (true, true): "Par rapport aux mêmes jours de la semaine d'avant"
+        case (true, false): "Par rapport à la semaine d'avant"
+        case (false, true): "Par rapport aux mêmes jours du mois d'avant"
+        case (false, false): "Par rapport au mois d'avant"
+        }
     }
 
     /// « Pas encore » while the period is open (issue #444), « pas » once it

@@ -71,8 +71,8 @@ struct RecapHomeCard: View {
                             .font(FouleeFont.footnote)
                             .foregroundStyle(.secondary)
                     }
-                    Spacer()
-                    RecapChangeChip(old: Double(recap.previous.minutes), new: Double(recap.totals.minutes))
+                    // No change here (#454): unlabelled, it read as a verdict on
+                    // today. The Bilan's comparison says what it compares.
                 }
             } else {
                 Text("Ta semaine, du lundi à aujourd'hui, jour par jour.")
