@@ -193,61 +193,54 @@ jobs:
 
       - uses: ./.github/actions/prepare-project
 
-      - name: Ensure Apple Watch simulator exists
+      # One step resolves the runtime, the simulator and its boot, in that
+      # order, because the image breaks each link on its own (issue #462):
+      # its watchOS runtime is listed when the job starts and can be gone
+      # half a minute later, while the simulators built on it are still
+      # listed — and booting one then fails with « runtime is not
+      # available ». So the runtime is awaited every time, not only when a
+      # simulator is missing, and the simulator is the one *on that runtime*,
+      # named by its UDID.
+      - name: Pick and boot the Apple Watch simulator
         run: |
-          if ! xcrun simctl list devices available | grep -q "Apple Watch"; then
-            # The newest watchOS runtime, and a watch that runtime supports
-            # (issue #460): the last Apple Watch of the whole catalogue was a
-            # Series 2, which no current runtime runs.
-            watch_runtime() {
-              xcrun simctl list runtimes available -j \
-                | jq -c '[.runtimes[] | select(.platform == "watchOS")] | sort_by(.version | split(".") | map(tonumber)) | last // empty'
-            }
-            # The image lists its watchOS runtime at the start of the job and
-            # can drop it a few seconds later while its disk image is
-            # remounted: wait for it to come back, then download it as a last
-            # resort.
-            WATCH_RUNTIME=""
-            for attempt in $(seq 1 12); do
-              WATCH_RUNTIME=$(watch_runtime)
-              [ -n "$WATCH_RUNTIME" ] && break
-              echo "No watchOS runtime listed (attempt $attempt), waiting 10s"
-              xcrun simctl runtime list || true
-              sleep 10
-            done
-            if [ -z "$WATCH_RUNTIME" ]; then
-              echo "Still no watchOS runtime, downloading the platform"
-              sudo xcodebuild -downloadPlatform watchOS
-              WATCH_RUNTIME=$(watch_runtime)
-            fi
-            RUNTIME=$(jq -r '.identifier // empty' <<<"$WATCH_RUNTIME")
-            DEVICETYPE=$(jq -r '.supportedDeviceTypes // [] | last | .identifier // empty' <<<"$WATCH_RUNTIME")
-            if [ -z "$RUNTIME" ] || [ -z "$DEVICETYPE" ]; then
-              echo "No watchOS runtime to create a simulator on"
-              xcrun simctl list runtimes
-              exit 1
-            fi
-            echo "Creating Apple Watch on runtime $RUNTIME (devicetype $DEVICETYPE)"
-            xcrun simctl create "Apple Watch" "$DEVICETYPE" "$RUNTIME"
+          watch_runtime() {
+            xcrun simctl list runtimes available -j \
+              | jq -c '[.runtimes[] | select(.platform == "watchOS")] | sort_by(.version | split(".") | map(tonumber)) | last // empty'
+          }
+          WATCH_RUNTIME=""
+          for attempt in $(seq 1 12); do
+            WATCH_RUNTIME=$(watch_runtime)
+            [ -n "$WATCH_RUNTIME" ] && break
+            echo "No watchOS runtime listed (attempt $attempt), waiting 10s"
+            xcrun simctl runtime list || true
+            sleep 10
+          done
+          if [ -z "$WATCH_RUNTIME" ]; then
+            echo "Still no watchOS runtime, downloading the platform"
+            sudo xcodebuild -downloadPlatform watchOS
+            WATCH_RUNTIME=$(watch_runtime)
           fi
-          xcrun simctl list devices available | grep -E "Apple Watch"
-
-      # The ensure step above guarantees an Apple Watch simulator exists, but
-      # its exact name depends on the runtime's default devices — resolve it
-      # instead of hardcoding one.
-      - name: Pick the Apple Watch simulator
-        run: |
-          WATCH_NAME=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("Apple Watch"))][0].name')
-          if [ -z "$WATCH_NAME" ] || [ "$WATCH_NAME" = "null" ]; then
-            echo "No Apple Watch simulator available"
-            xcrun simctl list devices
+          RUNTIME=$(jq -r '.identifier // empty' <<<"$WATCH_RUNTIME")
+          if [ -z "$RUNTIME" ]; then
+            echo "No watchOS runtime to run the tests on"
+            xcrun simctl list runtimes
             exit 1
           fi
-          echo "Testing on simulator: $WATCH_NAME"
-          echo "WATCH_DESTINATION=platform=watchOS Simulator,name=$WATCH_NAME" >> "$GITHUB_ENV"
+          echo "watchOS runtime: $RUNTIME"
+
+          WATCH_UDID=$(xcrun simctl list devices available -j \
+            | jq -r --arg rt "$RUNTIME" '[.devices[$rt][]? | select(.name | startswith("Apple Watch"))][0].udid // empty')
+          if [ -z "$WATCH_UDID" ]; then
+            # A watch the runtime supports: the last Apple Watch of the whole
+            # catalogue was a Series 2, which no current runtime runs (#460).
+            DEVICETYPE=$(jq -r '.supportedDeviceTypes // [] | last | .identifier // empty' <<<"$WATCH_RUNTIME")
+            echo "Creating Apple Watch on $RUNTIME (devicetype $DEVICETYPE)"
+            WATCH_UDID=$(xcrun simctl create "Apple Watch" "$DEVICETYPE" "$RUNTIME")
+          fi
+          echo "Testing on simulator $WATCH_UDID"
+          echo "WATCH_DESTINATION=platform=watchOS Simulator,id=$WATCH_UDID" >> "$GITHUB_ENV"
           # Same reason as the iPhone: finish the first boot before the test
           # runner's launch clock starts.
-          WATCH_UDID=$(xcrun simctl list devices available -j | jq -r --arg name "$WATCH_NAME" '[.devices[][] | select(.name == $name)][0].udid')
           xcrun simctl bootstatus "$WATCH_UDID" -b
 
       - name: Build for testing (watchOS)
