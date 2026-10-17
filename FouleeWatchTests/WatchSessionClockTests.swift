@@ -9,6 +9,10 @@ import Testing
 /// rebuilt every second and redrew the same frozen number, so the clock
 /// advanced in jerks at HealthKit's pace — and the view's own doc comment
 /// claimed the opposite. It is a *date* now, and the clock derives from it.
+///
+/// Since issue #458 the screen hands that date to `Text(timerInterval:)`
+/// rather than redrawing it from a `TimelineView`, which never refreshed on an
+/// Apple Watch SE. What the view draws is `clockReading`, asserted below.
 @Suite("Watch session clock")
 struct WatchSessionClockTests {
     private let start = Date(timeIntervalSince1970: 1_754_000_000)
@@ -55,6 +59,20 @@ struct WatchSessionClockTests {
         #expect(metrics.elapsed(at: start.addingTimeInterval(-60)) == 0)
     }
 
+    @Test("A running session hands its basis to the system clock")
+    func aRunningClockIsTheSystems() {
+        let metrics = running(since: 754, pushed: 30)
+        #expect(metrics.clockReading == .running(since: start.addingTimeInterval(-754)))
+    }
+
+    @Test("Paused or finished, the clock shows a duration that does not move")
+    func aStoppedClockIsADuration() {
+        var paused = running(since: 600, pushed: 412)
+        // What `applyOutingTotals` does on a pause (issue #384).
+        paused.timerBasis = nil
+        #expect(paused.clockReading == .stopped(412))
+    }
+
     #if DEBUG
     @Test("The capture seed has no running clock")
     func theSeededSessionDoesNotTick() {
@@ -66,6 +84,7 @@ struct WatchSessionClockTests {
             ScreenshotSeed.watchSessionMetrics.elapsed(at: start)
                 == ScreenshotSeed.watchSessionMetrics.elapsed(at: start.addingTimeInterval(9_999))
         )
+        #expect(ScreenshotSeed.watchSessionMetrics.clockReading == .stopped(ScreenshotSeed.watchSessionMetrics.elapsed))
     }
     #endif
 }

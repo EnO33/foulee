@@ -1,7 +1,7 @@
 # ADR 0003 — Séance partagée entre l'iPhone et l'Apple Watch
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#272](https://github.com/EnO33/foulee/issues/272) (épic), #277, #278, #279, #282, #283, [#334](https://github.com/EnO33/foulee/issues/334), [#342](https://github.com/EnO33/foulee/issues/342)
+- **Issues** : [#272](https://github.com/EnO33/foulee/issues/272) (épic), #277, #278, #279, #282, #283, [#334](https://github.com/EnO33/foulee/issues/334), [#342](https://github.com/EnO33/foulee/issues/342), [#458](https://github.com/EnO33/foulee/issues/458)
 
 ## Contexte
 
@@ -73,9 +73,16 @@ Le pendant de D1 dans l'autre sens : pour une séance lancée sur l'iPhone, **l'
 - **Une fermeture, pas swift-dependencies.** La cible montre n'embarque pas ce paquet, et la seule chose à injecter ici est l'heure. Le store reçoit déjà sa façade HealthKit, sa détection et son parcours de la même façon.
 - **Les tests l'arrêtent** (`ManualClock`) : chaque date que le store écrit est une date que le test peut nommer. Un test de pause a échoué une fois parce qu'un runner lent avait mis plus d'une seconde à démarrer une séance (#402).
 
+### D8 — Les chronos sont dessinés par le système (#458)
+
+- **`Text(timerInterval:)` partout où un chrono tourne** : la Live Activity, et depuis #458 l'écran de séance de la montre (`WatchSessionClock`). Les deux partent du même `timerBasis`. En pause, à la fin et dans les captures, le chrono affiche une durée figée (`WatchWorkoutMetrics.clockReading`).
+- **Plus de `TimelineView` pour le chrono.** Sur une Apple Watch SE, elle ne se rafraîchissait pas : le chrono restait à 00:00 alors que les bpm bougeaient et que la Live Activity, nourrie du même `timerBasis`, comptait juste. Le texte minuté du système n'a pas de timeline à entretenir.
+- **Le format est celui du système** (« 5:12 », « 1:06:31 »), le même que la Live Activity, au lieu de `walkClockText` (« 05:12 ») tant que le chrono tourne.
+
 ## Ce qui reste non mesuré
 
 - **La taille maximale d'un envoi** par `sendToRemoteWorkoutSession(data:)` n'est pas documentée. 1 500 points compacts font environ 30 Ko ; le plafond est le réglage à baisser si un envoi échoue (le journal `session` le dira : « snapshot non transmis »).
 - **L'arrivée du signal de fin** (D6) : le snapshot final et la fin de la session miroir ne sont promis par aucune doc à une app iPhone en arrière-plan. Si l'activité restait encore affichée, le journal le dira (`log stream --predicate 'subsystem == "com.eno33.foulee" AND category == "live-activity"' --info`) : sans « miroir : Live Activity terminée », le signal n'est pas arrivé, et un `WCSession.sendMessage` de la montre, qui réveille l'iPhone, deviendrait la voie de fin.
 - **Le coût CPU** de l'allègement toutes les 8 s sur une longue sortie : linéaire, jamais mesuré au poignet.
+- **La cause du gel de la `TimelineView`** sur la SE (D8) : jamais reproduite hors de cette montre. Les lignes de la page « Jambes » en dépendent encore ; si elles restaient figées, elles prendraient le même chemin.
 - **Le coût en batterie** d'un `sendMessage` toutes les 3 s pendant une séance iPhone, des deux côtés. C'est le réglage à allonger (`ActiveWalkStore.watchInterval`) si la montre s'en ressent.
