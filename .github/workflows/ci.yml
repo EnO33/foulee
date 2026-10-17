@@ -193,65 +193,38 @@ jobs:
 
       - uses: ./.github/actions/prepare-project
 
-      # One step resolves the runtime, the simulator and its boot, in that
-      # order, because the image breaks each link on its own (issues #460,
-      # #462): its watchOS runtime can vanish from the list half a minute
-      # into the job, and a runtime that *is* listed can still be refused at
-      # boot (« runtime profile not found using "System" match policy ») when
-      # it is not the build this Xcode's SDK matches. So the runtime is
-      # awaited every time, the simulator is the one on that runtime, named
-      # by its UDID, and a refused boot downloads the platform Xcode matches
-      # and tries once more on it.
+      # Xcode picks the simulator, not us (issue #462). Choosing a runtime and
+      # a device through simctl kept disagreeing with Xcode on the image: a
+      # runtime simctl listed as available was refused at boot (« runtime
+      # profile not found ») because it was not the one this Xcode's SDK
+      # matches. So the destination is the first watchOS simulator the scheme
+      # itself accepts — no version, model or runtime written down here — and
+      # when it accepts none, the platform Xcode matches is downloaded.
       - name: Pick and boot the Apple Watch simulator
         run: |
-          watch_runtime() {
-            xcrun simctl list runtimes available -j \
-              | jq -c '[.runtimes[] | select(.platform == "watchOS")] | sort_by(.version | split(".") | map(tonumber)) | last // empty'
-          }
-          await_runtime() {
-            WATCH_RUNTIME=""
-            for attempt in $(seq 1 12); do
-              WATCH_RUNTIME=$(watch_runtime)
-              [ -n "$WATCH_RUNTIME" ] && return 0
-              echo "No watchOS runtime listed (attempt $attempt), waiting 10s"
-              xcrun simctl runtime list || true
-              sleep 10
-            done
-            return 1
+          eligible_watch() {
+            xcodebuild -workspace Foulee.xcworkspace -scheme FouleeWatch -showdestinations 2>/dev/null \
+              | awk '/Ineligible destinations/ { exit } /platform:watchOS Simulator/ && !/placeholder/' \
+              | sed -n 's/.*id:\([^,]*\),.*/\1/p' \
+              | head -1
           }
           download_platform() {
             echo "Downloading the watchOS platform this Xcode matches"
-            xcrun simctl runtime list || true
-            xcrun simctl runtime match list || true
             sudo xcodebuild -downloadPlatform watchOS
+            WATCH_UDID=$(eligible_watch)
           }
-          # Sets WATCH_UDID to an Apple Watch on the newest listed runtime,
-          # created if that runtime has none.
-          pick_watch() {
-            RUNTIME=$(jq -r '.identifier // empty' <<<"$WATCH_RUNTIME")
-            echo "watchOS runtime: $RUNTIME"
-            WATCH_UDID=$(xcrun simctl list devices available -j \
-              | jq -r --arg rt "$RUNTIME" '[.devices[$rt][]? | select(.name | startswith("Apple Watch"))][0].udid // empty')
-            if [ -z "$WATCH_UDID" ]; then
-              # A watch the runtime supports: the last Apple Watch of the
-              # whole catalogue was a Series 2, which no current runtime runs.
-              DEVICETYPE=$(jq -r '.supportedDeviceTypes // [] | last | .identifier // empty' <<<"$WATCH_RUNTIME")
-              echo "Creating Apple Watch on $RUNTIME (devicetype $DEVICETYPE)"
-              WATCH_UDID=$(xcrun simctl create "Apple Watch" "$DEVICETYPE" "$RUNTIME")
-            fi
-          }
-
-          if ! await_runtime; then
-            download_platform
-            await_runtime || { echo "No watchOS runtime to run the tests on"; exit 1; }
+          WATCH_UDID=$(eligible_watch)
+          [ -n "$WATCH_UDID" ] || download_platform
+          if [ -z "$WATCH_UDID" ]; then
+            echo "No watchOS simulator Xcode accepts"
+            xcodebuild -workspace Foulee.xcworkspace -scheme FouleeWatch -showdestinations
+            exit 1
           fi
-          pick_watch
           # Same reason as the iPhone: finish the first boot before the test
-          # runner's launch clock starts.
+          # runner's launch clock starts. A simulator Xcode lists can still be
+          # refused at boot: then fetch the platform once and boot again.
           if ! xcrun simctl bootstatus "$WATCH_UDID" -b; then
             download_platform
-            await_runtime || { echo "No watchOS runtime to run the tests on"; exit 1; }
-            pick_watch
             xcrun simctl bootstatus "$WATCH_UDID" -b
           fi
           echo "Testing on simulator $WATCH_UDID"
