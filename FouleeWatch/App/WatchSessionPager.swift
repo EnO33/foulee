@@ -145,27 +145,33 @@ struct WatchSessionPager: View {
     private var showsLegs: Bool { metrics.legs.count > 1 }
 }
 
-/// The elapsed clock, and the only thing on any page that has to redraw every
-/// second.
+/// The elapsed clock.
 ///
-/// The `TimelineView` is **here, around a single `Text`**, and not around the
-/// pager. Wrapping the pager would rebuild the whole `TabView` — both pages and
-/// the selection binding — once a second in order to move four digits.
+/// **Drawn by the system, the way the Live Activity draws it** (issue #458).
+/// It used to be a `TimelineView` redrawing one `Text` every second. On an
+/// Apple Watch SE that timeline never refreshed: the clock sat at 00:00 while
+/// the heart rate kept moving and the iPhone's Live Activity — fed the very
+/// same `timerBasis` — counted correctly. `Text(timerInterval:)` hands the
+/// ticking to the system, so there is no timeline to keep alive at all.
 ///
-/// `context.date`, never `metrics.elapsed`: that was the whole of issue #266.
-/// The timeline rebuilt every second and redrew the same frozen number, so the
-/// clock only moved when HealthKit delivered a batch. `elapsed(at:)` falls back
-/// to the pushed snapshot when there is no basis, which is what keeps the
-/// seeded capture session byte-identical between runs.
+/// Still a function of the basis and never of `metrics.elapsed` while it runs:
+/// that was the whole of issue #266.
 struct WatchSessionClock: View {
     let metrics: WatchWorkoutMetrics
     var size: CGFloat
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-            Text(metrics.elapsed(at: context.date).walkClockText)
-                .font(.system(size: size, weight: .semibold, design: .rounded))
-                .monospacedDigit()
+        reading
+            .font(.system(size: size, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+    }
+
+    @ViewBuilder private var reading: some View {
+        switch metrics.clockReading {
+        case .running(let start):
+            Text(timerInterval: start...start.addingTimeInterval(WatchWorkoutMetrics.clockSpan), countsDown: false)
+        case .stopped(let elapsed):
+            Text(elapsed.walkClockText)
         }
     }
 }

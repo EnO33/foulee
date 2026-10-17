@@ -109,6 +109,22 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
         return max(0, date.timeIntervalSince(timerBasis))
     }
 
+    /// What the session clock shows (issue #458): a clock the system runs from
+    /// the basis, or a duration that does not move — paused, finished, or the
+    /// seeded capture.
+    enum ClockReading: Equatable {
+        case running(since: Date)
+        case stopped(TimeInterval)
+    }
+
+    var clockReading: ClockReading {
+        timerBasis.map { .running(since: $0) } ?? .stopped(elapsed)
+    }
+
+    /// How far a running clock may count: a day, like the Live Activity's.
+    /// No outing comes near it, and the range has to end somewhere.
+    static let clockSpan: TimeInterval = 86_400
+
     /// « Course · 7'37"/km » — the sport being done and how fast, right now.
     /// Just « Course » when there is no pace to state (issue #300).
     ///
