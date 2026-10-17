@@ -193,50 +193,51 @@ jobs:
 
       - uses: ./.github/actions/prepare-project
 
-      # Xcode picks the simulator, not us (issue #462). Choosing a runtime and
-      # a device through simctl kept disagreeing with Xcode on the image: a
-      # runtime simctl listed as available was refused at boot (« runtime
-      # profile not found ») because it was not the one this Xcode's SDK
-      # matches. So the destination is the first watchOS simulator the scheme
-      # itself accepts — no version, model or runtime written down here — and
-      # when it accepts none, the image's runtime is replaced by the one
-      # Xcode downloads.
+      # Xcode picks the simulator, not us, once the image has finished
+      # installing its watchOS runtime (issue #462).
+      #
+      # A fresh runner can still be provisioning it when the job starts: the
+      # same runtime is registered several times over one disk image, one copy
+      # « Copying » while another is « Deleting ». Until that settles the
+      # runtime comes and goes — listed, then refused at boot (« runtime
+      # profile not found »), or pulled from under a running test. So the job
+      # waits for every watchOS image to be « Ready », then takes the first
+      # watchOS simulator the scheme accepts: no version, model or runtime
+      # written down here.
       - name: Pick and boot the Apple Watch simulator
         run: |
+          watch_image_states() {
+            xcrun simctl runtime list -j \
+              | jq -r '[to_entries[] | select(.value.platformIdentifier | test("watch"; "i")) | .value.state] | join(", ")'
+          }
+          xcrun simctl runtime list -j \
+            | jq '[to_entries[] | select(.value.platformIdentifier | test("watch"; "i"))] | first // "no watchOS image"'
+          for attempt in $(seq 1 60); do
+            STATES=$(watch_image_states)
+            echo "watchOS runtime images: ${STATES:-none}"
+            if [ -n "$STATES" ] && ! grep -qv '^Ready$' <<<"${STATES//, /$'\n'}"; then
+              break
+            fi
+            sleep 10
+          done
           eligible_watch() {
             xcodebuild -workspace Foulee.xcworkspace -scheme FouleeWatch -showdestinations 2>/dev/null \
               | awk '/Ineligible destinations/ { exit } /platform:watchOS Simulator/ && !/placeholder/' \
               | sed -n 's/.*id:\([^,]*\),.*/\1/p' \
               | head -1
           }
-          # The image can ship a watchOS runtime Xcode reports as installed
-          # and still cannot use (no simulator offered, boot refused):
-          # -downloadPlatform then does nothing. Delete it first so Xcode
-          # fetches a working one.
-          download_platform() {
-            xcrun simctl runtime list -v || true
-            for image in $(xcrun simctl runtime list -j \
-              | jq -r 'to_entries[] | select(.value.platformIdentifier | test("watch"; "i")) | .key'); do
-              echo "Deleting the watchOS runtime image $image"
-              sudo xcrun simctl runtime delete "$image" || true
-            done
-            echo "Downloading the watchOS platform this Xcode matches"
-            sudo xcodebuild -downloadPlatform watchOS
-            WATCH_UDID=$(eligible_watch)
-          }
           WATCH_UDID=$(eligible_watch)
-          [ -n "$WATCH_UDID" ] || download_platform
           if [ -z "$WATCH_UDID" ]; then
             echo "No watchOS simulator Xcode accepts"
+            xcrun simctl runtime list -v || true
             xcodebuild -workspace Foulee.xcworkspace -scheme FouleeWatch -showdestinations
             exit 1
           fi
           # Same reason as the iPhone: finish the first boot before the test
-          # runner's launch clock starts. A simulator Xcode lists can still be
-          # refused at boot: then fetch the platform once and boot again.
+          # runner's launch clock starts.
           if ! xcrun simctl bootstatus "$WATCH_UDID" -b; then
-            download_platform
-            xcrun simctl bootstatus "$WATCH_UDID" -b
+            xcrun simctl runtime list -v || true
+            exit 1
           fi
           echo "Testing on simulator $WATCH_UDID"
           echo "WATCH_DESTINATION=platform=watchOS Simulator,id=$WATCH_UDID" >> "$GITHUB_ENV"
