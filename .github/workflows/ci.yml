@@ -118,7 +118,7 @@ jobs:
   # followed by a `test` that recompiled everything.
   ios:
     name: iOS
-    # GitHub's Xcode 27 image (issue #404): macOS 27, Xcode 27.0, iOS 27 and
+    # GitHub's Xcode 27 image (issue #404): macOS 27, Xcode 27.x, iOS 27 and
     # watchOS 27 simulators preinstalled. The general-purpose macos-26 image
     # tops out at Xcode 26.6, and Xcode 27 does not run on macos-15 at all
     # (it needs macOS Tahoe 26.6).
