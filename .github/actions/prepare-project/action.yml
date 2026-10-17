@@ -20,10 +20,16 @@ runs:
     # Foulee builds FouleeWatch for the watchOS simulator too. The Xcode 27
     # image ships the runtime, unlike macos-15 did; kept as a guard so an image
     # without it downloads it here instead of failing on a missing destination.
+    #
+    # Read as JSON, the way the watchOS job reads it to create its simulator
+    # (issue #460): a grep on the text listing once said « present » while
+    # the JSON held no watchOS runtime, and the download was never tried.
     - name: Ensure the watchOS platform is installed
       shell: bash
       run: |
-        if xcrun simctl list runtimes available | grep -q "watchOS"; then
+        xcrun simctl list runtimes
+        WATCH_RUNTIMES=$(xcrun simctl list runtimes available -j | jq '[.runtimes[] | select(.platform == "watchOS")] | length')
+        if [ "$WATCH_RUNTIMES" -gt 0 ]; then
           echo "watchOS runtime present"
           exit 0
         fi

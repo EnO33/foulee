@@ -196,8 +196,17 @@ jobs:
       - name: Ensure Apple Watch simulator exists
         run: |
           if ! xcrun simctl list devices available | grep -q "Apple Watch"; then
-            RUNTIME=$(xcrun simctl list runtimes available -j | jq -r '.runtimes[] | select(.platform == "watchOS") | .identifier' | sort -V | tail -1)
-            DEVICETYPE=$(xcrun simctl list devicetypes -j | jq -r '.devicetypes[] | select(.productFamily == "Apple Watch") | .identifier' | tail -1)
+            # The newest watchOS runtime, and a watch that runtime supports
+            # (issue #460): the last Apple Watch of the whole catalogue was a
+            # Series 2, which no current runtime runs.
+            WATCH_RUNTIME=$(xcrun simctl list runtimes available -j | jq -c '[.runtimes[] | select(.platform == "watchOS")] | sort_by(.version | split(".") | map(tonumber)) | last')
+            RUNTIME=$(jq -r '.identifier // empty' <<<"$WATCH_RUNTIME")
+            DEVICETYPE=$(jq -r '.supportedDeviceTypes // [] | last | .identifier // empty' <<<"$WATCH_RUNTIME")
+            if [ -z "$RUNTIME" ] || [ -z "$DEVICETYPE" ]; then
+              echo "No watchOS runtime to create a simulator on"
+              xcrun simctl list runtimes
+              exit 1
+            fi
             echo "Creating Apple Watch on runtime $RUNTIME (devicetype $DEVICETYPE)"
             xcrun simctl create "Apple Watch" "$DEVICETYPE" "$RUNTIME"
           fi
