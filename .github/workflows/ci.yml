@@ -200,24 +200,27 @@ jobs:
       # same runtime is registered several times over one disk image, one copy
       # « Copying » while another is « Deleting ». Until that settles the
       # runtime comes and goes — listed, then refused at boot (« runtime
-      # profile not found »), or pulled from under a running test. So the job
-      # waits for every watchOS image to be « Ready », then takes the first
-      # watchOS simulator the scheme accepts: no version, model or runtime
-      # written down here.
+      # profile not found »), or pulled from under a running test. It settles
+      # within seconds; the job waits for that (3 min at most), then takes the
+      # first watchOS simulator the scheme accepts: no version, model or
+      # runtime written down here.
       - name: Pick and boot the Apple Watch simulator
         run: |
           watch_image_states() {
             xcrun simctl runtime list -j \
               | jq -r '[to_entries[] | select(.value.platformIdentifier | test("watch"; "i")) | .value.state] | join(", ")'
           }
-          xcrun simctl runtime list -j \
-            | jq '[to_entries[] | select(.value.platformIdentifier | test("watch"; "i"))] | first // "no watchOS image"'
-          for attempt in $(seq 1 60); do
-            STATES=$(watch_image_states)
-            echo "watchOS runtime images: ${STATES:-none}"
-            if [ -n "$STATES" ] && ! grep -qv '^Ready$' <<<"${STATES//, /$'\n'}"; then
-              break
-            fi
+          # Settled: at least one image « Ready » and none still moving
+          # (« Copying », « Deleting »). Leftover copies stay « Unusable » for
+          # good, so waiting for *every* image to be ready never ends.
+          watch_runtime_settled() {
+            xcrun simctl runtime list -j | jq -e '
+              [to_entries[] | select(.value.platformIdentifier | test("watch"; "i")) | .value.state]
+              | any(. == "Ready") and all(test("ing$") | not)' >/dev/null
+          }
+          for attempt in $(seq 1 18); do
+            watch_runtime_settled && break
+            echo "watchOS runtime images still settling: $(watch_image_states)"
             sleep 10
           done
           eligible_watch() {
