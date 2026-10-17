@@ -199,7 +199,8 @@ jobs:
       # profile not found ») because it was not the one this Xcode's SDK
       # matches. So the destination is the first watchOS simulator the scheme
       # itself accepts — no version, model or runtime written down here — and
-      # when it accepts none, the platform Xcode matches is downloaded.
+      # when it accepts none, the image's runtime is replaced by the one
+      # Xcode downloads.
       - name: Pick and boot the Apple Watch simulator
         run: |
           eligible_watch() {
@@ -208,7 +209,17 @@ jobs:
               | sed -n 's/.*id:\([^,]*\),.*/\1/p' \
               | head -1
           }
+          # The image can ship a watchOS runtime Xcode reports as installed
+          # and still cannot use (no simulator offered, boot refused):
+          # -downloadPlatform then does nothing. Delete it first so Xcode
+          # fetches a working one.
           download_platform() {
+            xcrun simctl runtime list -v || true
+            for image in $(xcrun simctl runtime list -j \
+              | jq -r 'to_entries[] | select(.value.platformIdentifier | test("watch"; "i")) | .key'); do
+              echo "Deleting the watchOS runtime image $image"
+              sudo xcrun simctl runtime delete "$image" || true
+            done
             echo "Downloading the watchOS platform this Xcode matches"
             sudo xcodebuild -downloadPlatform watchOS
             WATCH_UDID=$(eligible_watch)
