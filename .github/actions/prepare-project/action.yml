@@ -7,10 +7,10 @@ description: >
 runs:
   using: composite
   steps:
-    - name: Select Xcode 27
+    - name: Select the latest stable Xcode
       uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
       with:
-        xcode-version: '27.0'
+        xcode-version: latest-stable
 
     - name: Show Xcode version
       shell: bash

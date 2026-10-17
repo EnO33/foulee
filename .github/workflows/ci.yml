@@ -118,7 +118,7 @@ jobs:
   # followed by a `test` that recompiled everything.
   ios:
     name: iOS
-    # GitHub's Xcode 27 image (issue #404): macOS 27, Xcode 27.0, iOS 27 and
+    # GitHub's Xcode 27 image (issue #404): macOS 27, Xcode 27.x, iOS 27 and
     # watchOS 27 simulators preinstalled. The general-purpose macos-26 image
     # tops out at Xcode 26.6, and Xcode 27 does not run on macos-15 at all
     # (it needs macOS Tahoe 26.6).
@@ -193,62 +193,57 @@ jobs:
 
       - uses: ./.github/actions/prepare-project
 
-      - name: Ensure Apple Watch simulator exists
+      # Xcode picks the simulator, not us, once the image has finished
+      # installing its watchOS runtime (issue #462).
+      #
+      # A fresh runner can still be provisioning it when the job starts: the
+      # same runtime is registered several times over one disk image, one copy
+      # « Copying » while another is « Deleting ». Until that settles the
+      # runtime comes and goes — listed, then refused at boot (« runtime
+      # profile not found »), or pulled from under a running test. It settles
+      # within seconds; the job waits for that (3 min at most), then takes the
+      # first watchOS simulator the scheme accepts: no version, model or
+      # runtime written down here.
+      - name: Pick and boot the Apple Watch simulator
         run: |
-          if ! xcrun simctl list devices available | grep -q "Apple Watch"; then
-            # The newest watchOS runtime, and a watch that runtime supports
-            # (issue #460): the last Apple Watch of the whole catalogue was a
-            # Series 2, which no current runtime runs.
-            watch_runtime() {
-              xcrun simctl list runtimes available -j \
-                | jq -c '[.runtimes[] | select(.platform == "watchOS")] | sort_by(.version | split(".") | map(tonumber)) | last // empty'
-            }
-            # The image lists its watchOS runtime at the start of the job and
-            # can drop it a few seconds later while its disk image is
-            # remounted: wait for it to come back, then download it as a last
-            # resort.
-            WATCH_RUNTIME=""
-            for attempt in $(seq 1 12); do
-              WATCH_RUNTIME=$(watch_runtime)
-              [ -n "$WATCH_RUNTIME" ] && break
-              echo "No watchOS runtime listed (attempt $attempt), waiting 10s"
-              xcrun simctl runtime list || true
-              sleep 10
-            done
-            if [ -z "$WATCH_RUNTIME" ]; then
-              echo "Still no watchOS runtime, downloading the platform"
-              sudo xcodebuild -downloadPlatform watchOS
-              WATCH_RUNTIME=$(watch_runtime)
-            fi
-            RUNTIME=$(jq -r '.identifier // empty' <<<"$WATCH_RUNTIME")
-            DEVICETYPE=$(jq -r '.supportedDeviceTypes // [] | last | .identifier // empty' <<<"$WATCH_RUNTIME")
-            if [ -z "$RUNTIME" ] || [ -z "$DEVICETYPE" ]; then
-              echo "No watchOS runtime to create a simulator on"
-              xcrun simctl list runtimes
-              exit 1
-            fi
-            echo "Creating Apple Watch on runtime $RUNTIME (devicetype $DEVICETYPE)"
-            xcrun simctl create "Apple Watch" "$DEVICETYPE" "$RUNTIME"
-          fi
-          xcrun simctl list devices available | grep -E "Apple Watch"
-
-      # The ensure step above guarantees an Apple Watch simulator exists, but
-      # its exact name depends on the runtime's default devices — resolve it
-      # instead of hardcoding one.
-      - name: Pick the Apple Watch simulator
-        run: |
-          WATCH_NAME=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("Apple Watch"))][0].name')
-          if [ -z "$WATCH_NAME" ] || [ "$WATCH_NAME" = "null" ]; then
-            echo "No Apple Watch simulator available"
-            xcrun simctl list devices
+          watch_image_states() {
+            xcrun simctl runtime list -j \
+              | jq -r '[to_entries[] | select(.value.platformIdentifier | test("watch"; "i")) | .value.state] | join(", ")'
+          }
+          # Settled: at least one image « Ready » and none still moving
+          # (« Copying », « Deleting »). Leftover copies stay « Unusable » for
+          # good, so waiting for *every* image to be ready never ends.
+          watch_runtime_settled() {
+            xcrun simctl runtime list -j | jq -e '
+              [to_entries[] | select(.value.platformIdentifier | test("watch"; "i")) | .value.state]
+              | any(. == "Ready") and all(test("ing$") | not)' >/dev/null
+          }
+          for attempt in $(seq 1 18); do
+            watch_runtime_settled && break
+            echo "watchOS runtime images still settling: $(watch_image_states)"
+            sleep 10
+          done
+          eligible_watch() {
+            xcodebuild -workspace Foulee.xcworkspace -scheme FouleeWatch -showdestinations 2>/dev/null \
+              | awk '/Ineligible destinations/ { exit } /platform:watchOS Simulator/ && !/placeholder/' \
+              | sed -n 's/.*id:\([^,]*\),.*/\1/p' \
+              | head -1
+          }
+          WATCH_UDID=$(eligible_watch)
+          if [ -z "$WATCH_UDID" ]; then
+            echo "No watchOS simulator Xcode accepts"
+            xcrun simctl runtime list -v || true
+            xcodebuild -workspace Foulee.xcworkspace -scheme FouleeWatch -showdestinations
             exit 1
           fi
-          echo "Testing on simulator: $WATCH_NAME"
-          echo "WATCH_DESTINATION=platform=watchOS Simulator,name=$WATCH_NAME" >> "$GITHUB_ENV"
           # Same reason as the iPhone: finish the first boot before the test
           # runner's launch clock starts.
-          WATCH_UDID=$(xcrun simctl list devices available -j | jq -r --arg name "$WATCH_NAME" '[.devices[][] | select(.name == $name)][0].udid')
-          xcrun simctl bootstatus "$WATCH_UDID" -b
+          if ! xcrun simctl bootstatus "$WATCH_UDID" -b; then
+            xcrun simctl runtime list -v || true
+            exit 1
+          fi
+          echo "Testing on simulator $WATCH_UDID"
+          echo "WATCH_DESTINATION=platform=watchOS Simulator,id=$WATCH_UDID" >> "$GITHUB_ENV"
 
       - name: Build for testing (watchOS)
         run: |
