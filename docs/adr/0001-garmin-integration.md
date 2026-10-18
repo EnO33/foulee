@@ -1,6 +1,6 @@
 # ADR 0001 — Routes d'intégration Garmin
 
-- **Statut** : acceptée (2026-08)
+- **Statut** : acceptée (2026-08). Le rôle de l'app Connect IQ (décision 2) est revu par l'[ADR 0009](0009-app-garmin-seance.md).
 - **Issues** : [#179](https://github.com/EnO33/foulee/issues/179) (épic), [#180](https://github.com/EnO33/foulee/issues/180)
 
 ## Contexte
