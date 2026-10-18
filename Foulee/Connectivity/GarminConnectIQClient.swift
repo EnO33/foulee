@@ -28,13 +28,18 @@ nonisolated enum GarminConnectIQConfiguration {
     /// in the background when the watch has data — see TN3115.
     static let stateRestorationIdentifier = "com.eno33.foulee.connectiq"
 
-    /// UUID of the Foulée Monkey C app, read from its `manifest.xml`.
-    ///
-    /// Placeholder: the watch app doesn't exist yet (#188). Until it is
-    /// generated, listener registration is a no-op in practice — no app on any
-    /// device will ever match this id — which is exactly the intended
-    /// behaviour for this spike.
-    static let applicationUUID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")
+    /// The `id` of the Foulée Monkey C app in `FouleeConnectIQ/manifest.xml`.
+    static let productionApplicationUUID = UUID(uuidString: "859c7300-a911-49fd-b6ce-7e4453bfe59d")
+
+    /// The id a beta build of the watch app is packaged with: a beta is a
+    /// separate store entry (`FouleeConnectIQ/store/README.md` § 5). Listened
+    /// to as well, or a TestFlight build would never hear the beta watch app.
+    static let betaApplicationUUID = UUID(uuidString: "a0d0785c-31b8-4e24-b4a3-0d6bfd950502")
+
+    /// Every watch app the phone listens to. Both literals are pinned against
+    /// the Connect IQ project by `FouleeConnectIQ/build.sh validate` in CI,
+    /// and by a test that none of them fails to parse.
+    static let applicationUUIDs = [productionApplicationUUID, betaApplicationUUID].compactMap(\.self)
 
     /// Whether a URL the app was opened with is the Garmin device-selection
     /// response. Pure, so the routing decision is testable — it also keeps the

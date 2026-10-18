@@ -195,6 +195,10 @@ connaissable depuis les fichiers :
 - aucun dossier `resources-<id>/` orphelin. Les qualifieurs du SDK sont
   épargnés (`resources-fre`, `resources-round-416x416`…) : ce sont des dossiers
   légitimes, pas des restes d'un appareil retiré ;
+- l'app iPhone écoute bien ces identifiants : `productionApplicationUUID` et
+  `betaApplicationUUID`, dans `Foulee/Connectivity/GarminConnectIQClient.swift`,
+  valent `PRODUCTION_APP_ID` et `BETA_APP_ID`. Sans quoi l'iPhone ne reçoit
+  rien, sans aucune erreur visible (#465) ;
 - aucun matériel de clé (`.der`, `.pem`, `.p12`, `.key`, `.p8`, `.pfx`, `.jks`,
   `.keystore`) **dans tout le dépôt**, pas seulement sous `FouleeConnectIQ/` —
   la CI récupère l'arbre entier, et un feu vert restreint à ce dossier se

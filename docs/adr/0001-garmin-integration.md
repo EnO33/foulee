@@ -67,7 +67,7 @@ Honnêtement : **tout le canal BLE**. Le simulateur Connect IQ ne parle companio
 - le réveil en arrière-plan : le mode `bluetooth-central` et l'identifiant de restauration `CBCentralManager` sont câblés (le SDK le passe lui-même à son `CBCentralManager` interne, et l'app initialise le SDK au démarrage du processus, pas à l'affichage d'un écran), mais **la fréquence réelle des réveils et leur survie à un `force quit` restent inconnues** ;
 - le débit et la taille maximale utile d'un message (`BLE_REQUEST_TOO_LARGE` n'est pas documenté chiffré).
 
-L'UUID de l'app Monkey C est un placeholder tant que #188 n'a pas généré le vrai : en pratique l'enregistrement des écouteurs ne matche donc aucun appareil aujourd'hui.
+L'iPhone écoute l'app Monkey C sous ses deux identifiants, production et beta (`GarminConnectIQConfiguration`). Tous deux sont épinglés contre le projet Connect IQ par `./build.sh validate` en CI (#465) : un écart ne se voit nulle part à l'exécution, les instantanés ne sont simplement jamais remis.
 
 ### Frontière assumée
 
