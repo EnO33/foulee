@@ -182,6 +182,9 @@ connaissable depuis les fichiers :
 
 - `manifest.xml` bien formé, attributs et permissions `Background` /
   `Communications` présents ;
+- `minApiLevel` au moins 3.2.0 : le service d'arrière-plan écrit dans
+  `Application.Storage`, ce qu'une API plus ancienne refuse par une exception
+  que personne ne voit (#469) ;
 - l'identifiant d'application est bien celui **de production** (`PRODUCTION_APP_ID`
   dans le validateur) : c'est ce qui attrape un manifeste resté sur
   l'identifiant beta après un paquet de test (voir `store/README.md` § 5) ;

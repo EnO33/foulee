@@ -4,7 +4,7 @@
         entry="FouleeApp"
         id="859c7300a91149fdb6ce7e4453bfe59d"
         launcherIcon="@Drawables.LauncherIcon"
-        minApiLevel="3.1.0"
+        minApiLevel="3.2.0"
         name="@Strings.AppName"
         type="watch-app">
 
@@ -21,6 +21,10 @@
             <iq:product id="venusq2"/>
             <iq:product id="vivoactive5"/>
         </iq:products>
+
+        <!-- minApiLevel 3.2.0: SnapshotService writes Application.Storage from
+             the background, which throws ObjectStoreAccessException on
+             anything older. -->
 
         <!-- ActivityMonitor needs no permission. Background is required by the
              temporal event, Communications by the transmit to the phone. -->
