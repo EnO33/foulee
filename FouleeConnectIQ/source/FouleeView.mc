@@ -1,14 +1,41 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Timer;
 import Toybox.WatchUi;
+
+//! How often the counters are re-read while the view is on screen. Nothing
+//! else asks for a redraw: without it, the steps shown are those of the moment
+//! the app opened, however far one walks with it open (#470).
+const VIEW_REFRESH_MS = 5000;
 
 //! Full-screen view: the same three numbers as the glance, nothing more. The
 //! watch is a sensor for Foulée, not a second app.
 (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
 class FouleeView extends WatchUi.View {
 
+    //! Runs only while the view is shown, so it never outlives the screen.
+    private var _refresh as Timer.Timer?;
+
     function initialize() {
         View.initialize();
+    }
+
+    function onShow() as Void {
+        var refresh = new Timer.Timer();
+        refresh.start(method(:requestRefresh), $.VIEW_REFRESH_MS, true);
+        _refresh = refresh;
+    }
+
+    function onHide() as Void {
+        var refresh = _refresh;
+        if (refresh != null) {
+            refresh.stop();
+        }
+        _refresh = null;
+    }
+
+    function requestRefresh() as Void {
+        WatchUi.requestUpdate();
     }
 
     function onUpdate(dc as Dc) as Void {
