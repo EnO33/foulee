@@ -51,6 +51,18 @@ LAUNCHER_ICON_PX = {
 # a check.
 PRODUCTION_APP_ID = "859c7300a91149fdb6ce7e4453bfe59d"
 
+# The id reserved for the beta store entry (store/README.md § 5).
+BETA_APP_ID = "a0d0785c31b84e24b4a30d6bfd950502"
+
+# Where the iPhone app declares the watch apps it listens to. The phone only
+# receives messages from an app whose id it registered, and nothing at runtime
+# says when the two disagree: the snapshots are simply never delivered (#465).
+COMPANION_CONFIG = "Foulee/Connectivity/GarminConnectIQClient.swift"
+COMPANION_IDS = {
+    "productionApplicationUUID": PRODUCTION_APP_ID,
+    "betaApplicationUUID": BETA_APP_ID,
+}
+
 errors: list[str] = []
 notes: list[str] = []
 
@@ -344,6 +356,32 @@ def check_no_key_material() -> None:
         ok("aucun matériel de clé dans le dépôt")
 
 
+def check_companion_ids() -> None:
+    """The iPhone app must listen to the ids the watch app is packaged with."""
+    path = os.path.join(os.path.dirname(ROOT), COMPANION_CONFIG)
+    try:
+        with open(path, encoding="utf-8") as handle:
+            content = handle.read()
+    except OSError as exc:
+        fail(f"lecture impossible de {COMPANION_CONFIG} : {exc}")
+        return
+
+    for name, expected in COMPANION_IDS.items():
+        match = re.search(rf'\b{name}\s*=\s*UUID\(uuidString:\s*"([^"]*)"\)', content)
+        if match is None:
+            fail(f"{COMPANION_CONFIG} : « {name} » introuvable")
+            continue
+        declared = match.group(1).replace("-", "").lower()
+        if declared != expected:
+            fail(
+                f"{COMPANION_CONFIG} : {name} vaut « {match.group(1)} », l'app "
+                f"montre est empaquetée sous « {expected} » — l'iPhone ne "
+                "recevrait rien d'elle",
+            )
+        else:
+            ok(f"iPhone à l'écoute de {name} ({expected})")
+
+
 # `resources-<suffix>` is not only a device folder: the SDK's own default.jungle
 # resolves the same prefix for language codes (`resources-fre`, and this app
 # declares <iq:language>fre</iq:language>) and for screen qualifiers
@@ -392,6 +430,7 @@ def main() -> int:
     else:
         for device in devices:
             check_device_resources(device, drawable_id)
+    check_companion_ids()
     check_no_key_material()
     check_orphan_resources(devices)
 

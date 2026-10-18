@@ -78,8 +78,7 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
 
     func startReceiving() {
         initializeIfNeeded()
-        guard let connectIQ = ConnectIQ.sharedInstance(),
-              let appUUID = GarminConnectIQConfiguration.applicationUUID else { return }
+        guard let connectIQ = ConnectIQ.sharedInstance() else { return }
         for device in GarminDeviceStore.read() {
             let isNew = state.withLock { $0.registeredDeviceIDs.insert(device.id).inserted }
             guard isNew else { continue }
@@ -89,11 +88,12 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
                 friendlyName: device.friendlyName
             )
             connectIQ.register(forDeviceEvents: iqDevice, delegate: self)
-            // Store UUID == app UUID: Foulée's watch app is side-loaded during
-            // development and only gets a distinct store id once published
-            // (#190). The SDK only uses it to open the store page.
-            let app = IQApp(uuid: appUUID, store: appUUID, device: iqDevice)
-            connectIQ.register(forAppMessages: app, delegate: self)
+            // Store UUID == app UUID until the first publication hands out the
+            // store id (#481). The SDK only uses it to open the store page.
+            for appUUID in GarminConnectIQConfiguration.applicationUUIDs {
+                let app = IQApp(uuid: appUUID, store: appUUID, device: iqDevice)
+                connectIQ.register(forAppMessages: app, delegate: self)
+            }
         }
     }
 

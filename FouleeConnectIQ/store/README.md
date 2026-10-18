@@ -166,6 +166,11 @@ suivre :
 3. **Rétablir l'identifiant de production dans `manifest.xml`** — ne pas
    committer le manifeste modifié.
 
+Rien à changer côté iPhone : l'app écoute les deux identifiants
+(`GarminConnectIQConfiguration.applicationUUIDs`), donc une montre beta parle à
+n'importe quel build, TestFlight compris. L'identifiant beta y est épinglé
+contre `BETA_APP_ID` par `./build.sh validate`.
+
 Tant que l'identifiant beta est en place, `./build.sh validate` **échoue**, et
 c'est voulu : `PRODUCTION_APP_ID` est épinglé dans
 [`tools/validate_project.py`](../tools/validate_project.py) et le message
