@@ -146,33 +146,40 @@ Connect IQ interdit de les redistribuer (§ I(b)).
 
 #### Mise en place, une fois
 
-1. Sur le Mac, se connecter **par le navigateur**. Aucun mot de passe ne passe
-   par l'outil, et la connexion par mot de passe casse dès que la double
-   authentification est active :
+1. Installer l'outil, dans la même version et avec la même vérification qu'en
+   CI. Le tap Homebrew de l'auteur ne convient pas : sa formule est restée en
+   0.7.1, et son cask déclare un binaire qui n'est pas dans l'archive.
 
    ```sh
-   # Même version et même vérification qu'en CI (Apple Silicon ; sur Intel,
-   # Darwin_x86_64 et d355fb6f…7315749). Le tap Homebrew de l'auteur ne
-   # convient pas : sa formule est restée en 0.7.1, et son cask déclare un
-   # binaire qui n'est pas dans l'archive.
+   # Apple Silicon ; sur Intel : Darwin_x86_64 et d355fb6f…7315749.
    archive=connect-iq-sdk-manager-cli_0.8.4_Darwin_ARM64.tar.gz
    curl -fsSLO "https://github.com/lindell/connect-iq-sdk-manager-cli/releases/download/v0.8.4/$archive"
    echo "afc3903034ec081942f3480ec140859d0bb73158c1a6badd64b57f88f6bf936b  $archive" | shasum -a 256 -c
    mkdir -p ~/.local/bin && tar -xzf "$archive" -C ~/.local/bin connect-iq-sdk-manager
+   ```
+
+2. Lire l'accord développeur, puis l'accepter par son empreinte : l'outil
+   refuse toute connexion avant. Une empreinte qui ne correspond plus au texte
+   en ligne est refusée.
+
+   ```sh
+   ~/.local/bin/connect-iq-sdk-manager agreement view    # lien + empreinte
+   ~/.local/bin/connect-iq-sdk-manager agreement accept --agreement-hash <empreinte>
+   ```
+
+   La même empreinte va dans la **variable** de dépôt `CIQ_AGREEMENT_HASH`
+   (Settings → Secrets and variables → Actions → Variables). Ce n'est pas un
+   secret, et c'est elle qui dit quel texte a été accepté.
+
+3. Se connecter **par le navigateur**. Aucun mot de passe ne passe par l'outil,
+   et la connexion par mot de passe casse dès que la double authentification
+   est active :
+
+   ```sh
    ~/.local/bin/connect-iq-sdk-manager login
    ```
 
-2. Lire l'accord développeur et relever son empreinte :
-
-   ```sh
-   ~/.local/bin/connect-iq-sdk-manager agreement view
-   ```
-
-   L'empreinte va dans la **variable** de dépôt `CIQ_AGREEMENT_HASH` (Settings
-   → Secrets and variables → Actions → Variables). Ce n'est pas un secret, et
-   c'est elle qui dit quel texte a été accepté.
-
-3. Le jeton va dans le **secret** `CIQ_SDK_TOKEN_BASE64` :
+4. Le jeton va dans le **secret** `CIQ_SDK_TOKEN_BASE64` :
 
    ```sh
    base64 -i "$HOME/.Garmin/ConnectIQ/token.json" | pbcopy
@@ -186,7 +193,7 @@ limité au client SDK Manager, mais il appartient au compte qui s'est connecté.
 Garmin fixe la durée de vie du jeton de rafraîchissement, sans la documenter,
 et la CI ne peut pas réécrire un jeton renouvelé dans le secret. À
 l'expiration, le job échoue avec « Jeton Garmin expiré ? » : refaire les
-étapes 1 et 3. Rien ne casse tant que le cache tient, c'est-à-dire tant que la
+étapes 3 et 4. Rien ne casse tant que le cache tient, c'est-à-dire tant que la
 matrice ne change pas et que le cache sert au moins une fois tous les sept
 jours.
 
