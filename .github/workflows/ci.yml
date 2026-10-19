@@ -78,6 +78,10 @@ jobs:
     # Connect IQ agreement bars redistributing them (§I(b)).
     name: Connect IQ build
     runs-on: ubuntu-24.04
+    # Garmin's servers are outside our control: a stalled SDK or profile
+    # download must fail the job, not hold a runner for GitHub's six hours.
+    # A cold cache takes a few minutes, a warm one under one.
+    timeout-minutes: 20
     permissions:
       contents: read
     env:
