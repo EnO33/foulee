@@ -57,6 +57,11 @@ BETA_APP_ID = "a0d0785c31b84e24b4a30d6bfd950502"
 # Where the iPhone app declares the watch apps it listens to. The phone only
 # receives messages from an app whose id it registered, and nothing at runtime
 # says when the two disagree: the snapshots are simply never delivered (#465).
+# SnapshotService writes Application.Storage from the background service. Only
+# Connect IQ 3.2.0 and later allow that: below it, setValue throws
+# ObjectStoreAccessException in the background, where nobody sees it (#469).
+MIN_API_LEVEL = (3, 2, 0)
+
 COMPANION_CONFIG = "Foulee/Connectivity/GarminConnectIQClient.swift"
 COMPANION_IDS = {
     "productionApplicationUUID": PRODUCTION_APP_ID,
@@ -131,6 +136,8 @@ def check_manifest() -> tuple[list[str], str | None]:
         if not application.get(attribute):
             fail(f"manifest.xml : attribut « {attribute} » manquant", "manifest.xml")
 
+    check_min_api_level(application.get("minApiLevel", ""))
+
     launcher_icon = application.get("launcherIcon", "")
     drawable_id: str | None = None
     if launcher_icon and not launcher_icon.startswith("@Drawables."):
@@ -173,6 +180,26 @@ def check_manifest() -> tuple[list[str], str | None]:
         ok(f"permissions déclarées : {', '.join(sorted(declared))}")
 
     return [i for i in ids if i], drawable_id
+
+
+def check_min_api_level(raw: str) -> None:
+    if not raw:
+        return  # already reported as a missing attribute
+    try:
+        declared = tuple(int(part) for part in raw.split("."))
+    except ValueError:
+        fail(f"manifest.xml : minApiLevel « {raw} » illisible", "manifest.xml")
+        return
+    required = ".".join(str(part) for part in MIN_API_LEVEL)
+    if declared < MIN_API_LEVEL:
+        fail(
+            f"manifest.xml : minApiLevel « {raw} » sous {required} — le service "
+            "d'arrière-plan écrit dans Application.Storage, ce qui lève une "
+            "exception avant 3.2.0",
+            "manifest.xml",
+        )
+    else:
+        ok(f"minApiLevel {raw} (≥ {required})")
 
 
 def png_dimensions(relative_path: str) -> tuple[int | None, int | None]:
