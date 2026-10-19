@@ -48,29 +48,11 @@ jobs:
           exit $failures
 
   connectiq:
-    # Static checks on the Garmin watch app (FouleeConnectIQ/). This job does
-    # NOT compile Monkey C, and it can't:
-    #
-    #   * The SDK archive itself is public and scriptable — sdks.json lists it
-    #     and connectiq-sdk-lin-9.2.0-….zip serves anonymously (HTTP 200).
-    #   * But the SDK ships *no device profiles*. Verified: the zip contains no
-    #     Devices/ entry, and monkeyc on a clean home answers
-    #     "ERROR: Invalid device id specified: 'venu2'". Profiles come from
-    #     api.gcs.garmin.com/ciq-product-onboarding/devices, which is 401
-    #     without a Garmin *account* bearer token — the SDK Manager is a GUI
-    #     with an SSO login, and the only non-interactive route known
-    #     (lindell/connect-iq-sdk-manager-cli) wants GARMIN_USERNAME /
-    #     GARMIN_PASSWORD. That is the account holding the owner's Garmin
-    #     Connect health data; it does not belong in repository secrets.
-    #   * Vendoring the profiles instead is barred by the Connect IQ agreement
-    #     (§I(b): no hosting or redistributing Program Materials).
-    #
-    # So the compile gate lives on the developer's machine
-    # (`FouleeConnectIQ/build.sh build`, seven devices, -w -l 3) and CI checks
-    # everything that is knowable from the files: manifest well-formedness,
-    # device ids matching their resources folder, launcher icons at the exact
-    # per-device pixel size, no key material committed. Details and the
-    # opt-in recipe if this trade-off is ever revisited: FouleeConnectIQ/README.md.
+    # Static checks on the Garmin watch app (FouleeConnectIQ/) that need no
+    # SDK: manifest well-formedness, production app id, device ids matching
+    # their resources folder, launcher icons at the exact per-device size,
+    # the iPhone listening to the right app ids, no key material committed.
+    # The compile itself is the `connectiq-build` job below.
     name: Connect IQ
     # Pinned to a version, like the macOS jobs around it: a floating label
     # moves the runner image under us without a commit. This job only needs
@@ -83,6 +65,106 @@ jobs:
 
       - name: Validate the Connect IQ project (no SDK required)
         run: FouleeConnectIQ/build.sh validate
+
+  connectiq-build:
+    # Compiles the Garmin app for every device of the manifest, in -w -l 3,
+    # failing on any warning but the two expected glance ones (build.sh), and
+    # compiles its unit-test build (issue #466).
+    #
+    # The SDK is public, the device profiles are not: they need a Garmin
+    # account token. It comes from an interactive SSO login on the owner's
+    # machine (`connect-iq-sdk-manager login`), never a password, and is only
+    # used when the cache below misses. The profiles are never committed: the
+    # Connect IQ agreement bars redistributing them (§I(b)).
+    name: Connect IQ build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      CIQ_SDK_VERSION: 9.2.0
+      CIQ_SDK_MANAGER_VERSION: 0.8.4
+      CIQ_SDK_MANAGER_SHA256: 5d57b8f9cfcd02d3b3f48e19d6daca0480e4c6f627926f15d8617ef8a6f57e0b
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Never token.json: the cache is readable by every pull request. Keyed
+      # on the manifest, so a device added or removed downloads afresh.
+      - name: Restore the SDK and the device profiles
+        id: sdk-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.Garmin/ConnectIQ/Sdks
+            ~/.Garmin/ConnectIQ/Devices
+            ~/.Garmin/ConnectIQ/current-sdk.cfg
+          key: ciq-sdk-${{ env.CIQ_SDK_VERSION }}-${{ hashFiles('FouleeConnectIQ/manifest.xml') }}
+
+      - name: Install connect-iq-sdk-manager
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          archive="connect-iq-sdk-manager-cli_${CIQ_SDK_MANAGER_VERSION}_Linux_x86_64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$archive" \
+            "https://github.com/lindell/connect-iq-sdk-manager-cli/releases/download/v${CIQ_SDK_MANAGER_VERSION}/$archive"
+          echo "$CIQ_SDK_MANAGER_SHA256  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          mkdir -p "$RUNNER_TEMP/sdk-manager"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/sdk-manager"
+          echo "$RUNNER_TEMP/sdk-manager" >> "$GITHUB_PATH"
+
+      - name: Download the SDK and the manifest's device profiles
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        env:
+          CIQ_SDK_TOKEN_BASE64: ${{ secrets.CIQ_SDK_TOKEN_BASE64 }}
+          CIQ_AGREEMENT_HASH: ${{ vars.CIQ_AGREEMENT_HASH }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CIQ_SDK_TOKEN_BASE64:-}" ] || [ -z "${CIQ_AGREEMENT_HASH:-}" ]; then
+            echo "::error title=Connect IQ::Cache vide et secret CIQ_SDK_TOKEN_BASE64 ou variable CIQ_AGREEMENT_HASH absents (une PR de fork n'y a pas accès). Voir FouleeConnectIQ/README.md, « Intégration continue »."
+            exit 1
+          fi
+          mkdir -p "$HOME/.Garmin/ConnectIQ"
+          (umask 077 && echo "$CIQ_SDK_TOKEN_BASE64" | base64 --decode > "$HOME/.Garmin/ConnectIQ/token.json")
+          connect-iq-sdk-manager agreement accept --agreement-hash "$CIQ_AGREEMENT_HASH"
+          connect-iq-sdk-manager sdk set "$CIQ_SDK_VERSION"
+          if ! connect-iq-sdk-manager device download --manifest FouleeConnectIQ/manifest.xml; then
+            echo "::error title=Connect IQ::Téléchargement des profils refusé. Jeton Garmin expiré ? Relancer « connect-iq-sdk-manager login » et mettre à jour CIQ_SDK_TOKEN_BASE64 (FouleeConnectIQ/README.md)."
+            exit 1
+          fi
+
+      - name: Forget the Garmin token
+        if: always()
+        run: rm -f "$HOME/.Garmin/ConnectIQ/token.json"
+
+      # Signing a build needs a key, not *the* key: a throwaway one proves the
+      # code compiles. The store key only ever signs a release package.
+      - name: Generate a throwaway developer key
+        run: |
+          set -euo pipefail
+          openssl genrsa -out "$RUNNER_TEMP/ci_key.pem" 4096 2>/dev/null
+          openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
+            -in "$RUNNER_TEMP/ci_key.pem" -out "$RUNNER_TEMP/ci_key.der"
+
+      - name: Compile every device of the manifest
+        env:
+          CIQ_DEVELOPER_KEY: ${{ runner.temp }}/ci_key.der
+        run: |
+          export JAVA_HOME="$JAVA_HOME_21_X64"
+          FouleeConnectIQ/build.sh build
+
+      - name: Compile the unit-test build
+        env:
+          CIQ_DEVELOPER_KEY: ${{ runner.temp }}/ci_key.der
+        run: |
+          export JAVA_HOME="$JAVA_HOME_21_X64"
+          FouleeConnectIQ/build.sh test
+
+      - name: Upload the compiler logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: connectiq-logs
+          path: FouleeConnectIQ/bin/logs
+          if-no-files-found: ignore
 
   # The pure logic and the shared models (issue #425, ADR 0007), tested on the
   # runner's own macOS: no simulator to install, boot or launch.
@@ -349,7 +431,7 @@ jobs:
     # fails it unless every job it needs succeeded. The dead-code job only
     # runs on pull requests: skipped on a push to main, it is allowed to be.
     name: Build & Test
-    needs: [kit, ios, watchos, deadcode]
+    needs: [kit, ios, watchos, deadcode, connectiq-build]
     if: always()
     runs-on: ubuntu-24.04
     steps:

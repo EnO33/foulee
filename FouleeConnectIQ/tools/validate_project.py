@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Static checks on the Connect IQ project that need no Connect IQ SDK.
 
-The SDK cannot be installed on a GitHub runner without a Garmin account (see
-FouleeConnectIQ/README.md, "Intégration continue"), so `monkeyc` never runs in
-CI. This script is what CI *can* run: everything about the project that is
-knowable from the files themselves.
+CI compiles the app too (FouleeConnectIQ/README.md, "Intégration continue"),
+but only once the SDK and the device profiles are in place. This script runs
+first and in seconds: everything about the project that is knowable from the
+files themselves, including what the compiler cannot see (the production app
+id, the iPhone listening to it, key material committed by mistake).
 
 It catches the mistakes that actually happen when the device matrix changes:
 a product added to the manifest with no resources folder, a launcher icon at

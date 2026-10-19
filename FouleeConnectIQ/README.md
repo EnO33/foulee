@@ -95,8 +95,7 @@ avertissement de l'appareil concerné (`WARNING: fr55: …`). Le même
 avertissement sur un appareil en CIQ 4+ signifierait que le glance est
 réellement cassé, et il fait donc échouer la compilation. C'est l'équivalent
 Monkey C de `swiftlint --strict`, et c'est ce qui fait de `./build.sh build` la
-barrière qualité du dossier — la CI, elle, ne peut pas compiler (section
-suivante).
+barrière qualité du dossier, en local comme en CI (section suivante).
 
 Trois réglages, si besoin : `CIQ_SDK_HOME`, `CIQ_DEVELOPER_KEY`, `JAVA_HOME`.
 
@@ -125,60 +124,72 @@ Cinq tests couvrent l'assemblage de l'instantané à partir d'une structure `inf
 
 ## Intégration continue
 
-**La CI ne compile pas le Monkey C, et elle ne le peut pas.** Voici pourquoi,
-en détail, parce que c'est contre-intuitif et que ça mérite d'être re-vérifié
-si Garmin change quelque chose.
+Deux jobs de [`ci.yml`](../.github/workflows/ci.yml) couvrent ce dossier sur
+chaque PR.
 
-> **À retenir : une CI verte ne veut pas dire que le Monkey C compile.** Le job
-> `Connect IQ` ne lit que des fichiers ; du code qui ne compile pas, ou qui
-> compile avec un avertissement, passe le vert sans broncher. Seul
-> `./build.sh build`, sur une machine munie du SDK, le prouve — à lancer avant
-> de pousser.
+### `Connect IQ build` : la compilation
 
-### Ce qui marche sans compte
+Il compile les sept appareils du manifeste avec `./build.sh build` (donc en
+`-w -l 3`, avec la même tolérance nominative aux avertissements de glance),
+puis la version de tests unitaires avec `./build.sh test`. Il signe avec une
+clé jetable générée pour le job : compiler demande une clé, pas *la* clé, qui
+ne sert qu'au paquet du store.
 
-Le SDK lui-même se récupère très bien en script. Garmin publie un index et des
-archives servies anonymement :
+Le SDK se télécharge sans compte, mais les **profils d'appareils** demandent
+un jeton de compte Garmin. Ils viennent de
+[`connect-iq-sdk-manager`](https://github.com/lindell/connect-iq-sdk-manager-cli)
+(version et somme SHA-256 épinglées dans le job), puis restent en cache
+(`actions/cache`, clé : version du SDK + empreinte du manifeste). Le jeton ne
+sert donc qu'au premier remplissage du cache, ou quand la matrice change. Il
+n'est jamais mis en cache, et les profils ne sont jamais committés : l'accord
+Connect IQ interdit de les redistribuer (§ I(b)).
 
-```sh
-curl -s https://developer.garmin.com/downloads/connect-iq/sdks/sdks.json
-curl -sI https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-9.2.0-2026-06-09-92a1605b2.zip
-# HTTP/2 200 — content-length: 213780514
-```
+#### Mise en place, une fois
 
-`monkeyc` n'est qu'un script de trois lignes qui lance `monkeybrains.jar` : le
-SDK Linux tourne sur n'importe quelle machine munie d'un JDK.
+1. Sur le Mac, se connecter **par le navigateur**. Aucun mot de passe ne passe
+   par l'outil, et la connexion par mot de passe casse dès que la double
+   authentification est active :
 
-### Ce qui bloque
+   ```sh
+   brew install lindell/connect-iq-sdk-manager-cli/connect-iq-sdk-manager
+   connect-iq-sdk-manager login
+   ```
 
-**Le SDK ne contient aucun profil d'appareil.** L'archive n'a pas de dossier
-`Devices/`, et un `monkeyc` fraîchement dézippé, lancé avec un `user.home`
-vierge — ce qu'est un runner GitHub — répond :
+2. Lire l'accord développeur et relever son empreinte :
 
-```
-ERROR: Invalid device id specified: 'venu2'.
-```
+   ```sh
+   connect-iq-sdk-manager agreement view
+   ```
 
-Les profils viennent d'ailleurs : `https://api.gcs.garmin.com/ciq-product-onboarding/devices`,
-qui renvoie **401** sans jeton de compte Garmin. Le SDK Manager qui les
-télécharge est une application graphique avec un login SSO. Le seul chemin non
-interactif connu est un outil communautaire
-([`lindell/connect-iq-sdk-manager-cli`](https://github.com/lindell/connect-iq-sdk-manager-cli)),
-et il réclame `GARMIN_USERNAME` / `GARMIN_PASSWORD`.
+   L'empreinte va dans la **variable** de dépôt `CIQ_AGREEMENT_HASH` (Settings
+   → Secrets and variables → Actions → Variables). Ce n'est pas un secret, et
+   c'est elle qui dit quel texte a été accepté.
 
-Ce serait le mot de passe du compte Garmin de l'auteur — celui qui contient ses
-données Garmin Connect *et* son identité de publication sur le store. Pour une
-app qui se revendique locale et sans compte, le mettre dans les secrets d'un
-dépôt public serait un mauvais échange. Et embarquer les profils dans le dépôt
-ou dans une image Docker n'est pas une option non plus : l'accord Connect IQ
-l'interdit explicitement (§ I(b), pas d'hébergement ni de redistribution des
-« Program Materials »).
+3. Le jeton va dans le **secret** `CIQ_SDK_TOKEN_BASE64` :
 
-### Ce que fait la CI à la place
+   ```sh
+   base64 -i "$HOME/.Garmin/ConnectIQ/token.json" | pbcopy
+   ```
 
-Le job **`Connect IQ`** de [`ci.yml`](../.github/workflows/ci.yml) lance
-`./build.sh validate`, qui ne demande que `python3` et vérifie tout ce qui est
-connaissable depuis les fichiers :
+Un compte Garmin dédié, sans montre ni données, reste conseillé : le jeton est
+limité au client SDK Manager, mais il appartient au compte qui s'est connecté.
+
+#### Quand le jeton expire
+
+Garmin fixe la durée de vie du jeton de rafraîchissement, sans la documenter,
+et la CI ne peut pas réécrire un jeton renouvelé dans le secret. À
+l'expiration, le job échoue avec « Jeton Garmin expiré ? » : refaire les
+étapes 1 et 3. Rien ne casse tant que le cache tient, c'est-à-dire tant que la
+matrice ne change pas et que le cache sert au moins une fois tous les sept
+jours.
+
+Une PR de fork n'a ni le secret ni la variable : elle compile depuis le cache
+de `main`, et échoue avec un message explicite si le cache est vide.
+
+### `Connect IQ` : les contrôles statiques
+
+`./build.sh validate` ne demande que `python3` et vérifie ce qui se lit dans
+les fichiers, plus vite que la compilation :
 
 - `manifest.xml` bien formé, attributs et permissions `Background` /
   `Communications` présents ;
@@ -206,52 +217,6 @@ connaissable depuis les fichiers :
   `.keystore`) **dans tout le dépôt**, pas seulement sous `FouleeConnectIQ/` —
   la CI récupère l'arbre entier, et un feu vert restreint à ce dossier se
   lirait comme un feu vert global.
-
-C'est ce qui attrape les vraies régressions de ce dossier : elles viennent
-presque toutes d'un changement de matrice d'appareils. Le reste — la
-compilation des sept appareils en `-w -l 3` — est à la charge de
-`./build.sh build`, **à lancer avant de pousser** toute modification de
-`FouleeConnectIQ/`.
-
-### Si l'arbitrage change un jour
-
-Pour activer une vraie compilation en CI il faudrait, dans l'ordre :
-
-1. Créer les secrets `GARMIN_USERNAME` et `GARMIN_PASSWORD` (compte Garmin
-   complet — c'est là qu'est le vrai coût) ;
-2. créer le secret `CIQ_DEVELOPER_KEY_BASE64` :
-
-   ```sh
-   base64 -i $HOME/.garmin/foulee_developer_key.der | pbcopy
-   ```
-
-   La clé se matérialise et se nettoie exactement comme le matériel de
-   signature Apple dans [`release.yml`](../.github/workflows/release.yml) :
-
-   ```yaml
-   - name: Materialise the Connect IQ developer key
-     env:
-       CIQ_DEVELOPER_KEY_BASE64: ${{ secrets.CIQ_DEVELOPER_KEY_BASE64 }}
-     run: |
-       set -euo pipefail
-       echo "$CIQ_DEVELOPER_KEY_BASE64" | base64 --decode > "$RUNNER_TEMP/ciq.der"
-
-   # …compilation…
-
-   - name: Tidy the developer key
-     if: always()
-     run: rm -f "$RUNNER_TEMP/ciq.der"
-   ```
-
-   `build.sh` lit déjà `CIQ_DEVELOPER_KEY`, il n'y a rien d'autre à changer de
-   ce côté.
-3. Mettre en cache le SDK (`actions/cache`, épinglé par SHA comme le reste) :
-   213 Mo à chaque run sinon.
-4. Installer `connect-iq-sdk-manager`, accepter l'accord avec
-   `agreement accept --acceptance-hash=…`, puis
-   `device download --manifest=FouleeConnectIQ/manifest.xml`.
-
-Le point 1 est le seul vrai obstacle, et il est politique, pas technique.
 
 ## Publication sur le Connect IQ Store
 

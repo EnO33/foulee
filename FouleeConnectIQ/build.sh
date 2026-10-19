@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 #
-# Build the Foulée Connect IQ app locally.
+# Build the Foulée Connect IQ app, locally or in CI.
 #
-# This script is the real gate for the Monkey C code: the Connect IQ SDK cannot
-# be installed on a GitHub runner without a Garmin account, so CI only runs
-# `./build.sh validate` (which needs no SDK). Everything else — the actual
-# compile across the device matrix — runs here, on a machine that has the SDK.
-# Run `./build.sh build` before pushing anything that touches FouleeConnectIQ/.
-# See README.md, section « Intégration continue ».
+# This script is the gate for the Monkey C code: CI runs `validate`, `build`
+# and `test` on every pull request (README.md, « Intégration continue »).
 #
-#   ./build.sh validate           static checks, no SDK needed (what CI runs)
+#   ./build.sh validate           static checks, no SDK needed
 #   ./build.sh build [device…]    compile every device in the manifest
 #   ./build.sh test [device]      compile the unit-test build (default: venu2)
 #   ./build.sh package            build the .iq bundle for the store
@@ -74,7 +70,15 @@ resolve_sdk() {
     if [ -n "${CIQ_SDK_HOME:-}" ]; then
         SDK="${CIQ_SDK_HOME%/}"
     else
-        local config="$HOME/Library/Application Support/Garmin/ConnectIQ/current-sdk.cfg"
+        # The graphical SDK Manager on macOS, then connect-iq-sdk-manager (the
+        # command-line one CI uses, on any OS): each records the current SDK
+        # in its own folder.
+        local config
+        for config in \
+            "$HOME/Library/Application Support/Garmin/ConnectIQ/current-sdk.cfg" \
+            "$HOME/.Garmin/ConnectIQ/current-sdk.cfg"; do
+            [ -f "$config" ] && break
+        done
         [ -f "$config" ] || die "SDK Connect IQ introuvable. Définir CIQ_SDK_HOME ou installer le SDK Manager."
         SDK="$(tr -d '\n' <"$config")"
         SDK="${SDK%/}"
