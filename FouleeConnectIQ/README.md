@@ -151,14 +151,21 @@ Connect IQ interdit de les redistribuer (§ I(b)).
    authentification est active :
 
    ```sh
-   brew install lindell/connect-iq-sdk-manager-cli/connect-iq-sdk-manager
-   connect-iq-sdk-manager login
+   # Même version et même vérification qu'en CI (Apple Silicon ; sur Intel,
+   # Darwin_x86_64 et d355fb6f…7315749). Le tap Homebrew de l'auteur ne
+   # convient pas : sa formule est restée en 0.7.1, et son cask déclare un
+   # binaire qui n'est pas dans l'archive.
+   archive=connect-iq-sdk-manager-cli_0.8.4_Darwin_ARM64.tar.gz
+   curl -fsSLO "https://github.com/lindell/connect-iq-sdk-manager-cli/releases/download/v0.8.4/$archive"
+   echo "afc3903034ec081942f3480ec140859d0bb73158c1a6badd64b57f88f6bf936b  $archive" | shasum -a 256 -c
+   mkdir -p ~/.local/bin && tar -xzf "$archive" -C ~/.local/bin connect-iq-sdk-manager
+   ~/.local/bin/connect-iq-sdk-manager login
    ```
 
 2. Lire l'accord développeur et relever son empreinte :
 
    ```sh
-   connect-iq-sdk-manager agreement view
+   ~/.local/bin/connect-iq-sdk-manager agreement view
    ```
 
    L'empreinte va dans la **variable** de dépôt `CIQ_AGREEMENT_HASH` (Settings
