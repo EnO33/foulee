@@ -1,6 +1,6 @@
 # ADR 0009 — L'app Garmin devient une app de séance, au même rôle que l'Apple Watch
 
-- **Statut** : proposée (2026-10)
+- **Statut** : acceptée (2026-10)
 - **Issues** : [#464](https://github.com/EnO33/foulee/issues/464) (épic), [#474](https://github.com/EnO33/foulee/issues/474)
 - **Remplace** : la décision 2 de l'[ADR 0001](0001-garmin-integration.md) sur un point, le rôle de l'app Connect IQ (« la montre est un capteur, pas une seconde app »). La phase 1 (Garmin Connect → Santé) et le canal d'instantanés de la phase 2 restent en vigueur.
 
