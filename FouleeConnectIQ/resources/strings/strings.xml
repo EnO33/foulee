@@ -5,4 +5,9 @@
     <string id="UnitSteps" scope="glance">steps</string>
     <string id="UnitActiveMinutes" scope="glance">active min</string>
     <string id="UnitKilometers" scope="glance">km</string>
+    <string id="StreakDays" scope="glance">$1$-day streak</string>
+    <string id="UnitMinutes" scope="glance">min</string>
+    <string id="UnitCalories">kcal</string>
+    <string id="SyncHintTop">Open Foulée</string>
+    <string id="SyncHintBottom">on your iPhone</string>
 </resources>

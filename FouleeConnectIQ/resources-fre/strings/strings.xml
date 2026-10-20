@@ -5,4 +5,9 @@
     <string id="UnitSteps" scope="glance">pas</string>
     <string id="UnitActiveMinutes" scope="glance">min actives</string>
     <string id="UnitKilometers" scope="glance">km</string>
+    <string id="StreakDays" scope="glance">$1$ j de série</string>
+    <string id="UnitMinutes" scope="glance">min</string>
+    <string id="UnitCalories">kcal</string>
+    <string id="SyncHintTop">Ouvre Foulée</string>
+    <string id="SyncHintBottom">sur ton iPhone</string>
 </resources>

@@ -7,6 +7,7 @@ import Toybox.Lang;
 //!
 //! The keys are the contract with `GarminPhoneSync` on the phone, pinned by
 //! tests on both sides.
+(:glance)
 module PhoneSync {
 
     const MESSAGE_TYPE = "sync";

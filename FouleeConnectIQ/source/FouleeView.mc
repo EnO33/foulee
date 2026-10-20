@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.System;
 import Toybox.Timer;
 import Toybox.WatchUi;
 
@@ -8,8 +9,9 @@ import Toybox.WatchUi;
 //! the app opened, however far one walks with it open (#470).
 const VIEW_REFRESH_MS = 5000;
 
-//! Full-screen view: the same three numbers as the glance, nothing more. The
-//! watch is a sensor for Foulée, not a second app.
+//! The watch home, like `WatchTodayView` on the Apple Watch (ADR 0009, D4):
+//! the streak the phone sent, then today's figures in their Foulée colours,
+//! steps and minutes against the phone's goals.
 (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
 class FouleeView extends WatchUi.View {
 
@@ -43,37 +45,64 @@ class FouleeView extends WatchUi.View {
         dc.clear();
 
         var metrics = DailySnapshot.readMetrics($.readActivityInfo());
-        var centerX = dc.getWidth() / 2;
-        var height = dc.getHeight();
-        var centered = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
+        var sync = PhoneSync.load();
+        var stepsGoal = 0;
+        var minutesGoal = 0;
 
-        dc.drawText(
-            centerX,
-            height * 20 / 100,
-            Graphics.FONT_TINY,
-            WatchUi.loadResource($.Rez.Strings.AppName) as String,
-            centered
-        );
-        dc.drawText(
-            centerX,
-            height * 42 / 100,
-            Graphics.FONT_MEDIUM,
-            SnapshotFormat.steps(metrics[DailySnapshot.METRIC_STEPS]),
-            centered
-        );
-        dc.drawText(
-            centerX,
-            height * 62 / 100,
-            Graphics.FONT_SMALL,
-            SnapshotFormat.activeMinutes(metrics[DailySnapshot.METRIC_ACTIVE_MINUTES]),
-            centered
-        );
-        dc.drawText(
-            centerX,
-            height * 80 / 100,
-            Graphics.FONT_TINY,
-            SnapshotFormat.distance(metrics[DailySnapshot.METRIC_DISTANCE_CM]),
-            centered
-        );
+        if (sync != null) {
+            stepsGoal = sync["stepsGoal"] as Number;
+            minutesGoal = sync["minutesGoal"] as Number;
+            drawLine(dc, 20, Graphics.FONT_SMALL, MetricPalette.STREAK,
+                HomeFormat.streak(sync["streak"] as Number), null);
+        } else {
+            // Never synced: a streak of zero would be a lie, so say where it
+            // comes from instead.
+            drawLine(dc, 14, Graphics.FONT_XTINY, MetricPalette.SECONDARY,
+                WatchUi.loadResource($.Rez.Strings.SyncHintTop) as String, null);
+            drawLine(dc, 24, Graphics.FONT_XTINY, MetricPalette.SECONDARY,
+                WatchUi.loadResource($.Rez.Strings.SyncHintBottom) as String, null);
+        }
+
+        var steps = metrics[DailySnapshot.METRIC_STEPS];
+        var minutes = metrics[DailySnapshot.METRIC_ACTIVE_MINUTES];
+        drawLine(dc, 38, Graphics.FONT_TINY, MetricPalette.STEPS,
+            HomeFormat.steps(steps, stepsGoal), HomeFormat.steps(steps, 0));
+        drawLine(dc, 53, Graphics.FONT_TINY, MetricPalette.MINUTES,
+            HomeFormat.minutes(minutes, minutesGoal), HomeFormat.minutes(minutes, 0));
+        drawLine(dc, 68, Graphics.FONT_TINY, MetricPalette.DISTANCE,
+            SnapshotFormat.distance(metrics[DailySnapshot.METRIC_DISTANCE_CM]), null);
+        drawLine(dc, 83, Graphics.FONT_TINY, MetricPalette.CALORIES,
+            SnapshotFormat.groupDigits(metrics[DailySnapshot.METRIC_CALORIES], SnapshotFormat.thousandsSeparator())
+                + " " + WatchUi.loadResource($.Rez.Strings.UnitCalories),
+            null);
+    }
+
+    //! One centred line at `percent` of the height. When `text` does not fit
+    //! the dial at that height, `shorter` (the figure without its goal) is
+    //! drawn instead.
+    private function drawLine(
+        dc as Dc,
+        percent as Number,
+        font as Graphics.FontType,
+        color as Graphics.ColorType,
+        text as String,
+        shorter as String?
+    ) as Void {
+        var width = dc.getWidth();
+        var height = dc.getHeight();
+        var y = height * percent / 100;
+        var shown = text;
+        if (shorter != null) {
+            var available = HomeFormat.lineWidth(width, height, y, isRound()) * 90 / 100;
+            if (dc.getTextWidthInPixels(text, font) > available) {
+                shown = shorter;
+            }
+        }
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(width / 2, y, font, shown, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    private function isRound() as Boolean {
+        return System.getDeviceSettings().screenShape == System.SCREEN_SHAPE_ROUND;
     }
 }

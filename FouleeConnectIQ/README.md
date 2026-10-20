@@ -12,12 +12,14 @@ Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucun
 |---|---|
 | `source/DailySnapshot.mc` | Assemblage pur de l'instantané (lecture des métriques, génération, payload). Aucune E/S. |
 | `source/SnapshotService.mc` | Service d'arrière-plan : lit, persiste, décide, transmet. |
-| `source/FouleeGlanceView.mc` | Glance : pas du jour + minutes actives. |
-| `source/FouleeView.mc` | Vue plein écran : pas, minutes actives, distance. |
+| `source/FouleeGlanceView.mc` | Glance : série + minutes actives / objectif (les pas tant que l'iPhone n'a rien envoyé). |
+| `source/FouleeView.mc` | Accueil, comme `WatchTodayView` : série, pas / objectif, minutes / objectif, km, kcal ; « Ouvre Foulée sur ton iPhone » avant la première synchro. |
+| `source/HomeFormat.mc` | Textes de l'accueil et du glance : progression vers l'objectif, série, largeur disponible sur un cadran rond. |
+| `source/MetricPalette.mc` | Couleurs des chiffres, celles de l'iPhone : une variante AMOLED, MIP et monochrome, choisie par `excludeAnnotations` dans `monkey.jungle`. |
 | `source/SnapshotFormat.mc` | Formatage dans la langue de la montre : espace et virgule en français, virgule et point en anglais. |
 | `source/PhoneSync.mc` | État envoyé par l'iPhone (série, objectifs, mode, hydratation) : décodage tolérant et stockage (ADR 0009, D5). |
 | `source/SessionMath.mc` | Arithmétique d'une séance : chrono, allure, alerte au kilomètre (ADR 0009, D9). |
-| `source/DailySnapshotTest.mc`, `source/PhoneSyncTest.mc`, `source/SessionMathTest.mc` | Tests unitaires Run No Evil. |
+| `source/*Test.mc` | Tests unitaires Run No Evil. |
 | `build.sh` | Point d'entrée : `validate`, `build`, `test`, `package`. |
 | `tools/validate_project.py` | Contrôles statiques sans SDK — ce que lance la CI. |
 | `store/` | Fiche Connect IQ Store (FR + EN) et procédure de publication. |
@@ -276,7 +278,7 @@ La matrice couvre volontairement les deux extrêmes : AMOLED 416×416 et monochr
 >
 > `WARNING: fr55: resources/strings/strings.xml:3,4: String resource 'UnitSteps' specifies the 'glance' resource scope, but app type 'watch-app' does not support glances on device 'fr55'.`
 
-Ce sont les **seuls** avertissements restants (28 au total, 14 par appareil, uniquement sur ces deux-là). Les cinq autres appareils compilent sans un seul avertissement, en `-w -l 3`. Les faire disparaître demanderait de sortir `fr55` et `instinct2` de la matrice : le compromis retenu est l'inverse — ces deux modèles très répandus gagnent le service d'arrière-plan, qui est l'objet de l'app.
+Ce sont les **seuls** avertissements restants, uniquement sur ces deux-là ; leur nombre suit celui des modules et chaînes du glance. Les cinq autres appareils compilent sans un seul avertissement, en `-w -l 3`. Les faire disparaître demanderait de sortir `fr55` et `instinct2` de la matrice : le compromis retenu est l'inverse — ces deux modèles très répandus gagnent le service d'arrière-plan, qui est l'objet de l'app.
 
 ### Ajouter un appareil
 
