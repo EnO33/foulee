@@ -19,4 +19,6 @@
     <string id="Discard">Supprimer</string>
     <string id="DiscardConfirm">Supprimer la séance ?</string>
     <string id="KilometerDone">km $1$</string>
+    <string id="SessionSaved">Séance enregistrée</string>
+    <string id="Done">Terminer</string>
 </resources>

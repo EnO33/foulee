@@ -15,8 +15,16 @@ module SessionFlow {
         WatchUi.pushView(new SessionView(recorder), new SessionDelegate(recorder), WatchUi.SLIDE_UP);
     }
 
-    //! Back to the home once the session is saved or discarded: pops the
-    //! pause menu, then the Séance page.
+    //! A saved session ends on its summary: the pause menu is popped and the
+    //! Séance page replaced by the summary, which « Terminer » closes.
+    function finish(summary as Dictionary<Symbol, Number>) as Void {
+        _recorder = null;
+        WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+        WatchUi.switchToView(new SummaryView(summary), new SummaryDelegate(), WatchUi.SLIDE_UP);
+    }
+
+    //! Back to the home once the session is discarded: pops the pause menu,
+    //! then the Séance page.
     function end() as Void {
         _recorder = null;
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
