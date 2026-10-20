@@ -7,7 +7,7 @@ import Toybox.Lang;
 //!
 //! The keys are the contract with `GarminPhoneSync` on the phone, pinned by
 //! tests on both sides.
-(:glance)
+(:background :glance)
 module PhoneSync {
 
     const MESSAGE_TYPE = "sync";
@@ -38,6 +38,17 @@ module PhoneSync {
             "waterGoalML" => DailySnapshot.asCount(message.get("waterGoalML")),
             "glassML" => DailySnapshot.asCount(message.get("glassML"))
         };
+    }
+
+    //! Decodes and stores a message from the phone. True when it was a sync
+    //! message this build understands, so the caller knows to redraw.
+    function receive(data as Object?) as Boolean {
+        var state = decode(data);
+        if (state == null) {
+            return false;
+        }
+        save(state);
+        return true;
     }
 
     function save(state as Dictionary<String, Number or Boolean or String>) as Void {

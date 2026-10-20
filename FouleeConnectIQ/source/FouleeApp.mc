@@ -38,20 +38,24 @@ class FouleeApp extends Application.AppBase {
         return [new $.FouleeView(), new $.HomeDelegate()];
     }
 
-    //! The phone's state arrives while the app is open (ADR 0009, D5). Only the
-    //! full app listens: neither the glance nor the background service does.
+    //! The phone's state (ADR 0009, D5): straight to the open app, which
+    //! redraws, and to the background service while the app is closed (#492),
+    //! so the home and the glance show it on the next look without a relaunch.
+    //! Registered from the full app only: the background registration outlives
+    //! it, and neither the glance nor the service needs to renew it.
     (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     private function listenToPhone() as Void {
         if (Communications has :registerForPhoneAppMessages) {
             Communications.registerForPhoneAppMessages(method(:onPhoneMessage));
         }
+        if ((Toybox has :Background) && (Background has :registerForPhoneAppMessageEvent)) {
+            Background.registerForPhoneAppMessageEvent();
+        }
     }
 
     (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     function onPhoneMessage(message as Communications.PhoneAppMessage) as Void {
-        var state = PhoneSync.decode(message.data);
-        if (state != null) {
-            PhoneSync.save(state);
+        if (PhoneSync.receive(message.data)) {
             WatchUi.requestUpdate();
         }
     }

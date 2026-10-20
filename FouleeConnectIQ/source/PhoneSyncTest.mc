@@ -67,3 +67,20 @@ function phoneSyncFieldsFallBackInsteadOfFailing(logger as Logger) as Boolean {
     logger.debug("lenient fields");
     return true;
 }
+
+(:test)
+function phoneSyncReceiveStoresOnlyWhatItUnderstands(logger as Logger) as Boolean {
+    Test.assert(PhoneSync.receive(phoneSyncMessage()));
+    var stored = PhoneSync.load() as Dictionary<String, Number or Boolean or String>;
+    Test.assertEqual(stored["streak"] as Object, 12);
+
+    var newer = phoneSyncMessage();
+    newer["v"] = 2;
+    newer["streak"] = 99;
+    Test.assert(!PhoneSync.receive(newer));
+    stored = PhoneSync.load() as Dictionary<String, Number or Boolean or String>;
+    Test.assertEqual(stored["streak"] as Object, 12);
+
+    logger.debug("only understood messages stored");
+    return true;
+}
