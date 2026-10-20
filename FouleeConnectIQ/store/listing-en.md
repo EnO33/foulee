@@ -32,8 +32,9 @@ today's counters and nothing more: the streak, the reminders, the weather and
 the history all live on the phone.
 
 WHAT IT DOES
-• Shows today's steps, distance and active minutes on the watch; steps and
-  active minutes also in the glance, on devices that support glances.
+• Shows your streak, then today's steps and active minutes against your
+  goals, distance and calories, in Foulée's colours; streak and minutes also
+  in the glance, on devices that support glances.
 • Sends five of today's values to your iPhone every five minutes, whenever the
   phone is in range: steps, distance, active minutes, vigorous active minutes,
   calories — plus the time of the reading, the time your day started on the

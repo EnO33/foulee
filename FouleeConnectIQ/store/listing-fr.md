@@ -29,8 +29,9 @@ affiche tes compteurs du jour et rien d'autre : la série, les rappels, la mét�
 et l'historique vivent sur le téléphone.
 
 CE QU'ELLE FAIT
-• Affiche tes pas, ta distance et tes minutes actives du jour sur la montre ;
-  pas et minutes actives aussi dans le glance, sur les modèles qui le gèrent.
+• Affiche ta série, puis tes pas et tes minutes actives face à tes objectifs,
+  ta distance et tes calories du jour, aux couleurs de Foulée ; série et
+  minutes aussi dans le glance, sur les modèles qui le gèrent.
 • Envoie à ton iPhone, toutes les cinq minutes et seulement quand il est à
   portée, cinq valeurs du jour : pas, distance, minutes actives, minutes
   actives intenses, calories — plus l'heure de la mesure, l'heure de début
