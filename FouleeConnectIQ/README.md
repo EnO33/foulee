@@ -138,8 +138,10 @@ Cinq tests couvrent l'assemblage de l'instantané à partir d'une structure `inf
 
 ## Intégration continue
 
-Deux jobs de [`ci.yml`](../.github/workflows/ci.yml) couvrent ce dossier sur
-chaque PR.
+Deux jobs de [`ci.yml`](../.github/workflows/ci.yml) couvrent ce dossier, sur
+chaque PR qui le touche (ou qui touche `ci.yml`, l'action `prepare-connectiq`
+ou les identifiants côté iPhone) : le job `Changes` les saute sinon, et ne lance
+pas les jobs de l'app iOS pour une PR qui ne touche que ce dossier.
 
 ### `Connect IQ build` : la compilation
 
