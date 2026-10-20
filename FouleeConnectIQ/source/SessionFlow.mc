@@ -16,6 +16,18 @@ module SessionFlow {
         WatchUi.pushView(pages, new WatchUi.ViewLoopDelegate(pages), WatchUi.SLIDE_UP);
     }
 
+    //! Saves the session into Garmin Connect and queues its summary for the
+    //! phone, which shows the outing until Garmin Connect writes it to Santé
+    //! (ADR 0009, D2). The outbox is tried at once; the background service
+    //! retries what does not get through.
+    function save(recorder as SessionRecorder) as Dictionary<Symbol, Number> {
+        var summary = recorder.summary();
+        recorder.save();
+        Outbox.enqueue(SessionMessage.summary(summary, recorder.isRunning()));
+        $.deliverOutbox(null);
+        return summary;
+    }
+
     //! A saved session ends on its summary: the pause menu is popped and the
     //! session's pages replaced by the summary, which « Terminer » closes.
     function finish(summary as Dictionary<Symbol, Number>) as Void {
@@ -37,7 +49,7 @@ module SessionFlow {
     function saveIfOpen() as Void {
         var recorder = _recorder;
         if (recorder != null) {
-            recorder.save();
+            save(recorder);
             _recorder = null;
         }
     }
