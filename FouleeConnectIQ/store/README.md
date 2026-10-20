@@ -106,24 +106,16 @@ change.
 Le rendu est reproductible : relancé sur une source inchangée, il ne modifie
 aucun fichier. L'image d'en-tête reste à faire.
 
-### Captures d'écran, par appareil visé
+### Captures d'écran, par format d'écran
 
-Une capture par famille suffit pour la fiche, mais autant les avoir toutes :
-les formats vont du rond 416 × 416 au rectangle 320 × 360, et c'est précisément
-ce qu'un relecteur regarde. Résolutions relevées dans le `compiler.json` de
-chaque appareil (SDK 9.2.0) :
+Une capture par format suffit pour la fiche : rond AMOLED 454 × 454, rond MIP
+260 × 260 (fēnix 7, Forerunner 255) et rectangle 320 × 360 (Venu Sq 2) couvrent
+ce qu'un relecteur regarde. La résolution de chaque montre est dans la famille
+d'écran de [`devices.json`](../devices.json).
 
-| Appareil | Capture | Écran |
-|---|---|---|
-| fēnix 8 43 mm (`fenix843mm`) | 416 × 416 | AMOLED 16 bpp |
-| Venu 2 (`venu2`) | 416 × 416 | AMOLED 16 bpp |
-| Forerunner 165 (`fr165`) | 390 × 390 | AMOLED 16 bpp |
-| vívoactive 5 (`vivoactive5`) | 390 × 390 | AMOLED 16 bpp |
-| Venu Sq 2 (`venusq2`) | 320 × 360 | AMOLED 16 bpp |
-
-Ne pas confondre avec les **icônes de lancement** embarquées dans l'app, qui
-sont d'autres tailles encore (60, 70, 54, 56 et 40 px respectivement) et
-que `./build.sh validate` vérifie déjà à chaque PR.
+Ne pas confondre avec les **icônes de lancement** embarquées dans l'app, d'une
+taille propre à chaque montre, que `./build.sh validate` vérifie déjà à chaque
+PR.
 
 ## 3. Prendre les captures — procédure manuelle
 
@@ -149,8 +141,8 @@ Puis, dans le simulateur :
 2. Laisser la vue plein écran s'afficher, puis **File → Screen Shot** : le
    simulateur écrit un PNG **à la taille exacte de l'écran de l'appareil**,
    sans décor de montre ni fond d'écran de bureau.
-3. Recommencer pour le *glance* (**Simulation → Glance View**), que les cinq
-   appareils supportent.
+3. Recommencer pour le *glance* (**Simulation → Glance View**), que toutes les
+   montres de la matrice supportent.
 
 > Ne **jamais** utiliser `screencapture` sur l'écran entier pour ça : la capture
 > embarquerait le bureau du développeur, et sa taille n'aurait aucun rapport

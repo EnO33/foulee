@@ -5,8 +5,9 @@ import Toybox.Lang;
 //! Watch (`MetricPalette.swift`): steps purple, minutes green, distance blue,
 //! calories and the streak orange, the heart rate red.
 //!
-//! The brand's exact colours: every device of the matrix has a colour
-//! AMOLED screen.
+//! The brand's exact colours. AMOLED watches show them as they are; the
+//! 64-colour memory-in-pixel ones (fēnix 7, Forerunner 255…) map each to the
+//! nearest colour of their palette, which keeps the hues apart.
 
 (:glance)
 module MetricPalette {

@@ -18,6 +18,7 @@ in GitHub's `::error` annotation format so it lands on the PR diff.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -27,19 +28,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 IQ_NS = "http://www.garmin.com/xml/connectiq"
 
-# Launcher icon size, in pixels, that each device's own profile demands. Read
-# from `launcherIcon` in
-# ~/Library/Application Support/Garmin/ConnectIQ/Devices/<id>/compiler.json
-# with SDK 9.2.0. These are device hardware facts, not preferences: an icon of
-# any other size makes the resource compiler rescale it and emit a warning.
-# When adding a device, read its compiler.json and add the row here.
-LAUNCHER_ICON_PX = {
-    "fenix843mm": 60,
-    "fr165": 54,
-    "venu2": 70,
-    "venusq2": 40,
-    "vivoactive5": 56,
-}
+# The device matrix: one row per watch, the hardware facts read from its
+# compiler.json by tools/device_catalog.py --write, which also writes the
+# manifest's <iq:products>. The launcher icon size is a fact, not a preference:
+# an icon of any other size makes the resource compiler rescale it and warn.
+DEVICES_FILE = "devices.json"
+
+
+def load_devices() -> dict[str, dict]:
+    with open(os.path.join(ROOT, DEVICES_FILE), encoding="utf-8") as handle:
+        return {row["id"]: row for row in json.load(handle)}
 
 # The application id of the *production* store entry, the one the committed
 # manifest must carry. A beta build needs a different id (a beta app is a
@@ -262,8 +260,18 @@ def icon_dimensions(relative_path: str) -> tuple[int | None, int | None]:
     return None, None
 
 
-def check_device_resources(device: str, drawable_id: str) -> None:
-    folder = f"resources-{device}"
+def icon_folder(device: dict) -> str:
+    """Where the device's launcher icon lives: its own folder when it has one,
+    else its screen family's, shared by every device of that family whose icon
+    is the same size (tools/render_icons.py)."""
+    own = f"resources-{device['id']}"
+    if os.path.isdir(os.path.join(ROOT, own)):
+        return own
+    return f"resources-{device['family']}"
+
+
+def check_device_resources(device: dict, drawable_id: str) -> None:
+    folder = icon_folder(device)
     drawables_path = f"{folder}/drawables/drawables.xml"
     root = parse_xml(drawables_path)
     if root is None:
@@ -284,27 +292,19 @@ def check_device_resources(device: str, drawable_id: str) -> None:
         fail(f"{drawables_path} : le fichier « {filename} » n'existe pas", drawables_path)
         return
 
-    expected = LAUNCHER_ICON_PX.get(device)
-    if expected is None:
-        fail(
-            f"appareil « {device} » absent de LAUNCHER_ICON_PX dans "
-            "tools/validate_project.py — relever launcherIcon dans le "
-            "compiler.json de l'appareil et ajouter la ligne",
-        )
-        return
-
+    expected = device["icon"]
     width, height = icon_dimensions(icon_path)
     if width is None or height is None:
         return
     if width != expected or height != expected:
         fail(
-            f"{icon_path} : l'icône fait {width}×{height}, l'appareil « {device} » "
+            f"{icon_path} : l'icône fait {width}×{height}, l'appareil « {device['id']} » "
             f"attend {expected}×{expected} — le compilateur redimensionnerait et "
             "avertirait",
             icon_path,
         )
     else:
-        ok(f"{device} : icône {expected}×{expected}")
+        ok(f"{device['id']} : icône {expected}×{expected} ({folder})")
 
 
 def check_strings() -> None:
@@ -454,6 +454,18 @@ SDK_QUALIFIER = re.compile(
 )
 
 
+def check_matrix(devices: list[str], matrix: dict[str, dict]) -> None:
+    """The manifest declares exactly the watches of devices.json: both are
+    written together by tools/device_catalog.py --write."""
+    declared, listed = set(devices), set(matrix)
+    for device in sorted(declared - listed):
+        fail(f"manifest.xml : « {device} » absent de {DEVICES_FILE}", "manifest.xml")
+    for device in sorted(listed - declared):
+        fail(f"{DEVICES_FILE} : « {device} » absent des <iq:products> du manifeste", DEVICES_FILE)
+    if declared == listed:
+        ok(f"manifest.xml et {DEVICES_FILE} : les mêmes {len(listed)} appareils")
+
+
 def check_orphan_resources(devices: list[str]) -> None:
     declared = set(devices)
     for entry in sorted(os.listdir(ROOT)):
@@ -474,6 +486,8 @@ def main() -> int:
     print(f"Validation du projet Connect IQ ({ROOT})")
 
     devices, drawable_id = check_manifest()
+    matrix = load_devices()
+    check_matrix(devices, matrix)
     check_jungle()
     check_sources()
     check_strings()
@@ -485,7 +499,8 @@ def main() -> int:
         )
     else:
         for device in devices:
-            check_device_resources(device, drawable_id)
+            if device in matrix:
+                check_device_resources(matrix[device], drawable_id)
     check_companion_ids()
     check_no_key_material()
     check_orphan_resources(devices)
