@@ -14,8 +14,63 @@ permissions:
   contents: read
 
 jobs:
+  # What the change touches, so a Garmin-only change does not wait on the
+  # macOS jobs and an app-only one does not download the Connect IQ SDK.
+  # The workflow itself, and the actions it shares, count as both.
+  changes:
+    name: Changes
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      apple: ${{ steps.filter.outputs.apple }}
+      garmin: ${{ steps.filter.outputs.garmin }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            workflow: &workflow
+              - .github/workflows/ci.yml
+            apple:
+              - *workflow
+              - .github/actions/prepare-project/**
+              - .github/actions/report-test-failure/**
+              - Foulee/**
+              - FouleeKit/**
+              - FouleeKitTests/**
+              - FouleeLiveActivity/**
+              - FouleeScreenshots/**
+              - FouleeTests/**
+              - FouleeWatch/**
+              - FouleeWatchScreenshots/**
+              - FouleeWatchTests/**
+              - FouleeWatchWidget/**
+              - FouleeWidget/**
+              - Tuist/**
+              - tools/**
+              - Project.swift
+              - Tuist.swift
+              - mise.toml
+              - .package.resolved
+              - .swiftlint.yml
+              - .swift-format
+              - .periphery.yml
+              - .periphery.baseline.json
+            garmin:
+              - *workflow
+              - .github/actions/prepare-connectiq/**
+              - FouleeConnectIQ/**
+              # The validator checks the app ids the iPhone listens to.
+              - Foulee/Connectivity/GarminConnectIQClient.swift
+
   lint:
     name: Lint
+    needs: changes
+    if: needs.changes.outputs.apple == 'true'
     # Same image as the platform jobs: the release scripts are type-checked
     # with this runner's swiftc, which must be the one that ships the app.
     runs-on: xcode-27
@@ -54,6 +109,8 @@ jobs:
     # the iPhone listening to the right app ids, no key material committed.
     # The compile itself is the `connectiq-build` job below.
     name: Connect IQ
+    needs: changes
+    if: needs.changes.outputs.garmin == 'true'
     # Pinned to a version, like the macOS jobs around it: a floating label
     # moves the runner image under us without a commit. This job only needs
     # python3, so bumping it is a one-line, deliberate change.
@@ -72,6 +129,8 @@ jobs:
     # compiles its unit-test build (issue #466). The SDK and the device
     # profiles come from ./.github/actions/prepare-connectiq.
     name: Connect IQ build
+    needs: changes
+    if: needs.changes.outputs.garmin == 'true'
     runs-on: ubuntu-24.04
     # Garmin's servers are outside our control: a stalled SDK or profile
     # download must fail the job, not hold a runner for GitHub's six hours.
@@ -118,6 +177,8 @@ jobs:
   # runner's own macOS: no simulator to install, boot or launch.
   kit:
     name: Kit
+    needs: changes
+    if: needs.changes.outputs.apple == 'true'
     runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -148,6 +209,8 @@ jobs:
   # followed by a `test` that recompiled everything.
   ios:
     name: iOS
+    needs: changes
+    if: needs.changes.outputs.apple == 'true'
     # GitHub's Xcode 27 image (issue #404): macOS 27, Xcode 27.x, iOS 27 and
     # watchOS 27 simulators preinstalled. The general-purpose macos-26 image
     # tops out at Xcode 26.6, and Xcode 27 does not run on macos-15 at all
@@ -217,6 +280,8 @@ jobs:
 
   watchos:
     name: watchOS
+    needs: changes
+    if: needs.changes.outputs.apple == 'true'
     runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -312,7 +377,8 @@ jobs:
   # `periphery scan --write-baseline .periphery.baseline.json`.
   deadcode:
     name: Dead code
-    if: github.event_name == 'pull_request'
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.apple == 'true'
     runs-on: xcode-27
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -376,15 +442,16 @@ jobs:
     # branch protection. The work now happens in the jobs above; this one
     # only reports their outcome, so the protection rule needs no change.
     # `always()`: a skipped aggregator would count as passing — alls-green
-    # fails it unless every job it needs succeeded. The dead-code job only
-    # runs on pull requests: skipped on a push to main, it is allowed to be.
+    # fails it unless every job it needs succeeded or was allowed to skip.
+    # Every job but `changes` may skip: it runs only when the change touches
+    # its side (and the dead-code job only on pull requests).
     name: Build & Test
-    needs: [kit, ios, watchos, deadcode, connectiq-build]
+    needs: [changes, lint, connectiq, connectiq-build, kit, ios, watchos, deadcode]
     if: always()
     runs-on: ubuntu-24.04
     steps:
       - name: Every platform passed
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
-          allowed-skips: deadcode
+          allowed-skips: lint, connectiq, connectiq-build, kit, ios, watchos, deadcode
           jobs: ${{ toJSON(needs) }}
