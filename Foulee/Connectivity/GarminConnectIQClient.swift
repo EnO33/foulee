@@ -87,6 +87,10 @@ nonisolated struct GarminConnectIQClient: Sendable {
     /// silently — a foreign or malformed payload is not an app error.
     var snapshots: @Sendable () -> AsyncStream<GarminDailySnapshot>
 
+    /// The session in progress on the watch, each state as it is decoded
+    /// (ADR 0009, D7). Read by `MirroredSessionStore`.
+    var sessionStates: @Sendable () -> AsyncStream<WatchSessionSnapshot>
+
     /// Today's Garmin overlay as of the given instant — the high-water floor
     /// the day's snapshots left, or nil when none can speak for today. Read by
     /// `TodayStore` on every refresh; persisted, so a background relaunch keeps
@@ -108,6 +112,7 @@ nonisolated extension GarminConnectIQClient: DependencyKey {
         },
         startReceiving: {},
         snapshots: { AsyncStream { $0.finish() } },
+        sessionStates: { AsyncStream { $0.finish() } },
         todayOverlay: { _ in nil }
     )
 
@@ -118,6 +123,7 @@ nonisolated extension GarminConnectIQClient: DependencyKey {
         knownDevices: { [] },
         startReceiving: {},
         snapshots: { AsyncStream { $0.finish() } },
+        sessionStates: { AsyncStream { $0.finish() } },
         todayOverlay: { _ in nil }
     )
 }

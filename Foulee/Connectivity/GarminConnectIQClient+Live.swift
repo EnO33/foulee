@@ -23,6 +23,7 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
         /// twice would deliver every message twice.
         var registeredDeviceIDs: Set<UUID> = []
         var subscribers: [UUID: AsyncStream<GarminDailySnapshot>.Continuation] = [:]
+        var sessionSubscribers: [UUID: AsyncStream<WatchSessionSnapshot>.Continuation] = [:]
         var lastAccepted: GarminDailySnapshot?
     }
 
@@ -118,11 +119,21 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
     }
 
     func snapshots() -> AsyncStream<GarminDailySnapshot> {
+        stream(of: \.subscribers)
+    }
+
+    func sessionStates() -> AsyncStream<WatchSessionSnapshot> {
+        stream(of: \.sessionSubscribers)
+    }
+
+    private func stream<Element: Sendable>(
+        of subscribers: WritableKeyPath<State, [UUID: AsyncStream<Element>.Continuation]> & Sendable
+    ) -> AsyncStream<Element> {
         AsyncStream { continuation in
             let id = UUID()
-            state.withLock { $0.subscribers[id] = continuation }
+            state.withLock { $0[keyPath: subscribers][id] = continuation }
             continuation.onTermination = { [weak self] _ in
-                self?.state.withLock { $0.subscribers[id] = nil }
+                self?.state.withLock { $0[keyPath: subscribers][id] = nil }
             }
         }
     }
@@ -139,6 +150,13 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
         // it; nothing is published from here.
         if let summary = GarminSessionSummary.decode(message) {
             GarminPendingOutingStore.add(summary)
+            return
+        }
+        // The session in progress, for the mirror screen (ADR 0009, D7).
+        // Every state goes through: `MirroredSessionStore` keeps the newest.
+        if let session = GarminSessionState.decode(message) {
+            let subscribers = state.withLock { Array($0.sessionSubscribers.values) }
+            for subscriber in subscribers { subscriber.yield(session) }
             return
         }
         guard let snapshot = GarminDailySnapshot.decode(message) else { return }
@@ -166,6 +184,7 @@ nonisolated extension GarminConnectIQClient {
         knownDevices: { GarminDeviceStore.read() },
         startReceiving: { GarminConnectIQBridge.shared.startReceiving() },
         snapshots: { GarminConnectIQBridge.shared.snapshots() },
+        sessionStates: { GarminConnectIQBridge.shared.sessionStates() },
         todayOverlay: { GarminSnapshotStore.readFloor(now: $0) }
     )
 }

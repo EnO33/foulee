@@ -134,6 +134,9 @@ struct FouleeApp: App {
                 await MirroredLiveActivity.shared.reflect(store)
             }
         }
+        Task { @MainActor in
+            await MirroredSessionStore.shared.observeGarmin()
+        }
     }()
 
     /// Ask iOS for a background refresh in ~2 h. Called when the app goes to

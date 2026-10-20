@@ -34,17 +34,25 @@ struct MirroredSessionStoreTests {
         steps: Int = 0,
         isEnded: Bool = false
     ) -> MirroredSessionEvent {
-        .snapshot(
-            WatchSessionSnapshot(
-                sentAt: base.addingTimeInterval(offset),
-                outingStartedAt: base.addingTimeInterval(outing),
-                activity: activity,
-                steps: steps,
-                distanceMeters: 0,
-                activeCalories: 0,
-                heartRate: nil,
-                isEnded: isEnded
-            )
+        .snapshot(state(at: offset, outingAt: outing, activity: activity, steps: steps, isEnded: isEnded))
+    }
+
+    private func state(
+        at offset: TimeInterval,
+        outingAt outing: TimeInterval = 0,
+        activity: SessionActivity = .walking,
+        steps: Int = 0,
+        isEnded: Bool = false
+    ) -> WatchSessionSnapshot {
+        WatchSessionSnapshot(
+            sentAt: base.addingTimeInterval(offset),
+            outingStartedAt: base.addingTimeInterval(outing),
+            activity: activity,
+            steps: steps,
+            distanceMeters: 0,
+            activeCalories: 0,
+            heartRate: nil,
+            isEnded: isEnded
         )
     }
 
@@ -257,5 +265,24 @@ struct MirroredSessionStoreTests {
         store.apply(mirror(.walking, at: 3_600))
 
         #expect(store.outingStartedAt == base.addingTimeInterval(3_600))
+    }
+
+    @Test("A Garmin state opens the outing, named after its watch")
+    func garminStateOpensTheOuting() {
+        let store = store()
+        store.apply(.garmin(state(at: 10, steps: 120)))
+        #expect(store.session?.device == .garmin)
+        #expect(store.session?.device.acceptsStop == false)
+        #expect(store.figures?.steps == 120)
+    }
+
+    @Test("A Garmin end dated the same second as the figures held still ends")
+    func garminEndInTheSameSecond() {
+        let store = store()
+        store.apply(.garmin(state(at: 10)))
+        store.apply(.garmin(state(at: 10)))
+        #expect(store.isMirroring)
+        store.apply(.garmin(state(at: 10, isEnded: true)))
+        #expect(!store.isMirroring)
     }
 }

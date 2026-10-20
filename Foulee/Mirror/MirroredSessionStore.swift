@@ -68,6 +68,9 @@ final class MirroredSessionStore {
     @ObservationIgnored
     @Dependency(\.mirroredWorkout) private var client
 
+    @ObservationIgnored
+    @Dependency(\.garminConnectIQ) private var garminConnectIQ
+
     /// Consume the mirror stream until cancelled. One caller, at process start.
     ///
     /// `onChange` runs after every event, once the store is up to date — the
@@ -77,6 +80,15 @@ final class MirroredSessionStore {
         for await event in client.events() {
             apply(event)
             await onChange(self)
+        }
+    }
+
+    /// Consume the Garmin watch's session states until cancelled (ADR 0009,
+    /// D7). One caller, at process start. No Lock Screen hook: D7 leaves the
+    /// Live Activity out for a Garmin session.
+    func observeGarmin() async {
+        for await state in garminConnectIQ.sessionStates() {
+            apply(.garmin(state))
         }
     }
 
@@ -91,7 +103,9 @@ final class MirroredSessionStore {
             if outingStartedAt == nil { outingStartedAt = mirrored.startedAt }
             session = mirrored
         case .snapshot(let snapshot):
-            apply(snapshot)
+            apply(snapshot, from: .appleWatch)
+        case .garmin(let snapshot):
+            apply(snapshot, from: .garmin)
         case .ended:
             clear()
         }
@@ -104,8 +118,15 @@ final class MirroredSessionStore {
     /// that accumulated since the last wake, and promises delivery rather than
     /// sequence. Comparing `sentAt` is what keeps a stale batch from rewinding
     /// the counters on screen.
-    private func apply(_ snapshot: WatchSessionSnapshot) {
-        if let newest = newestSentAt, newest >= snapshot.sentAt { return }
+    ///
+    /// An end dated the same as the figures held still ends: the Garmin watch
+    /// dates to the second, and its end can leave in the second of a periodic
+    /// state.
+    private func apply(_ snapshot: WatchSessionSnapshot, from device: MirroredDevice) {
+        if let newest = newestSentAt,
+           newest > snapshot.sentAt || (newest == snapshot.sentAt && !snapshot.isEnded) {
+            return
+        }
         if !snapshot.isEnded, let ended = endedOutingStartedAt,
            snapshot.outingStartedAt <= ended {
             return
@@ -119,7 +140,8 @@ final class MirroredSessionStore {
         if session == nil, !snapshot.isEnded {
             session = MirroredSession(
                 startedAt: snapshot.outingStartedAt,
-                activity: snapshot.activity
+                activity: snapshot.activity,
+                device: device
             )
         }
         session?.activity = snapshot.activity

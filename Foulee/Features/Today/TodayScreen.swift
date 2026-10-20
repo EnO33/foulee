@@ -142,7 +142,7 @@ struct TodayScreen: View {
     private func heroCard(snapshot: TodaySnapshot) -> some View {
         TodayHeroCard(
             snapshot: snapshot,
-            isMirroring: mirroredSession.isMirroring,
+            mirroring: mirroredSession.session?.device,
             // Only when the mode already answers « quel sport ? ». In « les
             // deux » the watch's own picker is where that is asked, and the
             // stamp it produces is permanent (issues #223, #224).
