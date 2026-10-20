@@ -22,6 +22,7 @@ Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucun
 | `source/SessionRecorder.mc` | Enregistrement de la séance par l'enregistreur FIT de la montre (`ActivityRecording`), GPS et cardio allumés pendant la séance seulement (D2). |
 | `source/SessionFlow.mc`, `source/SessionDelegates.mc` | « Démarrer » depuis l'accueil (choix Marche / Course en mode « Les deux »), pause en `Menu2` : Reprendre, Enregistrer, Supprimer (avec confirmation). |
 | `source/SessionView.mc` | Page Séance : chrono, distance, allure, fréquence cardiaque, vibration et kilomètre affiché à chaque borne. |
+| `source/SessionPages.mc` | Pages de la séance en `ViewLoop` : Séance, puis Journée (l'accueil). |
 | `source/SummaryView.mc` | Résumé d'une séance enregistrée : durée, pas, distance, « Terminer » vers l'accueil. |
 | `source/*Test.mc` | Tests unitaires Run No Evil. |
 | `build.sh` | Point d'entrée : `validate`, `build`, `test`, `package`. |

@@ -2,7 +2,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 //! The one session in progress, and the screens it puts on the stack: the
-//! Séance page over the home, the pause menu over the page.
+//! session's pages over the home, the pause menu over the pages.
 (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
 module SessionFlow {
 
@@ -12,11 +12,12 @@ module SessionFlow {
         var recorder = new SessionRecorder(running);
         recorder.start();
         _recorder = recorder;
-        WatchUi.pushView(new SessionView(recorder), new SessionDelegate(recorder), WatchUi.SLIDE_UP);
+        var pages = new WatchUi.ViewLoop(new SessionPages(recorder), {:wrap => true});
+        WatchUi.pushView(pages, new WatchUi.ViewLoopDelegate(pages), WatchUi.SLIDE_UP);
     }
 
     //! A saved session ends on its summary: the pause menu is popped and the
-    //! Séance page replaced by the summary, which « Terminer » closes.
+    //! session's pages replaced by the summary, which « Terminer » closes.
     function finish(summary as Dictionary<Symbol, Number>) as Void {
         _recorder = null;
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
@@ -24,7 +25,7 @@ module SessionFlow {
     }
 
     //! Back to the home once the session is discarded: pops the pause menu,
-    //! then the Séance page.
+    //! then the session's pages.
     function end() as Void {
         _recorder = null;
         WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
