@@ -218,8 +218,11 @@ de `main`, et échoue avec un message explicite si le cache est vide.
 
 ### `Connect IQ` : les contrôles statiques
 
-`./build.sh validate` ne demande que `python3` et vérifie ce qui se lit dans
-les fichiers, plus vite que la compilation :
+`./build.sh validate` ne demande que `python3` et vérifie, en quelques
+secondes, ce que le compilateur ne voit pas. Les ressources, les icônes de
+lancement et leur taille exacte sont laissées à `monkeyc` : une icône à la
+mauvaise taille est redimensionnée avec un avertissement, qui fait échouer
+`./build.sh build`.
 
 - `manifest.xml` bien formé, attributs et permissions `Background` /
   `Communications` présents ;
@@ -230,13 +233,6 @@ les fichiers, plus vite que la compilation :
 - l'identifiant d'application est bien celui **de production** (`PRODUCTION_APP_ID`
   dans le validateur) : c'est ce qui attrape un manifeste resté sur
   l'identifiant beta après un paquet de test (voir `store/README.md` § 5) ;
-- chaque `<iq:product>` a bien son dossier `resources-<id>/` avec un
-  `drawables.xml` exposant l'identifiant que `launcherIcon` désigne — celui du
-  manifeste, pas un nom en dur, pour qu'un renommage cohérent passe et qu'un
-  renommage à moitié fait échoue ;
-- chaque icône est **exactement** à la taille attendue par l'appareil (sinon le
-  compilateur redimensionne en silence et avertit), qu'elle soit en SVG — via
-  `width`/`height` ou à défaut le `viewBox` — ou en PNG, lu dans son IHDR ;
 - aucun dossier `resources-<id>/` orphelin. Les qualifieurs du SDK sont
   épargnés (`resources-fre`, `resources-round-416x416`…) : ce sont des dossiers
   légitimes, pas des restes d'un appareil retiré ;

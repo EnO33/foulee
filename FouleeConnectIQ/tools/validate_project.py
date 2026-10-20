@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 """Static checks on the Connect IQ project that need no Connect IQ SDK.
 
-CI compiles the app too (FouleeConnectIQ/README.md, "Intégration continue"),
-but only once the SDK and the device profiles are in place. This script runs
-first and in seconds: everything about the project that is knowable from the
-files themselves, including what the compiler cannot see (the production app
-id, the iPhone listening to it, key material committed by mistake).
-
-It catches the mistakes that actually happen when the device matrix changes:
-a product added to the manifest with no resources folder, a launcher icon at
-the wrong pixel size (the resource compiler silently rescales and warns), a
-drawable id that no longer matches `launcherIcon`, malformed XML.
+CI compiles the app for every device in -w -l 3, failing on any warning
+(FouleeConnectIQ/README.md, "Intégration continue"): resources, launcher icons
+and their sizes are the compiler's to check. This script runs first and in
+seconds, and keeps to what the compiler cannot see: the production app id, the
+iPhone listening to it, the API floor of the matrix, the manifest and
+devices.json declaring the same watches, translations, orphan resource folders
+and key material committed by mistake.
 
 Exit code 0 when everything checks out, 1 otherwise. Every failure is printed
 in GitHub's `::error` annotation format so it lands on the PR diff.
@@ -30,8 +27,7 @@ IQ_NS = "http://www.garmin.com/xml/connectiq"
 
 # The device matrix: one row per watch, the hardware facts read from its
 # compiler.json by tools/device_catalog.py --write, which also writes the
-# manifest's <iq:products>. The launcher icon size is a fact, not a preference:
-# an icon of any other size makes the resource compiler rescale it and warn.
+# manifest's <iq:products>.
 DEVICES_FILE = "devices.json"
 
 
@@ -96,21 +92,16 @@ def parse_xml(relative_path: str) -> ET.Element | None:
         return None
 
 
-def check_manifest() -> tuple[list[str], str | None]:
-    """Validate manifest.xml.
-
-    Returns the declared product ids and the drawable id `launcherIcon` points
-    at — the resource check needs the latter to look for the id the manifest
-    actually names rather than a hard-coded one.
-    """
+def check_manifest() -> list[str]:
+    """Validate manifest.xml and return the declared product ids."""
     root = parse_xml("manifest.xml")
     if root is None:
-        return [], None
+        return []
 
     application = root.find(f"{{{IQ_NS}}}application")
     if application is None:
         fail("manifest.xml : aucun élément <iq:application>", "manifest.xml")
-        return [], None
+        return []
 
     app_id = application.get("id", "")
     if not re.fullmatch(r"[0-9a-f]{32}", app_id):
@@ -137,17 +128,6 @@ def check_manifest() -> tuple[list[str], str | None]:
             fail(f"manifest.xml : attribut « {attribute} » manquant", "manifest.xml")
 
     check_min_api_level(application.get("minApiLevel", ""))
-
-    launcher_icon = application.get("launcherIcon", "")
-    drawable_id: str | None = None
-    if launcher_icon and not launcher_icon.startswith("@Drawables."):
-        fail(
-            f"manifest.xml : launcherIcon « {launcher_icon} » ne pointe pas vers "
-            "une ressource @Drawables.",
-            "manifest.xml",
-        )
-    elif launcher_icon:
-        drawable_id = launcher_icon[len("@Drawables.") :] or None
 
     products = application.find(f"{{{IQ_NS}}}products")
     ids = (
@@ -179,7 +159,7 @@ def check_manifest() -> tuple[list[str], str | None]:
     if declared:
         ok(f"permissions déclarées : {', '.join(sorted(declared))}")
 
-    return [i for i in ids if i], drawable_id
+    return [i for i in ids if i]
 
 
 def check_min_api_level(raw: str) -> None:
@@ -199,112 +179,6 @@ def check_min_api_level(raw: str) -> None:
         )
     else:
         ok(f"minApiLevel {raw} (≥ {required})")
-
-
-def png_dimensions(relative_path: str) -> tuple[int | None, int | None]:
-    """Width and height from a PNG's IHDR chunk, which is always first."""
-    path = os.path.join(ROOT, relative_path)
-    try:
-        with open(path, "rb") as handle:
-            header = handle.read(24)
-    except OSError as exc:
-        fail(f"lecture impossible de {relative_path} : {exc}", relative_path)
-        return None, None
-    if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR":
-        fail(f"{relative_path} : PNG illisible (en-tête IHDR absent)", relative_path)
-        return None, None
-    return (
-        int.from_bytes(header[16:20], "big"),
-        int.from_bytes(header[20:24], "big"),
-    )
-
-
-def svg_dimensions(relative_path: str) -> tuple[int | None, int | None]:
-    root = parse_xml(relative_path)
-    if root is None:
-        return None, None
-
-    def to_pixels(raw: str | None) -> int | None:
-        if raw is None:
-            return None
-        match = re.fullmatch(r"\s*(\d+)(?:\.0+)?(?:px)?\s*", raw)
-        return int(match.group(1)) if match else None
-
-    width, height = to_pixels(root.get("width")), to_pixels(root.get("height"))
-    if width is not None and height is not None:
-        return width, height
-
-    # An SVG may carry its size in the viewBox alone ("minX minY width height"),
-    # which is just as valid a 70pt icon as width="70" height="70".
-    box = (root.get("viewBox") or "").replace(",", " ").split()
-    if len(box) == 4:
-        try:
-            return int(float(box[2])), int(float(box[3]))
-        except ValueError:
-            pass
-    return width, height
-
-
-def icon_dimensions(relative_path: str) -> tuple[int | None, int | None]:
-    """Pixel size of a launcher icon, whichever format it is stored in."""
-    extension = os.path.splitext(relative_path)[1].lower()
-    if extension == ".png":
-        return png_dimensions(relative_path)
-    if extension == ".svg":
-        return svg_dimensions(relative_path)
-    named = extension or "sans extension"
-    fail(
-        f"{relative_path} : format d'icône non reconnu « {named} » — attendu .svg ou .png",
-        relative_path,
-    )
-    return None, None
-
-
-def icon_folder(device: dict) -> str:
-    """Where the device's launcher icon lives: its own folder when it has one,
-    else its screen family's, shared by every device of that family whose icon
-    is the same size (tools/render_icons.py)."""
-    own = f"resources-{device['id']}"
-    if os.path.isdir(os.path.join(ROOT, own)):
-        return own
-    return f"resources-{device['family']}"
-
-
-def check_device_resources(device: dict, drawable_id: str) -> None:
-    folder = icon_folder(device)
-    drawables_path = f"{folder}/drawables/drawables.xml"
-    root = parse_xml(drawables_path)
-    if root is None:
-        return
-
-    bitmaps = {b.get("id"): b.get("filename") for b in root.findall("bitmap")}
-    if drawable_id not in bitmaps:
-        fail(
-            f"{drawables_path} : aucun bitmap d'id « {drawable_id} » — le "
-            "launcherIcon du manifeste ne se résoudra pas",
-            drawables_path,
-        )
-        return
-
-    filename = bitmaps[drawable_id] or ""
-    icon_path = f"{folder}/drawables/{filename}"
-    if not os.path.exists(os.path.join(ROOT, icon_path)):
-        fail(f"{drawables_path} : le fichier « {filename} » n'existe pas", drawables_path)
-        return
-
-    expected = device["icon"]
-    width, height = icon_dimensions(icon_path)
-    if width is None or height is None:
-        return
-    if width != expected or height != expected:
-        fail(
-            f"{icon_path} : l'icône fait {width}×{height}, l'appareil « {device['id']} » "
-            f"attend {expected}×{expected} — le compilateur redimensionnerait et "
-            "avertirait",
-            icon_path,
-        )
-    else:
-        ok(f"{device['id']} : icône {expected}×{expected} ({folder})")
 
 
 def check_strings() -> None:
@@ -485,22 +359,12 @@ def check_orphan_resources(devices: list[str]) -> None:
 def main() -> int:
     print(f"Validation du projet Connect IQ ({ROOT})")
 
-    devices, drawable_id = check_manifest()
+    devices = check_manifest()
     matrix = load_devices()
     check_matrix(devices, matrix)
     check_jungle()
     check_sources()
     check_strings()
-    if drawable_id is None:
-        fail(
-            "manifest.xml : launcherIcon illisible — impossible de vérifier les "
-            "icônes des appareils",
-            "manifest.xml",
-        )
-    else:
-        for device in devices:
-            if device in matrix:
-                check_device_resources(matrix[device], drawable_id)
     check_companion_ids()
     check_no_key_material()
     check_orphan_resources(devices)
@@ -511,9 +375,6 @@ def main() -> int:
         for message in errors:
             print(f"  - {message}")
         return 1
-    # `notes` counts the checks that report something, one per device for the
-    # icons — deliberately not advertised as a fixed number of checks, since it
-    # tracks the size of the device matrix.
     print(f"OK : {len(notes)} points vérifiés, {len(devices)} appareils")
     return 0
 

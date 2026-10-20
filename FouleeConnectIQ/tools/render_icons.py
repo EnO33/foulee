@@ -11,8 +11,8 @@ whenever the iPhone app icon or the device matrix changes, then commit:
 The icons are grouped rather than written once per device (#472). Each screen
 family gets one folder (`resources-round-454x454`), at the icon size most of
 its devices use; a device whose icon differs gets its own folder
-(`resources-venu3`), which the SDK picks over the family's. That is the same
-lookup validate_project.py makes.
+(`resources-venu3`), which the SDK picks over the family's. An icon at the
+wrong size fails the build: the compiler rescales it and warns.
 """
 
 from __future__ import annotations
