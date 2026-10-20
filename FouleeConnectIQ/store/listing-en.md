@@ -3,9 +3,9 @@
 Ready to paste into the form at <https://apps.garmin.com/developer/upload>.
 Don't rewrite it there: this file is the reference, the form is the copy.
 
-The store listing is bilingual on purpose; **the app itself is French only**
-(`<iq:language>fre</iq:language>` in the manifest, like the iPhone app). The
-English description says so rather than pretending otherwise.
+The store listing is bilingual on purpose. The watch app follows the watch's
+language (English, or French on a French watch); **the iPhone app is French
+only**, and the English description says so rather than pretending otherwise.
 
 ---
 
@@ -57,7 +57,8 @@ if they moved — about a hundred bytes. No GPS, no sensor powered up, no screen
 lit.
 
 LANGUAGE
-The iPhone app and the on-watch labels are in French.
+The watch app speaks English, or French on a watch set to French. The
+iPhone app is in French.
 
 PRIVACY
 Foulée is a local app: nothing goes to a server of ours, there is no account to

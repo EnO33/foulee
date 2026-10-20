@@ -121,12 +121,24 @@ function countsAreCoercedToNonNegativeNumbers(logger as Logger) as Boolean {
 
 (:test)
 function frenchFormattingIsReadable(logger as Logger) as Boolean {
-    Test.assertEqual(SnapshotFormat.groupDigits(0), "0");
-    Test.assertEqual(SnapshotFormat.groupDigits(999), "999");
-    Test.assertEqual(SnapshotFormat.groupDigits(1000), "1 000");
-    Test.assertEqual(SnapshotFormat.groupDigits(12345), "12 345");
-    Test.assertEqual(SnapshotFormat.groupDigits(1234567), "1 234 567");
+    Test.assertEqual(SnapshotFormat.groupDigits(0, " "), "0");
+    Test.assertEqual(SnapshotFormat.groupDigits(999, " "), "999");
+    Test.assertEqual(SnapshotFormat.groupDigits(1000, " "), "1 000");
+    Test.assertEqual(SnapshotFormat.groupDigits(12345, " "), "12 345");
+    Test.assertEqual(SnapshotFormat.groupDigits(1234567, " "), "1 234 567");
+    Test.assertEqual(SnapshotFormat.kilometers(634000, ","), "6,3");
 
     logger.debug("digit grouping ok");
+    return true;
+}
+
+(:test)
+function englishFormattingIsReadable(logger as Logger) as Boolean {
+    Test.assertEqual(SnapshotFormat.groupDigits(999, ","), "999");
+    Test.assertEqual(SnapshotFormat.groupDigits(1234567, ","), "1,234,567");
+    Test.assertEqual(SnapshotFormat.kilometers(634000, "."), "6.3");
+    Test.assertEqual(SnapshotFormat.kilometers(99, "."), "0.0");
+
+    logger.debug("english separators ok");
     return true;
 }

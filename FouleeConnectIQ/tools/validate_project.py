@@ -320,6 +320,34 @@ def check_strings() -> None:
         )
     else:
         ok(f"chaînes définies : {', '.join(sorted(i for i in ids if i))}")
+    check_translations(ids)
+
+
+def check_translations(default_ids: set[str | None]) -> None:
+    """Every language folder defines exactly the default strings.
+
+    A string missing from resources-fre silently falls back to the English
+    default on a French watch; an extra one is dead. Neither makes monkeyc
+    complain.
+    """
+    for entry in sorted(os.listdir(ROOT)):
+        suffix = entry[len("resources-") :]
+        if not entry.startswith("resources-") or not re.fullmatch(r"[a-z]{3}", suffix):
+            continue
+        relative = f"{entry}/strings/strings.xml"
+        root = parse_xml(relative)
+        if root is None:
+            continue
+        ids = {s.get("id") for s in root.findall("string")}
+        missing, extra = default_ids - ids, ids - default_ids
+        if missing or extra:
+            fail(
+                f"{relative} : chaînes manquantes {sorted(i for i in missing if i)}, "
+                f"en trop {sorted(i for i in extra if i)} par rapport à resources/",
+                relative,
+            )
+        else:
+            ok(f"{entry} : {len(ids)} chaînes traduites")
 
 
 def check_jungle() -> None:
