@@ -281,13 +281,20 @@ Ce sont les **seuls** avertissements restants (28 au total, 14 par appareil, uni
 
 1. Vérifier l'identifiant dans le dossier `Devices`.
 2. L'ajouter aux `<iq:products>` du manifeste.
-3. Créer `resources-<identifiant>/drawables/` avec `drawables.xml` et un `launcher_icon.svg` **à la taille exacte** indiquée par `launcherIcon` dans le `compiler.json` de l'appareil. Sans ça le compilateur redimensionne et avertit. Le jungle du SDK ajoute déjà `resources-<identifiant>` au chemin de ressources : ne pas le redéclarer dans `monkey.jungle`, ça provoque un avertissement de doublon.
-4. Reporter cette même taille dans `LAUNCHER_ICON_PX`, dans
+3. Créer `resources-<identifiant>/drawables/drawables.xml`, sur le modèle des
+   autres (`launcher_icon.png`). Le jungle du SDK ajoute déjà
+   `resources-<identifiant>` au chemin de ressources : ne pas le redéclarer
+   dans `monkey.jungle`, ça provoque un avertissement de doublon.
+4. Reporter la taille d'icône indiquée par `launcherIcon` dans le
+   `compiler.json` de l'appareil dans `LAUNCHER_ICON_PX`, dans
    [`tools/validate_project.py`](tools/validate_project.py) — c'est ce qui
-   permet à la CI de vérifier l'icône alors qu'elle n'a pas accès aux profils
-   d'appareils. Le script échoue explicitement sur un appareil qu'il ne connaît
-   pas, donc l'oubli se voit.
-5. `./build.sh validate && ./build.sh build`.
+   permet à la CI de vérifier l'icône, et le script échoue explicitement sur un
+   appareil qu'il ne connaît pas. Écran *memory-in-pixel* : l'ajouter aussi à
+   `MIP_DEVICES` (et `ONE_BIT_DEVICES` s'il est monochrome) dans
+   [`tools/render_icons.py`](tools/render_icons.py).
+5. `tools/render_icons.py`, qui produit l'icône **à la taille exacte** (sans
+   quoi le compilateur redimensionne et avertit).
+6. `./build.sh validate && ./build.sh build`.
 
 ## Ce qui ne peut PAS être testé ici
 
