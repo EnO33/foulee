@@ -19,4 +19,6 @@
     <string id="Discard">Discard</string>
     <string id="DiscardConfirm">Discard this session?</string>
     <string id="KilometerDone">km $1$</string>
+    <string id="SessionSaved">Session saved</string>
+    <string id="Done">Done</string>
 </resources>

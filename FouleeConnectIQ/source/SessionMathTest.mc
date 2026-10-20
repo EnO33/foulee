@@ -36,6 +36,13 @@ function sessionLivePaceRoundsToTheSport(logger as Logger) as Boolean {
 }
 
 (:test)
+function sessionStepsSurviveMidnight(logger as Logger) as Boolean {
+    Test.assertEqual(SessionMath.stepsBetween(8000, 9200), 1200);
+    Test.assertEqual(SessionMath.stepsBetween(9800, 300), 300);
+    return true;
+}
+
+(:test)
 function sessionKilometerAlertFiresOnceAtTheBoundary(logger as Logger) as Boolean {
     Test.assertEqual(SessionMath.kilometerCrossed(990, 999), 0);
     Test.assertEqual(SessionMath.kilometerCrossed(999, 1003), 1);

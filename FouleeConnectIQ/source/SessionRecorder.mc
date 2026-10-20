@@ -16,6 +16,7 @@ class SessionRecorder {
 
     private var _session as ActivityRecording.Session?;
     private var _running as Boolean;
+    private var _startSteps as Number = 0;
 
     function initialize(running as Boolean) {
         _running = running;
@@ -41,6 +42,34 @@ class SessionRecorder {
         });
         session.start();
         _session = session;
+        _startSteps = todaySteps();
+    }
+
+    //! Duration (s), distance (m) and steps of the session so far, for the
+    //! summary. Read before `save`, while the recorder still holds them.
+    function summary() as Dictionary<Symbol, Number> {
+        var seconds = 0;
+        var meters = 0;
+        var info = Activity.getActivityInfo();
+        if (info != null) {
+            var timerTime = info.timerTime;
+            if (timerTime != null) {
+                seconds = timerTime / 1000;
+            }
+            var distance = info.elapsedDistance;
+            if (distance != null) {
+                meters = distance.toNumber();
+            }
+        }
+        return {
+            :seconds => seconds,
+            :meters => meters,
+            :steps => SessionMath.stepsBetween(_startSteps, todaySteps())
+        };
+    }
+
+    private function todaySteps() as Number {
+        return DailySnapshot.readMetrics($.readActivityInfo())[DailySnapshot.METRIC_STEPS];
     }
 
     function pause() as Void {

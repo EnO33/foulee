@@ -66,4 +66,11 @@ module SessionMath {
         var now = meters / 1000;
         return now > before ? now : 0;
     }
+
+    //! The steps taken during the session, from the day's counter read at the
+    //! start and at the end. The counter restarts at midnight: a session that
+    //! crosses it counts the new day's steps only, never a negative figure.
+    function stepsBetween(startSteps as Number, endSteps as Number) as Number {
+        return endSteps >= startSteps ? endSteps - startSteps : endSteps;
+    }
 }
