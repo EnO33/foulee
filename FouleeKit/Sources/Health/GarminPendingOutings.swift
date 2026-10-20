@@ -17,14 +17,14 @@ import Foundation
 /// 3. **It goes as soon as Santé covers it** — any workout overlapping it, the
 ///    test `WorkoutDeduplication` merges rows by — or once older than the
 ///    streak can reach.
-nonisolated enum GarminPendingOutings {
+nonisolated public enum GarminPendingOutings {
     /// Beyond the streak's own history window a pending outing can change
     /// nothing any more, and Garmin Connect has had more than enough time.
-    static let horizon: TimeInterval = TimeInterval(StreakCalculator.historyWindowDays) * 24 * 60 * 60
+    public static let horizon: TimeInterval = TimeInterval(StreakCalculator.historyWindowDays) * 24 * 60 * 60
 
     /// `pending` with `summary` in it once, oldest first: the watch retries
     /// until it hears the phone got it, so the same outing can arrive twice.
-    static func adding(
+    public static func adding(
         _ summary: GarminSessionSummary,
         to pending: [GarminSessionSummary]
     ) -> [GarminSessionSummary] {
@@ -34,7 +34,7 @@ nonisolated enum GarminPendingOutings {
 
     /// The outings Santé doesn't cover yet, and that are still within reach of
     /// the streak at `now`.
-    static func remaining(
+    public static func remaining(
         _ pending: [GarminSessionSummary],
         healthKitWorkouts: [ActiveMinutes.WorkoutInterval],
         now: Date
@@ -45,5 +45,15 @@ nonisolated enum GarminPendingOutings {
             guard let span = ActiveMinutes.span(of: outing.interval) else { return false }
             return !covered.contains { ActiveMinutes.overlap($0, span) }
         }
+    }
+
+    /// The clock the outings cover, for the minute count of `window`: an
+    /// outing belongs to the window it starts in, as `ActiveMinutes` files a
+    /// workout under the day it starts.
+    public static func intervals(
+        _ pending: [GarminSessionSummary],
+        startingIn window: Range<Date>
+    ) -> [ActiveMinutes.WorkoutInterval] {
+        pending.filter { window.contains($0.startedAt) }.map(\.interval)
     }
 }
