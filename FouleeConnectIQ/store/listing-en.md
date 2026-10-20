@@ -43,7 +43,8 @@ WHAT IT DOES
   phone is in range: steps, distance, active minutes, vigorous active minutes,
   calories — plus the time of the reading, the time your day started on the
   watch and three technical markers (message type, payload version, send
-  counter). Nothing else leaves the watch. Out of range it simply
+  counter). At the end of a session, its summary: walk or run, start, end,
+  duration, distance, steps. Nothing else leaves the watch. Out of range it simply
   waits for the next pass — no error message, no battery drain.
 
 WHAT IT DOES NOT DO
@@ -83,8 +84,9 @@ ActivityMonitor.getInfo() and transmits five integers to the phone over
 Communications: steps, distanceCm, activeMinutes, activeMinutesVigorous,
 calories (plus "ts", a timestamp, "day", the start of the watch's local day,
 "gen", a send counter, "t", the message type, and "v", the payload schema
-version). Nothing else is read or transmitted, and it contacts no
-server.
+version). At the end of a saved session it also transmits its summary ("t" =
+"summary": sport, start, end, duration, distance, steps). Nothing else is read
+or transmitted, and it contacts no server.
 
 It also records walks and runs with ActivityRecording (permissions Fit,
 Positioning, Sensor): GPS and the heart-rate sensor are only on during the

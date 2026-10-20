@@ -3,6 +3,7 @@ import Toybox.ActivityRecording;
 import Toybox.Lang;
 import Toybox.Position;
 import Toybox.Sensor;
+import Toybox.Time;
 import Toybox.WatchUi;
 
 //! The session's recording, and nothing else: the watch's own FIT recorder
@@ -17,6 +18,7 @@ class SessionRecorder {
     private var _session as ActivityRecording.Session?;
     private var _running as Boolean;
     private var _startSteps as Number = 0;
+    private var _startedAt as Number = 0;
 
     function initialize(running as Boolean) {
         _running = running;
@@ -43,10 +45,12 @@ class SessionRecorder {
         session.start();
         _session = session;
         _startSteps = todaySteps();
+        _startedAt = Time.now().value();
     }
 
-    //! Duration (s), distance (m) and steps of the session so far, for the
-    //! summary. Read before `save`, while the recorder still holds them.
+    //! Duration (s), distance (m), steps, start and end (epoch s) of the
+    //! session so far, for the summary. Read before `save`, while the recorder
+    //! still holds them.
     function summary() as Dictionary<Symbol, Number> {
         var seconds = 0;
         var meters = 0;
@@ -64,7 +68,9 @@ class SessionRecorder {
         return {
             :seconds => seconds,
             :meters => meters,
-            :steps => SessionMath.stepsBetween(_startSteps, todaySteps())
+            :steps => SessionMath.stepsBetween(_startSteps, todaySteps()),
+            :startedAt => _startedAt,
+            :endedAt => Time.now().value()
         };
     }
 

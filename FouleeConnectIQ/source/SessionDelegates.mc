@@ -88,9 +88,7 @@ class PauseMenuDelegate extends WatchUi.Menu2InputDelegate {
             _recorder.resume();
             WatchUi.popView(WatchUi.SLIDE_DOWN);
         } else if (id == :save) {
-            var summary = _recorder.summary();
-            _recorder.save();
-            SessionFlow.finish(summary);
+            SessionFlow.finish(SessionFlow.save(_recorder));
         } else if (id == :discard) {
             WatchUi.pushView(
                 new WatchUi.Confirmation(WatchUi.loadResource($.Rez.Strings.DiscardConfirm) as String),

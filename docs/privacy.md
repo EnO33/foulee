@@ -71,6 +71,12 @@ vers ton iPhone par Bluetooth**, au plus une fois toutes les cinq minutes, et
 téléphone n'est pas à portée, la montre n'envoie rien et attend simplement le
 prochain passage.
 
+**À la fin d'une séance enregistrée**, elle envoie aussi son résumé : marche ou
+course, heure de début et de fin, durée, distance et pas. Il sert à l'iPhone à
+afficher la sortie en attendant que Garmin Connect l'écrive dans Santé. Le
+résumé attend sur la montre que l'iPhone l'ait reçu (les sept derniers au
+plus) ; ni la position ni la fréquence cardiaque n'en font partie.
+
 **Ce qu'elle reçoit** — de ton iPhone, et par le même lien Bluetooth : ta
 série, tes objectifs de pas et de minutes, ton choix marche / course et tes
 réglages d'hydratation (activée ou non, objectif, taille d'un verre). C'est ce

@@ -41,8 +41,9 @@ CE QU'ELLE FAIT
   portée, cinq valeurs du jour : pas, distance, minutes actives, minutes
   actives intenses, calories — plus l'heure de la mesure, l'heure de début
   de ta journée sur la montre et trois repères techniques (type de message,
-  version du format, numéro d'envoi). Rien d'autre ne quitte la
-  montre. Hors de portée, elle attend le prochain passage — sans message
+  version du format, numéro d'envoi). À la fin d'une séance, son résumé :
+  marche ou course, début, fin, durée, distance, pas. Rien d'autre ne quitte
+  la montre. Hors de portée, elle attend le prochain passage — sans message
   d'erreur, sans vider ta batterie.
 
 CE QU'ELLE NE FAIT PAS
@@ -80,8 +81,10 @@ ActivityMonitor.getInfo() et transmet au téléphone, via Communications, un
 instantané de cinq entiers : steps, distanceCm, activeMinutes,
 activeMinutesVigorous, calories (plus « ts », un horodatage, « day », le
 début de la journée locale de la montre, « gen », un compteur d'envoi, « t »,
-le type de message, et « v », la version du format). Rien d'autre n'est lu ni
-transmis, et elle ne contacte aucun serveur.
+le type de message, et « v », la version du format). À la fin d'une séance
+enregistrée, elle transmet aussi son résumé (« t » = "summary" : sport,
+début, fin, durée, distance, pas). Rien d'autre n'est lu ni transmis, et elle
+ne contacte aucun serveur.
 
 Elle enregistre aussi des séances de marche ou de course avec
 ActivityRecording (permissions Fit, Positioning, Sensor) : GPS et capteur
