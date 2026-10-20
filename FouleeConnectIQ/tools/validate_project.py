@@ -36,8 +36,6 @@ IQ_NS = "http://www.garmin.com/xml/connectiq"
 LAUNCHER_ICON_PX = {
     "fenix843mm": 60,
     "fr165": 54,
-    "fr55": 35,
-    "instinct2": 62,
     "venu2": 70,
     "venusq2": 40,
     "vivoactive5": 56,
@@ -59,10 +57,12 @@ BETA_APP_ID = "a0d0785c31b84e24b4a30d6bfd950502"
 # Where the iPhone app declares the watch apps it listens to. The phone only
 # receives messages from an app whose id it registered, and nothing at runtime
 # says when the two disagree: the snapshots are simply never delivered (#465).
-# SnapshotService writes Application.Storage from the background service. Only
-# Connect IQ 3.2.0 and later allow that: below it, setValue throws
-# ObjectStoreAccessException in the background, where nobody sees it (#469).
-MIN_API_LEVEL = (3, 2, 0)
+# The floor of the device matrix: every device runs Connect IQ 5.0.0 or later.
+# It also covers what the code needs: Application.Storage written from the
+# background (3.2.0, ObjectStoreAccessException before, #469), a watch-app
+# glance (4.0.0) and the session's ViewLoop (3.4.0). A manifest below it would
+# claim devices the app was never compiled or checked against.
+MIN_API_LEVEL = (5, 0, 0)
 
 COMPANION_CONFIG = "Foulee/Connectivity/GarminConnectIQClient.swift"
 COMPANION_IDS = {
@@ -195,9 +195,8 @@ def check_min_api_level(raw: str) -> None:
     required = ".".join(str(part) for part in MIN_API_LEVEL)
     if declared < MIN_API_LEVEL:
         fail(
-            f"manifest.xml : minApiLevel « {raw} » sous {required} — le service "
-            "d'arrière-plan écrit dans Application.Storage, ce qui lève une "
-            "exception avant 3.2.0",
+            f"manifest.xml : minApiLevel « {raw} » sous {required}, le plancher "
+            "de la matrice d'appareils",
             "manifest.xml",
         )
     else:

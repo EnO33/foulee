@@ -4,10 +4,3 @@ project.manifest = manifest.xml
 # defaults. The per-device resources-<device>/ folders are picked up
 # automatically too: each one only carries the launcher icon at that device's
 # exact pixel size, since a mismatch makes the resource compiler rescale and warn.
-
-# One MetricPalette per kind of screen (source/MetricPalette.mc): AMOLED by
-# default, memory-in-pixel on fr55, monochrome on instinct2. Every device of
-# the manifest must keep exactly one of the three.
-base.excludeAnnotations = mip;mono
-fr55.excludeAnnotations = amoled;mono
-instinct2.excludeAnnotations = amoled;mip

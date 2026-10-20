@@ -15,7 +15,7 @@ Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucun
 | `source/FouleeGlanceView.mc` | Glance : série + minutes actives / objectif (les pas tant que l'iPhone n'a rien envoyé). |
 | `source/FouleeView.mc` | Accueil, comme `WatchTodayView` : série, pas / objectif, minutes / objectif, km, kcal ; « Ouvre Foulée sur ton iPhone » avant la première synchro. |
 | `source/HomeFormat.mc` | Textes de l'accueil et du glance : progression vers l'objectif, série, largeur disponible sur un cadran rond. |
-| `source/MetricPalette.mc` | Couleurs des chiffres, celles de l'iPhone : une variante AMOLED, MIP et monochrome, choisie par `excludeAnnotations` dans `monkey.jungle`. |
+| `source/MetricPalette.mc` | Couleurs des chiffres, celles de l'iPhone (tous les appareils de la matrice sont en AMOLED). |
 | `source/SnapshotFormat.mc` | Formatage dans la langue de la montre : espace et virgule en français, virgule et point en anglais. |
 | `source/PhoneSync.mc` | État envoyé par l'iPhone (série, objectifs, mode, hydratation) : décodage tolérant et stockage (ADR 0009, D5). |
 | `source/SessionMath.mc` | Arithmétique d'une séance : chrono, allure, alerte au kilomètre (ADR 0009, D9). |
@@ -87,7 +87,7 @@ openssl pkcs8 -topk8 -inform PEM -outform DER \
 ## Compiler
 
 ```sh
-./build.sh build            # les sept appareils du manifeste, dans bin/
+./build.sh build            # les cinq appareils du manifeste, dans bin/
 ./build.sh build venu2      # un seul
 ```
 
@@ -100,17 +100,12 @@ sort les `.prg` dans `bin/`. Sous le capot, pour un appareil :
   -y $HOME/.garmin/foulee_developer_key.der -w -l 3
 ```
 
-`-w` active les avertissements, `-l 3` le contrôle de types **strict** (même exigence que SwiftLint/Periphery côté iOS). Les sept appareils compilent proprement à ce niveau.
+`-w` active les avertissements, `-l 3` le contrôle de types **strict** (même exigence que SwiftLint/Periphery côté iOS). Les cinq appareils compilent proprement à ce niveau.
 
-Le script va plus loin que `monkeyc` : il **échoue sur tout avertissement**
-autre que les deux avertissements de glance attendus sur `fr55` et `instinct2`
-(voir « Matrice d'appareils »). La dispense est **nominative** : elle ne
-s'applique qu'à ces deux appareils, parce que `monkeyc` préfixe chaque
-avertissement de l'appareil concerné (`WARNING: fr55: …`). Le même
-avertissement sur un appareil en CIQ 4+ signifierait que le glance est
-réellement cassé, et il fait donc échouer la compilation. C'est l'équivalent
-Monkey C de `swiftlint --strict`, et c'est ce qui fait de `./build.sh build` la
-barrière qualité du dossier, en local comme en CI (section suivante).
+Le script va plus loin que `monkeyc` : il **échoue sur tout avertissement**,
+sans exception ni dispense. C'est l'équivalent Monkey C de `swiftlint --strict`,
+et c'est ce qui fait de `./build.sh build` la barrière qualité du dossier, en
+local comme en CI (section suivante).
 
 Trois réglages, si besoin : `CIQ_SDK_HOME`, `CIQ_DEVELOPER_KEY`, `JAVA_HOME`.
 
@@ -144,8 +139,8 @@ chaque PR.
 
 ### `Connect IQ build` : la compilation
 
-Il compile les sept appareils du manifeste avec `./build.sh build` (donc en
-`-w -l 3`, avec la même tolérance nominative aux avertissements de glance),
+Il compile les cinq appareils du manifeste avec `./build.sh build` (donc en
+`-w -l 3`, sans aucun avertissement toléré),
 puis la version de tests unitaires avec `./build.sh test`. Il signe avec une
 clé jetable générée pour le job : compiler demande une clé, pas *la* clé, qui
 ne sert qu'au paquet du store.
@@ -222,9 +217,10 @@ les fichiers, plus vite que la compilation :
 
 - `manifest.xml` bien formé, attributs et permissions `Background` /
   `Communications` présents ;
-- `minApiLevel` au moins 3.2.0 : le service d'arrière-plan écrit dans
-  `Application.Storage`, ce qu'une API plus ancienne refuse par une exception
-  que personne ne voit (#469) ;
+- `minApiLevel` au moins 5.0.0, le plancher de la matrice. Il couvre aussi ce
+  que le code demande : `Application.Storage` écrit en arrière-plan (3.2.0,
+  sans quoi une exception que personne ne voit, #469), le glance d'une
+  `watch-app` (4.0.0) ;
 - l'identifiant d'application est bien celui **de production** (`PRODUCTION_APP_ID`
   dans le validateur) : c'est ce qui attrape un manifeste resté sur
   l'identifiant beta après un paquet de test (voir `store/README.md` § 5) ;
@@ -268,21 +264,19 @@ Chaque identifiant a été vérifié dans `~/Library/Application Support/Garmin/
 |---|---|---|---|---|
 | fēnix 8 43 mm | `fenix843mm` | 6.0.2 | round-416x416 | oui |
 | Forerunner 165 | `fr165` | 5.2.0 | round-390x390 | oui |
-| Forerunner 55 | `fr55` | 3.4.2 | round-208x208 (4 bpp) | non |
-| Instinct 2 | `instinct2` | 3.4.2 | semioctagon-176x176 (1 bpp) | non |
 | Venu 2 | `venu2` | 5.0.0 | round-416x416 | oui |
 | Venu Sq 2 | `venusq2` | 5.0.0 | rectangle-320x360 | oui |
 | vívoactive 5 | `vivoactive5` | 5.2.0 | round-390x390 | oui |
 
-La matrice couvre volontairement les deux extrêmes : AMOLED 416×416 et monochrome 176×176 sur un service d'arrière-plan limité à 32 ko.
+Tous tournent en Connect IQ 5.0.0 ou plus, le `minApiLevel` du manifeste, et
+tous ont un écran couleur AMOLED : le glance existe partout et les couleurs de
+Foulée s'affichent telles quelles.
 
-**Forerunner 55 et Instinct 2** tournent en CIQ 3.4.2 : le glance d'une `watch-app` demande 4.0.0. Sur ces deux modèles l'app s'installe et fonctionne normalement (vue plein écran + service d'arrière-plan), seul le glance manque. Le compilateur le signale sous deux formes, c'est attendu :
-
-> `WARNING: fr55: source/FouleeGlanceView.mc:14: Glance applications are not supported for app type 'watch-app' on device 'fr55' with minimum API Level 3.4.2. The (:glance) annotation will be ignored.`
->
-> `WARNING: fr55: resources/strings/strings.xml:3,4: String resource 'UnitSteps' specifies the 'glance' resource scope, but app type 'watch-app' does not support glances on device 'fr55'.`
-
-Ce sont les **seuls** avertissements restants, uniquement sur ces deux-là ; leur nombre suit celui des modules et chaînes du glance. Les cinq autres appareils compilent sans un seul avertissement, en `-w -l 3`. Les faire disparaître demanderait de sortir `fr55` et `instinct2` de la matrice : le compromis retenu est l'inverse — ces deux modèles très répandus gagnent le service d'arrière-plan, qui est l'objet de l'app.
+**Forerunner 55 et Instinct 2 sont sortis de la matrice** : bloqués en CIQ
+3.4.2 par Garmin, ils n'avaient pas de glance, demandaient des couleurs et des
+icônes à part (écrans *memory-in-pixel*, dont un monochrome) et une dispense
+d'avertissements dans `build.sh`. Les garder imposait un plancher d'API qui
+retient toute l'app pour deux modèles qui n'évolueront plus.
 
 ### Ajouter un appareil
 
@@ -296,9 +290,8 @@ Ce sont les **seuls** avertissements restants, uniquement sur ces deux-là ; leu
    `compiler.json` de l'appareil dans `LAUNCHER_ICON_PX`, dans
    [`tools/validate_project.py`](tools/validate_project.py) — c'est ce qui
    permet à la CI de vérifier l'icône, et le script échoue explicitement sur un
-   appareil qu'il ne connaît pas. Écran *memory-in-pixel* : l'ajouter aussi à
-   `MIP_DEVICES` (et `ONE_BIT_DEVICES` s'il est monochrome) dans
-   [`tools/render_icons.py`](tools/render_icons.py).
+   appareil qu'il ne connaît pas. Il doit tourner en CIQ 5.0.0 au moins :
+   `validate` refuse un `minApiLevel` plus bas.
 5. `tools/render_icons.py`, qui produit l'icône **à la taille exacte** (sans
    quoi le compilateur redimensionne et avertit).
 6. `./build.sh validate && ./build.sh build`.
@@ -381,7 +374,7 @@ Ce que la fiche store promet, donc ce qu'il faut tenir :
 - **Périmètre** : l'app montre et sa synchronisation avec l'iPhone. Tout ce qui
   relève du firmware Garmin, de Garmin Connect ou de la montre elle-même
   renvoie vers le support Garmin.
-- **Appareils** : les sept modèles du manifeste. Nous n'en possédons pas la
+- **Appareils** : les cinq modèles du manifeste. Nous n'en possédons pas la
   totalité (#191) : un bug spécifique à un modèle absent de notre matériel sera
   traité à l'aveugle, avec l'aide de son signaleur et des rapports ERA — et
   c'est dit franchement plutôt que promis.
