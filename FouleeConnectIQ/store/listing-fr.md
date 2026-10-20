@@ -33,8 +33,9 @@ CE QU'ELLE FAIT
   pas et minutes actives aussi dans le glance, sur les modèles qui le gèrent.
 • Envoie à ton iPhone, toutes les cinq minutes et seulement quand il est à
   portée, cinq valeurs du jour : pas, distance, minutes actives, minutes
-  actives intenses, calories — plus l'heure de la mesure et deux repères
-  techniques (version du format, numéro d'envoi). Rien d'autre ne quitte la
+  actives intenses, calories — plus l'heure de la mesure, l'heure de début
+  de ta journée sur la montre et trois repères techniques (type de message,
+  version du format, numéro d'envoi). Rien d'autre ne quitte la
   montre. Hors de portée, elle attend le prochain passage — sans message
   d'erreur, sans vider ta batterie.
 
@@ -70,8 +71,9 @@ Réponse sous une semaine, en français ou en anglais.
 Cette app est le compagnon montre d'une app iPhone (Foulée). Elle lit
 ActivityMonitor.getInfo() et transmet au téléphone, via Communications, un
 instantané de cinq entiers : steps, distanceCm, activeMinutes,
-activeMinutesVigorous, calories (plus « ts », un horodatage, « gen », un
-compteur d'envoi, et « v », la version du format). Rien d'autre n'est lu ni
+activeMinutesVigorous, calories (plus « ts », un horodatage, « day », le
+début de la journée locale de la montre, « gen », un compteur d'envoi, « t »,
+le type de message, et « v », la version du format). Rien d'autre n'est lu ni
 transmis, et elle ne contacte aucun serveur.
 
 Le canal iOS ne peut pas être démontré dans le simulateur Connect IQ, qui ne

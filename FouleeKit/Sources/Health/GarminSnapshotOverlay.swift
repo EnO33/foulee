@@ -114,11 +114,23 @@ nonisolated public enum GarminSnapshotOverlay {
         now: Date,
         calendar: Calendar = .current
     ) -> Usability {
-        guard calendar.isDate(snapshot.timestamp, inSameDayAs: now) else { return .otherDay }
+        guard describesToday(snapshot, now: now, calendar: calendar) else { return .otherDay }
         let age = now.timeIntervalSince(snapshot.timestamp)
         if age < -clockSkewTolerance { return .clockAhead }
         if age > freshnessHorizon { return .tooOld }
         return .usable
+    }
+
+    /// Whether the day `snapshot` counts is the phone's today. A v2 snapshot
+    /// carries the start of the watch's own day: its middle falls on the
+    /// phone's today exactly when both days bear the same date, whatever the
+    /// offset between the two time zones (#473). A v1 snapshot can only be
+    /// dated in the phone's zone.
+    private static func describesToday(_ snapshot: GarminDailySnapshot, now: Date, calendar: Calendar) -> Bool {
+        guard let watchDayStart = snapshot.watchDayStart else {
+            return calendar.isDate(snapshot.timestamp, inSameDayAs: now)
+        }
+        return calendar.isDate(watchDayStart.addingTimeInterval(12 * 60 * 60), inSameDayAs: now)
     }
 
     public static func isUsable(_ snapshot: GarminDailySnapshot, now: Date, calendar: Calendar = .current) -> Bool {

@@ -51,8 +51,11 @@ actives, tes minutes actives intenses et tes calories. Pas de GPS, pas de
 fréquence cardiaque, pas de séances, aucun capteur allumé pour l'occasion.
 
 **Ce qu'elle envoie** — un instantané de ces **cinq valeurs**, plus l'heure de
-la mesure, le numéro de version du format et un numéro d'envoi qui permet à
-l'iPhone d'ignorer un instantané qu'il a déjà reçu. Le tout part **directement
+la mesure, l'heure de début de ta journée sur la montre (pour compter les
+valeurs sur le bon jour quand montre et téléphone ne sont pas dans le même
+fuseau horaire), le type de message, le numéro de version du format et un
+numéro d'envoi qui permet à l'iPhone d'ignorer un instantané qu'il a déjà
+reçu. Le tout part **directement
 vers ton iPhone par Bluetooth**, au plus une fois toutes les cinq minutes, et
 **seulement si ces valeurs ont changé** depuis le dernier envoi. Quand le
 téléphone n'est pas à portée, la montre n'envoie rien et attend simplement le

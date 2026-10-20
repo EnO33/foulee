@@ -30,20 +30,27 @@ Chaque champ est gardé deux fois : `info has :champ` (les familles n'exposent p
 
 ```json
 {
-  "v": 1,
+  "t": "snapshot",
+  "v": 2,
   "steps": 8421,
   "distanceCm": 634000,
   "activeMinutes": 47,
   "activeMinutesVigorous": 12,
   "calories": 2103,
   "ts": 1754380800,
+  "day": 1754344800,
   "gen": 7
 }
 ```
 
+- `t` : type de message. D'autres types partageront le lien (ADR 0009, D6).
 - `ts` : epoch en secondes.
+- `day` : début de la journée locale **de la montre** (`Time.today()`), en
+  epoch. Ses compteurs repartent à son minuit à elle, qui n'est pas celui du
+  téléphone quand les deux ne sont pas dans le même fuseau (#473). L'iPhone
+  accepte aussi la v1, sans `t` ni `day`, des montres pas encore mises à jour.
 - `gen` : compteur monotone **qui n'avance que si les métriques ont bougé**. Un instantané qui n'est pas arrivé est donc retransmis sous la *même* génération, et l'iPhone peut ignorer une génération déjà ingérée. C'est ce qui rend l'échange idempotent (côté iOS : #189).
-- Clés courtes et valeurs entières : le lien BLE tourne autour de 1 ko/s.
+- Clés courtes, valeurs entières hors `t` : le lien BLE tourne autour de 1 ko/s.
 
 ### Absence de téléphone
 

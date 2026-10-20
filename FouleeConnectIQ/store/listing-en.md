@@ -36,8 +36,9 @@ WHAT IT DOES
   active minutes also in the glance, on devices that support glances.
 • Sends five of today's values to your iPhone every five minutes, whenever the
   phone is in range: steps, distance, active minutes, vigorous active minutes,
-  calories — plus the time of the reading and two technical markers (payload
-  version, send counter). Nothing else leaves the watch. Out of range it simply
+  calories — plus the time of the reading, the time your day started on the
+  watch and three technical markers (message type, payload version, send
+  counter). Nothing else leaves the watch. Out of range it simply
   waits for the next pass — no error message, no battery drain.
 
 WHAT IT DOES NOT DO
@@ -74,8 +75,9 @@ Answered within a week, in French or English.
 This app is the watch companion to an iPhone app (Foulée). It reads
 ActivityMonitor.getInfo() and transmits five integers to the phone over
 Communications: steps, distanceCm, activeMinutes, activeMinutesVigorous,
-calories (plus "ts", a timestamp, "gen", a send counter, and "v", the payload
-schema version). Nothing else is read or transmitted, and it contacts no
+calories (plus "ts", a timestamp, "day", the start of the watch's local day,
+"gen", a send counter, "t", the message type, and "v", the payload schema
+version). Nothing else is read or transmitted, and it contacts no
 server.
 
 The iOS channel cannot be demonstrated in the Connect IQ simulator, which only

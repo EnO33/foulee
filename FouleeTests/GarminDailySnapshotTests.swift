@@ -38,9 +38,41 @@ struct GarminDailySnapshotDecodingTests {
 
     @Test("A newer schema version is rejected whole rather than half-read")
     func unknownVersion() {
-        #expect(GarminDailySnapshot.decode(validMessage(overrides: ["v": 2])) == nil)
+        #expect(GarminDailySnapshot.decode(validMessage(overrides: ["v": 3])) == nil)
         #expect(GarminDailySnapshot.decode(validMessage(overrides: ["v": 0])) == nil)
         #expect(GarminDailySnapshot.decode(validMessage(overrides: ["v": -1])) == nil)
+    }
+
+    @Test("A v2 snapshot carries the start of the watch's own day")
+    func version2DayStart() throws {
+        let message = validMessage(overrides: ["t": "snapshot", "v": 2, "day": 1_754_344_800])
+        let snapshot = try #require(GarminDailySnapshot.decode(message))
+        #expect(snapshot.watchDayStart == Date(timeIntervalSince1970: 1_754_344_800))
+        #expect(snapshot.steps == 8_432)
+    }
+
+    @Test("A v1 snapshot has no watch day, even if a stray key says otherwise")
+    func version1HasNoWatchDay() throws {
+        let snapshot = try #require(GarminDailySnapshot.decode(validMessage(overrides: ["day": 1_754_344_800])))
+        #expect(snapshot.watchDayStart == nil)
+    }
+
+    @Test("A v2 snapshot without a usable day keeps its counters and loses only the day")
+    func version2WithoutDay() throws {
+        let unusableDays: [Any] = [0, -5, "1754344800", Double.nan]
+        for day in unusableDays {
+            let message = validMessage(overrides: ["t": "snapshot", "v": 2, "day": day])
+            let snapshot = try #require(GarminDailySnapshot.decode(message))
+            #expect(snapshot.watchDayStart == nil)
+        }
+        let missing = try #require(GarminDailySnapshot.decode(validMessage(overrides: ["v": 2])))
+        #expect(missing.watchDayStart == nil)
+    }
+
+    @Test("Another message type is not a snapshot")
+    func otherMessageType() {
+        #expect(GarminDailySnapshot.decode(validMessage(overrides: ["t": "session", "v": 2])) == nil)
+        #expect(GarminDailySnapshot.decode(validMessage(overrides: ["t": 1, "v": 2])) == nil)
     }
 
     @Test("A payload with no version at all is rejected")
