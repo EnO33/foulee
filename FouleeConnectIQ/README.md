@@ -11,13 +11,13 @@ Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucun
 | Élément | Rôle |
 |---|---|
 | `source/DailySnapshot.mc` | Assemblage pur de l'instantané (lecture des métriques, génération, payload). Aucune E/S. |
-| `source/SnapshotService.mc` | Service d'arrière-plan : lit, persiste, décide, transmet. |
+| `source/SnapshotService.mc` | Service d'arrière-plan : lit, persiste, décide, transmet ; stocke l'état de l'iPhone reçu app fermée. |
 | `source/FouleeGlanceView.mc` | Glance : série + minutes actives / objectif (les pas tant que l'iPhone n'a rien envoyé). |
 | `source/FouleeView.mc` | Accueil, comme `WatchTodayView` : série, pas / objectif, minutes / objectif, km, kcal ; « Ouvre Foulée sur ton iPhone » avant la première synchro. |
 | `source/HomeFormat.mc` | Textes de l'accueil et du glance : progression vers l'objectif, série, largeur disponible sur un cadran rond. |
 | `source/MetricPalette.mc` | Couleurs des chiffres, celles de l'iPhone ; les écrans MIP 64 couleurs les ramènent à leur palette. |
 | `source/SnapshotFormat.mc` | Formatage dans la langue de la montre : espace et virgule en français, virgule et point en anglais. |
-| `source/PhoneSync.mc` | État envoyé par l'iPhone (série, objectifs, mode, hydratation) : décodage tolérant et stockage (ADR 0009, D5). |
+| `source/PhoneSync.mc` | État envoyé par l'iPhone (série, objectifs, mode, hydratation) : décodage tolérant et stockage (ADR 0009, D5), app ouverte ou fermée. |
 | `source/SessionMath.mc` | Arithmétique d'une séance : chrono, allure, alerte au kilomètre (ADR 0009, D9). |
 | `source/SessionRecorder.mc` | Enregistrement de la séance par l'enregistreur FIT de la montre (`ActivityRecording`), GPS et cardio allumés pendant la séance seulement (D2). |
 | `source/SessionFlow.mc`, `source/SessionDelegates.mc` | « Démarrer » depuis l'accueil (choix Marche / Course en mode « Les deux »), pause en `Menu2` : Reprendre, Enregistrer, Supprimer (avec confirmation). |
@@ -324,6 +324,7 @@ Restent donc non validés sans une montre physique + un iPhone (cf. [#191](https
 
 - la réception effective par le Companion App SDK iOS ;
 - la fiabilité du `transmit` depuis le contexte arrière-plan vers un iPhone suspendu ;
+- la réception de l'état de l'iPhone par le service d'arrière-plan, app montre fermée (#492) ;
 - le rendu réel du glance et des polices sur chaque famille ;
 - la consommation batterie d'un réveil toutes les 5 minutes.
 

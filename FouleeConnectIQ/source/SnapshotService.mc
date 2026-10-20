@@ -140,7 +140,8 @@ function publishSnapshot() as Void {
     }
 }
 
-//! Entry point of the background service.
+//! Entry point of the background service: the snapshot every five minutes,
+//! and the phone's state when it arrives with the app closed (#492).
 (:background)
 class SnapshotService extends System.ServiceDelegate {
 
@@ -150,5 +151,10 @@ class SnapshotService extends System.ServiceDelegate {
 
     function onTemporalEvent() as Void {
         $.publishSnapshot();
+    }
+
+    function onPhoneAppMessage(message as Communications.PhoneAppMessage) as Void {
+        PhoneSync.receive(message.data);
+        $.endSnapshotService();
     }
 }
