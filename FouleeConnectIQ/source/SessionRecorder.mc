@@ -48,14 +48,19 @@ class SessionRecorder {
         _startedAt = Time.now().value();
     }
 
-    //! Duration (s), distance (m), steps, start and end (epoch s) of the
-    //! session so far, for the summary. Read before `save`, while the recorder
-    //! still holds them.
+    //! Duration (s), distance (m), steps, heart rate (bpm, 0 when none), start
+    //! and end (epoch s) of the session so far, for the summary and the
+    //! mirror. Read before `save`, while the recorder still holds them.
     function summary() as Dictionary<Symbol, Number> {
         var seconds = 0;
         var meters = 0;
+        var heartRate = 0;
         var info = Activity.getActivityInfo();
         if (info != null) {
+            var currentHeartRate = info.currentHeartRate;
+            if (currentHeartRate != null) {
+                heartRate = currentHeartRate;
+            }
             var timerTime = info.timerTime;
             if (timerTime != null) {
                 seconds = timerTime / 1000;
@@ -69,6 +74,7 @@ class SessionRecorder {
             :seconds => seconds,
             :meters => meters,
             :steps => SessionMath.stepsBetween(_startSteps, todaySteps()),
+            :heartRate => heartRate,
             :startedAt => _startedAt,
             :endedAt => Time.now().value()
         };

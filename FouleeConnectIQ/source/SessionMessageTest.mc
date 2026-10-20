@@ -34,6 +34,31 @@ function sessionMessageNamesTheRun(logger as Logger) as Boolean {
 }
 
 (:test)
+function sessionStateCarriesTheWholeSession(logger as Logger) as Boolean {
+    var message = SessionMessage.state({
+        :startedAt => 1760961600,
+        :endedAt => 1760962200,
+        :seconds => 540,
+        :meters => 900,
+        :steps => 1200,
+        :heartRate => 112
+    }, true, true, false);
+    Test.assertEqual(message["t"] as Object, "session");
+    Test.assertEqual(message["v"] as Object, 1);
+    Test.assertEqual(message["sport"] as Object, "running");
+    Test.assertEqual(message["sent"] as Object, 1760962200);
+    Test.assertEqual(message["elapsed"] as Object, 540);
+    Test.assertEqual(message["distanceM"] as Object, 900);
+    Test.assertEqual(message["steps"] as Object, 1200);
+    Test.assertEqual(message["hr"] as Object, 112);
+    Test.assertEqual(message["paused"] as Object, 1);
+    Test.assertEqual(message["ended"] as Object, 0);
+
+    logger.debug("session = " + message.toString());
+    return true;
+}
+
+(:test)
 function outboxKeepsTheNewestWithinCapacity(logger as Logger) as Boolean {
     Storage.deleteValue(Outbox.KEY_MESSAGES);
     for (var i = 0; i < Outbox.CAPACITY + 2; i += 1) {

@@ -20,11 +20,11 @@ struct TodayHeroCard: View {
     @Environment(UserPreferences.self) private var preferences
 
     var snapshot: TodaySnapshot
-    /// An outing is already running on the wrist (issue #279). The card offers
+    /// The wrist an outing is already running on (issue #279). The card offers
     /// to *watch* it rather than to start a second one — the watch is the only
     /// device HealthKit lets mirror, so a phone session beside it would be
     /// invisible from there and would leave two overlapping records in Santé.
-    var isMirroring = false
+    var mirroring: MirroredDevice?
     /// A watch app is installed, so the outing can be measured at the wrist
     /// instead (issue #283).
     var canStartOnWatch = false
@@ -255,8 +255,8 @@ struct TodayHeroCard: View {
             ? AnyLayout(VStackLayout(spacing: 10))
             : AnyLayout(HStackLayout(spacing: 10))
         return layout {
-            if isMirroring {
-                PrimaryButton(title: "Séance en cours sur ta Watch", systemIcon: "applewatch", action: onStart)
+            if let mirroring {
+                PrimaryButton(title: "Séance en cours sur \(mirroring.name)", systemIcon: mirroring.icon, action: onStart)
             } else if canStartOnWatch {
                 // The wrist first, because it records a *better* outing: real
                 // HealthKit samples, heart rate, and the leg-by-leg split of

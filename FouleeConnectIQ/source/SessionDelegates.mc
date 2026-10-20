@@ -63,6 +63,7 @@ class SessionDelegate extends WatchUi.BehaviorDelegate {
 
     private function pause() as Void {
         _recorder.pause();
+        SessionFlow.stateChanged();
         var menu = new WatchUi.Menu2({:title => WatchUi.loadResource($.Rez.Strings.Paused) as String});
         menu.addItem(new WatchUi.MenuItem(WatchUi.loadResource($.Rez.Strings.Resume) as String, null, :resume, null));
         menu.addItem(new WatchUi.MenuItem(WatchUi.loadResource($.Rez.Strings.Save) as String, null, :save, null));
@@ -85,8 +86,7 @@ class PauseMenuDelegate extends WatchUi.Menu2InputDelegate {
     function onSelect(item as WatchUi.MenuItem) as Void {
         var id = item.getId();
         if (id == :resume) {
-            _recorder.resume();
-            WatchUi.popView(WatchUi.SLIDE_DOWN);
+            resumeSession();
         } else if (id == :save) {
             SessionFlow.finish(SessionFlow.save(_recorder));
         } else if (id == :discard) {
@@ -100,7 +100,12 @@ class PauseMenuDelegate extends WatchUi.Menu2InputDelegate {
 
     //! BACK on the pause menu resumes, like the Apple Watch's pause.
     function onBack() as Void {
+        resumeSession();
+    }
+
+    private function resumeSession() as Void {
         _recorder.resume();
+        SessionFlow.stateChanged();
         WatchUi.popView(WatchUi.SLIDE_DOWN);
     }
 }
@@ -116,11 +121,10 @@ class DiscardDelegate extends WatchUi.ConfirmationDelegate {
     }
 
     //! The confirmation is already off the stack here; the pause menu and the
-    //! session page are popped by `SessionFlow.end`.
+    //! session page are popped by `SessionFlow.discard`.
     function onResponse(response as WatchUi.Confirm) as Boolean {
         if (response == WatchUi.CONFIRM_YES) {
-            _recorder.discard();
-            SessionFlow.end();
+            SessionFlow.discard(_recorder);
         }
         return true;
     }

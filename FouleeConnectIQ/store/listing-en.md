@@ -43,8 +43,10 @@ WHAT IT DOES
   phone is in range: steps, distance, active minutes, vigorous active minutes,
   calories — plus the time of the reading, the time your day started on the
   watch and three technical markers (message type, payload version, send
-  counter). At the end of a session, its summary: walk or run, start, end,
-  duration, distance, steps. Nothing else leaves the watch. Out of range it simply
+  counter). During a session, every ten seconds, where it stands for the
+  iPhone's screen: walk or run, time, duration, distance, steps, heart rate,
+  paused, ended. At the end of a session, its summary: walk or run, start,
+  end, duration, distance, steps. Nothing else leaves the watch. Out of range it simply
   waits for the next pass — no error message, no battery drain.
 
 WHAT IT DOES NOT DO
@@ -85,13 +87,16 @@ Communications: steps, distanceCm, activeMinutes, activeMinutesVigorous,
 calories (plus "ts", a timestamp, "day", the start of the watch's local day,
 "gen", a send counter, "t", the message type, and "v", the payload schema
 version). At the end of a saved session it also transmits its summary ("t" =
-"summary": sport, start, end, duration, distance, steps). Nothing else is read
-or transmitted, and it contacts no server.
+"summary": sport, start, end, duration, distance, steps), and during the
+session, every ten seconds, its state ("t" = "session": sport, time, duration,
+distance, steps, heart rate, paused, ended). Nothing else is read or
+transmitted, and it contacts no server.
 
 It also records walks and runs with ActivityRecording (permissions Fit,
 Positioning, Sensor): GPS and the heart-rate sensor are only on during the
 session, and the activity is saved to Garmin Connect as a native one.
-Neither position nor heart rate is sent to the phone.
+Position is not sent to the phone; the current heart rate is, in the session
+state only, for the iPhone's screen.
 
 The iOS channel cannot be demonstrated in the Connect IQ simulator, which only
 relays companion traffic to Android (ADB). With no iPhone paired, the app just

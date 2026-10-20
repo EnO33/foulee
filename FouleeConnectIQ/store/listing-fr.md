@@ -41,9 +41,11 @@ CE QU'ELLE FAIT
   portée, cinq valeurs du jour : pas, distance, minutes actives, minutes
   actives intenses, calories — plus l'heure de la mesure, l'heure de début
   de ta journée sur la montre et trois repères techniques (type de message,
-  version du format, numéro d'envoi). À la fin d'une séance, son résumé :
-  marche ou course, début, fin, durée, distance, pas. Rien d'autre ne quitte
-  la montre. Hors de portée, elle attend le prochain passage — sans message
+  version du format, numéro d'envoi). Pendant une séance, toutes les dix
+  secondes, où elle en est pour l'écran de l'iPhone : marche ou course,
+  heure, durée, distance, pas, fréquence cardiaque, pause, fin. À la fin
+  d'une séance, son résumé : marche ou course, début, fin, durée, distance,
+  pas. Rien d'autre ne quitte la montre. Hors de portée, elle attend le prochain passage — sans message
   d'erreur, sans vider ta batterie.
 
 CE QU'ELLE NE FAIT PAS
@@ -83,14 +85,17 @@ activeMinutesVigorous, calories (plus « ts », un horodatage, « day », le
 début de la journée locale de la montre, « gen », un compteur d'envoi, « t »,
 le type de message, et « v », la version du format). À la fin d'une séance
 enregistrée, elle transmet aussi son résumé (« t » = "summary" : sport,
-début, fin, durée, distance, pas). Rien d'autre n'est lu ni transmis, et elle
+début, fin, durée, distance, pas), et pendant la séance, toutes les dix
+secondes, son état (« t » = "session" : sport, heure, durée, distance, pas,
+fréquence cardiaque, pause, fin). Rien d'autre n'est lu ni transmis, et elle
 ne contacte aucun serveur.
 
 Elle enregistre aussi des séances de marche ou de course avec
 ActivityRecording (permissions Fit, Positioning, Sensor) : GPS et capteur
 cardiaque ne sont allumés que pendant la séance, et l'activité est enregistrée
-dans Garmin Connect comme une activité native. Ni la position ni la fréquence
-cardiaque ne sont transmises au téléphone.
+dans Garmin Connect comme une activité native. La position n'est pas
+transmise au téléphone ; la fréquence cardiaque du moment ne l'est que dans
+l'état de séance, pour l'écran de l'iPhone.
 
 Le canal iOS ne peut pas être démontré dans le simulateur Connect IQ, qui ne
 relaie les échanges compagnon que vers Android (ADB). Sans iPhone appairé,

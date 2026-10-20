@@ -33,4 +33,14 @@ nonisolated enum ConnectIQField {
     static func nonNegative(_ value: Any?) -> Int {
         max(0, integer(value) ?? 0)
     }
+
+    /// A 0-or-1 flag: anything but a non-zero number is false.
+    static func flag(_ value: Any?) -> Bool {
+        (integer(value) ?? 0) != 0
+    }
+
+    /// The session's sport: an unknown one is walking, the phone's own default.
+    static func activity(_ value: Any?) -> SessionActivity {
+        (value as? String).flatMap(SessionActivity.init(rawValue:)) ?? .walking
+    }
 }

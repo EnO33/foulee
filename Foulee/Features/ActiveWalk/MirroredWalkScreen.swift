@@ -7,7 +7,7 @@ import SwiftUI
 /// the session — there is no API that would let the phone measure one and mirror
 /// it back — so this screen states what the wrist says and nothing else. Issue
 /// #282 adds a stop button; it will still be a remote control, not a second
-/// engine.
+/// engine. A Garmin outing (ADR 0009, D7) shows the same screen, without it.
 ///
 /// **It dates its figures.** HealthKit caches what a mirrored session sends and
 /// wakes this app *periodically*, potentially minutes apart, so « en direct »
@@ -23,6 +23,8 @@ struct MirroredWalkScreen: View {
 
     @State private var isShowingRoute = false
 
+    private var device: MirroredDevice { store.session?.device ?? .appleWatch }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -30,7 +32,9 @@ struct MirroredWalkScreen: View {
                     clock
                     figures
                     routeButton
-                    stopButton
+                    if device.acceptsStop {
+                        stopButton
+                    }
                     origin
                 }
                 .padding(.horizontal, 20)
@@ -112,7 +116,9 @@ struct MirroredWalkScreen: View {
                     tile(figures.distanceKm.kmValue(), "km")
                 }
                 HStack(spacing: 12) {
-                    tile("\(figures.activeCalories)", "kcal")
+                    // The Garmin watch states no calories: a dash, not a
+                    // measured zero.
+                    tile(device == .garmin ? "—" : "\(figures.activeCalories)", "kcal")
                     tile(figures.heartRate.map { "\($0)" } ?? "—", "bpm")
                 }
                 // The outing's average, the only pace honest enough to state:
@@ -127,7 +133,7 @@ struct MirroredWalkScreen: View {
                 freshness(figures)
             }
         } else {
-            Text("En attente des chiffres de ta Watch")
+            Text("En attente des chiffres de \(device.name)")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -194,7 +200,7 @@ struct MirroredWalkScreen: View {
     /// Says where the session lives, so « pourquoi ça s'arrête depuis ma
     /// montre ? » has an answer on screen rather than in a support thread.
     private var origin: some View {
-        Label("Mesurée par ta Apple Watch", systemImage: "applewatch")
+        Label(device == .garmin ? "Mesurée par ta montre Garmin" : "Mesurée par ta Apple Watch", systemImage: device.icon)
             .font(.footnote)
             .foregroundStyle(.secondary)
     }

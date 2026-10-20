@@ -76,7 +76,7 @@ nonisolated public extension GarminSessionSummary {
 
         let duration = TimeInterval(ConnectIQField.nonNegative(fields[Key.duration]))
         return GarminSessionSummary(
-            activity: (fields[Key.sport] as? String).flatMap(SessionActivity.init(rawValue:)) ?? .walking,
+            activity: ConnectIQField.activity(fields[Key.sport]),
             startedAt: start,
             endedAt: end,
             durationSeconds: min(duration, end.timeIntervalSince(start)),

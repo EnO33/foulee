@@ -19,6 +19,34 @@ nonisolated struct MirroredSession: Equatable, Sendable {
     /// outing's own clock has to keep it across mirrors rather than read this.
     var startedAt: Date
     var activity: SessionActivity
+    var device: MirroredDevice = .appleWatch
+}
+
+/// Which wrist the outing runs on.
+nonisolated enum MirroredDevice: Equatable, Sendable {
+    /// Mirrored by HealthKit, and takes the phone's « Arrêter » (issue #282).
+    case appleWatch
+    /// States its session over Connect IQ (ADR 0009, D7), and takes no command
+    /// from the phone: D7 leaves those out until they are tried on a watch.
+    case garmin
+
+    /// « ta Watch », as the home and the mirror screen name it.
+    var name: String {
+        switch self {
+        case .appleWatch: "ta Watch"
+        case .garmin: "ta Garmin"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .appleWatch: "applewatch"
+        case .garmin: "watch.analog"
+        }
+    }
+
+    /// Whether the phone can ask this wrist to end the outing.
+    var acceptsStop: Bool { self == .appleWatch }
 }
 
 /// What the phone learns about the wrist.
@@ -32,5 +60,7 @@ nonisolated enum MirroredSessionEvent: Equatable, Sendable {
     /// wrist — the phone keeps the newest and drops the rest, because HealthKit
     /// promises delivery, not sequence.
     case snapshot(WatchSessionSnapshot)
+    /// The same complete state, from the Garmin watch (ADR 0009, D7).
+    case garmin(WatchSessionSnapshot)
     case ended
 }
