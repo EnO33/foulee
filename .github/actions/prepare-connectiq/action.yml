@@ -19,14 +19,22 @@ inputs:
   agreement-hash:
     description: CIQ_AGREEMENT_HASH, the hash of the developer agreement accepted.
     required: false
+  all-devices:
+    description: >
+      'true' downloads every device profile Garmin publishes instead of the
+      manifest's, for the device catalog (FouleeConnectIQ/tools/device_catalog.py).
+    required: false
+    default: 'false'
 
 runs:
   using: composite
   steps:
     # Keyed on the manifest as checked out, before any beta id swap, so a
-    # device added or removed downloads afresh.
+    # device added or removed downloads afresh. The full catalog is never
+    # cached: its point is to see the devices Garmin published since last time.
     - name: Restore the SDK and the device profiles
       id: sdk-cache
+      if: inputs.all-devices != 'true'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
@@ -35,7 +43,7 @@ runs:
           ~/.Garmin/ConnectIQ/current-sdk.cfg
         key: ciq-sdk-9.2.0-${{ hashFiles('FouleeConnectIQ/manifest.xml') }}
 
-    - name: Download the SDK and the manifest's device profiles
+    - name: Download the SDK and the device profiles
       if: steps.sdk-cache.outputs.cache-hit != 'true'
       shell: bash
       env:
@@ -44,6 +52,7 @@ runs:
         CIQ_SDK_MANAGER_SHA256: 5d57b8f9cfcd02d3b3f48e19d6daca0480e4c6f627926f15d8617ef8a6f57e0b
         CIQ_SDK_TOKEN_BASE64: ${{ inputs.sdk-token }}
         CIQ_AGREEMENT_HASH: ${{ inputs.agreement-hash }}
+        ALL_DEVICES: ${{ inputs.all-devices }}
       run: |
         set -euo pipefail
         if [ -z "${CIQ_SDK_TOKEN_BASE64:-}" ] || [ -z "${CIQ_AGREEMENT_HASH:-}" ]; then
@@ -67,7 +76,12 @@ runs:
 
         "$manager" agreement accept --agreement-hash "$CIQ_AGREEMENT_HASH"
         "$manager" sdk set "$CIQ_SDK_VERSION"
-        if ! "$manager" device download --manifest FouleeConnectIQ/manifest.xml; then
+        if [ "$ALL_DEVICES" = "true" ]; then
+          selection=(--download-all)
+        else
+          selection=(--manifest FouleeConnectIQ/manifest.xml)
+        fi
+        if ! "$manager" device download "${selection[@]}"; then
           echo "::error title=Connect IQ::Téléchargement des profils refusé. Jeton Garmin expiré ? Relancer « connect-iq-sdk-manager login » et mettre à jour CIQ_SDK_TOKEN_BASE64 (FouleeConnectIQ/README.md)."
           exit 1
         fi

@@ -280,6 +280,15 @@ retient toute l'app pour deux modèles qui n'évolueront plus.
 
 ### Ajouter un appareil
 
+Les candidats viennent du catalogue : le workflow **Garmin devices** (à lancer
+depuis l'onglet Actions) télécharge tous les profils publiés par Garmin et
+liste, avec [`tools/device_catalog.py`](tools/device_catalog.py), ceux qui
+peuvent faire tourner l'app (watch app et service d'arrière-plan, au-dessus du
+`minApiLevel`) : CIQ, famille d'écran, profondeur de couleur, taille d'icône et
+mémoire disponible. En local, après
+`connect-iq-sdk-manager device download --download-all`, le script se lance
+seul.
+
 1. Vérifier l'identifiant dans le dossier `Devices`.
 2. L'ajouter aux `<iq:products>` du manifeste.
 3. Créer `resources-<identifiant>/drawables/drawables.xml`, sur le modèle des
