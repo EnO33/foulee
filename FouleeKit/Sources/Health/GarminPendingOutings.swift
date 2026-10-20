@@ -17,14 +17,14 @@ import Foundation
 /// 3. **It goes as soon as Santé covers it** — any workout overlapping it, the
 ///    test `WorkoutDeduplication` merges rows by — or once older than the
 ///    streak can reach.
-nonisolated public enum GarminPendingOutings {
+nonisolated enum GarminPendingOutings {
     /// Beyond the streak's own history window a pending outing can change
     /// nothing any more, and Garmin Connect has had more than enough time.
-    public static let horizon: TimeInterval = TimeInterval(StreakCalculator.historyWindowDays) * 24 * 60 * 60
+    static let horizon: TimeInterval = TimeInterval(StreakCalculator.historyWindowDays) * 24 * 60 * 60
 
     /// `pending` with `summary` in it once, oldest first: the watch retries
     /// until it hears the phone got it, so the same outing can arrive twice.
-    public static func adding(
+    static func adding(
         _ summary: GarminSessionSummary,
         to pending: [GarminSessionSummary]
     ) -> [GarminSessionSummary] {
@@ -34,7 +34,7 @@ nonisolated public enum GarminPendingOutings {
 
     /// The outings Santé doesn't cover yet, and that are still within reach of
     /// the streak at `now`.
-    public static func remaining(
+    static func remaining(
         _ pending: [GarminSessionSummary],
         healthKitWorkouts: [ActiveMinutes.WorkoutInterval],
         now: Date
