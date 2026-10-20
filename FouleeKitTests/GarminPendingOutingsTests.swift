@@ -52,4 +52,31 @@ struct GarminPendingOutingsTests {
         let window = Self.noon.addingTimeInterval(-3_600)..<Self.noon.addingTimeInterval(3_600)
         #expect(GarminPendingOutings.intervals([before, inside], startingIn: window) == [inside.interval])
     }
+
+    @Test("A pending outing of the window is a résumé row, under the watch's name")
+    func workoutsInWindow() throws {
+        let inside = Self.outing(at: Self.noon)
+        let before = Self.outing(at: Self.noon.addingTimeInterval(-86_400))
+        let window = Self.noon.addingTimeInterval(-3_600)..<Self.noon.addingTimeInterval(3_600)
+
+        let rows = GarminPendingOutings.workouts([before, inside], startingIn: window)
+        let row = try #require(rows.first)
+        #expect(rows.count == 1)
+        #expect(row.startedAt == inside.startedAt && row.endedAt == inside.endedAt)
+        #expect(row.durationSeconds == inside.durationSeconds)
+        #expect(row.distanceKm == 2.4 && row.steps == 3_100)
+        #expect(row.activity == .walking)
+        #expect(GarminPendingOutings.isPending(row))
+        #expect(row.caloriesText == "— kcal")
+    }
+
+    @Test("A row keeps its identity from one read to the next, and differs from another outing's")
+    func stableIdentity() {
+        let window = Self.noon..<Self.noon.addingTimeInterval(7_200)
+        let first = GarminPendingOutings.workouts([Self.outing(at: Self.noon)], startingIn: window)
+        let again = GarminPendingOutings.workouts([Self.outing(at: Self.noon)], startingIn: window)
+        let other = GarminPendingOutings.workouts([Self.outing(at: Self.noon.addingTimeInterval(60))], startingIn: window)
+        #expect(first.map(\.id) == again.map(\.id))
+        #expect(first.map(\.id) != other.map(\.id))
+    }
 }

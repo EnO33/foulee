@@ -90,6 +90,13 @@ nonisolated public extension WorkoutSummary {
     /// « 08:00 → 08:41 » — the row, the detail and the bubbles all say it so.
     var timeRangeText: String { "\(startedAt.clockText) → \(endedAt.clockText)" }
 
+    /// « 142 kcal », the row and the detail alike. A Garmin outing Santé
+    /// doesn't have yet (#479) says « — kcal »: the watch doesn't send its
+    /// energy, and 0 would read as a figure.
+    var caloriesText: String {
+        GarminPendingOutings.isPending(self) ? "— kcal" : "\(activeCalories) kcal"
+    }
+
     /// The figure drawn next to the row: the sport's own, or the walk-and-run
     /// figure once an outing mixes them — what `ActivityGlyph.mixedCardio`
     /// stands for.

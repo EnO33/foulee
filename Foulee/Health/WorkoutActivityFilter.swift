@@ -39,19 +39,31 @@ nonisolated enum WorkoutActivityFilter {
         calendar: Calendar = .current,
         now: Date = .now
     ) -> NSPredicate? {
-        let startOfToday = calendar.startOfDay(for: now)
-        guard let start = calendar.date(
-            byAdding: .day, value: -(daysBack - 1), to: startOfToday
-        ) else { return nil }
+        guard let window = recentWindow(daysBack: daysBack, calendar: calendar, now: now) else { return nil }
 
         return NSCompoundPredicate(andPredicateWithSubpredicates: [
             summarizedActivityPredicate,
             HKQuery.predicateForSamples(
-                withStart: start,
-                end: startOfToday.addingTimeInterval(24 * 60 * 60),
+                withStart: window.lowerBound,
+                end: window.upperBound,
                 options: .strictStartDate
             )
         ])
+    }
+
+    /// The last `daysBack` days, today included, midnight to midnight. Also
+    /// the window of the Garmin outings Santé doesn't have yet, which the
+    /// résumé lists next to the query's workouts.
+    static func recentWindow(
+        daysBack: Int,
+        calendar: Calendar = .current,
+        now: Date = .now
+    ) -> Range<Date>? {
+        let startOfToday = calendar.startOfDay(for: now)
+        guard let start = calendar.date(
+            byAdding: .day, value: -(daysBack - 1), to: startOfToday
+        ) else { return nil }
+        return start..<startOfToday.addingTimeInterval(24 * 60 * 60)
     }
 
     /// `HKQuery.predicateForWorkouts(with:)` accepts exactly one activity
