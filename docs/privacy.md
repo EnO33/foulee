@@ -47,8 +47,18 @@ fonctionner par l'app Santé, comme décrit ci-dessus.
 
 **Ce qu'elle lit sur la montre** — uniquement les compteurs du jour que la
 montre tient déjà (`ActivityMonitor`) : tes pas, ta distance, tes minutes
-actives, tes minutes actives intenses et tes calories. Pas de GPS, pas de
-fréquence cardiaque, pas de séances, aucun capteur allumé pour l'occasion.
+actives, tes minutes actives intenses et tes calories. En dehors d'une
+séance, pas de GPS, pas de fréquence cardiaque, aucun capteur allumé pour
+l'occasion.
+
+**Pendant une séance que tu lances sur la montre** — la montre enregistre
+elle-même l'activité, avec son propre enregistreur, comme ses apps de sport :
+durée, distance, **position GPS** et **fréquence cardiaque**. Le GPS et le
+capteur cardiaque ne sont allumés que de « Démarrer » à « Enregistrer » ou
+« Supprimer ». Une séance enregistrée part dans **Garmin Connect** comme
+n'importe quelle activité de ta montre, et Garmin Connect l'écrit dans Santé ;
+une séance supprimée ne laisse aucune trace. L'app Foulée de la montre ne garde
+ni ne transmet la position ou la fréquence cardiaque.
 
 **Ce qu'elle envoie** — un instantané de ces **cinq valeurs**, plus l'heure de
 la mesure, l'heure de début de ta journée sur la montre (pour compter les
@@ -88,7 +98,9 @@ position pour deux usages, et jamais en dehors :
 - tracer le **parcours** de ta sortie sur une carte, sur l'iPhone ou sur
   l'Apple Watch — **pendant la sortie seulement**. Sur la montre, la position
   n'est demandée qu'au démarrage d'une sortie et n'est plus lue une fois la
-  sortie terminée.
+  sortie terminée. Il en va de même sur une **montre Garmin** : le GPS n'y
+  est allumé que pendant une séance, et le parcours reste dans l'activité
+  enregistrée par la montre (voir « Montres Garmin »).
   Pendant une sortie lancée sur la montre, son parcours est aussi envoyé à
   **ton iPhone**, directement entre tes deux appareils, pour l'afficher sur la
   carte de la séance.

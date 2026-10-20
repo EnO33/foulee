@@ -10,4 +10,13 @@
     <string id="UnitCalories">kcal</string>
     <string id="SyncHintTop">Ouvre Foulée</string>
     <string id="SyncHintBottom">sur ton iPhone</string>
+    <string id="SportWalk">Marche</string>
+    <string id="SportRun">Course</string>
+    <string id="ChooseSport">Activité</string>
+    <string id="Paused">Pause</string>
+    <string id="Resume">Reprendre</string>
+    <string id="Save">Enregistrer</string>
+    <string id="Discard">Supprimer</string>
+    <string id="DiscardConfirm">Supprimer la séance ?</string>
+    <string id="KilometerDone">km $1$</string>
 </resources>

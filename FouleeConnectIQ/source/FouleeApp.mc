@@ -6,10 +6,15 @@ import Toybox.System;
 import Toybox.Time;
 import Toybox.WatchUi;
 
-//! Foulée on the watch is a sensor, not a second app: it shows today's numbers
-//! and pushes them to the iPhone. Nothing here needs the phone to be in range.
+//! Foulée on the watch, like on the Apple Watch: the day at a glance, a
+//! session started from the wrist, and today's numbers pushed to the iPhone
+//! (ADR 0009). Nothing here needs the phone to be in range.
 (:background :glance)
 class FouleeApp extends Application.AppBase {
+
+    //! True only in the process that showed the views: the background service
+    //! starts and stops the same class, without any session code loaded.
+    private var _hasViews as Boolean = false;
 
     function initialize() {
         AppBase.initialize();
@@ -19,13 +24,18 @@ class FouleeApp extends Application.AppBase {
         scheduleSnapshots();
     }
 
+    (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     function onStop(state as Dictionary?) as Void {
+        if (_hasViews) {
+            SessionFlow.saveIfOpen();
+        }
     }
 
     (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     function getInitialView() as [Views] or [Views, InputDelegates] {
+        _hasViews = true;
         listenToPhone();
-        return [new $.FouleeView()];
+        return [new $.FouleeView(), new $.HomeDelegate()];
     }
 
     //! The phone's state arrives while the app is open (ADR 0009, D5). Only the
