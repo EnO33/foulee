@@ -106,7 +106,7 @@ struct RecapDayTimeline: View {
                 Text(workout.activityLabel)
                     .font(FouleeFont.headline)
                     .foregroundStyle(.primary)
-                Text("\(workout.distanceKm.kmText(fractionDigits: 1)) · \(workout.activeCalories) kcal · \(workout.sourceName)")
+                Text("\(workout.distanceKm.kmText(fractionDigits: 1)) · \(workout.caloriesText) · \(workout.sourceName)")
                     .font(FouleeFont.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

@@ -17,7 +17,14 @@ import Foundation
 /// 3. **It goes as soon as Santé covers it** — any workout overlapping it, the
 ///    test `WorkoutDeduplication` merges rows by — or once older than the
 ///    streak can reach.
+///
+/// Until then it is also a row of the résumé (#479), under `sourceName`: the
+/// outing was done, and the résumé is the record of what was done.
 nonisolated public enum GarminPendingOutings {
+    /// Where the résumé says the row comes from. The watch, not Santé: the
+    /// detail has nothing more to read than the summary itself.
+    static let sourceName = "Montre Garmin"
+
     /// Beyond the streak's own history window a pending outing can change
     /// nothing any more, and Garmin Connect has had more than enough time.
     public static let horizon: TimeInterval = TimeInterval(StreakCalculator.historyWindowDays) * 24 * 60 * 60
@@ -55,5 +62,39 @@ nonisolated public enum GarminPendingOutings {
         startingIn window: Range<Date>
     ) -> [ActiveMinutes.WorkoutInterval] {
         pending.filter { window.contains($0.startedAt) }.map(\.interval)
+    }
+
+    /// The outings of `window`, as the résumé lists a Santé workout.
+    public static func workouts(
+        _ pending: [GarminSessionSummary],
+        startingIn window: Range<Date>
+    ) -> [WorkoutSummary] {
+        pending.filter { window.contains($0.startedAt) }.map(workout(of:))
+    }
+
+    /// Whether `workout` is a pending outing rather than a Santé workout.
+    public static func isPending(_ workout: WorkoutSummary) -> Bool {
+        workout.sourceName == sourceName
+    }
+
+    private static func workout(of outing: GarminSessionSummary) -> WorkoutSummary {
+        WorkoutSummary(
+            id: id(of: outing),
+            startedAt: outing.startedAt,
+            endedAt: outing.endedAt,
+            durationSeconds: outing.durationSeconds,
+            distanceKm: Double(outing.distanceMeters) / 1_000,
+            activeCalories: 0,
+            steps: outing.steps,
+            sourceName: sourceName,
+            activity: RecordedActivity(rawValue: outing.activity.rawValue) ?? .other
+        )
+    }
+
+    /// Stable from one read to the next, so SwiftUI keeps the row: made of the
+    /// start, which already identifies the outing.
+    private static func id(of outing: GarminSessionSummary) -> UUID {
+        let start = withUnsafeBytes(of: outing.startedAt.timeIntervalSince1970.bitPattern.bigEndian, Array.init)
+        return UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, start[0], start[1], start[2], start[3], start[4], start[5], start[6], start[7]))
     }
 }

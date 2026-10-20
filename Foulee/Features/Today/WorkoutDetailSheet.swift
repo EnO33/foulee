@@ -9,7 +9,8 @@ import SwiftUI
 /// matches what Apple Santé does for the same drill-down.
 ///
 /// Pulls HR samples + step count from HealthKit for the workout's exact
-/// window, derives pace from the summary.
+/// window, derives pace from the summary. A Garmin outing Santé doesn't have
+/// yet (#479) shows its summary alone.
 struct WorkoutDetailSheet: View {
     let summary: WorkoutSummary
 
@@ -58,7 +59,7 @@ struct WorkoutDetailSheet: View {
                         heartRateSection(detail: detail)
                     }
                     metricsGrid(detail: detail)
-                    healthAppLink
+                    source(of: detail.summary)
                         .padding(.top, 4)
                     if let lastError {
                         Text(lastError)
@@ -123,7 +124,7 @@ struct WorkoutDetailSheet: View {
                     icon: WalkMetric.calories.icon,
                     tint: WalkMetric.calories.tint,
                     label: "Calories",
-                    value: "\(detail.summary.activeCalories) kcal"
+                    value: detail.summary.caloriesText
                 )
                 metricCard(
                     icon: FouleeIcon.timer,
@@ -161,6 +162,20 @@ struct WorkoutDetailSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .fouleeGlass(cornerRadius: 18)
+    }
+
+    /// Santé has the workout, except a Garmin outing Garmin Connect hasn't
+    /// written there yet (#479): no link to an empty page then, but why.
+    @ViewBuilder
+    private func source(of summary: WorkoutSummary) -> some View {
+        if GarminPendingOutings.isPending(summary) {
+            Text("Garmin Connect l'ajoutera à Santé à sa prochaine synchronisation.")
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        } else {
+            healthAppLink
+        }
     }
 
     private var healthAppLink: some View {
