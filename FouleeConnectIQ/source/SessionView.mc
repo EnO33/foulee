@@ -50,8 +50,8 @@ class SessionView extends WatchUi.View {
         var info = Activity.getActivityInfo();
         var seconds = 0;
         var meters = 0;
-        var speed as Float? = null;
-        var heartRate as Number? = null;
+        var speed = info != null ? info.currentSpeed : null;
+        var heartRate = info != null ? info.currentHeartRate : null;
         if (info != null) {
             var timerTime = info.timerTime;
             if (timerTime != null) {
@@ -61,8 +61,6 @@ class SessionView extends WatchUi.View {
             if (distance != null) {
                 meters = distance.toNumber();
             }
-            speed = info.currentSpeed;
-            heartRate = info.currentHeartRate;
         }
         noteKilometer(meters);
 
