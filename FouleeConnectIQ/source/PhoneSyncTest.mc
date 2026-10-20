@@ -1,25 +1,29 @@
 import Toybox.Lang;
 import Toybox.Test;
 
-//! The message as `GarminPhoneSync` builds it on the phone.
+//! The message as `GarminPhoneSync` builds it on the phone. A module, not a
+//! global function: Run No Evil runs every global `(:test)` function as a
+//! test, with a Logger this one does not take.
 (:test)
-function phoneSyncMessage() as Dictionary<String, Object> {
-    return {
-        "t" => "sync",
-        "v" => 1,
-        "streak" => 12,
-        "minutesGoal" => 30,
-        "stepsGoal" => 8000,
-        "mode" => "both",
-        "water" => true,
-        "waterGoalML" => 2000,
-        "glassML" => 250
-    };
+module PhoneSyncFixture {
+    function message() as Dictionary<String, Object> {
+        return {
+            "t" => "sync",
+            "v" => 1,
+            "streak" => 12,
+            "minutesGoal" => 30,
+            "stepsGoal" => 8000,
+            "mode" => "both",
+            "water" => true,
+            "waterGoalML" => 2000,
+            "glassML" => 250
+        };
+    }
 }
 
 (:test)
 function phoneSyncDecodesTheWholeState(logger as Logger) as Boolean {
-    var state = PhoneSync.decode(phoneSyncMessage());
+    var state = PhoneSync.decode(PhoneSyncFixture.message());
     Test.assert(state != null);
     var decoded = state as Dictionary<String, Number or Boolean or String>;
     Test.assertEqual(decoded["streak"] as Object, 12);
@@ -36,11 +40,11 @@ function phoneSyncDecodesTheWholeState(logger as Logger) as Boolean {
 
 (:test)
 function phoneSyncRefusesWhatItDoesNotUnderstand(logger as Logger) as Boolean {
-    var otherType = phoneSyncMessage();
+    var otherType = PhoneSyncFixture.message();
     otherType["t"] = "session";
     Test.assert(PhoneSync.decode(otherType) == null);
 
-    var newerVersion = phoneSyncMessage();
+    var newerVersion = PhoneSyncFixture.message();
     newerVersion["v"] = 2;
     Test.assert(PhoneSync.decode(newerVersion) == null);
 
@@ -53,7 +57,7 @@ function phoneSyncRefusesWhatItDoesNotUnderstand(logger as Logger) as Boolean {
 
 (:test)
 function phoneSyncFieldsFallBackInsteadOfFailing(logger as Logger) as Boolean {
-    var message = phoneSyncMessage();
+    var message = PhoneSyncFixture.message();
     message.remove("streak");
     message["stepsGoal"] = "8000";
     message["mode"] = "swimming";
@@ -70,11 +74,11 @@ function phoneSyncFieldsFallBackInsteadOfFailing(logger as Logger) as Boolean {
 
 (:test)
 function phoneSyncReceiveStoresOnlyWhatItUnderstands(logger as Logger) as Boolean {
-    Test.assert(PhoneSync.receive(phoneSyncMessage()));
+    Test.assert(PhoneSync.receive(PhoneSyncFixture.message()));
     var stored = PhoneSync.load() as Dictionary<String, Number or Boolean or String>;
     Test.assertEqual(stored["streak"] as Object, 12);
 
-    var newer = phoneSyncMessage();
+    var newer = PhoneSyncFixture.message();
     newer["v"] = 2;
     newer["streak"] = 99;
     Test.assert(!PhoneSync.receive(newer));
