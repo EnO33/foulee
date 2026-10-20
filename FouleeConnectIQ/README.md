@@ -15,7 +15,7 @@ Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucun
 | `source/FouleeGlanceView.mc` | Glance : série + minutes actives / objectif (les pas tant que l'iPhone n'a rien envoyé). |
 | `source/FouleeView.mc` | Accueil, comme `WatchTodayView` : série, pas / objectif, minutes / objectif, km, kcal ; « Ouvre Foulée sur ton iPhone » avant la première synchro. |
 | `source/HomeFormat.mc` | Textes de l'accueil et du glance : progression vers l'objectif, série, largeur disponible sur un cadran rond. |
-| `source/MetricPalette.mc` | Couleurs des chiffres, celles de l'iPhone (tous les appareils de la matrice sont en AMOLED). |
+| `source/MetricPalette.mc` | Couleurs des chiffres, celles de l'iPhone ; les écrans MIP 64 couleurs les ramènent à leur palette. |
 | `source/SnapshotFormat.mc` | Formatage dans la langue de la montre : espace et virgule en français, virgule et point en anglais. |
 | `source/PhoneSync.mc` | État envoyé par l'iPhone (série, objectifs, mode, hydratation) : décodage tolérant et stockage (ADR 0009, D5). |
 | `source/SessionMath.mc` | Arithmétique d'une séance : chrono, allure, alerte au kilomètre (ADR 0009, D9). |
@@ -26,6 +26,8 @@ Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucun
 | `source/*Test.mc` | Tests unitaires Run No Evil. |
 | `build.sh` | Point d'entrée : `validate`, `build`, `test`, `package`. |
 | `tools/validate_project.py` | Contrôles statiques sans SDK — ce que lance la CI. |
+| `tools/device_catalog.py`, `devices.json` | Catalogue des montres compatibles, depuis les profils Garmin, et la matrice qui en sort (voir « Matrice d'appareils »). |
+| `tools/render_icons.py` | Icônes de lancement par famille d'écran, et icônes du store. |
 | `store/` | Fiche Connect IQ Store (FR + EN) et procédure de publication. |
 
 ### Métriques lues
@@ -87,7 +89,7 @@ openssl pkcs8 -topk8 -inform PEM -outform DER \
 ## Compiler
 
 ```sh
-./build.sh build            # les cinq appareils du manifeste, dans bin/
+./build.sh build            # tous les appareils du manifeste, dans bin/
 ./build.sh build venu2      # un seul
 ```
 
@@ -100,7 +102,7 @@ sort les `.prg` dans `bin/`. Sous le capot, pour un appareil :
   -y $HOME/.garmin/foulee_developer_key.der -w -l 3
 ```
 
-`-w` active les avertissements, `-l 3` le contrôle de types **strict** (même exigence que SwiftLint/Periphery côté iOS). Les cinq appareils compilent proprement à ce niveau.
+`-w` active les avertissements, `-l 3` le contrôle de types **strict** (même exigence que SwiftLint/Periphery côté iOS). Tous les appareils du manifeste compilent proprement à ce niveau.
 
 Le script va plus loin que `monkeyc` : il **échoue sur tout avertissement**,
 sans exception ni dispense. C'est l'équivalent Monkey C de `swiftlint --strict`,
@@ -139,7 +141,7 @@ chaque PR.
 
 ### `Connect IQ build` : la compilation
 
-Il compile les cinq appareils du manifeste avec `./build.sh build` (donc en
+Il compile tous les appareils du manifeste avec `./build.sh build` (donc en
 `-w -l 3`, sans aucun avertissement toléré),
 puis la version de tests unitaires avec `./build.sh test`. Il signe avec une
 clé jetable générée pour le job : compiler demande une clé, pas *la* clé, qui
@@ -258,52 +260,56 @@ jours, et se consulte avec `"$SDK/bin/era" -a <identifiant>`.
 
 ## Matrice d'appareils
 
-Chaque identifiant a été vérifié dans `~/Library/Application Support/Garmin/ConnectIQ/Devices`.
+**Toutes les montres Garmin qui peuvent faire tourner l'app** (#472) : 73
+appareils, listés dans [`devices.json`](devices.json) avec leurs caractéristiques
+(famille d'écran, type et profondeur d'écran, taille d'icône, CIQ, mémoire).
+Ce fichier et les `<iq:products>` du manifeste sont écrits ensemble par
+[`tools/device_catalog.py`](tools/device_catalog.py) à partir des profils
+Garmin, et `./build.sh validate` vérifie qu'ils concordent.
 
-| Appareil | Identifiant | CIQ | Famille | Glance |
-|---|---|---|---|---|
-| fēnix 8 43 mm | `fenix843mm` | 6.0.2 | round-416x416 | oui |
-| Forerunner 165 | `fr165` | 5.2.0 | round-390x390 | oui |
-| Venu 2 | `venu2` | 5.0.0 | round-416x416 | oui |
-| Venu Sq 2 | `venusq2` | 5.0.0 | rectangle-320x360 | oui |
-| vívoactive 5 | `vivoactive5` | 5.2.0 | round-390x390 | oui |
+Une montre est retenue si elle a une *watch app* et un service d'arrière-plan,
+tourne en Connect IQ 5.0.0 ou plus (le `minApiLevel`) et a un écran couleur :
+- **AMOLED** (fēnix 8/9, Forerunner 165/265/570/965/970, Venu 2/3/4/X1/Sq 2,
+  vívoactive 5/6, epix 2, Instinct 3 AMOLED, MARQ…) : les couleurs de Foulée
+  telles quelles ;
+- **MIP 64 couleurs** (fēnix 7, fēnix 8 et 9 Solar, Forerunner 255/955,
+  Enduro 3/4) : chaque couleur est ramenée par la montre à la plus proche de sa
+  palette.
 
-Tous tournent en Connect IQ 5.0.0 ou plus, le `minApiLevel` du manifeste, et
-tous ont un écran couleur AMOLED : le glance existe partout et les couleurs de
-Foulée s'affichent telles quelles.
+Restent dehors :
+- les compteurs vélo et GPS de randonnée (Edge, eTrex, GPSMAP), qui font
+  tourner des *watch apps* sans être des montres ;
+- les écrans à 1 bit (Instinct 3 Solar, Instinct E) : l'app dessine en
+  couleur, et ces montres ne lui laissent que 128 ko ;
+- tout ce qui est sous Connect IQ 5.0.0, dont **Forerunner 55 et Instinct 2**,
+  bloqués en 3.4.2 par Garmin : sans glance, ils retenaient le plancher d'API
+  de toute l'app.
 
-**Forerunner 55 et Instinct 2 sont sortis de la matrice** : bloqués en CIQ
-3.4.2 par Garmin, ils n'avaient pas de glance, demandaient des couleurs et des
-icônes à part (écrans *memory-in-pixel*, dont un monochrome) et une dispense
-d'avertissements dans `build.sh`. Les garder imposait un plancher d'API qui
-retient toute l'app pour deux modèles qui n'évolueront plus.
+Les icônes de lancement sont **regroupées par famille d'écran**
+(`resources-round-454x454/`) à la taille la plus courante de la famille ; une
+montre dont l'icône diffère a son propre dossier (`resources-venu3/`), que le
+SDK préfère à celui de sa famille. 30 dossiers pour 73 montres.
 
-### Ajouter un appareil
+### Mettre la matrice à jour
 
-Les candidats viennent du catalogue : le workflow **Garmin devices** (à lancer
-depuis l'onglet Actions) télécharge tous les profils publiés par Garmin et
-liste, avec [`tools/device_catalog.py`](tools/device_catalog.py), ceux qui
-peuvent faire tourner l'app (watch app et service d'arrière-plan, au-dessus du
-`minApiLevel`) : CIQ, famille d'écran, profondeur de couleur, taille d'icône et
-mémoire disponible. En local, après
-`connect-iq-sdk-manager device download --download-all`, le script se lance
-seul.
+Garmin publie de nouvelles montres : la matrice se recalcule, elle ne s'écrit
+pas à la main.
 
-1. Vérifier l'identifiant dans le dossier `Devices`.
-2. L'ajouter aux `<iq:products>` du manifeste.
-3. Créer `resources-<identifiant>/drawables/drawables.xml`, sur le modèle des
-   autres (`launcher_icon.png`). Le jungle du SDK ajoute déjà
-   `resources-<identifiant>` au chemin de ressources : ne pas le redéclarer
-   dans `monkey.jungle`, ça provoque un avertissement de doublon.
-4. Reporter la taille d'icône indiquée par `launcherIcon` dans le
-   `compiler.json` de l'appareil dans `LAUNCHER_ICON_PX`, dans
-   [`tools/validate_project.py`](tools/validate_project.py) — c'est ce qui
-   permet à la CI de vérifier l'icône, et le script échoue explicitement sur un
-   appareil qu'il ne connaît pas. Il doit tourner en CIQ 5.0.0 au moins :
-   `validate` refuse un `minApiLevel` plus bas.
-5. `tools/render_icons.py`, qui produit l'icône **à la taille exacte** (sans
-   quoi le compilateur redimensionne et avertit).
-6. `./build.sh validate && ./build.sh build`.
+1. Lancer le workflow **Garmin devices** depuis l'onglet Actions. Il
+   télécharge tous les profils publiés par Garmin et affiche la liste des
+   montres retenues dans son résumé, puis les mêmes lignes en JSON dans son
+   journal.
+2. Enregistrer ces lignes JSON dans un fichier, puis
+   `tools/device_catalog.py --from <fichier> --write` : `devices.json` et le
+   manifeste sont réécrits. En local, après
+   `connect-iq-sdk-manager device download --download-all`,
+   `tools/device_catalog.py --write` lit directement les profils.
+3. `tools/render_icons.py` : produit les icônes de chaque famille et des
+   exceptions **à la taille exacte** (sans quoi le compilateur redimensionne et
+   avertit), et supprime les dossiers devenus inutiles. Le jungle du SDK
+   résout déjà `resources-<famille>` et `resources-<appareil>` : ne pas les
+   redéclarer dans `monkey.jungle`, ça provoque un avertissement de doublon.
+4. `./build.sh validate && ./build.sh build`.
 
 ## Ce qui ne peut PAS être testé ici
 
@@ -383,7 +389,7 @@ Ce que la fiche store promet, donc ce qu'il faut tenir :
 - **Périmètre** : l'app montre et sa synchronisation avec l'iPhone. Tout ce qui
   relève du firmware Garmin, de Garmin Connect ou de la montre elle-même
   renvoie vers le support Garmin.
-- **Appareils** : les cinq modèles du manifeste. Nous n'en possédons pas la
+- **Appareils** : les modèles du manifeste. Nous n'en possédons pas la
   totalité (#191) : un bug spécifique à un modèle absent de notre matériel sera
   traité à l'aveugle, avec l'aide de son signaleur et des rapports ERA — et
   c'est dit franchement plutôt que promis.
