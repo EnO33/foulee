@@ -72,9 +72,11 @@ changement d'une option, et cette note existe pour qu'on sache quoi essayer.
 
 ## 2. Les images
 
-Aucune n'est dans le dépôt : ce sont des captures d'écran d'appareils qui
-n'existent qu'en simulateur graphique (voir § 3), et il vaut mieux ne pas
-committer d'images obtenues à l'arraché.
+Les **icônes** sont dans le dépôt, sous [`assets/`](assets/), rendues depuis
+l'icône de l'app iPhone : le marcheur blanc sur dégradé violet, une seule
+identité Foulée sur l'iPhone, l'Apple Watch et Garmin (#468). Les **captures
+d'écran** n'y sont pas encore : elles viennent du simulateur graphique (voir
+§ 3).
 
 ### Tailles exigées
 
@@ -91,9 +93,18 @@ Le forum développeurs mentionne en plus un plafond de **300 ko** pour les
 icônes et images de couverture et de **150 ko** par capture d'écran. Ce chiffre
 est communautaire, pas documenté par Garmin : le vérifier sur le formulaire.
 
-Le motif source est déjà dans le dépôt : `resources-venu2/drawables/launcher_icon.svg`
-(les trois barres violettes de Foulée, `#BF5AF2` sur fond noir). Il suffit de le
-rendre aux tailles ci-dessus.
+`assets/icon-500.png` et `assets/icon-128.png` sont produites, avec les icônes
+de lancement de chaque appareil, par :
+
+```sh
+tools/render_icons.py     # ImageMagick : brew install imagemagick
+```
+
+Le script part de `Foulee/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png`
+et donne aux écrans *memory-in-pixel* (fr55, instinct2) le marcheur blanc sur
+fond noir, sans dégradé. À relancer, puis committer, si l'icône iPhone change.
+Le rendu est reproductible : relancé sur une source inchangée, il ne modifie
+aucun fichier. L'image d'en-tête reste à faire.
 
 ### Captures d'écran, par appareil visé
 
