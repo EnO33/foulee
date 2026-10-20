@@ -145,7 +145,7 @@ nonisolated private func refreshSnapshotMetrics(store: HKHealthStore, wake: Back
     // all day for a user who never opens the app (issue #194). Only on a real
     // recompute: quiet wakes would just add WatchConnectivity traffic.
     guard streak != nil else { return }
-    PhoneWatchSync.shared.send(WatchSyncPayload(
+    WatchSyncBroadcast.send(WatchSyncPayload(
         streak: snapshot.streak,
         minutesGoal: snapshot.minutesGoal,
         stepsGoal: snapshot.stepsGoal,

@@ -82,19 +82,39 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
         for device in GarminDeviceStore.read() {
             let isNew = state.withLock { $0.registeredDeviceIDs.insert(device.id).inserted }
             guard isNew else { continue }
-            let iqDevice = IQDevice(
-                id: device.id,
-                modelName: device.modelName,
-                friendlyName: device.friendlyName
-            )
+            let iqDevice = Self.iqDevice(device)
             connectIQ.register(forDeviceEvents: iqDevice, delegate: self)
-            // Store UUID == app UUID until the first publication hands out the
-            // store id (#481). The SDK only uses it to open the store page.
-            for appUUID in GarminConnectIQConfiguration.applicationUUIDs {
-                let app = IQApp(uuid: appUUID, store: appUUID, device: iqDevice)
+            for app in Self.apps(on: iqDevice) {
                 connectIQ.register(forAppMessages: app, delegate: self)
             }
         }
+    }
+
+    /// Pushes the phone-computed state to the Foulée app on every authorized
+    /// watch (ADR 0009, D5). Fire and forget: a watch out of range, or without
+    /// the app, misses this send and is put right by the next, since each one
+    /// is the complete state. Nothing is sent before `initializeIfNeeded` ran,
+    /// and sending must not be what initializes the SDK.
+    func sendSync(_ payload: WatchSyncPayload) {
+        guard state.withLock({ $0.isInitialized }), let connectIQ = ConnectIQ.sharedInstance() else { return }
+        let message = GarminPhoneSync.message(from: payload)
+        for device in GarminDeviceStore.read() {
+            for app in Self.apps(on: Self.iqDevice(device)) {
+                // The SDK calls both blocks unconditionally: nil would crash it.
+                connectIQ.sendMessage(message, to: app, progress: { _, _ in }, completion: { _ in })
+            }
+        }
+    }
+
+    private static func iqDevice(_ device: GarminDevice) -> IQDevice {
+        IQDevice(id: device.id, modelName: device.modelName, friendlyName: device.friendlyName)
+    }
+
+    /// The production and beta builds of the watch app on `device`. Store UUID
+    /// == app UUID until the first publication hands out the store id (#481);
+    /// the SDK only uses it to open the store page.
+    private static func apps(on device: IQDevice) -> [IQApp] {
+        GarminConnectIQConfiguration.applicationUUIDs.map { IQApp(uuid: $0, store: $0, device: device) }
     }
 
     func snapshots() -> AsyncStream<GarminDailySnapshot> {

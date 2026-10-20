@@ -15,7 +15,8 @@ Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucun
 | `source/FouleeGlanceView.mc` | Glance : pas du jour + minutes actives. |
 | `source/FouleeView.mc` | Vue plein écran : pas, minutes actives, distance. |
 | `source/SnapshotFormat.mc` | Formatage dans la langue de la montre : espace et virgule en français, virgule et point en anglais. |
-| `source/DailySnapshotTest.mc` | Tests unitaires Run No Evil. |
+| `source/PhoneSync.mc` | État envoyé par l'iPhone (série, objectifs, mode, hydratation) : décodage tolérant et stockage (ADR 0009, D5). |
+| `source/DailySnapshotTest.mc`, `source/PhoneSyncTest.mc` | Tests unitaires Run No Evil. |
 | `build.sh` | Point d'entrée : `validate`, `build`, `test`, `package`. |
 | `tools/validate_project.py` | Contrôles statiques sans SDK — ce que lance la CI. |
 | `store/` | Fiche Connect IQ Store (FR + EN) et procédure de publication. |

@@ -27,11 +27,12 @@ extension TodayStore {
         SharedStore.write(publication.snapshot)
         WidgetCenter.shared.reloadAllTimelines()
 
-        // Push the phone-computed streak (+ goals) to the Watch. The watch's
-        // local HealthKit only keeps a few days of history, so it can't
-        // recompute long streaks correctly — it just displays this value.
+        // Push the phone-computed streak (+ goals) to the watches. The Apple
+        // Watch's local HealthKit only keeps a few days of history, and a
+        // Garmin watch has none of it: neither can recompute long streaks
+        // correctly, both just display this value.
         guard let payload = publication.watchPayload else { return }
-        PhoneWatchSync.shared.send(payload)
+        WatchSyncBroadcast.send(payload)
     }
 
     /// Project the current snapshot onto `stored` — the app group as it stands
