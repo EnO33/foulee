@@ -113,21 +113,20 @@ nonisolated public extension GarminDailySnapshot {
         // cast for the whole dictionary.
         guard let fields = message as? [AnyHashable: Any],
               isSnapshotType(fields[Key.type]),
-              let version = integer(fields[Key.version]),
+              let version = ConnectIQField.integer(fields[Key.version]),
               (1...schemaVersion).contains(version),
-              let seconds = finiteDouble(fields[Key.timestamp]),
-              seconds > 0,
-              let generation = integer(fields[Key.generation]),
+              let timestamp = ConnectIQField.positiveDate(fields[Key.timestamp]),
+              let generation = ConnectIQField.integer(fields[Key.generation]),
               generation >= 0 else { return nil }
 
         return GarminDailySnapshot(
-            steps: nonNegative(fields[Key.steps]),
-            distanceCm: nonNegative(fields[Key.distanceCm]),
-            activeMinutes: nonNegative(fields[Key.activeMinutes]),
-            activeMinutesVigorous: nonNegative(fields[Key.activeMinutesVigorous]),
-            calories: nonNegative(fields[Key.calories]),
-            timestamp: Date(timeIntervalSince1970: seconds),
-            watchDayStart: version >= 2 ? positiveDate(fields[Key.dayStart]) : nil,
+            steps: ConnectIQField.nonNegative(fields[Key.steps]),
+            distanceCm: ConnectIQField.nonNegative(fields[Key.distanceCm]),
+            activeMinutes: ConnectIQField.nonNegative(fields[Key.activeMinutes]),
+            activeMinutesVigorous: ConnectIQField.nonNegative(fields[Key.activeMinutesVigorous]),
+            calories: ConnectIQField.nonNegative(fields[Key.calories]),
+            timestamp: timestamp,
+            watchDayStart: version >= 2 ? ConnectIQField.positiveDate(fields[Key.dayStart]) : nil,
             generation: generation
         )
     }
@@ -146,35 +145,9 @@ nonisolated public extension GarminDailySnapshot {
         return incoming.timestamp > last.timestamp
     }
 
-    /// `NSNumber`-only on purpose: a numeric-looking `NSString` is a watch-side
-    /// bug, and silently coercing it would hide it.
-    private static func finiteDouble(_ value: Any?) -> Double? {
-        guard let number = value as? NSNumber else { return nil }
-        let double = number.doubleValue
-        return double.isFinite ? double : nil
-    }
-
-    private static func integer(_ value: Any?) -> Int? {
-        guard let double = finiteDouble(value) else { return nil }
-        // Saturate instead of trapping: `Int(_: Double)` crashes out of range,
-        // and a corrupt payload must never take the app down.
-        if double >= Double(Int.max) { return Int.max }
-        if double <= Double(Int.min) { return Int.min }
-        return Int(double.rounded())
-    }
-
     /// No `t` at all is a v1 snapshot, which predates message types.
     private static func isSnapshotType(_ value: Any?) -> Bool {
         guard let value else { return true }
         return value as? String == messageType
-    }
-
-    private static func positiveDate(_ value: Any?) -> Date? {
-        guard let seconds = finiteDouble(value), seconds > 0 else { return nil }
-        return Date(timeIntervalSince1970: seconds)
-    }
-
-    private static func nonNegative(_ value: Any?) -> Int {
-        max(0, integer(value) ?? 0)
     }
 }
