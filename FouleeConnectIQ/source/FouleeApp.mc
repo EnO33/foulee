@@ -1,5 +1,6 @@
 import Toybox.Application;
 import Toybox.Background;
+import Toybox.Communications;
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.Time;
@@ -23,7 +24,26 @@ class FouleeApp extends Application.AppBase {
 
     (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     function getInitialView() as [Views] or [Views, InputDelegates] {
+        listenToPhone();
         return [new $.FouleeView()];
+    }
+
+    //! The phone's state arrives while the app is open (ADR 0009, D5). Only the
+    //! full app listens: neither the glance nor the background service does.
+    (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
+    private function listenToPhone() as Void {
+        if (Communications has :registerForPhoneAppMessages) {
+            Communications.registerForPhoneAppMessages(method(:onPhoneMessage));
+        }
+    }
+
+    (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
+    function onPhoneMessage(message as Communications.PhoneAppMessage) as Void {
+        var state = PhoneSync.decode(message.data);
+        if (state != null) {
+            PhoneSync.save(state);
+            WatchUi.requestUpdate();
+        }
     }
 
     (:glance :typecheck(disableBackgroundCheck))

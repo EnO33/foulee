@@ -61,6 +61,12 @@ vers ton iPhone par Bluetooth**, au plus une fois toutes les cinq minutes, et
 téléphone n'est pas à portée, la montre n'envoie rien et attend simplement le
 prochain passage.
 
+**Ce qu'elle reçoit** — de ton iPhone, et par le même lien Bluetooth : ta
+série, tes objectifs de pas et de minutes, ton choix marche / course et tes
+réglages d'hydratation (activée ou non, objectif, taille d'un verre). C'est ce
+que l'Apple Watch reçoit déjà. La montre garde le dernier état reçu pour
+l'afficher hors de portée du téléphone.
+
 **Ce qu'elle n'envoie pas** — rien ne part vers les serveurs de Garmin, ni vers
 les nôtres (nous n'en avons pas). Il n'y a aucun compte à créer dans cette app,
 aucun réglage, et rien n'est enregistré ailleurs que sur la montre et sur ton
