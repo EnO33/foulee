@@ -1,0 +1,62 @@
+name: Connect IQ simulator diagnosis
+
+# Throwaway: shows what the simulator puts on screen while monkeydo hangs
+# (issue #488). Never merged.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/connectiq-diag.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare-connectiq
+        with:
+          sdk-token: ${{ secrets.CIQ_SDK_TOKEN_BASE64 }}
+          agreement-hash: ${{ vars.CIQ_AGREEMENT_HASH }}
+
+      - name: Install the simulator's libraries
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends xvfb libwebkit2gtk-4.0-37 libusb-1.0-0 libsm6 x11-apps x11-utils imagemagick >/dev/null
+
+      - name: Compile the unit-test build
+        run: |
+          set -euo pipefail
+          openssl genrsa -out "$RUNNER_TEMP/k.pem" 4096 2>/dev/null
+          openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in "$RUNNER_TEMP/k.pem" -out "$RUNNER_TEMP/k.der"
+          sdk="$(tr -d '\n' < "$HOME/.Garmin/ConnectIQ/current-sdk.cfg")"; sdk="${sdk%/}"
+          cd FouleeConnectIQ
+          "$sdk/bin/monkeyc" -f monkey.jungle -d venu2 -o bin/test.prg -y "$RUNNER_TEMP/k.der" -t -l 3
+
+      - name: Run the tests and capture the screen
+        run: |
+          sdk="$(tr -d '\n' < "$HOME/.Garmin/ConnectIQ/current-sdk.cfg")"; sdk="${sdk%/}"
+          export DISPLAY=:1
+          Xvfb "$DISPLAY" -screen 0 1280x1024x24 &
+          sleep 2
+          "$sdk/bin/simulator" > /tmp/simulator.log 2>&1 &
+          sleep 5
+          capture() {
+            echo "--- capture $1"
+            xwininfo -root -tree | grep -v 'has no name' || true
+            xwd -silent -root | convert xwd:- -crop 900x720+0+0 +repage -colors 64 png:- | base64 -w 0
+            echo
+            echo "--- fin capture $1"
+          }
+          capture avant
+          (timeout 120 "$sdk/bin/monkeydo" FouleeConnectIQ/bin/test.prg venu2 -t > /tmp/monkeydo.log 2>&1; echo "monkeydo: $?" >> /tmp/monkeydo.log) &
+          sleep 30
+          capture pendant
+          wait
+          capture apres
+          echo "--- monkeydo"; cat /tmp/monkeydo.log
+          echo "--- simulateur"; cat /tmp/simulator.log
