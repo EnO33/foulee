@@ -70,7 +70,7 @@ Le pendant Monkey C de l'ADR 0007. Calculs (allure, kilomètres, résumé, déci
 
 ### D10 — Un appareil reste dans la matrice s'il tient la séance en mémoire
 
-La séance demande beaucoup plus de mémoire que l'app actuelle. Un appareil reste dans la matrice si, au simulateur, une séance d'une heure tient avec au moins 20 % de marge mémoire sur la page la plus lourde. Ce seuil se mesure et se vérifie en CI ; il remplace le choix au cas par cas. fr55 et instinct2 seront les premiers mesurés (#472).
+La séance demande beaucoup plus de mémoire que l'app actuelle. Un appareil reste dans la matrice si, au simulateur, une séance d'une heure tient avec au moins 20 % de marge mémoire sur la page la plus lourde. Ce seuil se mesure et se vérifie en CI ; il remplace le choix au cas par cas. fr55 et instinct2 sont sortis de la matrice avant toute mesure : bloqués en Connect IQ 3.4.2, ils retenaient le plancher d'API de toute l'app (`minApiLevel` 5.0.0 depuis, #472).
 
 ## Phases
 

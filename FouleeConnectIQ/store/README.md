@@ -35,7 +35,7 @@ base64 -i $HOME/.garmin/foulee_developer_key.der | pbcopy
 
 En local, `./build.sh package` produit le même paquet dans `bin/foulee.iq`.
 
-Le `.iq` contient les binaires des sept appareils du manifeste. C'est le seul
+Le `.iq` contient un binaire par appareil du manifeste. C'est le seul
 fichier à téléverser. Il est construit en `--release`, ce que `monkeyc --help`
 résume en une ligne :
 
@@ -49,8 +49,8 @@ qu'affiche `./build.sh build venu2`) et **19 372 octets** avec, soit 5,5 fois
 moins. Et `strings` ne trouve plus un seul chemin `…/source/*.mc` dans le
 binaire de release, là où il en trouve sept dans celui de debug.
 
-> Ne pas mesurer ça sur les `.iq` : ce sont des archives 7-zip contenant les
-> sept binaires, elles pèsent ~95 ko et ~93,5 ko selon la variante — et pas
+> Ne pas mesurer ça sur les `.iq` : ce sont des archives 7-zip contenant un
+> binaire par appareil (sept lors de cette mesure), elles pèsent ~95 ko et ~93,5 ko selon la variante — et pas
 > même à l'octet près, la taille bouge de quelques dizaines d'octets d'une
 > exécution à l'autre. L'écart de ~1,6 % qu'on lit là ne dit rien du binaire
 > qui tourne réellement sur la montre.
@@ -101,17 +101,17 @@ tools/render_icons.py     # ImageMagick : brew install imagemagick
 ```
 
 Le script part de `Foulee/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png`
-et donne aux écrans *memory-in-pixel* (fr55, instinct2) le marcheur blanc sur
-fond noir, sans dégradé. À relancer, puis committer, si l'icône iPhone change.
+à la taille de chaque appareil. À relancer, puis committer, si l'icône iPhone
+change.
 Le rendu est reproductible : relancé sur une source inchangée, il ne modifie
 aucun fichier. L'image d'en-tête reste à faire.
 
 ### Captures d'écran, par appareil visé
 
-Une capture par famille suffit pour la fiche, mais autant les avoir toutes : la
-matrice couvre volontairement deux extrêmes (AMOLED 416 × 416 et monochrome
-176 × 176) et c'est précisément ce qu'un relecteur regarde. Résolutions relevées
-dans le `compiler.json` de chaque appareil (SDK 9.2.0) :
+Une capture par famille suffit pour la fiche, mais autant les avoir toutes :
+les formats vont du rond 416 × 416 au rectangle 320 × 360, et c'est précisément
+ce qu'un relecteur regarde. Résolutions relevées dans le `compiler.json` de
+chaque appareil (SDK 9.2.0) :
 
 | Appareil | Capture | Écran |
 |---|---|---|
@@ -120,11 +120,9 @@ dans le `compiler.json` de chaque appareil (SDK 9.2.0) :
 | Forerunner 165 (`fr165`) | 390 × 390 | AMOLED 16 bpp |
 | vívoactive 5 (`vivoactive5`) | 390 × 390 | AMOLED 16 bpp |
 | Venu Sq 2 (`venusq2`) | 320 × 360 | AMOLED 16 bpp |
-| Forerunner 55 (`fr55`) | 208 × 208 | MIP 4 bpp |
-| Instinct 2 (`instinct2`) | 176 × 176 | MIP 1 bpp |
 
 Ne pas confondre avec les **icônes de lancement** embarquées dans l'app, qui
-sont d'autres tailles encore (60, 70, 54, 56, 40, 35 et 62 px respectivement) et
+sont d'autres tailles encore (60, 70, 54, 56 et 40 px respectivement) et
 que `./build.sh validate` vérifie déjà à chaque PR.
 
 ## 3. Prendre les captures — procédure manuelle
@@ -151,8 +149,8 @@ Puis, dans le simulateur :
 2. Laisser la vue plein écran s'afficher, puis **File → Screen Shot** : le
    simulateur écrit un PNG **à la taille exacte de l'écran de l'appareil**,
    sans décor de montre ni fond d'écran de bureau.
-3. Recommencer pour le *glance* (**Simulation → Glance View**) sur les cinq
-   appareils qui le supportent — fr55 et instinct2 n'en ont pas, c'est attendu.
+3. Recommencer pour le *glance* (**Simulation → Glance View**), que les cinq
+   appareils supportent.
 
 > Ne **jamais** utiliser `screencapture` sur l'écran entier pour ça : la capture
 > embarquerait le bureau du développeur, et sa taille n'aurait aucun rapport

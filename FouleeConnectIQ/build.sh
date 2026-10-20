@@ -25,22 +25,9 @@ cd "$HERE"
 OUT_DIR="$HERE/bin"
 LOG_DIR="$OUT_DIR/logs"
 
-# Warnings monkeyc emits that we accept, matched against its output. fr55 and
-# instinct2 run Connect IQ 3.4.2 and a watch-app glance needs 4.0.0, so the
-# (:glance) annotation and the glance-scoped strings are ignored on those two.
-# Keeping them in the matrix is deliberate (README.md, « Matrice d'appareils »).
-# Anything else is a build failure: this is the Monkey C equivalent of
-# `swiftlint --strict`.
-#
-# The exemption is scoped to those two devices on purpose. monkeyc prefixes
-# every warning with the device it came from ("WARNING: fr55: …"), including
-# during `--package-app`, where all seven devices land in a single log — so an
-# unscoped pattern would forgive the same warning on a CIQ 4+ device, where it
-# would mean the glance genuinely broke. Every other device stays at zero
-# tolerance.
-GLANCELESS_DEVICES='fr55|instinct2'
-GLANCE_WARNINGS='Glance applications are not supported for app type|specifies the .glance. resource scope'
-ACCEPTED_WARNINGS="^WARNING: ($GLANCELESS_DEVICES): .*($GLANCE_WARNINGS)"
+# Any monkeyc warning fails the build: this is the Monkey C equivalent of
+# `swiftlint --strict`. Every device of the matrix runs CIQ 5.0.0 or later, so
+# none has a legitimate warning to forgive.
 
 die() {
     echo "erreur : $*" >&2
@@ -127,18 +114,17 @@ compile_one() {
         return 1
     fi
 
-    local warnings unexpected
-    warnings=$(grep -c '^WARNING' "$log" || true)
-    unexpected=$(grep '^WARNING' "$log" | grep -Ev "$ACCEPTED_WARNINGS" || true)
-    if [ -n "$unexpected" ]; then
-        echo "ÉCHEC (avertissement non attendu)"
-        printf '%s\n' "$unexpected" | sed 's/^/      /'
+    local warnings
+    warnings=$(grep '^WARNING' "$log" || true)
+    if [ -n "$warnings" ]; then
+        echo "ÉCHEC (avertissement)"
+        printf '%s\n' "$warnings" | sed 's/^/      /'
         return 1
     fi
 
     local size
     size=$(wc -c <"$output" | tr -d ' ')
-    echo "ok    ${size} octets, ${warnings} avertissement(s) attendu(s)"
+    echo "ok    ${size} octets"
 }
 
 cmd_build() {
@@ -193,11 +179,11 @@ cmd_package() {
         die "l'export .iq a échoué"
     fi
 
-    local unexpected
-    unexpected=$(grep '^WARNING' "$log" | grep -Ev "$ACCEPTED_WARNINGS" || true)
-    if [ -n "$unexpected" ]; then
-        printf '%s\n' "$unexpected" | sed 's/^/  /'
-        die "avertissement non attendu à l'export"
+    local warnings
+    warnings=$(grep '^WARNING' "$log" || true)
+    if [ -n "$warnings" ]; then
+        printf '%s\n' "$warnings" | sed 's/^/  /'
+        die "avertissement à l'export"
     fi
 
     echo "  $output ($(wc -c <"$output" | tr -d ' ') octets)"
