@@ -76,7 +76,7 @@ Le glance et la vue plein écran ne touchent jamais au téléphone : elles s'aff
 
 ## Prérequis
 
-- SDK Connect IQ 9.2.0 : `~/Library/Application Support/Garmin/ConnectIQ/Sdks/connectiq-sdk-mac-9.2.0-2026-06-09-92a1605b2`
+- SDK Connect IQ 9.3.0 : `~/Library/Application Support/Garmin/ConnectIQ/Sdks/connectiq-sdk-mac-9.3.0-2026-10-20-95888f262`
 - Un JDK (le SDK est en Java). Sur cette machine : `export JAVA_HOME=/opt/homebrew/opt/openjdk@21`
 - Une **clé développeur**, générée hors du dépôt (elle ne doit jamais y entrer) :
 

@@ -41,13 +41,13 @@ runs:
           ~/.Garmin/ConnectIQ/Sdks
           ~/.Garmin/ConnectIQ/Devices
           ~/.Garmin/ConnectIQ/current-sdk.cfg
-        key: ciq-sdk-9.2.0-${{ hashFiles('FouleeConnectIQ/manifest.xml') }}
+        key: ciq-sdk-9.3.0-${{ hashFiles('FouleeConnectIQ/manifest.xml') }}
 
     - name: Download the SDK and the device profiles
       if: steps.sdk-cache.outputs.cache-hit != 'true'
       shell: bash
       env:
-        CIQ_SDK_VERSION: 9.2.0
+        CIQ_SDK_VERSION: 9.3.0
         CIQ_SDK_MANAGER_VERSION: 0.8.4
         CIQ_SDK_MANAGER_SHA256: 5d57b8f9cfcd02d3b3f48e19d6daca0480e4c6f627926f15d8617ef8a6f57e0b
         CIQ_SDK_TOKEN_BASE64: ${{ inputs.sdk-token }}
