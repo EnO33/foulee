@@ -11,8 +11,8 @@ function sessionClockPromotesPastTheHour(logger as Logger) as Boolean {
 
 (:test)
 function sessionPaceDividesTheStretch(logger as Logger) as Boolean {
-    Test.assertEqual(SessionMath.pace(370, 1000), "6'10\"/km");
-    Test.assertEqual(SessionMath.pace(925, 2500), "6'10\"/km");
+    Test.assert("6'10\"/km".equals(SessionMath.pace(370, 1000)));
+    Test.assert("6'10\"/km".equals(SessionMath.pace(925, 2500)));
     return true;
 }
 
@@ -27,8 +27,8 @@ function sessionPaceIsSilentWhenItWouldLie(logger as Logger) as Boolean {
 (:test)
 function sessionLivePaceRoundsToTheSport(logger as Logger) as Boolean {
     // 2.75 m/s is 363.6 s/km: 365 running (step 5), 360 walking (step 10).
-    Test.assertEqual(SessionMath.livePace(2.75f, true), "6'05\"/km");
-    Test.assertEqual(SessionMath.livePace(2.75f, false), "6'00\"/km");
+    Test.assert("6'05\"/km".equals(SessionMath.livePace(2.75f, true)));
+    Test.assert("6'00\"/km".equals(SessionMath.livePace(2.75f, false)));
     Test.assert(SessionMath.livePace(null, true) == null);
     Test.assert(SessionMath.livePace(0.0f, false) == null);
     Test.assert(SessionMath.livePace(0.1f, false) == null);
