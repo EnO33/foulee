@@ -5,15 +5,19 @@ import Foundation
 ///
 /// The wire format is a Connect IQ message dictionary — `NSString` keys,
 /// `NSNumber` values — not JSON, so it gets its own hand-written decoder
-/// rather than `Codable`. The schema is frozen and shared verbatim with the
-/// watch side:
+/// rather than `Codable`. The schema is shared verbatim with the watch side:
 ///
-///     { "v", "steps", "distanceCm", "activeMinutes",
-///       "activeMinutesVigorous", "calories", "ts", "gen" }
+///     { "t", "v", "steps", "distanceCm", "activeMinutes",
+///       "activeMinutesVigorous", "calories", "ts", "day", "gen" }
 ///
-/// - `v`  — schema version. A payload from a newer watch app is dropped whole
-///          rather than half-read.
+/// - `t`  — message type, `"snapshot"` (ADR 0009, D6). Absent from v1.
+/// - `v`  — schema version, 1 or 2. A payload from a newer watch app is
+///          dropped whole rather than half-read.
 /// - `ts` — snapshot instant, epoch seconds UTC (`Time.now().value()`).
+/// - `day`— v2: start of the watch's own local day, epoch seconds
+///          (`Time.today().value()`). The watch's counters reset at *its*
+///          midnight, which is not the phone's when the two sit in different
+///          time zones (#473).
 /// - `gen`— watch-side counter, incremented on every snapshot the watch builds.
 ///          BLE can redeliver and reorder, so this is what orders the stream.
 ///
@@ -26,9 +30,15 @@ import Foundation
 /// background on BLE activity and kills it again between wakes
 /// (`GarminSnapshotStore`, #189).
 nonisolated public struct GarminDailySnapshot: Codable, Equatable, Sendable {
-    /// Frozen schema version. Bumping it means the watch app changed shape;
-    /// old phone builds must then reject the payload instead of guessing.
-    public static let schemaVersion = 1
+    /// Latest schema version this build reads; every version from 1 up to it
+    /// is accepted, since watches update on their own schedule. Bumping it
+    /// means the watch app changed shape: older phone builds then reject the
+    /// payload instead of guessing.
+    public static let schemaVersion = 2
+
+    /// The only `t` a snapshot may carry. Other message types (ADR 0009, D6)
+    /// are not snapshots and are refused here.
+    public static let messageType = "snapshot"
 
     public var steps: Int
     public var distanceCm: Int
@@ -42,6 +52,9 @@ nonisolated public struct GarminDailySnapshot: Codable, Equatable, Sendable {
     public var activeMinutesVigorous: Int
     public var calories: Int
     public var timestamp: Date
+    /// Start of the watch's local day, from a v2 payload; nil from v1, whose
+    /// day can only be read off `timestamp` in the phone's time zone (#473).
+    public var watchDayStart: Date?
     public var generation: Int
 
     public init(
@@ -51,6 +64,7 @@ nonisolated public struct GarminDailySnapshot: Codable, Equatable, Sendable {
         activeMinutesVigorous: Int,
         calories: Int,
         timestamp: Date,
+        watchDayStart: Date? = nil,
         generation: Int
     ) {
         self.steps = steps
@@ -59,12 +73,14 @@ nonisolated public struct GarminDailySnapshot: Codable, Equatable, Sendable {
         self.activeMinutesVigorous = activeMinutesVigorous
         self.calories = calories
         self.timestamp = timestamp
+        self.watchDayStart = watchDayStart
         self.generation = generation
     }
 }
 
 nonisolated public extension GarminDailySnapshot {
     nonisolated private enum Key {
+        static let type = "t"
         static let version = "v"
         static let steps = "steps"
         static let distanceCm = "distanceCm"
@@ -72,6 +88,7 @@ nonisolated public extension GarminDailySnapshot {
         static let activeMinutesVigorous = "activeMinutesVigorous"
         static let calories = "calories"
         static let timestamp = "ts"
+        static let dayStart = "day"
         static let generation = "gen"
     }
 
@@ -82,6 +99,9 @@ nonisolated public extension GarminDailySnapshot {
     /// becomes `nil` and the caller drops the snapshot:
     ///
     /// - unknown or missing `v` → rejected whole (forward compatibility);
+    /// - a `t` other than `"snapshot"` → rejected (another message type);
+    /// - v2 `day` missing or not a positive number → no watch day, and the
+    ///   phone's time zone decides, as for v1;
     /// - missing or non-numeric `ts`/`gen` → rejected (they order the stream);
     /// - missing or non-numeric metric → 0 (a watch build that predates a
     ///   metric shouldn't cost us the whole snapshot);
@@ -92,8 +112,9 @@ nonisolated public extension GarminDailySnapshot {
         // non-string keys, and a single stray one would otherwise fail the
         // cast for the whole dictionary.
         guard let fields = message as? [AnyHashable: Any],
+              isSnapshotType(fields[Key.type]),
               let version = integer(fields[Key.version]),
-              version == schemaVersion,
+              (1...schemaVersion).contains(version),
               let seconds = finiteDouble(fields[Key.timestamp]),
               seconds > 0,
               let generation = integer(fields[Key.generation]),
@@ -106,6 +127,7 @@ nonisolated public extension GarminDailySnapshot {
             activeMinutesVigorous: nonNegative(fields[Key.activeMinutesVigorous]),
             calories: nonNegative(fields[Key.calories]),
             timestamp: Date(timeIntervalSince1970: seconds),
+            watchDayStart: version >= 2 ? positiveDate(fields[Key.dayStart]) : nil,
             generation: generation
         )
     }
@@ -139,6 +161,17 @@ nonisolated public extension GarminDailySnapshot {
         if double >= Double(Int.max) { return Int.max }
         if double <= Double(Int.min) { return Int.min }
         return Int(double.rounded())
+    }
+
+    /// No `t` at all is a v1 snapshot, which predates message types.
+    private static func isSnapshotType(_ value: Any?) -> Bool {
+        guard let value else { return true }
+        return value as? String == messageType
+    }
+
+    private static func positiveDate(_ value: Any?) -> Date? {
+        guard let seconds = finiteDouble(value), seconds > 0 else { return nil }
+        return Date(timeIntervalSince1970: seconds)
     }
 
     private static func nonNegative(_ value: Any?) -> Int {

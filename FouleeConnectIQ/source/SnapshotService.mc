@@ -128,7 +128,7 @@ function publishSnapshot() as Void {
         return;
     }
 
-    var payload = DailySnapshot.makePayload(metrics, Time.now().value(), generation);
+    var payload = DailySnapshot.makePayload(metrics, Time.now().value(), Time.today().value(), generation);
     try {
         Communications.transmit(
             payload as Communications.TransmitType,

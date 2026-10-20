@@ -44,11 +44,12 @@ function snapshotUsesEveryInjectedField(logger as Logger) as Boolean {
     info.calories = 2103;
     info.activeMinutesDay = new FakeActiveMinutes(47, 12);
 
-    var payload = DailySnapshot.makePayload(DailySnapshot.readMetrics(info), 1754380800, 7);
+    var payload = DailySnapshot.makePayload(DailySnapshot.readMetrics(info), 1754380800, 1754344800, 7);
     logger.debug("payload = " + payload.toString());
 
     // A missing key reads as null, which never equals the expected Number, so
     // a renamed field fails here rather than slipping through.
+    Test.assertEqual(payload["t"] as Object, "snapshot");
     Test.assertEqual(payload["v"] as Object, DailySnapshot.SCHEMA_VERSION);
     Test.assertEqual(payload["steps"] as Object, 8421);
     Test.assertEqual(payload["distanceCm"] as Object, 634000);
@@ -56,8 +57,9 @@ function snapshotUsesEveryInjectedField(logger as Logger) as Boolean {
     Test.assertEqual(payload["activeMinutesVigorous"] as Object, 12);
     Test.assertEqual(payload["calories"] as Object, 2103);
     Test.assertEqual(payload["ts"] as Object, 1754380800);
+    Test.assertEqual(payload["day"] as Object, 1754344800);
     Test.assertEqual(payload["gen"] as Object, 7);
-    Test.assertEqual(payload.size(), 8);
+    Test.assertEqual(payload.size(), 10);
     return true;
 }
 

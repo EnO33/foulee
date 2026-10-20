@@ -28,8 +28,13 @@ typedef ActivityInfoLike as interface {
 (:background :glance)
 module DailySnapshot {
 
-    //! Payload schema version. Bump it whenever the shape changes.
-    const SCHEMA_VERSION = 1;
+    //! Payload schema version. Bump it whenever the shape changes. v2 adds
+    //! the message type and the start of the watch's local day (#473).
+    const SCHEMA_VERSION = 2;
+
+    //! Message type of a snapshot. Other types will share the link
+    //! (ADR 0009, D6): the phone routes on it.
+    const MESSAGE_TYPE = "snapshot";
 
     //! Indexes inside the metric tuple.
     enum Metric {
@@ -78,13 +83,19 @@ module DailySnapshot {
     }
 
     //! Builds the transmitted dictionary. Keys stay short and values stay
-    //! integers: the BLE link runs at roughly 1 KB/s.
+    //! small: the BLE link runs at roughly 1 KB/s.
+    //!
+    //! `dayStart` is the start of the watch's own local day: the counters
+    //! reset at the watch's midnight, which is not the phone's when the two
+    //! sit in different time zones (#473).
     function makePayload(
         metrics as Array<Number>,
         timestamp as Number,
+        dayStart as Number,
         generation as Number
-    ) as Dictionary<String, Number> {
+    ) as Dictionary<String, Number or String> {
         return {
+            "t" => MESSAGE_TYPE,
             "v" => SCHEMA_VERSION,
             "steps" => metrics[METRIC_STEPS],
             "distanceCm" => metrics[METRIC_DISTANCE_CM],
@@ -92,6 +103,7 @@ module DailySnapshot {
             "activeMinutesVigorous" => metrics[METRIC_ACTIVE_MINUTES_VIGOROUS],
             "calories" => metrics[METRIC_CALORIES],
             "ts" => timestamp,
+            "day" => dayStart,
             "gen" => generation
         };
     }
