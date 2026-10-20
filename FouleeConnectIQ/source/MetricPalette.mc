@@ -3,7 +3,8 @@ import Toybox.Lang;
 
 //! The colour of each daily figure, the same as on the iPhone and the Apple
 //! Watch (`MetricPalette.swift`): steps purple, minutes green, distance blue,
-//! calories and the streak orange.
+//! calories and the streak orange, the
+//! heart rate red.
 //!
 //! Three variants, one per kind of screen, picked at compile time by the
 //! `excludeAnnotations` of monkey.jungle: the brand's exact colours on AMOLED,
@@ -17,6 +18,7 @@ module MetricPalette {
     const DISTANCE = 0x0A84FF;
     const CALORIES = 0xFF9F0A;
     const STREAK = 0xFF9F0A;
+    const HEART_RATE = 0xFF453A;
     const SECONDARY = Graphics.COLOR_LT_GRAY;
 }
 
@@ -27,6 +29,7 @@ module MetricPalette {
     const DISTANCE = Graphics.COLOR_BLUE;
     const CALORIES = Graphics.COLOR_ORANGE;
     const STREAK = Graphics.COLOR_ORANGE;
+    const HEART_RATE = Graphics.COLOR_RED;
     const SECONDARY = Graphics.COLOR_LT_GRAY;
 }
 
@@ -37,5 +40,6 @@ module MetricPalette {
     const DISTANCE = Graphics.COLOR_WHITE;
     const CALORIES = Graphics.COLOR_WHITE;
     const STREAK = Graphics.COLOR_WHITE;
+    const HEART_RATE = Graphics.COLOR_WHITE;
     const SECONDARY = Graphics.COLOR_WHITE;
 }

@@ -25,13 +25,18 @@ Foulée est une app iPhone qui t'aide à garder ta série de sorties quotidienne
 Cette app Connect IQ en est le compagnon montre.
 
 ELLE NE FONCTIONNE PAS TOUTE SEULE. Sans Foulée installée sur ton iPhone, elle
-affiche tes compteurs du jour et rien d'autre : la série, les rappels, la météo
-et l'historique vivent sur le téléphone.
+affiche tes compteurs du jour et enregistre tes séances, rien de plus : la
+série, les objectifs, les rappels, la météo et l'historique vivent sur le
+téléphone.
 
 CE QU'ELLE FAIT
 • Affiche ta série, puis tes pas et tes minutes actives face à tes objectifs,
   ta distance et tes calories du jour, aux couleurs de Foulée ; série et
   minutes aussi dans le glance, sur les modèles qui le gèrent.
+• Lance une séance de marche ou de course depuis le poignet : chrono,
+  distance, allure, fréquence cardiaque, une vibration à chaque kilomètre,
+  pause, puis « Enregistrer » ou « Supprimer ». La montre l'enregistre
+  elle-même et elle part dans Garmin Connect comme tes autres activités.
 • Envoie à ton iPhone, toutes les cinq minutes et seulement quand il est à
   portée, cinq valeurs du jour : pas, distance, minutes actives, minutes
   actives intenses, calories — plus l'heure de la mesure, l'heure de début
@@ -43,7 +48,7 @@ CE QU'ELLE FAIT
 CE QU'ELLE NE FAIT PAS
 • Aucun compte, aucune inscription, aucun réglage.
 • Aucune donnée envoyée sur Internet. La montre parle à ton iPhone, point.
-• Aucun enregistrement d'activité, aucun GPS, aucune notification.
+• Aucune notification. Hors séance, aucun GPS.
 
 POURQUOI ELLE EXISTE
 Ta montre Garmin mesure des minutes d'intensité qu'un iPhone seul ne voit
@@ -54,7 +59,8 @@ Garmin Connect.
 BATTERIE
 La montre se réveille toutes les cinq minutes, lit ces cinq valeurs, et
 n'envoie quelque chose que si elles ont bougé — une centaine d'octets. Pas de
-GPS, pas de capteur allumé, pas d'écran réveillé.
+GPS, pas de capteur allumé, pas d'écran réveillé. Le GPS et le capteur
+cardiaque ne s'allument que pendant une séance.
 
 CONFIDENTIALITÉ
 Foulée est une app locale : rien ne part vers un serveur qui nous
@@ -76,6 +82,12 @@ activeMinutesVigorous, calories (plus « ts », un horodatage, « day », le
 début de la journée locale de la montre, « gen », un compteur d'envoi, « t »,
 le type de message, et « v », la version du format). Rien d'autre n'est lu ni
 transmis, et elle ne contacte aucun serveur.
+
+Elle enregistre aussi des séances de marche ou de course avec
+ActivityRecording (permissions Fit, Positioning, Sensor) : GPS et capteur
+cardiaque ne sont allumés que pendant la séance, et l'activité est enregistrée
+dans Garmin Connect comme une activité native. Ni la position ni la fréquence
+cardiaque ne sont transmises au téléphone.
 
 Le canal iOS ne peut pas être démontré dans le simulateur Connect IQ, qui ne
 relaie les échanges compagnon que vers Android (ADB). Sans iPhone appairé,

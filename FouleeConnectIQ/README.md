@@ -1,6 +1,6 @@
 # Foulée Connect IQ (Monkey C)
 
-App Garmin de Foulée. Elle est volontairement minuscule : **la montre est un capteur, pas une seconde app**. Elle lit les compteurs du jour (`Toybox.ActivityMonitor`), les affiche sobrement, et pousse un instantané compact vers l'iPhone toutes les 5 minutes.
+App Garmin de Foulée, l'équivalent de l'app Apple Watch (ADR 0009) : l'accueil du jour (série, objectifs), une séance lancée depuis le poignet et enregistrée par la montre elle-même, et un instantané compact des compteurs du jour (`Toybox.ActivityMonitor`) poussé vers l'iPhone toutes les 5 minutes.
 
 Voir [ADR 0001](../docs/adr/0001-garmin-integration.md) (phase 2) et les issues [#188](https://github.com/EnO33/foulee/issues/188) / [#179](https://github.com/EnO33/foulee/issues/179).
 
@@ -19,6 +19,9 @@ Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucun
 | `source/SnapshotFormat.mc` | Formatage dans la langue de la montre : espace et virgule en français, virgule et point en anglais. |
 | `source/PhoneSync.mc` | État envoyé par l'iPhone (série, objectifs, mode, hydratation) : décodage tolérant et stockage (ADR 0009, D5). |
 | `source/SessionMath.mc` | Arithmétique d'une séance : chrono, allure, alerte au kilomètre (ADR 0009, D9). |
+| `source/SessionRecorder.mc` | Enregistrement de la séance par l'enregistreur FIT de la montre (`ActivityRecording`), GPS et cardio allumés pendant la séance seulement (D2). |
+| `source/SessionFlow.mc`, `source/SessionDelegates.mc` | « Démarrer » depuis l'accueil (choix Marche / Course en mode « Les deux »), pause en `Menu2` : Reprendre, Enregistrer, Supprimer (avec confirmation). |
+| `source/SessionView.mc` | Page Séance : chrono, distance, allure, fréquence cardiaque, vibration et kilomètre affiché à chaque borne. |
 | `source/*Test.mc` | Tests unitaires Run No Evil. |
 | `build.sh` | Point d'entrée : `validate`, `build`, `test`, `package`. |
 | `tools/validate_project.py` | Contrôles statiques sans SDK — ce que lance la CI. |
