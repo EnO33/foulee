@@ -1,0 +1,130 @@
+name: Garmin release
+
+# Push a tag like `garmin-v1.0.0`, or `garmin-v1.0.0-beta1` for the beta store
+# entry, to build the signed Connect IQ package (.iq) and attach it to a GitHub
+# release (issue #467). Garmin offers no upload API: the last step, uploading
+# the .iq on apps.garmin.com, stays in the browser. Procedure and the store
+# version to type in: FouleeConnectIQ/store/README.md.
+on:
+  push:
+    tags:
+      - 'garmin-v*'
+
+concurrency:
+  group: garmin-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build the Connect IQ package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write # create the GitHub release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Read the version and the channel from the tag
+        id: tag
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#garmin-v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-beta[0-9]+)?$ ]]; then
+            echo "::error title=Garmin release::Tag « $GITHUB_REF_NAME » : attendu garmin-vX.Y.Z ou garmin-vX.Y.Z-betaN."
+            exit 1
+          fi
+          channel=production
+          [[ "$version" == *-beta* ]] && channel=beta
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "channel=$channel" >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/prepare-connectiq
+        with:
+          sdk-token: ${{ secrets.CIQ_SDK_TOKEN_BASE64 }}
+          agreement-hash: ${{ vars.CIQ_AGREEMENT_HASH }}
+
+      # On the manifest as committed: the production id is pinned there, and
+      # a tag cut from a commit that fails CI never reaches the store.
+      - name: Validate the project
+        run: FouleeConnectIQ/build.sh validate
+
+      # A beta is a separate store entry with its own id. The swap only ever
+      # happens in this job's checkout, never in a commit. Both ids are read
+      # from the validator, which already pins them.
+      - name: Point the manifest at the beta store entry
+        if: steps.tag.outputs.channel == 'beta'
+        run: |
+          set -euo pipefail
+          validator=FouleeConnectIQ/tools/validate_project.py
+          production=$(sed -n 's/^PRODUCTION_APP_ID = "\([0-9a-f]\{32\}\)"$/\1/p' "$validator")
+          beta=$(sed -n 's/^BETA_APP_ID = "\([0-9a-f]\{32\}\)"$/\1/p' "$validator")
+          [ -n "$production" ] && [ -n "$beta" ] || { echo "::error::Identifiants introuvables dans $validator"; exit 1; }
+          sed -i "s/id=\"$production\"/id=\"$beta\"/" FouleeConnectIQ/manifest.xml
+          grep -q "id=\"$beta\"" FouleeConnectIQ/manifest.xml
+
+      - name: Materialise the developer key
+        env:
+          CIQ_DEVELOPER_KEY_BASE64: ${{ secrets.CIQ_DEVELOPER_KEY_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CIQ_DEVELOPER_KEY_BASE64:-}" ]; then
+            echo "::error title=Garmin release::Secret CIQ_DEVELOPER_KEY_BASE64 absent. Voir FouleeConnectIQ/store/README.md, § 1."
+            exit 1
+          fi
+          (umask 077 && echo "$CIQ_DEVELOPER_KEY_BASE64" | base64 --decode > "$RUNNER_TEMP/ciq.der")
+
+      - name: Build the store package
+        env:
+          CIQ_DEVELOPER_KEY: ${{ runner.temp }}/ciq.der
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          FouleeConnectIQ/build.sh package
+          mv FouleeConnectIQ/bin/foulee.iq "FouleeConnectIQ/bin/foulee-$VERSION.iq"
+
+      - name: Tidy the developer key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/ciq.der"
+
+      # Re-running the job replaces the asset rather than failing on a release
+      # that already exists.
+      - name: Attach the package to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.tag.outputs.version }}
+          CHANNEL: ${{ steps.tag.outputs.channel }}
+        run: |
+          set -euo pipefail
+          package="FouleeConnectIQ/bin/foulee-$VERSION.iq"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$package" --clobber
+          else
+            prerelease=()
+            [ "$CHANNEL" = beta ] && prerelease=(--prerelease)
+            gh release create "$GITHUB_REF_NAME" "$package" "${prerelease[@]}" \
+              --title "Garmin $VERSION ($CHANNEL)" \
+              --notes "Paquet Connect IQ $VERSION, entrée store « $CHANNEL ». À téléverser sur https://apps.garmin.com/developer/upload (FouleeConnectIQ/store/README.md)."
+          fi
+
+      - name: Summarise what is left to do by hand
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+          CHANNEL: ${{ steps.tag.outputs.channel }}
+        run: |
+          entry="l'entrée de production"
+          [ "$CHANNEL" = beta ] && entry="l'entrée beta (case **Beta App**)"
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Garmin $VERSION ($CHANNEL)
+
+          Le paquet \`foulee-$VERSION.iq\` est attaché à la release \`$GITHUB_REF_NAME\`.
+
+          Reste à faire dans le navigateur (Garmin n'offre pas d'API de dépôt) :
+
+          1. Télécharger \`foulee-$VERSION.iq\` depuis la release.
+          2. Le déposer sur https://apps.garmin.com/developer/upload, sur $entry.
+          3. Saisir la version **$VERSION** dans le formulaire.
+          4. Pour une production : fiches et visuels depuis \`FouleeConnectIQ/store/\`.
+          EOF

@@ -238,8 +238,9 @@ La fiche store (FR + EN), les tailles d'images exigées, la procédure de captur
 d'écran, le canal beta et le suivi des plantages **ERA** sont dans
 [`store/README.md`](store/README.md).
 
-En deux lignes : `./build.sh package` produit `bin/foulee.iq`, qu'on dépose sur
-<https://apps.garmin.com/developer/upload>. ERA ne demande **rien** dans le
+En deux lignes : un tag `garmin-vX.Y.Z` (ou `garmin-vX.Y.Z-betaN`) fait
+construire par la CI le paquet signé, attaché à une release GitHub, qu'on
+dépose ensuite sur <https://apps.garmin.com/developer/upload>. ERA ne demande **rien** dans le
 manifeste ni dans le code — c'est un service serveur indexé sur l'identifiant
 d'application, qui agrège les plantages des apps publiées ou beta pendant 30
 jours, et se consulte avec `"$SDK/bin/era" -a <identifiant>`.

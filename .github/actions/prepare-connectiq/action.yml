@@ -1,0 +1,77 @@
+name: Prepare the Connect IQ SDK
+description: >
+  Restore or download the Connect IQ SDK and the manifest's device profiles,
+  then point JAVA_HOME at the runner's JDK 21. Shared by the CI compile job and
+  the Garmin release (issues #466, #467), so the two cannot drift apart.
+
+  The SDK is public, the device profiles are not: they need a Garmin account
+  token, from an interactive SSO login on the owner's machine
+  (`connect-iq-sdk-manager login`), never a password. It is only used when the
+  cache misses, and never cached itself: the cache is readable by every pull
+  request. The profiles are never committed: the Connect IQ agreement bars
+  redistributing them (§I(b)). Setup: FouleeConnectIQ/README.md,
+  « Intégration continue ».
+
+inputs:
+  sdk-token:
+    description: CIQ_SDK_TOKEN_BASE64, the base64 token.json of an SSO login.
+    required: false
+  agreement-hash:
+    description: CIQ_AGREEMENT_HASH, the hash of the developer agreement accepted.
+    required: false
+
+runs:
+  using: composite
+  steps:
+    # Keyed on the manifest as checked out, before any beta id swap, so a
+    # device added or removed downloads afresh.
+    - name: Restore the SDK and the device profiles
+      id: sdk-cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/.Garmin/ConnectIQ/Sdks
+          ~/.Garmin/ConnectIQ/Devices
+          ~/.Garmin/ConnectIQ/current-sdk.cfg
+        key: ciq-sdk-9.2.0-${{ hashFiles('FouleeConnectIQ/manifest.xml') }}
+
+    - name: Download the SDK and the manifest's device profiles
+      if: steps.sdk-cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        CIQ_SDK_VERSION: 9.2.0
+        CIQ_SDK_MANAGER_VERSION: 0.8.4
+        CIQ_SDK_MANAGER_SHA256: 5d57b8f9cfcd02d3b3f48e19d6daca0480e4c6f627926f15d8617ef8a6f57e0b
+        CIQ_SDK_TOKEN_BASE64: ${{ inputs.sdk-token }}
+        CIQ_AGREEMENT_HASH: ${{ inputs.agreement-hash }}
+      run: |
+        set -euo pipefail
+        if [ -z "${CIQ_SDK_TOKEN_BASE64:-}" ] || [ -z "${CIQ_AGREEMENT_HASH:-}" ]; then
+          echo "::error title=Connect IQ::Cache vide et secret CIQ_SDK_TOKEN_BASE64 ou variable CIQ_AGREEMENT_HASH absents (une PR de fork n'y a pas accès). Voir FouleeConnectIQ/README.md, « Intégration continue »."
+          exit 1
+        fi
+
+        archive="connect-iq-sdk-manager-cli_${CIQ_SDK_MANAGER_VERSION}_Linux_x86_64.tar.gz"
+        curl -fsSL -o "$RUNNER_TEMP/$archive" \
+          "https://github.com/lindell/connect-iq-sdk-manager-cli/releases/download/v${CIQ_SDK_MANAGER_VERSION}/$archive"
+        echo "$CIQ_SDK_MANAGER_SHA256  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+        mkdir -p "$RUNNER_TEMP/sdk-manager"
+        tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/sdk-manager"
+        manager="$RUNNER_TEMP/sdk-manager/connect-iq-sdk-manager"
+
+        # The token never outlives this step, whatever happens below.
+        token="$HOME/.Garmin/ConnectIQ/token.json"
+        trap 'rm -f "$token"' EXIT
+        mkdir -p "$(dirname "$token")"
+        (umask 077 && echo "$CIQ_SDK_TOKEN_BASE64" | base64 --decode > "$token")
+
+        "$manager" agreement accept --agreement-hash "$CIQ_AGREEMENT_HASH"
+        "$manager" sdk set "$CIQ_SDK_VERSION"
+        if ! "$manager" device download --manifest FouleeConnectIQ/manifest.xml; then
+          echo "::error title=Connect IQ::Téléchargement des profils refusé. Jeton Garmin expiré ? Relancer « connect-iq-sdk-manager login » et mettre à jour CIQ_SDK_TOKEN_BASE64 (FouleeConnectIQ/README.md)."
+          exit 1
+        fi
+
+    - name: Use the runner's JDK 21
+      shell: bash
+      run: echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"

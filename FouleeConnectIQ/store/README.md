@@ -17,9 +17,23 @@ montre sont en français.
 
 ## 1. Fabriquer le paquet
 
+Par un tag, depuis la CI (workflow
+[`garmin-release.yml`](../../.github/workflows/garmin-release.yml)) :
+
 ```sh
-./build.sh package     # → bin/foulee.iq
+git tag garmin-v1.0.0 && git push origin garmin-v1.0.0
 ```
+
+Le job valide le projet, construit le paquet signé et l'attache à la release
+GitHub `garmin-v1.0.0` sous le nom `foulee-1.0.0.iq`. La version à saisir dans
+le formulaire du store est celle du tag. Il faut le secret
+`CIQ_DEVELOPER_KEY_BASE64` en plus de ceux de la compilation :
+
+```sh
+base64 -i $HOME/.garmin/foulee_developer_key.der | pbcopy
+```
+
+En local, `./build.sh package` produit le même paquet dans `bin/foulee.iq`.
 
 Le `.iq` contient les binaires des sept appareils du manifeste. C'est le seul
 fichier à téléverser. Il est construit en `--release`, ce que `monkeyc --help`
@@ -152,34 +166,28 @@ jour, vérifier d'abord qu'aucune donnée personnelle n'apparaît à l'écran.
 ## 5. Canal beta
 
 Le SDK est explicite : une app beta a besoin d'un **identifiant d'application
-différent**, parce qu'elle occupe une entrée de store distincte. La marche à
-suivre :
+différent**, parce qu'elle occupe une entrée de store distincte. Il est réservé
+et épinglé dans [`tools/validate_project.py`](../tools/validate_project.py)
+(`BETA_APP_ID`).
 
-1. Dans `manifest.xml`, remplacer temporairement `id="859c7300a91149fdb6ce7e4453bfe59d"`
-   par l'identifiant beta réservé ici :
+Un tag suffit :
 
-   ```
-   a0d0785c31b84e24b4a30d6bfd950502
-   ```
+```sh
+git tag garmin-v1.0.0-beta1 && git push origin garmin-v1.0.0-beta1
+```
 
-2. `./build.sh package`, téléverser en cochant **Beta App**.
-3. **Rétablir l'identifiant de production dans `manifest.xml`** — ne pas
-   committer le manifeste modifié.
+Le job remplace l'identifiant de production par l'identifiant beta **dans sa
+propre copie du dépôt**, après `validate`, puis construit le paquet et
+l'attache à une pré-release GitHub. Le manifeste committé garde toujours
+l'identifiant de production, et `validate` le vérifie sur chaque PR. Le
+remplacement à la main, et le risque de le committer, n'existent plus.
+
+Téléverser ensuite en cochant **Beta App**.
 
 Rien à changer côté iPhone : l'app écoute les deux identifiants
 (`GarminConnectIQConfiguration.applicationUUIDs`), donc une montre beta parle à
 n'importe quel build, TestFlight compris. L'identifiant beta y est épinglé
 contre `BETA_APP_ID` par `./build.sh validate`.
-
-Tant que l'identifiant beta est en place, `./build.sh validate` **échoue**, et
-c'est voulu : `PRODUCTION_APP_ID` est épinglé dans
-[`tools/validate_project.py`](../tools/validate_project.py) et le message
-nomme le swap beta comme cause probable. Pendant l'étape 2, cet échec est
-attendu — `./build.sh package` n'appelle pas `validate` et fabrique le paquet
-normalement. Après l'étape 3, `validate` doit repasser au vert : c'est le
-contrôle à lancer avant de committer quoi que ce soit. La CI le lance de toute
-façon sur chaque PR, donc un manifeste beta committé par erreur bloque la
-fusion au lieu de partir en production.
 
 La beta se met à jour autant de fois qu'on veut, ses URL ne sortent pas du
 compte, et ERA remonte ses plantages comme ceux d'une app publiée. C'est le
