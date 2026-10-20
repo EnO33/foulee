@@ -1,0 +1,39 @@
+name: Garmin devices
+
+# Lists every Garmin device Foulée can run on, from the full catalog of device
+# profiles: what to add to the manifest's matrix (issue #472). Reports only,
+# never changes the repository. Runs on demand, and on a pull request that
+# touches the catalog itself so its output can be read before merging.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - FouleeConnectIQ/tools/device_catalog.py
+      - .github/workflows/garmin-devices.yml
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    name: Device catalog
+    runs-on: ubuntu-24.04
+    # Every profile Garmin publishes is a few hundred downloads: allow for a
+    # slow server, not for a stalled one.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare-connectiq
+        with:
+          sdk-token: ${{ secrets.CIQ_SDK_TOKEN_BASE64 }}
+          agreement-hash: ${{ vars.CIQ_AGREEMENT_HASH }}
+          all-devices: 'true'
+
+      - name: List the eligible devices
+        run: |
+          set -euo pipefail
+          FouleeConnectIQ/tools/device_catalog.py | tee -a "$GITHUB_STEP_SUMMARY"
+          FouleeConnectIQ/tools/device_catalog.py --json
