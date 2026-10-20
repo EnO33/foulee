@@ -35,7 +35,7 @@ jobs:
           openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in "$RUNNER_TEMP/k.pem" -out "$RUNNER_TEMP/k.der"
           sdk="$(tr -d '\n' < "$HOME/.Garmin/ConnectIQ/current-sdk.cfg")"; sdk="${sdk%/}"
           cd FouleeConnectIQ
-          "$sdk/bin/monkeyc" -f monkey.jungle -d venu2 -o bin/test.prg -y "$RUNNER_TEMP/k.der" -t -l 3
+          "$sdk/bin/monkeyc" -f monkey.jungle -d fenix7 -o bin/test.prg -y "$RUNNER_TEMP/k.der" -t -l 3
 
       - name: Run the tests and capture the screen
         run: |
@@ -53,10 +53,11 @@ jobs:
             echo "--- fin capture $1"
           }
           capture avant
-          (timeout 120 "$sdk/bin/monkeydo" FouleeConnectIQ/bin/test.prg venu2 -t > /tmp/monkeydo.log 2>&1; echo "monkeydo: $?" >> /tmp/monkeydo.log) &
+          (timeout 120 "$sdk/bin/monkeydo" FouleeConnectIQ/bin/test.prg fenix7 -t > /tmp/monkeydo.log 2>&1; echo "monkeydo: $?" >> /tmp/monkeydo.log) &
+          run=$!
           sleep 30
           capture pendant
-          wait
+          wait "$run"
           capture apres
           echo "--- monkeydo"; cat /tmp/monkeydo.log
           echo "--- simulateur"; cat /tmp/simulator.log
