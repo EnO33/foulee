@@ -1,0 +1,8 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- French. Same ids as resources/strings/strings.xml, checked by
+         ./build.sh validate. -->
+    <string id="AppName" scope="glance">Foulée</string>
+    <string id="UnitSteps" scope="glance">pas</string>
+    <string id="UnitActiveMinutes" scope="glance">min actives</string>
+    <string id="UnitKilometers" scope="glance">km</string>
+</resources>

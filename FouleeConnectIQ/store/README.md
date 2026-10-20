@@ -8,10 +8,10 @@ navigateur connecté au compte développeur Garmin — c'est signalé à chaque 
 | [`listing-fr.md`](listing-fr.md) | Nom, descriptions et champs annexes, en français |
 | [`listing-en.md`](listing-en.md) | La même fiche, en anglais |
 
-L'app elle-même est **en français uniquement** (`<iq:language>fre</iq:language>`),
-comme l'app iPhone. La fiche store, elle, est bilingue : le Connect IQ Store est
-mondial et la description anglaise dit explicitement que les libellés de la
-montre sont en français.
+L'app montre parle **la langue de la montre** : français sur une montre réglée
+en français, anglais partout ailleurs (`resources-fre/` et `resources/`, #471).
+L'app iPhone, elle, reste en français, et la description anglaise le dit. La
+fiche store est bilingue : le Connect IQ Store est mondial.
 
 ---
 
