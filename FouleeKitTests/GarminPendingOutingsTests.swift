@@ -44,4 +44,13 @@ struct GarminPendingOutingsTests {
         let empty = Self.outing(at: Self.noon, minutes: 0)
         #expect(GarminPendingOutings.remaining([empty], healthKitWorkouts: [], now: Self.noon).isEmpty)
     }
+
+    @Test("Only the outings starting in the window count for it")
+    func intervalsInWindow() {
+        let inside = Self.outing(at: Self.noon)
+        let before = Self.outing(at: Self.noon.addingTimeInterval(-86_400))
+        let window = Self.noon.addingTimeInterval(-3_600)..<Self.noon.addingTimeInterval(3_600)
+        #expect(GarminPendingOutings.intervals([before, inside], startingIn: window) == [inside.interval])
+    }
 }
+

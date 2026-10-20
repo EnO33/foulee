@@ -30,7 +30,9 @@ import Foundation
 ///
 /// The overlay feeds the **displayed counters** only. The streak keeps reading
 /// its history from HealthKit (`mergedDailyMinutes`): a streak resting on a
-/// two-hour overlay would appear and vanish with BLE range.
+/// two-hour overlay would appear and vanish with BLE range. What the streak
+/// does take from the watch is a saved session, kept until Santé has it
+/// (`GarminPendingOutings`): a record of an outing, not a moving total.
 nonisolated public enum GarminSnapshotOverlay {
     /// Past this age a snapshot no longer earns the day's overlay.
     ///

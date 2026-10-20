@@ -152,10 +152,24 @@ nonisolated private func appleMinutesByBucket(
     }
 }
 
+/// The workouts of `start..<end` the minutes are counted from: Santé's, plus
+/// the Garmin outings it doesn't have yet (ADR 0009, D2). One more interval
+/// each, so `ActiveMinutes` unions an outing with Garmin Connect's copy the day
+/// it lands instead of counting it twice; the store then lets it go.
+nonisolated private func workoutIntervals(
+    store: HKHealthStore,
+    start: Date,
+    end: Date
+) async throws -> [ActiveMinutes.WorkoutInterval] {
+    let healthKit = try await healthKitWorkoutIntervals(store: store, start: start, end: end)
+    let pending = GarminPendingOutingStore.remaining(healthKitWorkouts: healthKit)
+    return healthKit + GarminPendingOutings.intervals(pending, startingIn: start..<end)
+}
+
 /// All `HKWorkout`s started in `start..<end`, any activity type, reduced to
 /// the pure `WorkoutInterval` shape. Workouts are sparse — a plain
 /// `HKSampleQuery` over the whole streak window is trivial.
-nonisolated private func workoutIntervals(
+nonisolated private func healthKitWorkoutIntervals(
     store: HKHealthStore,
     start: Date,
     end: Date

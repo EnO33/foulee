@@ -133,7 +133,15 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
     /// so the untyped `Any` payload never crosses an isolation boundary — only
     /// the decoded `Sendable` snapshot does.
     func receivedMessage(_ message: Any!, from app: IQApp!) {
-        guard let message, let snapshot = GarminDailySnapshot.decode(message) else { return }
+        guard let message else { return }
+        // A session saved on the watch: kept until Santé has the activity
+        // Garmin Connect writes (ADR 0009, D2). The next HealthKit read counts
+        // it; nothing is published from here.
+        if let summary = GarminSessionSummary.decode(message) {
+            GarminPendingOutingStore.add(summary)
+            return
+        }
+        guard let snapshot = GarminDailySnapshot.decode(message) else { return }
         let subscribers = state.withLock { state -> [AsyncStream<GarminDailySnapshot>.Continuation] in
             guard GarminDailySnapshot.supersedes(snapshot, lastAccepted: state.lastAccepted) else { return [] }
             state.lastAccepted = snapshot
