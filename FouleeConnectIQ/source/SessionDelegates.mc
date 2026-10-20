@@ -86,7 +86,7 @@ class PauseMenuDelegate extends WatchUi.Menu2InputDelegate {
     function onSelect(item as WatchUi.MenuItem) as Void {
         var id = item.getId();
         if (id == :resume) {
-            resume();
+            resumeSession();
         } else if (id == :save) {
             SessionFlow.finish(SessionFlow.save(_recorder));
         } else if (id == :discard) {
@@ -100,10 +100,10 @@ class PauseMenuDelegate extends WatchUi.Menu2InputDelegate {
 
     //! BACK on the pause menu resumes, like the Apple Watch's pause.
     function onBack() as Void {
-        resume();
+        resumeSession();
     }
 
-    private function resume() as Void {
+    private function resumeSession() as Void {
         _recorder.resume();
         SessionFlow.stateChanged();
         WatchUi.popView(WatchUi.SLIDE_DOWN);
