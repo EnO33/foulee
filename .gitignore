@@ -75,3 +75,6 @@ Simulator Screenshot*.png
 
 # Per-developer signing settings (template is checked in)
 Local.xcconfig
+
+# Python (FouleeConnectIQ/tools)
+__pycache__/
