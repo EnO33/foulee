@@ -481,27 +481,34 @@ deliberate, manual action:
 
 ## 11. The Garmin watch app (separate store, separate cadence)
 
-The Connect IQ app in [`FouleeConnectIQ/`](../FouleeConnectIQ/README.md) is not
-part of this pipeline. It goes to the **Connect IQ Store**, not App Store
-Connect, it is versioned independently of the `v*` tags, and nothing here
-builds it — the Connect IQ SDK can't be installed on a GitHub runner without a
-Garmin *account* password, so the compile gate stays on the developer's
-machine. The full reasoning is in that README, under « Intégration continue ».
+The Connect IQ app in [`FouleeConnectIQ/`](../FouleeConnectIQ/README.md) goes to
+the **Connect IQ Store**, not App Store Connect, and is versioned independently
+of the `v*` tags. Its own workflow,
+[`garmin-release.yml`](../.github/workflows/garmin-release.yml), runs on
+`garmin-v*` tags:
 
-What CI does check on every PR is the `Connect IQ` job: manifest, device matrix,
-launcher icon sizes and that the manifest still carries the *production* app id
-(a beta package needs a different one), via `FouleeConnectIQ/build.sh validate`.
-It does **not** compile the Monkey C — a green CI says nothing about that.
+```sh
+git tag garmin-v1.0.0-beta1 && git push origin garmin-v1.0.0-beta1   # beta store entry
+git tag garmin-v1.0.0       && git push origin garmin-v1.0.0         # production
+```
 
-Publishing is `./build.sh package` (→ `bin/foulee.iq`) then an upload at
-<https://apps.garmin.com/developer/upload>; the listing copy, the required
-image sizes, the beta channel and the ERA crash-report loop are all in
+It validates the project, builds the signed `.iq` for every device of the
+manifest and attaches it to a GitHub release (a pre-release for a beta). Garmin
+offers no upload API, so uploading that `.iq` on
+<https://apps.garmin.com/developer/upload> stays a browser step; the job summary
+lists it. Listing copy, images, the beta channel and the ERA crash-report loop:
 [`FouleeConnectIQ/store/README.md`](../FouleeConnectIQ/store/README.md).
 
-No new GitHub secret is needed today. If a Monkey C compile is ever wired into
-CI it will want `CIQ_DEVELOPER_KEY_BASE64` (base64 of
-`$HOME/.garmin/foulee_developer_key.der`) alongside Garmin account credentials
-— the exact recipe, and why it isn't enabled, are in the Connect IQ README.
+Every PR compiles the Monkey C too (`Connect IQ build`). Secrets and variable:
+
+| Name | Kind | Value |
+|---|---|---|
+| `CIQ_SDK_TOKEN_BASE64` | secret | base64 of `~/.Garmin/ConnectIQ/token.json`, from an SSO login (never a password) |
+| `CIQ_AGREEMENT_HASH` | variable | hash of the accepted Connect IQ developer agreement |
+| `CIQ_DEVELOPER_KEY_BASE64` | secret | base64 of `$HOME/.garmin/foulee_developer_key.der`, release only |
+
+Setup of the first two: [`FouleeConnectIQ/README.md`](../FouleeConnectIQ/README.md),
+« Intégration continue ».
 
 ## Troubleshooting
 

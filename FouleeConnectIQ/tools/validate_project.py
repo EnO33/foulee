@@ -43,16 +43,17 @@ LAUNCHER_ICON_PX = {
     "vivoactive5": 56,
 }
 
-# The application id of the *production* store entry. Publishing a beta build
-# requires a different id (a beta app is a separate store entry), so
-# store/README.md § 5 has the owner swap this value in manifest.xml, package,
-# then swap it back. Committing the swapped manifest would silently point every
-# later release at the beta entry — both ids are well-formed UUIDs, so nothing
-# else here would notice. Pinning the expected value turns that discipline into
-# a check.
+# The application id of the *production* store entry, the one the committed
+# manifest must carry. A beta build needs a different id (a beta app is a
+# separate store entry): garmin-release.yml swaps it in its own checkout only,
+# reading both values below. A manifest committed with the beta id would
+# silently point every later release at the beta entry — both ids are
+# well-formed UUIDs, so nothing else here would notice.
+# Read by garmin-release.yml too: keep it on one line, in this form.
 PRODUCTION_APP_ID = "859c7300a91149fdb6ce7e4453bfe59d"
 
-# The id reserved for the beta store entry (store/README.md § 5).
+# The id reserved for the beta store entry (store/README.md § 5). Read by
+# garmin-release.yml for a beta tag: keep it on one line, in this form.
 BETA_APP_ID = "a0d0785c31b84e24b4a30d6bfd950502"
 
 # Where the iPhone app declares the watch apps it listens to. The phone only
@@ -123,11 +124,11 @@ def check_manifest() -> tuple[list[str], str | None]:
     elif app_id != PRODUCTION_APP_ID:
         fail(
             f"manifest.xml : identifiant d'application « {app_id} » au lieu de "
-            f"« {PRODUCTION_APP_ID} ». Cause la plus probable : un paquet beta a "
-            "été fabriqué (store/README.md § 5) et l'identifiant de production "
-            "n'a pas été rétabli. Si l'identifiant de production a réellement "
-            "changé, mettre PRODUCTION_APP_ID à jour dans "
-            "tools/validate_project.py.",
+            f"« {PRODUCTION_APP_ID} ». Le manifeste committé garde l'identifiant de "
+            "production : une beta passe par un tag garmin-vX.Y.Z-betaN, qui fait "
+            "le remplacement dans la CI (store/README.md § 5). Si l'identifiant "
+            "de production a réellement changé, mettre PRODUCTION_APP_ID à jour "
+            "dans tools/validate_project.py.",
             "manifest.xml",
         )
     else:
