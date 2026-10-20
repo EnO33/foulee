@@ -53,4 +53,3 @@ struct GarminPendingOutingsTests {
         #expect(GarminPendingOutings.intervals([before, inside], startingIn: window) == [inside.interval])
     }
 }
-
