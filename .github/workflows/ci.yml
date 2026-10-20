@@ -68,7 +68,7 @@ jobs:
 
   connectiq-build:
     # Compiles the Garmin app for every device of the manifest, in -w -l 3,
-    # failing on any warning but the two expected glance ones (build.sh), and
+    # failing on any warning (build.sh), and
     # compiles its unit-test build (issue #466). The SDK and the device
     # profiles come from ./.github/actions/prepare-connectiq.
     name: Connect IQ build
