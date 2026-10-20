@@ -18,7 +18,7 @@ class SessionPages extends WatchUi.ViewLoopFactory {
         return 2;
     }
 
-    function getView(page as Number) as [WatchUi.View] or [WatchUi.View, WatchUi.BehaviorDelegate] {
+    function getView(page as Number) as [WatchUi.ViewLoopFactory.Views] or [WatchUi.ViewLoopFactory.Views, WatchUi.ViewLoopFactory.Delegates] {
         var view = page == 0 ? new SessionView(_recorder) : new FouleeView();
         return [view, new SessionDelegate(_recorder)];
     }
