@@ -25,7 +25,7 @@ module PhoneSync {
         if (!(data instanceof Lang.Dictionary)) {
             return null;
         }
-        var message = data as Dictionary;
+        var message = data as Dictionary<String, Object?>;
         if (!MESSAGE_TYPE.equals(message.get("t")) || !SCHEMA_VERSION.equals(message.get("v"))) {
             return null;
         }
