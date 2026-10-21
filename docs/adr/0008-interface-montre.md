@@ -50,7 +50,7 @@ Le résumé de fin de sortie avait le même défaut que l'accueil : avec le plan
 - **Un écran a au plus une action principale, et elle est fixe en bas** (`pinnedAction`).
 - **Un écran de choix se ferme par la croix du système** (`.cancellationAction`), pas par un bouton dans le contenu.
 - **Une nouvelle page de séance s'ajoute après Plan**, jamais entre Contrôles, Séance et Musique.
-- **Toute mise en page se vérifie sur la sonde 40 mm** (`tools/capture_screenshots.sh --watch "Apple Watch SE 3 (40mm)" probe-40`, ou le workflow Screenshots).
+- **Toute mise en page se vérifie sur la sonde 40 mm** (`tools/capture_screenshots.sh --watch "Apple Watch SE 3 (40mm)" probe-40`).
 
 ## Conséquences
 
