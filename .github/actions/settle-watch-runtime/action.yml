@@ -1,0 +1,33 @@
+name: Settle the watchOS runtime
+description: >
+  Wait until the runner has finished installing its watchOS simulator runtime
+  (issue #462). A fresh runner can still be provisioning it when the job
+  starts: the same runtime is registered several times over one disk image,
+  one copy « Copying » while another is « Deleting ». Until that settles the
+  runtime comes and goes — listed, then refused at boot (« runtime profile not
+  found »), or pulled from under a running job. It settles within seconds;
+  this waits for that, 3 min at most.
+
+runs:
+  using: composite
+  steps:
+    - name: Wait for the watchOS runtime to settle
+      shell: bash
+      run: |
+        watch_image_states() {
+          xcrun simctl runtime list -j \
+            | jq -r '[to_entries[] | select(.value.platformIdentifier | test("watch"; "i")) | .value.state] | join(", ")'
+        }
+        # Settled: at least one image « Ready » and none still moving
+        # (« Copying », « Deleting »). Leftover copies stay « Unusable » for
+        # good, so waiting for *every* image to be ready never ends.
+        watch_runtime_settled() {
+          xcrun simctl runtime list -j | jq -e '
+            [to_entries[] | select(.value.platformIdentifier | test("watch"; "i")) | .value.state]
+            | any(. == "Ready") and all(test("ing$") | not)' >/dev/null
+        }
+        for attempt in $(seq 1 18); do
+          watch_runtime_settled && exit 0
+          echo "watchOS runtime images still settling: $(watch_image_states)"
+          sleep 10
+        done

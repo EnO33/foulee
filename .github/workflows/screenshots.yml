@@ -15,6 +15,7 @@ on:
     branches: [main]
     paths:
       - .github/workflows/screenshots.yml
+      - .github/actions/settle-watch-runtime/**
       - tools/capture_screenshots.sh
       - Foulee/Screenshots/**
       - FouleeScreenshots/**
@@ -36,6 +37,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: ./.github/actions/prepare-project
+
+      # Before any simulator is looked up: a runtime still being installed is
+      # listed, then refused at boot.
+      - uses: ./.github/actions/settle-watch-runtime
 
       # The script resolves devices by name and refuses a name two runtimes
       # share, so each is created only when the image lacks it.
