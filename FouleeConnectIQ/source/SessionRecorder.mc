@@ -132,6 +132,11 @@ class SessionRecorder {
         _route = RouteMath.extend(_route, RouteMath.toFixed(degrees[0]), RouteMath.toFixed(degrees[1]));
     }
 
+    //! The route recorded so far, for the Plan page.
+    function routeSoFar() as Array<Number> {
+        return _route;
+    }
+
     //! The route for the summary, cut down to what the outbox carries.
     function route() as Array<Number> {
         return RouteMath.thin(_route, RouteMath.MAX_POINTS);
