@@ -84,11 +84,12 @@ final class MirroredSessionStore {
     }
 
     /// Consume the Garmin watch's session states until cancelled (ADR 0009,
-    /// D7). One caller, at process start. No Lock Screen hook: D7 leaves the
-    /// Live Activity out for a Garmin session.
-    func observeGarmin() async {
+    /// D7). One caller, at process start. `onChange` is the Lock Screen hook,
+    /// as for the Apple Watch.
+    func observeGarmin(onChange: @MainActor (MirroredSessionStore) async -> Void = { _ in }) async {
         for await state in garminConnectIQ.sessionStates() {
             apply(.garmin(state))
+            await onChange(self)
         }
     }
 
@@ -199,7 +200,15 @@ final class MirroredSessionStore {
     ///
     /// A refusal is ordinary rather than exceptional: the wrist may have
     /// stopped a second before the tap landed. Logged, not surfaced.
+    ///
+    /// A Garmin watch gets a command message instead (ADR 0009, D7), fire and
+    /// forget: its end comes back through its outbox like any other.
     func requestStop() async {
+        if session?.device == .garmin {
+            garminConnectIQ.requestStop()
+            FouleeLog.session.notice("arrêt demandé à la Garmin")
+            return
+        }
         do {
             try await client.send(.stop)
             FouleeLog.session.notice("arrêt demandé à la Watch")

@@ -24,10 +24,10 @@ nonisolated struct MirroredSession: Equatable, Sendable {
 
 /// Which wrist the outing runs on.
 nonisolated enum MirroredDevice: Equatable, Sendable {
-    /// Mirrored by HealthKit, and takes the phone's « Arrêter » (issue #282).
+    /// Mirrored by HealthKit; « Arrêter » goes through the mirror (issue #282).
     case appleWatch
-    /// States its session over Connect IQ (ADR 0009, D7), and takes no command
-    /// from the phone: D7 leaves those out until they are tried on a watch.
+    /// States its session over Connect IQ (ADR 0009, D7); « Arrêter » goes as
+    /// a command message (`GarminSessionCommand`).
     case garmin
 
     /// « ta Watch », as the home and the mirror screen name it.
@@ -44,9 +44,6 @@ nonisolated enum MirroredDevice: Equatable, Sendable {
         case .garmin: "watch.analog"
         }
     }
-
-    /// Whether the phone can ask this wrist to end the outing.
-    var acceptsStop: Bool { self == .appleWatch }
 }
 
 /// What the phone learns about the wrist.

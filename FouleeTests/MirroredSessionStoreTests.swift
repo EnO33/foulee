@@ -272,7 +272,6 @@ struct MirroredSessionStoreTests {
         let store = store()
         store.apply(.garmin(state(at: 10, steps: 120)))
         #expect(store.session?.device == .garmin)
-        #expect(store.session?.device.acceptsStop == false)
         #expect(store.figures?.steps == 120)
     }
 
@@ -284,5 +283,20 @@ struct MirroredSessionStoreTests {
         #expect(store.isMirroring)
         store.apply(.garmin(state(at: 10, isEnded: true)))
         #expect(!store.isMirroring)
+    }
+
+    @Test("« Arrêter » on a Garmin outing goes to the Garmin, as a command")
+    func garminStopGoesToTheGarmin() async {
+        let stopped = LockedRef(false)
+        let store = withDependencies {
+            $0.mirroredWorkout = .testValue
+            $0.garminConnectIQ.requestStop = { stopped.set(true) }
+        } operation: {
+            MirroredSessionStore()
+        }
+        store.apply(.garmin(state(at: 10)))
+        await store.requestStop()
+        #expect(stopped.value)
+        #expect(store.isMirroring)
     }
 }

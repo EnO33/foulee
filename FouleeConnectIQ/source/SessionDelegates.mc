@@ -111,7 +111,7 @@ class SessionDelegate extends WatchUi.BehaviorDelegate {
         menu.addItem(new WatchUi.MenuItem(WatchUi.loadResource($.Rez.Strings.Resume) as String, null, :resume, null));
         menu.addItem(new WatchUi.MenuItem(WatchUi.loadResource($.Rez.Strings.Save) as String, null, :save, null));
         menu.addItem(new WatchUi.MenuItem(WatchUi.loadResource($.Rez.Strings.Discard) as String, null, :discard, null));
-        WatchUi.pushView(menu, new PauseMenuDelegate(_recorder), WatchUi.SLIDE_UP);
+        SessionFlow.pushOverlay(menu, new PauseMenuDelegate(_recorder), WatchUi.SLIDE_UP);
     }
 }
 
@@ -133,7 +133,7 @@ class PauseMenuDelegate extends WatchUi.Menu2InputDelegate {
         } else if (id == :save) {
             SessionFlow.finish(SessionFlow.save(_recorder));
         } else if (id == :discard) {
-            WatchUi.pushView(
+            SessionFlow.pushOverlay(
                 new WatchUi.Confirmation(WatchUi.loadResource($.Rez.Strings.DiscardConfirm) as String),
                 new DiscardDelegate(_recorder),
                 WatchUi.SLIDE_IMMEDIATE
@@ -149,7 +149,7 @@ class PauseMenuDelegate extends WatchUi.Menu2InputDelegate {
     private function resumeSession() as Void {
         _recorder.resume();
         SessionFlow.stateChanged();
-        WatchUi.popView(WatchUi.SLIDE_DOWN);
+        SessionFlow.popOverlay();
     }
 }
 
@@ -166,6 +166,7 @@ class DiscardDelegate extends WatchUi.ConfirmationDelegate {
     //! The confirmation is already off the stack here; the pause menu and the
     //! session page are popped by `SessionFlow.discard`.
     function onResponse(response as WatchUi.Confirm) as Boolean {
+        SessionFlow.overlayClosed();
         if (response == WatchUi.CONFIRM_YES) {
             SessionFlow.discard(_recorder);
         }

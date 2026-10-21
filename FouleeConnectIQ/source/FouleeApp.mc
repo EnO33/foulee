@@ -56,6 +56,10 @@ class FouleeApp extends Application.AppBase {
 
     (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     function onPhoneMessage(message as Communications.PhoneAppMessage) as Void {
+        if (SessionCommand.isStop(message.data)) {
+            SessionFlow.stopFromPhone();
+            return;
+        }
         if (PhoneSync.receive(message.data)) {
             ComplicationFeed.publish();
             WatchUi.requestUpdate();

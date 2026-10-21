@@ -83,7 +83,10 @@ nonisolated struct WalkActivityAttributes: ActivityAttributes {
         var elapsed: TimeInterval
         var steps: Int
         var distanceKm: Double
-        var activeCalories: Int
+        /// `nil` when the source states none — a Garmin watch (ADR 0009,
+        /// D7): the Lock Screen says « — » rather than a measured-looking 0.
+        /// Optional, so a state written before it decodes as is.
+        var activeCalories: Int?
 
         var isPaused: Bool { pausedAt != nil }
     }
