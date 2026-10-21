@@ -101,7 +101,13 @@ let project = Project(
                 // Connect rejects two bundles with one identifier there
                 // (ITMS-90685), so the watch's copy takes its own.
                 "PRODUCT_BUNDLE_IDENTIFIER[sdk=watchos*]": "\(bundleIdBase).kit.watch",
-                "PRODUCT_BUNDLE_IDENTIFIER[sdk=watchsimulator*]": "\(bundleIdBase).kit.watch"
+                "PRODUCT_BUNDLE_IDENTIFIER[sdk=watchsimulator*]": "\(bundleIdBase).kit.watch",
+                // Signed when the apps embed it (Code Sign On Copy), with
+                // their identity. Signing it on its own needs a development
+                // certificate in the keychain, which a framework cannot get
+                // from cloud signing: the release archive failed on it.
+                "CODE_SIGNING_ALLOWED[sdk=iphoneos*]": "NO",
+                "CODE_SIGNING_ALLOWED[sdk=watchos*]": "NO"
             ]) { $1 })
         ),
         .target(
