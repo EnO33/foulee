@@ -15,6 +15,12 @@ nonisolated struct GarminDevice: Codable, Equatable, Sendable {
     var friendlyName: String
 }
 
+/// A build of the watch app: the id it is packaged with and its store entry.
+nonisolated struct GarminWatchApp: Equatable, Sendable {
+    var id: UUID
+    var storeID: UUID
+}
+
 /// Constants the SDK needs at initialization time.
 nonisolated enum GarminConnectIQConfiguration {
     /// URL scheme Garmin Connect Mobile calls back with the device-selection
@@ -36,10 +42,21 @@ nonisolated enum GarminConnectIQConfiguration {
     /// to as well, or a TestFlight build would never hear the beta watch app.
     static let betaApplicationUUID = UUID(uuidString: "a0d0785c-31b8-4e24-b4a3-0d6bfd950502")
 
-    /// Every watch app the phone listens to. Both literals are pinned against
-    /// the Connect IQ project by `FouleeConnectIQ/build.sh validate` in CI,
-    /// and by a test that none of them fails to parse.
-    static let applicationUUIDs = [productionApplicationUUID, betaApplicationUUID].compactMap(\.self)
+    /// The store entries Garmin handed out at publication (#481), distinct from
+    /// the app ids: the SDK opens them to install the watch app from the phone.
+    static let productionStoreUUID = UUID(uuidString: "8c11aa2c-7fc7-4e3d-8441-b2771626cbc7")
+    static let betaStoreUUID = UUID(uuidString: "83d23904-ef5c-472b-8194-bb607e05c6df")
+
+    /// Every watch app the phone listens to, with its store entry. The literals
+    /// are pinned by `FouleeConnectIQ/build.sh validate` in CI, and by a test
+    /// that none of them fails to parse.
+    static let watchApps: [GarminWatchApp] = [
+        (productionApplicationUUID, productionStoreUUID),
+        (betaApplicationUUID, betaStoreUUID),
+    ].compactMap { id, storeID in
+        guard let id, let storeID else { return nil }
+        return GarminWatchApp(id: id, storeID: storeID)
+    }
 
     /// Whether a URL the app was opened with is the Garmin device-selection
     /// response. Pure, so the routing decision is testable — it also keeps the

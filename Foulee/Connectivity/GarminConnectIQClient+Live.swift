@@ -121,11 +121,9 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
         IQDevice(id: device.id, modelName: device.modelName, friendlyName: device.friendlyName)
     }
 
-    /// The production and beta builds of the watch app on `device`. Store UUID
-    /// == app UUID until the first publication hands out the store id (#481);
-    /// the SDK only uses it to open the store page.
+    /// The production and beta builds of the watch app on `device`.
     private static func apps(on device: IQDevice) -> [IQApp] {
-        GarminConnectIQConfiguration.applicationUUIDs.map { IQApp(uuid: $0, store: $0, device: device) }
+        GarminConnectIQConfiguration.watchApps.map { IQApp(uuid: $0.id, store: $0.storeID, device: device) }
     }
 
     func snapshots() -> AsyncStream<GarminDailySnapshot> {
