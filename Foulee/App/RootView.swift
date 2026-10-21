@@ -1,3 +1,4 @@
+import Dependencies
 import SwiftUI
 
 /// Top-level container. Gates onboarding, shows the home screen once the user
@@ -6,6 +7,7 @@ import SwiftUI
 /// drive it (active days + window start + notifications toggle), and the
 /// recap notifications with theirs (issue #344).
 struct RootView: View {
+    @Dependency(\.garminConnectIQ) private var garminConnectIQ
     @State private var preferences: UserPreferences
     @Environment(\.scenePhase) private var scenePhase
     private let scheduler = WalkReminderScheduler()
@@ -33,6 +35,13 @@ struct RootView: View {
         .preferredColorScheme(preferences.themeMode.colorScheme)
         .environment(preferences)
         .task(id: scheduleKey) { await syncReminders() }
+        // Garmin Connect's answer to « Choisir ma montre »: here, mounted in
+        // every state, since iOS may relaunch the app to deliver it.
+        .onOpenURL { url in
+            if GarminConnectIQConfiguration.isDeviceSelectionResponse(url) {
+                _ = garminConnectIQ.handleDeviceSelection(url)
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .background:

@@ -36,6 +36,7 @@ struct GarminSetupSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     header
+                    GarminWatchLinkCard()
                     stepsCard
                     verifyCard
                     caveatsCard
