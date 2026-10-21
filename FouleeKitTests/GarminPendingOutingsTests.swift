@@ -79,4 +79,23 @@ struct GarminPendingOutingsTests {
         #expect(first.map(\.id) == again.map(\.id))
         #expect(first.map(\.id) != other.map(\.id))
     }
+
+    @Test("The detail of a pending outing draws the route the watch sent")
+    func routeOfPendingOuting() throws {
+        let walk = [Coordinate(latitude: 48.84, longitude: 2.35), Coordinate(latitude: 48.841, longitude: 2.35)]
+        var outing = Self.outing(at: Self.noon)
+        outing.route = walk
+        let window = Self.noon..<Self.noon.addingTimeInterval(3_600)
+        let row = try #require(GarminPendingOutings.workouts([outing], startingIn: window).first)
+
+        let segments = GarminPendingOutings.route(of: row, in: [outing])
+        #expect(segments.map(\.coordinates) == [walk])
+        #expect(segments.map(\.id) == [row.id])
+
+        var healthRow = row
+        healthRow.sourceName = "Connect"
+        #expect(GarminPendingOutings.route(of: healthRow, in: [outing]).isEmpty)
+        outing.route = Array(walk.prefix(1))
+        #expect(GarminPendingOutings.route(of: row, in: [outing]).isEmpty)
+    }
 }

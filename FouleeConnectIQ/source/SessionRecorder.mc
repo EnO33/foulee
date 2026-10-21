@@ -19,6 +19,7 @@ class SessionRecorder {
     private var _running as Boolean;
     private var _startSteps as Number = 0;
     private var _startedAt as Number = 0;
+    private var _route as Array<Number> = [] as Array<Number>;
 
     function initialize(running as Boolean) {
         _running = running;
@@ -118,9 +119,22 @@ class SessionRecorder {
         release();
     }
 
-    //! Positions only need to flow for the recorder to use them; nothing is
-    //! kept from them here.
+    //! The recorder uses every fix; the route the phone gets keeps the
+    //! usable ones, a step apart, while the session records (ADR 0009, D7).
     function onPosition(info as Position.Info) as Void {
+        var location = info.position;
+        var accuracy = info.accuracy;
+        var usable = accuracy == Position.QUALITY_USABLE || accuracy == Position.QUALITY_GOOD;
+        if (location == null || !usable || !isRecording()) {
+            return;
+        }
+        var degrees = location.toDegrees();
+        _route = RouteMath.extend(_route, RouteMath.toFixed(degrees[0]), RouteMath.toFixed(degrees[1]));
+    }
+
+    //! The route for the summary, cut down to what the outbox carries.
+    function route() as Array<Number> {
+        return RouteMath.thin(_route, RouteMath.MAX_POINTS);
     }
 
     private function release() as Void {

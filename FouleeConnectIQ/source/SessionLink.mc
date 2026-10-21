@@ -41,7 +41,7 @@ class SessionLink {
         Outbox.enqueue(state(true));
     }
 
-    private function state(ended as Boolean) as Dictionary<String, Number or String> {
+    private function state(ended as Boolean) as Outbox.Message {
         return SessionMessage.state(_recorder.summary(), _recorder.isRunning(), !_recorder.isRecording(), ended);
     }
 }

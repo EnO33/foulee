@@ -48,7 +48,7 @@ WHAT IT DOES
   counter). During a session, every ten seconds, where it stands for the
   iPhone's screen: walk or run, time, duration, distance, steps, heart rate,
   paused, ended. At the end of a session, its summary: walk or run, start,
-  end, duration, distance, steps. For each glass logged, its time, volume and
+  end, duration, distance, steps, a thinned route (64 points at most). For each glass logged, its time, volume and
   identifier. Nothing else leaves the watch. Out of range it simply
   waits for the next pass — no error message, no battery drain.
 
@@ -90,7 +90,8 @@ Communications: steps, distanceCm, activeMinutes, activeMinutesVigorous,
 calories (plus "ts", a timestamp, "day", the start of the watch's local day,
 "gen", a send counter, "t", the message type, and "v", the payload schema
 version). At the end of a saved session it also transmits its summary ("t" =
-"summary": sport, start, end, duration, distance, steps), and during the
+"summary": sport, start, end, duration, distance, steps, a route thinned to
+64 points), and during the
 session, every ten seconds, its state ("t" = "session": sport, time, duration,
 distance, steps, heart rate, paused, ended). For each glass logged, it
 transmits the glass ("t" = "water": identifier, time, volume), which the
@@ -100,8 +101,8 @@ contacts no server.
 It also records walks and runs with ActivityRecording (permissions Fit,
 Positioning, Sensor): GPS and the heart-rate sensor are only on during the
 session, and the activity is saved to Garmin Connect as a native one.
-Position is not sent to the phone; the current heart rate is, in the session
-state only, for the iPhone's screen.
+Position reaches the phone only in the summary's thinned route; the current
+heart rate only in the session state, for the iPhone's screen.
 
 The iOS channel cannot be demonstrated in the Connect IQ simulator, which only
 relays companion traffic to Android (ADB). With no iPhone paired, the app just

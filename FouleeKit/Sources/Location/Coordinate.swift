@@ -2,7 +2,7 @@ import Foundation
 
 /// Plain `Sendable` 2D coordinate — avoids exporting non-`Sendable`
 /// `CLLocation` across dependency boundaries.
-nonisolated public struct Coordinate: Equatable, Sendable {
+nonisolated public struct Coordinate: Codable, Equatable, Sendable {
     public var latitude: Double
     public var longitude: Double
 

@@ -269,8 +269,9 @@ nonisolated private func fetchWorkoutDetail(
               let workout = try await fetchWorkout(uuid: summary.id, store: store) else {
             // A Garmin outing Santé doesn't have yet (#479), or a workout that
             // disappeared between summary and detail fetch: the summary alone
-            // is the detail, so the UI can still render.
-            return WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: summary.steps)
+            // is the detail, with the route the watch sent, so the UI can
+            // still render.
+            return summaryOnlyDetail(of: summary)
         }
         window = DateInterval(start: workout.startDate, end: workout.endDate)
     } else {
@@ -414,25 +415,10 @@ nonisolated func isNoDataAvailable(_ error: (any Error)?) -> Bool {
     return hkError.code == .errorNoData
 }
 
-/// The résumé's workouts of the last `daysBack` days: Santé's, plus the
-/// Garmin outings it doesn't have yet (ADR 0009, D2; #479). Newest first.
-nonisolated private func recentWorkoutSummaries(
-    store: HKHealthStore,
-    daysBack: Int
-) async throws -> [WorkoutSummary] {
-    let healthKit = try await healthKitWorkoutSummaries(store: store, daysBack: daysBack)
-    guard let window = WorkoutActivityFilter.recentWindow(daysBack: daysBack) else { return healthKit }
-    let pending = GarminPendingOutingStore.remaining(healthKitWorkouts: healthKit.map {
-        ActiveMinutes.WorkoutInterval(start: $0.startedAt, duration: $0.durationSeconds)
-    })
-    return (healthKit + GarminPendingOutings.workouts(pending, startingIn: window))
-        .sorted { $0.startedAt > $1.startedAt }
-}
-
 /// All workouts of a `WorkoutActivityFilter` type (walk, run, hike)
 /// started in the last `daysBack` days (today included), regardless of
 /// which app or device wrote them. Newest first.
-nonisolated private func healthKitWorkoutSummaries(
+nonisolated func healthKitWorkoutSummaries(
     store: HKHealthStore,
     daysBack: Int
 ) async throws -> [WorkoutSummary] {

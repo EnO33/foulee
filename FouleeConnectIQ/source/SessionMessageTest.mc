@@ -10,7 +10,7 @@ function sessionMessageCarriesTheWholeSummary(logger as Logger) as Boolean {
         :seconds => 1800,
         :meters => 2400,
         :steps => 3100
-    }, false);
+    }, false, [4884000, 235000, 4884100, 235000] as Array<Number>);
     Test.assertEqual(message["t"] as Object, "summary");
     Test.assertEqual(message["v"] as Object, 1);
     Test.assertEqual(message["sport"] as Object, "walking");
@@ -19,6 +19,7 @@ function sessionMessageCarriesTheWholeSummary(logger as Logger) as Boolean {
     Test.assertEqual(message["duration"] as Object, 1800);
     Test.assertEqual(message["distanceM"] as Object, 2400);
     Test.assertEqual(message["steps"] as Object, 3100);
+    Test.assertEqual((message["route"] as Array<Number>).size(), 4);
 
     logger.debug("summary = " + message.toString());
     return true;
@@ -28,7 +29,7 @@ function sessionMessageCarriesTheWholeSummary(logger as Logger) as Boolean {
 function sessionMessageNamesTheRun(logger as Logger) as Boolean {
     var message = SessionMessage.summary({
         :startedAt => 0, :endedAt => 0, :seconds => 0, :meters => 0, :steps => 0
-    }, true);
+    }, true, [] as Array<Number>);
     Test.assertEqual(message["sport"] as Object, "running");
     return true;
 }

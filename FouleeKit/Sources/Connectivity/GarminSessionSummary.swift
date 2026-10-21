@@ -9,10 +9,12 @@ import Foundation
 /// `FouleeConnectIQ/source/SessionMessage.mc`:
 ///
 ///     { "t": "summary", "v", "sport", "start", "end", "duration",
-///       "distanceM", "steps" }
+///       "distanceM", "steps", "route" }
 ///
 /// `start` and `end` are epoch seconds; `duration` is the recorded time in
-/// seconds, pauses excluded, so it can be shorter than `end - start`.
+/// seconds, pauses excluded, so it can be shorter than `end - start`. `route`
+/// is flat `[lat, lon, lat, lon, …]` in degrees × 100 000, thinned on the
+/// watch (`RouteMath.mc`); a watch on an older build sends none.
 nonisolated public struct GarminSessionSummary: Codable, Equatable, Sendable {
     public static let messageType = "summary"
 
@@ -27,6 +29,8 @@ nonisolated public struct GarminSessionSummary: Codable, Equatable, Sendable {
     public var durationSeconds: TimeInterval
     public var distanceMeters: Int
     public var steps: Int
+    /// The outing's route, thinned on the watch. Empty without a fix.
+    public var route: [Coordinate]
 
     public init(
         activity: SessionActivity,
@@ -34,7 +38,8 @@ nonisolated public struct GarminSessionSummary: Codable, Equatable, Sendable {
         endedAt: Date,
         durationSeconds: TimeInterval,
         distanceMeters: Int,
-        steps: Int
+        steps: Int,
+        route: [Coordinate] = []
     ) {
         self.activity = activity
         self.startedAt = startedAt
@@ -42,6 +47,20 @@ nonisolated public struct GarminSessionSummary: Codable, Equatable, Sendable {
         self.durationSeconds = durationSeconds
         self.distanceMeters = distanceMeters
         self.steps = steps
+        self.route = route
+    }
+
+    /// By hand for `route` alone: summaries stored before it existed have none,
+    /// and must still read back.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        activity = try container.decode(SessionActivity.self, forKey: .activity)
+        startedAt = try container.decode(Date.self, forKey: .startedAt)
+        endedAt = try container.decode(Date.self, forKey: .endedAt)
+        durationSeconds = try container.decode(TimeInterval.self, forKey: .durationSeconds)
+        distanceMeters = try container.decode(Int.self, forKey: .distanceMeters)
+        steps = try container.decode(Int.self, forKey: .steps)
+        route = try container.decodeIfPresent([Coordinate].self, forKey: .route) ?? []
     }
 }
 
@@ -55,7 +74,11 @@ nonisolated public extension GarminSessionSummary {
         static let duration = "duration"
         static let distance = "distanceM"
         static let steps = "steps"
+        static let route = "route"
     }
+
+    /// Fixed point on the wire: degrees × 100 000.
+    private static let routeScale = 100_000.0
 
     /// Tolerant decoder for a raw Connect IQ message, in the manner of
     /// `GarminDailySnapshot.decode`:
@@ -65,7 +88,9 @@ nonisolated public extension GarminSessionSummary {
     ///   (they place the outing on the clock);
     /// - an unknown `sport` → walking, the phone's own default;
     /// - missing or non-numeric metric → 0, negative → 0; a `duration` past
-    ///   the wall clock is cut to it.
+    ///   the wall clock is cut to it;
+    /// - a malformed `route` costs the map, never the outing: it is dropped
+    ///   whole.
     static func decode(_ message: Any) -> GarminSessionSummary? {
         guard let fields = message as? [AnyHashable: Any],
               fields[Key.type] as? String == messageType,
@@ -81,8 +106,22 @@ nonisolated public extension GarminSessionSummary {
             endedAt: end,
             durationSeconds: min(duration, end.timeIntervalSince(start)),
             distanceMeters: ConnectIQField.nonNegative(fields[Key.distance]),
-            steps: ConnectIQField.nonNegative(fields[Key.steps])
+            steps: ConnectIQField.nonNegative(fields[Key.steps]),
+            route: route(fields[Key.route])
         )
+    }
+
+    /// Pairs of fixed-point degrees, each on the globe; anything else is no
+    /// route at all, rather than a line through a point nobody walked.
+    private static func route(_ value: Any?) -> [Coordinate] {
+        guard let flat = value as? [Any], flat.count.isMultiple(of: 2) else { return [] }
+        let degrees = flat.compactMap { ConnectIQField.finiteDouble($0) }.map { $0 / routeScale }
+        guard degrees.count == flat.count else { return [] }
+        let points = stride(from: 0, to: degrees.count, by: 2).map {
+            Coordinate(latitude: degrees[$0], longitude: degrees[$0 + 1])
+        }
+        let onTheGlobe = points.allSatisfy { abs($0.latitude) <= 90 && abs($0.longitude) <= 180 }
+        return onTheGlobe ? points : []
     }
 
     /// The clock the outing covers, as the minute count reads a workout.
