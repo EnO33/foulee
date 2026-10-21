@@ -27,7 +27,8 @@ Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucun
 | `source/WaterMessage.mc` | « J'ai bu » (menu de l'accueil, appui long sur UP) : le verre part par la file d'envoi, l'iPhone l'écrit dans Santé (D8). |
 | `source/SessionLink.mc` | État de la séance pour l'écran miroir de l'iPhone (D7) : toutes les 10 s et à la pause, à la reprise et à la fin ; la fin passe par la file d'envoi. |
 | `source/SessionView.mc` | Page Séance : chrono, distance, allure, fréquence cardiaque, vibration et kilomètre affiché à chaque borne. |
-| `source/SessionPages.mc` | Pages de la séance en `ViewLoop` : Séance, puis Journée (l'accueil). |
+| `source/SessionPages.mc` | Pages de la séance en `ViewLoop` : Séance, Journée (l'accueil), puis Plan sur les montres à cartes. |
+| `source/SessionMapView.mc` | Page Plan (`MapTrackView`, carte du système centrée sur le porteur) avec le tracé parcouru, renouvelé toutes les 10 s. |
 | `source/SummaryView.mc` | Résumé d'une séance enregistrée : durée, pas, distance, « Terminer » vers l'accueil. |
 | `source/*Test.mc` | Tests unitaires Run No Evil. |
 | `build.sh` | Point d'entrée : `validate`, `build`, `test`, `package`. |
