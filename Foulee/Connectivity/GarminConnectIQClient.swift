@@ -76,23 +76,16 @@ nonisolated struct GarminConnectIQClient: Sendable {
     /// Idempotent; must run at process start, including on a background wake.
     var initialize: @Sendable () -> Void
 
-    // periphery:ignore - implemented and ready, deliberately not wired: the flow
-    // needs a settings entry point and a `.onOpenURL` route, and #187 stops
-    // before any UI. Wired by the ingestion issue (#189).
     /// Foregrounds Garmin Connect Mobile so the user can pick which paired
     /// devices to share. The app is backgrounded — and possibly suspended —
     /// by this call; the answer comes back through `handleDeviceSelection`.
     var presentDeviceSelection: @Sendable () -> Void
 
-    // periphery:ignore - same as `presentDeviceSelection`: it is the other half
-    // of the same unwired round-trip.
     /// Parses the URL Garmin Connect Mobile relaunched the app with, persists
     /// the authorized devices and starts listening to them. Returns the
     /// devices, or an empty array when the URL isn't a selection response.
     var handleDeviceSelection: @Sendable (URL) -> [GarminDevice]
 
-    // periphery:ignore - the listing exists for the settings screen that will
-    // show "montre appairée" (#189); the live path reads the store directly.
     /// Devices authorized in a previous session.
     var knownDevices: @Sendable () -> [GarminDevice]
 

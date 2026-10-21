@@ -33,7 +33,16 @@ struct FouleeApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(defaults: Self.preferencesDefaults)
+                .onOpenURL(perform: Self.handleGarminDeviceSelection)
         }
+    }
+
+    /// Garmin Connect's answer to « Choisir ma montre »: on the scene, since
+    /// iOS may relaunch the app to deliver it, onboarding or not.
+    private static func handleGarminDeviceSelection(_ url: URL) {
+        guard GarminConnectIQConfiguration.isDeviceSelectionResponse(url) else { return }
+        @Dependency(\.garminConnectIQ) var garminConnectIQ
+        _ = garminConnectIQ.handleDeviceSelection(url)
     }
 
     /// Where the app reads the user's preferences from — always `.standard`,
