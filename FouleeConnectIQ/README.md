@@ -22,6 +22,7 @@ Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucun
 | `source/SessionRecorder.mc` | Enregistrement de la séance par l'enregistreur FIT de la montre (`ActivityRecording`), GPS et cardio allumés pendant la séance seulement (D2). |
 | `source/SessionFlow.mc`, `source/SessionDelegates.mc` | « Démarrer » depuis l'accueil (choix Marche / Course en mode « Les deux »), pause en `Menu2` : Reprendre, Enregistrer, Supprimer (avec confirmation). |
 | `source/SessionMessage.mc`, `source/Outbox.mc` | Résumé de fin de séance pour l'iPhone (ADR 0009, D2), gardé dans une file d'envoi jusqu'à sa réception ; le service d'arrière-plan réessaie toutes les 5 minutes. |
+| `source/ComplicationFeed.mc` | La série en complication publique (`resources/complications`) pour Face It et les cadrans, publiée par l'app ouverte. |
 | `source/WaterMessage.mc` | « J'ai bu » (menu de l'accueil, appui long sur UP) : le verre part par la file d'envoi, l'iPhone l'écrit dans Santé (D8). |
 | `source/SessionLink.mc` | État de la séance pour l'écran miroir de l'iPhone (D7) : toutes les 10 s et à la pause, à la reprise et à la fin ; la fin passe par la file d'envoi. |
 | `source/SessionView.mc` | Page Séance : chrono, distance, allure, fréquence cardiaque, vibration et kilomètre affiché à chaque borne. |

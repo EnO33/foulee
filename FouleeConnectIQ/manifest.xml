@@ -90,13 +90,16 @@
 
         <!-- minApiLevel 5.0.0: the floor of the device matrix. The code itself
              needs 3.2.0 (Application.Storage written from the background),
-             4.0.0 (a watch-app glance) and 3.4.0 (WatchUi.ViewLoop). -->
+             4.0.0 (a watch-app glance), 3.4.0 (WatchUi.ViewLoop) and 4.2.0
+             (Complications). -->
 
         <!-- ActivityMonitor needs no permission. Background is required by the
-             temporal event, Communications by the transmit to the phone. -->
+             temporal event, Communications by the transmit to the phone,
+             ComplicationPublisher by the streak complication. -->
         <iq:permissions>
             <iq:uses-permission id="Background"/>
             <iq:uses-permission id="Communications"/>
+            <iq:uses-permission id="ComplicationPublisher"/>
             <iq:uses-permission id="Fit"/>
             <iq:uses-permission id="Positioning"/>
             <iq:uses-permission id="Sensor"/>

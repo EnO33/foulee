@@ -1,0 +1,14 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- ADR 0009, phase C. The id is the contract with every watch face that
+         shows the complication: it never changes. Public, so Face It and any
+         watch face can show the streak. -->
+    <complications>
+        <complication id="0" access="public"
+                      longLabel="@Strings.ComplicationStreak"
+                      shortLabel="@Strings.ComplicationStreakShort"
+                      icon="@Drawables.ComplicationStreak"
+                      glancePreview="true">
+            <faceIt defaultText="@Strings.ComplicationStreak" />
+        </complication>
+    </complications>
+</resources>

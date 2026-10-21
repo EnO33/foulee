@@ -35,6 +35,7 @@ class FouleeApp extends Application.AppBase {
     function getInitialView() as [Views] or [Views, InputDelegates] {
         _hasViews = true;
         listenToPhone();
+        ComplicationFeed.publish();
         return [new $.FouleeView(), new $.HomeDelegate()];
     }
 
@@ -56,6 +57,7 @@ class FouleeApp extends Application.AppBase {
     (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
     function onPhoneMessage(message as Communications.PhoneAppMessage) as Void {
         if (PhoneSync.receive(message.data)) {
+            ComplicationFeed.publish();
             WatchUi.requestUpdate();
         }
     }
