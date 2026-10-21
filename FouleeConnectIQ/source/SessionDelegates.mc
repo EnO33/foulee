@@ -1,4 +1,6 @@
 import Toybox.Lang;
+import Toybox.Math;
+import Toybox.Time;
 import Toybox.WatchUi;
 
 //! The home's main action: START on button watches, a tap on touch screens
@@ -22,6 +24,47 @@ class HomeDelegate extends WatchUi.BehaviorDelegate {
             SessionFlow.start("running".equals(mode));
         }
         return true;
+    }
+
+    //! The menu gesture (long press on UP, or the touch screens' own) offers
+    //! « J'ai bu » once the phone has turned hydration on (ADR 0009, D8).
+    function onMenu() as Boolean {
+        var sync = PhoneSync.load();
+        if (sync == null || !(sync["water"] as Boolean) || (sync["glassML"] as Number) <= 0) {
+            return false;
+        }
+        var glassML = sync["glassML"] as Number;
+        var menu = new WatchUi.Menu2({:title => WatchUi.loadResource($.Rez.Strings.Hydration) as String});
+        menu.addItem(new WatchUi.MenuItem(
+            WatchUi.loadResource($.Rez.Strings.Drank) as String,
+            glassML.format("%d") + " mL",
+            :drank,
+            null
+        ));
+        WatchUi.pushView(menu, new WaterMenuDelegate(glassML), WatchUi.SLIDE_UP);
+        return true;
+    }
+}
+
+//! « J'ai bu »: the glass waits in the outbox until the phone has it, then the
+//! phone writes it to Santé (ADR 0009, D8).
+(:typecheck([disableBackgroundCheck, disableGlanceCheck]))
+class WaterMenuDelegate extends WatchUi.Menu2InputDelegate {
+
+    private var _glassML as Number;
+
+    function initialize(glassML as Number) {
+        Menu2InputDelegate.initialize();
+        _glassML = glassML;
+    }
+
+    function onSelect(item as WatchUi.MenuItem) as Void {
+        Outbox.enqueue(WaterMessage.glass(Time.now().value(), _glassML, Math.rand()));
+        $.deliverOutbox(null);
+        WatchUi.popView(WatchUi.SLIDE_DOWN);
+        if (WatchUi has :showToast) {
+            WatchUi.showToast(WatchUi.loadResource($.Rez.Strings.GlassNoted) as String, null);
+        }
     }
 }
 

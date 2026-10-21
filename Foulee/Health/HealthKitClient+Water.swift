@@ -2,9 +2,9 @@ import FouleeKit
 import Foundation
 import HealthKit
 
-/// The water reads behind the Hydratation screen (issue #355), and the delete
-/// behind « Annuler » (#354), apart from `HealthKitClient+Live` so that file
-/// stays one screen of wiring.
+/// The water reads behind the Hydratation screen (issue #355), the delete
+/// behind « Annuler » (#354) and the Garmin watch's glasses (ADR 0009, D8),
+/// apart from `HealthKitClient+Live` so that file stays one screen of wiring.
 
 nonisolated private let waterType = HKQuantityType(.dietaryWater)
 nonisolated private let milliliter = HKUnit.literUnit(with: .milli)
@@ -62,4 +62,45 @@ nonisolated func deleteWaterSample(store: HKHealthStore, id: UUID) async throws 
             }
         }
     }
+}
+
+/// Writes a glass at `date`, unless Santé already holds one with
+/// `syncIdentifier`.
+///
+/// Looked up first rather than left to the sync version alone: HealthKit
+/// documents that a *greater* version replaces the sample it finds, and says
+/// nothing of an equal one. The identifier and its version still go in the
+/// metadata, so Santé knows the glass by them too. Should reading water be
+/// refused, the lookup finds nothing and the write goes ahead: a glass is then
+/// at worst written again, never lost.
+nonisolated func logWaterOnce(
+    store: HKHealthStore,
+    milliliters: Int,
+    date: Date,
+    syncIdentifier: String
+) async throws {
+    let existing = HKSampleQueryDescriptor(
+        predicates: [.quantitySample(
+            type: waterType,
+            predicate: HKQuery.predicateForObjects(
+                withMetadataKey: HKMetadataKeySyncIdentifier,
+                allowedValues: [syncIdentifier]
+            )
+        )],
+        sortDescriptors: [],
+        limit: 1
+    )
+    do {
+        guard try await existing.result(for: store).isEmpty else { return }
+    } catch where isNoDataAvailable(error) {
+        // Nothing matched: the glass is not there yet.
+    }
+    let sample = HKQuantitySample(
+        type: waterType,
+        quantity: HKQuantity(unit: milliliter, doubleValue: Double(milliliters)),
+        start: date,
+        end: date,
+        metadata: [HKMetadataKeySyncIdentifier: syncIdentifier, HKMetadataKeySyncVersion: 1]
+    )
+    try await store.save(sample)
 }

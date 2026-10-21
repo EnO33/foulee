@@ -46,7 +46,8 @@ WHAT IT DOES
   counter). During a session, every ten seconds, where it stands for the
   iPhone's screen: walk or run, time, duration, distance, steps, heart rate,
   paused, ended. At the end of a session, its summary: walk or run, start,
-  end, duration, distance, steps. Nothing else leaves the watch. Out of range it simply
+  end, duration, distance, steps. For each glass logged, its time, volume and
+  identifier. Nothing else leaves the watch. Out of range it simply
   waits for the next pass — no error message, no battery drain.
 
 WHAT IT DOES NOT DO
@@ -89,8 +90,10 @@ calories (plus "ts", a timestamp, "day", the start of the watch's local day,
 version). At the end of a saved session it also transmits its summary ("t" =
 "summary": sport, start, end, duration, distance, steps), and during the
 session, every ten seconds, its state ("t" = "session": sport, time, duration,
-distance, steps, heart rate, paused, ended). Nothing else is read or
-transmitted, and it contacts no server.
+distance, steps, heart rate, paused, ended). For each glass logged, it
+transmits the glass ("t" = "water": identifier, time, volume), which the
+iPhone writes to Apple Health. Nothing else is read or transmitted, and it
+contacts no server.
 
 It also records walks and runs with ActivityRecording (permissions Fit,
 Positioning, Sensor): GPS and the heart-rate sensor are only on during the
