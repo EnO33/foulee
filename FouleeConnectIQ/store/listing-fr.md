@@ -47,7 +47,7 @@ CE QU'ELLE FAIT
   secondes, où elle en est pour l'écran de l'iPhone : marche ou course,
   heure, durée, distance, pas, fréquence cardiaque, pause, fin. À la fin
   d'une séance, son résumé : marche ou course, début, fin, durée, distance,
-  pas. À chaque « J'ai bu », le verre : heure, quantité, identifiant. Rien
+  pas, tracé allégé (64 points au plus). À chaque « J'ai bu », le verre : heure, quantité, identifiant. Rien
   d'autre ne quitte la montre. Hors de portée, elle attend le prochain passage — sans message
   d'erreur, sans vider ta batterie.
 
@@ -88,7 +88,7 @@ activeMinutesVigorous, calories (plus « ts », un horodatage, « day », le
 début de la journée locale de la montre, « gen », un compteur d'envoi, « t »,
 le type de message, et « v », la version du format). À la fin d'une séance
 enregistrée, elle transmet aussi son résumé (« t » = "summary" : sport,
-début, fin, durée, distance, pas), et pendant la séance, toutes les dix
+début, fin, durée, distance, pas, tracé allégé à 64 points), et pendant la séance, toutes les dix
 secondes, son état (« t » = "session" : sport, heure, durée, distance, pas,
 fréquence cardiaque, pause, fin). À chaque « J'ai bu », elle transmet le verre
 (« t » = "water" : identifiant, heure, quantité), que l'iPhone écrit dans
@@ -97,9 +97,9 @@ Santé. Rien d'autre n'est lu ni transmis, et elle ne contacte aucun serveur.
 Elle enregistre aussi des séances de marche ou de course avec
 ActivityRecording (permissions Fit, Positioning, Sensor) : GPS et capteur
 cardiaque ne sont allumés que pendant la séance, et l'activité est enregistrée
-dans Garmin Connect comme une activité native. La position n'est pas
-transmise au téléphone ; la fréquence cardiaque du moment ne l'est que dans
-l'état de séance, pour l'écran de l'iPhone.
+dans Garmin Connect comme une activité native. La position ne part au
+téléphone que dans le tracé allégé du résumé ; la fréquence cardiaque du
+moment ne l'est que dans l'état de séance, pour l'écran de l'iPhone.
 
 Le canal iOS ne peut pas être démontré dans le simulateur Connect IQ, qui ne
 relaie les échanges compagnon que vers Android (ADB). Sans iPhone appairé,

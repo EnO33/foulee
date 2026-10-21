@@ -58,7 +58,8 @@ capteur cardiaque ne sont allumés que de « Démarrer » à « Enregistrer » o
 « Supprimer ». Une séance enregistrée part dans **Garmin Connect** comme
 n'importe quelle activité de ta montre, et Garmin Connect l'écrit dans Santé ;
 une séance supprimée ne laisse aucune trace. L'app Foulée de la montre ne garde
-ni ne transmet la position.
+de la position que le tracé de la séance, allégé, pour ton iPhone (ci-dessous) :
+il ne reste sur la montre que le temps que l'iPhone le reçoive.
 
 **Pendant la séance**, quand ton iPhone est à portée, elle lui envoie aussi
 toutes les dix secondes, ainsi qu'à la pause, à la reprise et à la fin, où en
@@ -80,11 +81,13 @@ téléphone n'est pas à portée, la montre n'envoie rien et attend simplement l
 prochain passage.
 
 **À la fin d'une séance enregistrée**, elle envoie aussi son résumé : marche ou
-course, heure de début et de fin, durée, distance et pas. Il sert à l'iPhone à
-afficher la sortie en attendant que Garmin Connect l'écrive dans Santé. Le
-résumé attend sur la montre que l'iPhone l'ait reçu (avec les fins de
-séance et les verres, les trente-deux derniers messages au plus) ; ni la
-position ni la fréquence cardiaque n'en font partie.
+course, heure de début et de fin, durée, distance, pas et **le tracé de la
+séance**, réduit à 64 points au plus. Il sert à l'iPhone à afficher la sortie
+et sa carte en attendant que Garmin Connect l'écrive dans Santé, qui la reçoit
+sans tracé. Le résumé attend sur la montre que l'iPhone l'ait reçu (avec les
+fins de séance et les verres, les trente-deux derniers messages au plus) ; la
+fréquence cardiaque n'en fait pas partie. L'iPhone garde le tracé avec la
+sortie en attente, et l'oublie avec elle.
 
 **Quand tu touches « J'ai bu »** dans le menu de la montre, elle envoie le
 verre : son heure, sa quantité et un identifiant. La montre ne peut pas

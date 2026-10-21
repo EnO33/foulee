@@ -21,8 +21,13 @@ module SessionMessage {
 
     //! `summary` is `SessionRecorder.summary()`: seconds recorded (pauses
     //! excluded), metres, steps, heart rate, and the start and end instants in
-    //! epoch seconds.
-    function summary(summary as Dictionary<Symbol, Number>, running as Boolean) as Dictionary<String, Number or String> {
+    //! epoch seconds. `route` is `SessionRecorder.route()`, `RouteMath`'s flat
+    //! fixed-point points, empty without a fix.
+    function summary(
+        summary as Dictionary<Symbol, Number>,
+        running as Boolean,
+        route as Array<Number>
+    ) as Outbox.Message {
         return {
             "t" => SUMMARY_TYPE,
             "v" => SCHEMA_VERSION,
@@ -31,7 +36,8 @@ module SessionMessage {
             "end" => summary[:endedAt] as Number,
             "duration" => summary[:seconds] as Number,
             "distanceM" => summary[:meters] as Number,
-            "steps" => summary[:steps] as Number
+            "steps" => summary[:steps] as Number,
+            "route" => route
         };
     }
 
@@ -44,7 +50,7 @@ module SessionMessage {
         running as Boolean,
         paused as Boolean,
         ended as Boolean
-    ) as Dictionary<String, Number or String> {
+    ) as Outbox.Message {
         return {
             "t" => STATE_TYPE,
             "v" => SCHEMA_VERSION,

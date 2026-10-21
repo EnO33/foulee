@@ -49,4 +49,34 @@ struct GarminSessionSummaryTests {
         #expect(summary.distanceMeters == 0)
         #expect(summary.durationSeconds == 2_100)
     }
+
+    @Test("The route is read in degrees, from the watch's fixed point")
+    func route() throws {
+        let summary = try #require(GarminSessionSummary.decode(Self.message([
+            "route": [4_884_000, 235_000, 4_884_100, 235_050],
+        ])))
+        #expect(summary.route == [
+            Coordinate(latitude: 48.84, longitude: 2.35),
+            Coordinate(latitude: 48.841, longitude: 2.3505),
+        ])
+    }
+
+    @Test("A malformed route costs the map, never the outing")
+    func malformedRoute() throws {
+        for route in [[4_884_000], [4_884_000, "east"] as [Any], [95_000_000, 0], "route"] as [Any] {
+            let summary = try #require(GarminSessionSummary.decode(Self.message(["route": route])))
+            #expect(summary.route.isEmpty)
+        }
+        #expect(try #require(GarminSessionSummary.decode(Self.message())).route.isEmpty)
+    }
+
+    @Test("A summary stored before routes existed still reads back")
+    func storedWithoutRoute() throws {
+        let stored = Data("""
+        {"activity":"walking","startedAt":0,"endedAt":1800,"durationSeconds":1800,"distanceMeters":2400,"steps":3100}
+        """.utf8)
+        let summary = try JSONDecoder().decode(GarminSessionSummary.self, from: stored)
+        #expect(summary.steps == 3_100)
+        #expect(summary.route.isEmpty)
+    }
 }

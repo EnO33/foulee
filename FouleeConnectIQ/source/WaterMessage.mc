@@ -13,7 +13,7 @@ module WaterMessage {
 
     //! A glass of `milliliters` drunk at `at` (epoch seconds). `nonce` tells
     //! apart two glasses noted in the same second.
-    function glass(at as Number, milliliters as Number, nonce as Number) as Dictionary<String, Number or String> {
+    function glass(at as Number, milliliters as Number, nonce as Number) as Outbox.Message {
         return {
             "t" => MESSAGE_TYPE,
             "v" => SCHEMA_VERSION,

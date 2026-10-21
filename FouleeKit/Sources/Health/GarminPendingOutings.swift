@@ -72,6 +72,15 @@ nonisolated public enum GarminPendingOutings {
         pending.filter { window.contains($0.startedAt) }.map(workout(of:))
     }
 
+    /// The route of the pending outing `workout` stands for, as the detail's
+    /// map draws it: none for a Santé workout, or an outing without a route.
+    public static func route(of workout: WorkoutSummary, in pending: [GarminSessionSummary]) -> [RouteSegment] {
+        guard isPending(workout),
+              let outing = pending.first(where: { $0.startedAt == workout.startedAt }),
+              outing.route.count > 1 else { return [] }
+        return [RouteSegment(id: workout.id, activity: workout.activity, coordinates: outing.route)]
+    }
+
     /// Whether `workout` is a pending outing rather than a Santé workout.
     public static func isPending(_ workout: WorkoutSummary) -> Bool {
         workout.sourceName == sourceName

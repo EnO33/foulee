@@ -18,7 +18,10 @@ module Outbox {
     //! bytes a message keeps the whole queue within a few kilobytes of Storage.
     const CAPACITY = 32;
 
-    function enqueue(message as Dictionary<String, Number or String>) as Void {
+    //! What the outbox holds: a message dictionary, its route included.
+    typedef Message as Dictionary<String, Number or String or Array<Number>>;
+
+    function enqueue(message as Message) as Void {
         var messages = load();
         messages.add(message);
         if (messages.size() > CAPACITY) {
@@ -28,7 +31,7 @@ module Outbox {
     }
 
     //! The message to send next, or null when everything got through.
-    function peek() as Dictionary<String, Number or String>? {
+    function peek() as Message? {
         var messages = load();
         return messages.size() > 0 ? messages[0] : null;
     }
@@ -42,12 +45,12 @@ module Outbox {
         }
     }
 
-    function load() as Array<Dictionary<String, Number or String>> {
+    function load() as Array<Message> {
         var stored = Storage.getValue(KEY_MESSAGES);
         if (stored instanceof Lang.Array) {
-            return stored as Array<Dictionary<String, Number or String>>;
+            return stored as Array<Message>;
         }
-        return [] as Array<Dictionary<String, Number or String>>;
+        return [] as Array<Message>;
     }
 }
 

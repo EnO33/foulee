@@ -35,7 +35,7 @@ module SessionFlow {
         var summary = recorder.summary();
         endLink();
         recorder.save();
-        Outbox.enqueue(SessionMessage.summary(summary, recorder.isRunning()));
+        Outbox.enqueue(SessionMessage.summary(summary, recorder.isRunning(), recorder.route()));
         $.deliverOutbox(null);
         return summary;
     }

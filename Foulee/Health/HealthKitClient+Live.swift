@@ -269,8 +269,14 @@ nonisolated private func fetchWorkoutDetail(
               let workout = try await fetchWorkout(uuid: summary.id, store: store) else {
             // A Garmin outing Santé doesn't have yet (#479), or a workout that
             // disappeared between summary and detail fetch: the summary alone
-            // is the detail, so the UI can still render.
-            return WorkoutDetail(summary: summary, heartRateSamples: [], stepsCount: summary.steps)
+            // is the detail, with the route the watch sent, so the UI can
+            // still render.
+            return WorkoutDetail(
+                summary: summary,
+                heartRateSamples: [],
+                stepsCount: summary.steps,
+                route: GarminPendingOutings.route(of: summary, in: GarminPendingOutingStore.read())
+            )
         }
         window = DateInterval(start: workout.startDate, end: workout.endDate)
     } else {
