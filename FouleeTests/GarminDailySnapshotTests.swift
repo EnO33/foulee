@@ -266,14 +266,20 @@ struct GarminConnectIQConfigurationTests {
         #expect(GarminConnectIQConfiguration.isDeviceSelectionResponse(shouted))
     }
 
-    // A literal that fails to parse would drop out of `applicationUUIDs`
-    // silently, and the phone would stop hearing that watch app.
-    @Test("The production and beta watch app ids both parse, and differ")
-    func applicationUUIDs() throws {
-        let production = try #require(GarminConnectIQConfiguration.productionApplicationUUID)
-        let beta = try #require(GarminConnectIQConfiguration.betaApplicationUUID)
-        #expect(production != beta)
-        #expect(GarminConnectIQConfiguration.applicationUUIDs == [production, beta])
+    // A literal that fails to parse would drop out of `watchApps` silently,
+    // and the phone would stop hearing that watch app.
+    @Test("The production and beta watch apps both parse, each with its own store entry")
+    func watchApps() throws {
+        let production = try GarminWatchApp(
+            id: #require(GarminConnectIQConfiguration.productionApplicationUUID),
+            storeID: #require(GarminConnectIQConfiguration.productionStoreUUID)
+        )
+        let beta = try GarminWatchApp(
+            id: #require(GarminConnectIQConfiguration.betaApplicationUUID),
+            storeID: #require(GarminConnectIQConfiguration.betaStoreUUID)
+        )
+        #expect(Set([production.id, production.storeID, beta.id, beta.storeID]).count == 4)
+        #expect(GarminConnectIQConfiguration.watchApps == [production, beta])
     }
 }
 

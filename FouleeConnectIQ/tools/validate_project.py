@@ -64,6 +64,14 @@ COMPANION_IDS = {
     "betaApplicationUUID": BETA_APP_ID,
 }
 
+# The store entries Garmin handed out at publication (#481): the SDK opens them
+# to install the watch app from the phone. Nothing else in the repository knows
+# them, so they are pinned here against an accidental edit.
+COMPANION_STORE_IDS = {
+    "productionStoreUUID": "8c11aa2c7fc74e3d8441b2771626cbc7",
+    "betaStoreUUID": "83d23904ef5c472b8194bb607e05c6df",
+}
+
 errors: list[str] = []
 notes: list[str] = []
 
@@ -297,19 +305,26 @@ def check_companion_ids() -> None:
         return
 
     for name, expected in COMPANION_IDS.items():
-        match = re.search(rf'\b{name}\s*=\s*UUID\(uuidString:\s*"([^"]*)"\)', content)
-        if match is None:
-            fail(f"{COMPANION_CONFIG} : « {name} » introuvable")
-            continue
-        declared = match.group(1).replace("-", "").lower()
-        if declared != expected:
-            fail(
-                f"{COMPANION_CONFIG} : {name} vaut « {match.group(1)} », l'app "
-                f"montre est empaquetée sous « {expected} » — l'iPhone ne "
-                "recevrait rien d'elle",
-            )
-        else:
-            ok(f"iPhone à l'écoute de {name} ({expected})")
+        check_companion_id(
+            content, name, expected, "l'app montre est empaquetée sous", "l'iPhone ne recevrait rien d'elle"
+        )
+    for name, expected in COMPANION_STORE_IDS.items():
+        check_companion_id(
+            content, name, expected, "la fiche store est", "le téléphone ouvrirait une autre fiche"
+        )
+
+
+def check_companion_id(content: str, name: str, expected: str, truth: str, consequence: str) -> None:
+    """Compare one `UUID(uuidString:)` literal of the companion config to its pinned value."""
+    match = re.search(rf'\b{name}\s*=\s*UUID\(uuidString:\s*"([^"]*)"\)', content)
+    if match is None:
+        fail(f"{COMPANION_CONFIG} : « {name} » introuvable")
+        return
+    declared = match.group(1).replace("-", "").lower()
+    if declared != expected:
+        fail(f"{COMPANION_CONFIG} : {name} vaut « {match.group(1)} », {truth} « {expected} » — {consequence}")
+    else:
+        ok(f"{name} ({expected})")
 
 
 # `resources-<suffix>` is not only a device folder: the SDK's own default.jungle

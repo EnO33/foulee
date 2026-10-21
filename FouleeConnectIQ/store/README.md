@@ -186,7 +186,7 @@ remplacement à la main, et le risque de le committer, n'existent plus.
 Téléverser ensuite en cochant **Beta App**.
 
 Rien à changer côté iPhone : l'app écoute les deux identifiants
-(`GarminConnectIQConfiguration.applicationUUIDs`), donc une montre beta parle à
+(`GarminConnectIQConfiguration.watchApps`), donc une montre beta parle à
 n'importe quel build, TestFlight compris. L'identifiant beta y est épinglé
 contre `BETA_APP_ID` par `./build.sh validate`.
 
