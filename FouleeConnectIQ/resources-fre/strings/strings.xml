@@ -24,4 +24,6 @@
     <string id="Hydration">Hydratation</string>
     <string id="Drank">J'ai bu</string>
     <string id="GlassNoted">Verre noté</string>
+    <string id="ComplicationStreak">Série Foulée</string>
+    <string id="ComplicationStreakShort">SERIE</string>
 </resources>

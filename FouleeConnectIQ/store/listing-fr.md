@@ -33,6 +33,8 @@ CE QU'ELLE FAIT
 • Affiche ta série, puis tes pas et tes minutes actives face à tes objectifs,
   ta distance et tes calories du jour, aux couleurs de Foulée ; série et
   minutes aussi dans le glance, sur les modèles qui le gèrent.
+• Met ta série sur ton cadran : une complication « Série Foulée » pour Face It
+  et les cadrans qui les affichent.
 • Lance une séance de marche ou de course depuis le poignet : chrono,
   distance, allure, fréquence cardiaque, une vibration à chaque kilomètre,
   pause, puis « Enregistrer » ou « Supprimer ». La montre l'enregistre

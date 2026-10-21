@@ -35,6 +35,8 @@ WHAT IT DOES
 • Shows your streak, then today's steps and active minutes against your
   goals, distance and calories, in Foulée's colours; streak and minutes also
   in the glance, on devices that support glances.
+• Puts your streak on your watch face: a "Foulee streak" complication for
+  Face It and the watch faces that show complications.
 • Starts a walk or a run from the wrist: clock, distance, pace, heart rate,
   a vibration at every kilometre, pause, then Save or Discard. The watch
   records it itself and it lands in Garmin Connect like your other

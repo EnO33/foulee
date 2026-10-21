@@ -91,6 +91,10 @@ verre : son heure, sa quantité et un identifiant. La montre ne peut pas
 écrire dans Santé : c'est l'iPhone qui l'y écrit, avec cet identifiant, pour
 qu'un verre reçu deux fois ne compte qu'une fois.
 
+**Sur ton cadran**, si tu y ajoutes la complication « Série Foulée », la
+montre affiche ta série. La complication est publique, comme celles de la
+montre : tout cadran installé peut la lire. Elle ne quitte pas la montre.
+
 **Ce qu'elle reçoit** — de ton iPhone, et par le même lien Bluetooth : ta
 série, tes objectifs de pas et de minutes, ton choix marche / course et tes
 réglages d'hydratation (activée ou non, objectif, taille d'un verre). C'est ce
