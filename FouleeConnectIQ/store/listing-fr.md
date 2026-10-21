@@ -45,7 +45,8 @@ CE QU'ELLE FAIT
   secondes, où elle en est pour l'écran de l'iPhone : marche ou course,
   heure, durée, distance, pas, fréquence cardiaque, pause, fin. À la fin
   d'une séance, son résumé : marche ou course, début, fin, durée, distance,
-  pas. Rien d'autre ne quitte la montre. Hors de portée, elle attend le prochain passage — sans message
+  pas. À chaque « J'ai bu », le verre : heure, quantité, identifiant. Rien
+  d'autre ne quitte la montre. Hors de portée, elle attend le prochain passage — sans message
   d'erreur, sans vider ta batterie.
 
 CE QU'ELLE NE FAIT PAS
@@ -87,8 +88,9 @@ le type de message, et « v », la version du format). À la fin d'une séance
 enregistrée, elle transmet aussi son résumé (« t » = "summary" : sport,
 début, fin, durée, distance, pas), et pendant la séance, toutes les dix
 secondes, son état (« t » = "session" : sport, heure, durée, distance, pas,
-fréquence cardiaque, pause, fin). Rien d'autre n'est lu ni transmis, et elle
-ne contacte aucun serveur.
+fréquence cardiaque, pause, fin). À chaque « J'ai bu », elle transmet le verre
+(« t » = "water" : identifiant, heure, quantité), que l'iPhone écrit dans
+Santé. Rien d'autre n'est lu ni transmis, et elle ne contacte aucun serveur.
 
 Elle enregistre aussi des séances de marche ou de course avec
 ActivityRecording (permissions Fit, Positioning, Sensor) : GPS et capteur

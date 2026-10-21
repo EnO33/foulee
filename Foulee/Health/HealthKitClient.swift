@@ -76,6 +76,13 @@ nonisolated struct HealthKitClient: Sendable {
     var logWater: @Sendable (_ milliliters: Int) async throws -> UUID
         = { _ in UUID() }
 
+    /// Log a glass noted elsewhere — « J'ai bu » at the Garmin watch (ADR
+    /// 0009, D8) — at the time it was drunk, unless Santé already holds one
+    /// with the same `syncIdentifier`: a glass delivered twice counts once.
+    /// Defaulted to a no-op.
+    var logSyncedWater: @Sendable (_ milliliters: Int, _ date: Date, _ syncIdentifier: String) async throws -> Void
+        = { _, _, _ in }
+
     /// Delete a `dietaryWater` sample this app wrote — the « Annuler » of a
     /// glass (issue #354). HealthKit only lets an app delete its own samples,
     /// so this can never take back water another app logged. Defaulted to a

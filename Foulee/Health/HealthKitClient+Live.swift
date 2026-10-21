@@ -130,6 +130,9 @@ nonisolated extension HealthKitClient {
                 try await store.save(sample)
                 return sample.uuid
             },
+            logSyncedWater: { milliliters, date, syncIdentifier in
+                try await logWaterOnce(store: store, milliliters: milliliters, date: date, syncIdentifier: syncIdentifier)
+            },
             deleteWater: { try await deleteWaterSample(store: store, id: $0) },
             todayWaterML: {
                 let milliliters = try await sumToday(store: store, type: waterType, unit: .literUnit(with: .milli))

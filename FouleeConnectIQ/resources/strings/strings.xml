@@ -21,4 +21,7 @@
     <string id="KilometerDone">km $1$</string>
     <string id="SessionSaved">Session saved</string>
     <string id="Done">Done</string>
+    <string id="Hydration">Hydration</string>
+    <string id="Drank">Log a glass</string>
+    <string id="GlassNoted">Glass logged</string>
 </resources>

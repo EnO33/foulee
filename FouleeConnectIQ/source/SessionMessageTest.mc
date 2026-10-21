@@ -74,3 +74,14 @@ function outboxKeepsTheNewestWithinCapacity(logger as Logger) as Boolean {
     Test.assert(Outbox.peek() == null);
     return true;
 }
+
+(:test)
+function waterMessageCarriesTheGlass(logger as Logger) as Boolean {
+    var message = WaterMessage.glass(1760961600, 250, 42);
+    Test.assertEqual(message["t"] as Object, "water");
+    Test.assertEqual(message["v"] as Object, 1);
+    Test.assertEqual(message["id"] as Object, "1760961600-42");
+    Test.assertEqual(message["at"] as Object, 1760961600);
+    Test.assertEqual(message["ml"] as Object, 250);
+    return true;
+}

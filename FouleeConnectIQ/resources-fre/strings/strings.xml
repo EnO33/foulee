@@ -21,4 +21,7 @@
     <string id="KilometerDone">km $1$</string>
     <string id="SessionSaved">Séance enregistrée</string>
     <string id="Done">Terminer</string>
+    <string id="Hydration">Hydratation</string>
+    <string id="Drank">J'ai bu</string>
+    <string id="GlassNoted">Verre noté</string>
 </resources>

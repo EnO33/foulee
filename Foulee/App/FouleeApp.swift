@@ -110,14 +110,18 @@ struct FouleeApp: App {
     // devices immediately is what makes the wake useful.
     //
     // Each decoded snapshot then goes to `GarminSnapshotIngestion`, which owns
-    // the day-stamped overlay and the merge (#189). Nothing on this path ever
-    // writes to HealthKit: Garmin Connect syncs the same day later, and a
-    // sample written here would double-count it forever.
+    // the day-stamped overlay and the merge (#189). None of the day's counters
+    // is ever written to HealthKit: Garmin Connect syncs the same day later,
+    // and a sample written here would double-count it forever. The one write
+    // is a glass noted at the watch (ADR 0009, D8), which only the phone can
+    // write and Garmin Connect never syncs (`GarminWaterIngestion`).
     private static let startGarminConnectIQOnce: Void = {
         @Dependency(\.garminConnectIQ) var garminConnectIQ
+        @Dependency(\.healthKit) var healthKit
         garminConnectIQ.initialize()
         garminConnectIQ.startReceiving()
         Task { await GarminSnapshotIngestion.run(garminConnectIQ.snapshots()) }
+        Task { await GarminWaterIngestion.run(garminConnectIQ.waterArrivals(), healthKit: healthKit) }
     }()
 
     // A mirrored workout session (issue #277) arrives through

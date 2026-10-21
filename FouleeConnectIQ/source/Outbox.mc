@@ -3,8 +3,7 @@ import Toybox.Communications;
 import Toybox.Lang;
 
 //! Messages for the phone that must arrive, not just be tried once: a session
-//! summary (ADR 0009, D2), the end of a session (D7), later a glass of water
-//! (D8). Each waits in Storage
+//! summary (ADR 0009, D2), the end of a session (D7), a glass of water (D8). Each waits in Storage
 //! until a transmit of it completes, oldest first, so a phone out of range or
 //! an app closed in between loses nothing. The snapshot stays out of it: it is
 //! a whole state, and the next one replaces it.
@@ -13,10 +12,11 @@ module Outbox {
 
     const KEY_MESSAGES = "outbox";
 
-    //! A week of daily sessions, each a summary and its end. Past it the
-    //! oldest goes: a phone that has not been seen for that long is better
-    //! served by Garmin Connect, which has every one of these sessions anyway.
-    const CAPACITY = 14;
+    //! A few days of sessions (a summary and an end each) and glasses. Past it
+    //! the oldest goes: a phone that has not been seen for that long is better
+    //! served by Garmin Connect, which has every session anyway. A hundred
+    //! bytes a message keeps the whole queue within a few kilobytes of Storage.
+    const CAPACITY = 32;
 
     function enqueue(message as Dictionary<String, Number or String>) as Void {
         var messages = load();

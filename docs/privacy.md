@@ -83,8 +83,13 @@ prochain passage.
 course, heure de début et de fin, durée, distance et pas. Il sert à l'iPhone à
 afficher la sortie en attendant que Garmin Connect l'écrive dans Santé. Le
 résumé attend sur la montre que l'iPhone l'ait reçu (avec les fins de
-séance, les quatorze derniers messages au plus) ; ni la position ni la
-fréquence cardiaque n'en font partie.
+séance et les verres, les trente-deux derniers messages au plus) ; ni la
+position ni la fréquence cardiaque n'en font partie.
+
+**Quand tu touches « J'ai bu »** dans le menu de la montre, elle envoie le
+verre : son heure, sa quantité et un identifiant. La montre ne peut pas
+écrire dans Santé : c'est l'iPhone qui l'y écrit, avec cet identifiant, pour
+qu'un verre reçu deux fois ne compte qu'une fois.
 
 **Ce qu'elle reçoit** — de ton iPhone, et par le même lien Bluetooth : ta
 série, tes objectifs de pas et de minutes, ton choix marche / course et tes

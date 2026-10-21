@@ -24,6 +24,7 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
         var registeredDeviceIDs: Set<UUID> = []
         var subscribers: [UUID: AsyncStream<GarminDailySnapshot>.Continuation] = [:]
         var sessionSubscribers: [UUID: AsyncStream<WatchSessionSnapshot>.Continuation] = [:]
+        var waterSubscribers: [UUID: AsyncStream<Void>.Continuation] = [:]
         var lastAccepted: GarminDailySnapshot?
     }
 
@@ -126,6 +127,10 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
         stream(of: \.sessionSubscribers)
     }
 
+    func waterArrivals() -> AsyncStream<Void> {
+        stream(of: \.waterSubscribers)
+    }
+
     private func stream<Element: Sendable>(
         of subscribers: WritableKeyPath<State, [UUID: AsyncStream<Element>.Continuation]> & Sendable
     ) -> AsyncStream<Element> {
@@ -150,6 +155,15 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
         // it; nothing is published from here.
         if let summary = GarminSessionSummary.decode(message) {
             GarminPendingOutingStore.add(summary)
+            return
+        }
+        // A glass noted at the watch (ADR 0009, D8): kept before anything
+        // else, since the watch lets it go once delivered; the drain then
+        // writes it to Santé.
+        if let glass = GarminWaterGlass.decode(message) {
+            GarminWaterStore.add(glass)
+            let subscribers = state.withLock { Array($0.waterSubscribers.values) }
+            for subscriber in subscribers { subscriber.yield() }
             return
         }
         // The session in progress, for the mirror screen (ADR 0009, D7).
@@ -185,6 +199,7 @@ nonisolated extension GarminConnectIQClient {
         startReceiving: { GarminConnectIQBridge.shared.startReceiving() },
         snapshots: { GarminConnectIQBridge.shared.snapshots() },
         sessionStates: { GarminConnectIQBridge.shared.sessionStates() },
+        waterArrivals: { GarminConnectIQBridge.shared.waterArrivals() },
         todayOverlay: { GarminSnapshotStore.readFloor(now: $0) }
     )
 }
