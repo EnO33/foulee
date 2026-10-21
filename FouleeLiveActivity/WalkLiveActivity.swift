@@ -55,7 +55,7 @@ struct WalkLiveActivity: Widget {
                             icon: "shoe"
                         )
                         statCell(
-                            value: "\(context.state.activeCalories)",
+                            value: context.state.activeCalories.map { "\($0)" } ?? "—",
                             label: "kcal",
                             icon: "flame.fill"
                         )

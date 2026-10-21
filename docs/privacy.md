@@ -101,7 +101,8 @@ montre : tout cadran installé peut la lire. Elle ne quitte pas la montre.
 **Ce qu'elle reçoit** — de ton iPhone, et par le même lien Bluetooth : ta
 série, tes objectifs de pas et de minutes, ton choix marche / course et tes
 réglages d'hydratation (activée ou non, objectif, taille d'un verre). C'est ce
-que l'Apple Watch reçoit déjà. La montre garde le dernier état reçu pour
+que l'Apple Watch reçoit déjà. Pendant une séance, si tu touches « Arrêter la
+séance » sur l'iPhone, la montre reçoit aussi l'ordre de l'enregistrer. La montre garde le dernier état reçu pour
 l'afficher hors de portée du téléphone.
 
 **Ce qu'elle n'envoie pas** — rien ne part vers les serveurs de Garmin, ni vers

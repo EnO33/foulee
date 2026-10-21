@@ -79,6 +79,7 @@ nonisolated enum ScreenshotDoubles {
         snapshots: { AsyncStream { $0.finish() } },
         sessionStates: { AsyncStream { $0.finish() } },
         waterArrivals: { AsyncStream { $0.finish() } },
+        requestStop: {},
         // nil, not a contribution: the seeded counters are already the whole
         // day's story, and an overlay on top of them would lift the hero card
         // above the numbers every other screen shows.

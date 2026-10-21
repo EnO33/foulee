@@ -145,7 +145,9 @@ struct FouleeApp: App {
             }
         }
         Task { @MainActor in
-            await MirroredSessionStore.shared.observeGarmin()
+            await MirroredSessionStore.shared.observeGarmin { store in
+                await MirroredLiveActivity.shared.reflect(store)
+            }
         }
     }()
 

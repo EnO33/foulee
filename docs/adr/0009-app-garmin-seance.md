@@ -58,7 +58,10 @@ La règle de l'ADR 0003 D2 : **un état complet et daté, jamais un delta**. Un 
 
 - **Le tracé ne voyage pas en direct** : 1 500 points (ADR 0003, D3) ne passent pas à 1 ko/s toutes les 10 s.
 - **Le tracé de fin** : Garmin Connect écrit les sorties dans Santé sans leur tracé GPS (ADR 0001). S'il doit rejoindre l'iPhone, c'est dans le résumé de fin, allégé sur la montre. Ce point a sa propre issue (phase C).
-- **Écarté pour l'instant** : la Live Activity pour une séance Garmin (`Activity.request` échoue hors du premier plan, et un réveil BLE n'est pas un réveil miroir HealthKit, ADR 0003 D6), et les commandes de l'iPhone vers la montre. À réévaluer sur matériel (#191).
+- **Écarté d'abord, puis repris (#480)** : la Live Activity pour une séance Garmin et la commande « Arrêter » de l'iPhone vers la montre.
+  - **« Arrêter »** part en message `command` (`GarminSessionCommand`). La montre enregistre la séance comme son propre menu de pause. L'écran de l'iPhone se ferme sur la fin que la montre renvoie, jamais sur le toucher.
+  - **La Live Activity** est demandée à chaque état reçu. `Activity.request` peut être refusé hors du premier plan, et un réveil BLE n'est pas un réveil miroir HealthKit (ADR 0003, D6). Elle apparaît alors au premier état qui trouve l'app au premier plan, puis suit chaque état. Les calories, que la montre n'envoie pas, s'y affichent « — ».
+  - Le comportement réel reste à vérifier sur matériel (#191).
 
 ### D8 — « J'ai bu » à la montre, écrit par l'iPhone
 

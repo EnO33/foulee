@@ -98,8 +98,17 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
     /// is the complete state. Nothing is sent before `initializeIfNeeded` ran,
     /// and sending must not be what initializes the SDK.
     func sendSync(_ payload: WatchSyncPayload) {
+        send(GarminPhoneSync.message(from: payload))
+    }
+
+    /// Asks the session on the watch to end (ADR 0009, D7). Fire and forget
+    /// too: the mirror screen closes when the watch's end arrives, not here.
+    func requestStop() {
+        send(GarminSessionCommand.stop)
+    }
+
+    private func send(_ message: [String: Any]) {
         guard state.withLock({ $0.isInitialized }), let connectIQ = ConnectIQ.sharedInstance() else { return }
-        let message = GarminPhoneSync.message(from: payload)
         for device in GarminDeviceStore.read() {
             for app in Self.apps(on: Self.iqDevice(device)) {
                 // The SDK calls both blocks unconditionally: nil would crash it.
@@ -200,6 +209,7 @@ nonisolated extension GarminConnectIQClient {
         snapshots: { GarminConnectIQBridge.shared.snapshots() },
         sessionStates: { GarminConnectIQBridge.shared.sessionStates() },
         waterArrivals: { GarminConnectIQBridge.shared.waterArrivals() },
+        requestStop: { GarminConnectIQBridge.shared.requestStop() },
         todayOverlay: { GarminSnapshotStore.readFloor(now: $0) }
     )
 }

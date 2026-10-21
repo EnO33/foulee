@@ -7,7 +7,8 @@ import SwiftUI
 /// the session — there is no API that would let the phone measure one and mirror
 /// it back — so this screen states what the wrist says and nothing else. Issue
 /// #282 adds a stop button; it will still be a remote control, not a second
-/// engine. A Garmin outing (ADR 0009, D7) shows the same screen, without it.
+/// engine. A Garmin outing (ADR 0009, D7) shows the same screen, stop button
+/// included.
 ///
 /// **It dates its figures.** HealthKit caches what a mirrored session sends and
 /// wakes this app *periodically*, potentially minutes apart, so « en direct »
@@ -32,9 +33,7 @@ struct MirroredWalkScreen: View {
                     clock
                     figures
                     routeButton
-                    if device.acceptsStop {
-                        stopButton
-                    }
+                    stopButton
                     origin
                 }
                 .padding(.horizontal, 20)

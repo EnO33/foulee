@@ -6,7 +6,13 @@ import Foundation
 import os
 import UIKit
 
-/// The outing running on the wrist, on the iPhone's Lock Screen (issue #275).
+/// The outing running on the wrist, on the iPhone's Lock Screen (issue #275),
+/// an Apple Watch's or a Garmin's (ADR 0009, D7).
+///
+/// For a Garmin outing the request comes on a Bluetooth wake, not a mirror
+/// one, and nothing says iOS grants it there: if refused, the activity starts
+/// at the first state that finds the app in the foreground, and is updated by
+/// each one after it.
 ///
 /// ActivityKit's documentation says `Activity.request` fails outside the
 /// foreground; Apple's WWDC23 session on mirroring says HealthKit gives the app
@@ -40,7 +46,8 @@ final class MirroredLiveActivity {
         }
         let state = Self.state(
             figures: store.figures,
-            outingStartedAt: store.outingStartedAt ?? session.startedAt
+            outingStartedAt: store.outingStartedAt ?? session.startedAt,
+            device: session.device
         )
         // A relaunch between two wakes loses the reference, not the activity:
         // take the one already on the Lock Screen rather than ask for a second.
@@ -59,9 +66,12 @@ final class MirroredLiveActivity {
     /// `timerBasis` is the outing's own start rather than « now minus
     /// elapsed »: the wrist already pushes that start back by every pause, and
     /// the system runs the clock from it between two wakes.
+    ///
+    /// A Garmin watch states no calories: none are drawn.
     nonisolated static func state(
         figures: WatchSessionSnapshot?,
-        outingStartedAt: Date
+        outingStartedAt: Date,
+        device: MirroredDevice = .appleWatch
     ) -> WalkActivityAttributes.WalkActivityState {
         guard let figures else {
             return WalkActivityAttributes.WalkActivityState(
@@ -75,7 +85,7 @@ final class MirroredLiveActivity {
             elapsed: figures.elapsed(at: figures.sentAt),
             steps: figures.steps,
             distanceKm: figures.distanceKm,
-            activeCalories: figures.activeCalories
+            activeCalories: device == .garmin ? nil : figures.activeCalories
         )
     }
 

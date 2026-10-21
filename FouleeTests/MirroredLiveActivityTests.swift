@@ -51,4 +51,11 @@ struct MirroredLiveActivityTests {
         #expect(state.pausedAt == start.addingTimeInterval(900))
         #expect(state.elapsed == 900)
     }
+
+    @Test("A Garmin outing draws no calories rather than a measured-looking zero")
+    func garminHasNoCalories() {
+        let state = MirroredLiveActivity.state(figures: figures(at: 600), outingStartedAt: start, device: .garmin)
+        #expect(state.activeCalories == nil)
+        #expect(state.steps == 1_200)
+    }
 }

@@ -95,6 +95,10 @@ nonisolated struct GarminConnectIQClient: Sendable {
     /// D8). Read by `GarminWaterIngestion`, which writes what is waiting.
     var waterArrivals: @Sendable () -> AsyncStream<Void>
 
+    /// Asks the session running on the watch to end (ADR 0009, D7): the
+    /// mirror screen's « Arrêter la séance ». Read by `MirroredSessionStore`.
+    var requestStop: @Sendable () -> Void
+
     /// Today's Garmin overlay as of the given instant — the high-water floor
     /// the day's snapshots left, or nil when none can speak for today. Read by
     /// `TodayStore` on every refresh; persisted, so a background relaunch keeps
@@ -118,6 +122,7 @@ nonisolated extension GarminConnectIQClient: DependencyKey {
         snapshots: { AsyncStream { $0.finish() } },
         sessionStates: { AsyncStream { $0.finish() } },
         waterArrivals: { AsyncStream { $0.finish() } },
+        requestStop: {},
         todayOverlay: { _ in nil }
     )
 
@@ -130,6 +135,7 @@ nonisolated extension GarminConnectIQClient: DependencyKey {
         snapshots: { AsyncStream { $0.finish() } },
         sessionStates: { AsyncStream { $0.finish() } },
         waterArrivals: { AsyncStream { $0.finish() } },
+        requestStop: {},
         todayOverlay: { _ in nil }
     )
 }
