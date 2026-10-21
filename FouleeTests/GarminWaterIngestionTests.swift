@@ -9,7 +9,7 @@ struct GarminWaterIngestionTests {
     private static let first = GarminWaterGlass(id: "a", loggedAt: noon, milliliters: 250)
     private static let second = GarminWaterGlass(id: "b", loggedAt: noon.addingTimeInterval(600), milliliters: 330)
 
-    private struct Refused: Error {}
+    nonisolated private struct Refused: Error {}
 
     /// Runs `body` against a throwaway suite, so nothing leaks into `.standard`.
     private func withDefaults(_ body: (UserDefaults) async throws -> Void) async throws {
@@ -54,9 +54,10 @@ struct GarminWaterIngestionTests {
         try await withDefaults { defaults in
             GarminWaterStore.add(Self.first, to: defaults)
             GarminWaterStore.add(Self.second, to: defaults)
+            let refused = Self.second.syncIdentifier
             var healthKit = HealthKitClient.testValue
             healthKit.logSyncedWater = { _, _, syncIdentifier in
-                if syncIdentifier == Self.second.syncIdentifier { throw Refused() }
+                if syncIdentifier == refused { throw Refused() }
             }
 
             await GarminWaterIngestion.drain(healthKit: healthKit, defaults: defaults)

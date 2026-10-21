@@ -120,8 +120,14 @@ struct FouleeApp: App {
         @Dependency(\.healthKit) var healthKit
         garminConnectIQ.initialize()
         garminConnectIQ.startReceiving()
-        Task { await GarminSnapshotIngestion.run(garminConnectIQ.snapshots()) }
-        Task { await GarminWaterIngestion.run(garminConnectIQ.waterArrivals(), healthKit: healthKit) }
+        // Everything the two tasks need is read here, before either starts:
+        // a property wrapper sent to one task can't be touched again by the
+        // next, the streams and the client can.
+        let snapshots = garminConnectIQ.snapshots()
+        let waterArrivals = garminConnectIQ.waterArrivals()
+        let healthKitClient = healthKit
+        Task { await GarminSnapshotIngestion.run(snapshots) }
+        Task { await GarminWaterIngestion.run(waterArrivals, healthKit: healthKitClient) }
     }()
 
     // A mirrored workout session (issue #277) arrives through
