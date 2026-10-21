@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Links the Foulée watch app to the iPhone (ADR 0009): the Connect IQ SDK
 /// only talks to devices the user picked in Garmin Connect. Garmin Connect
-/// answers through the `foulee-ciq://` URL, handled by `RootView`.
+/// answers through the `foulee-ciq://` URL, handled by `FouleeApp`.
 struct GarminWatchLinkCard: View {
     @Dependency(\.garminConnectIQ) private var garminConnectIQ
 
@@ -34,7 +34,7 @@ struct GarminWatchLinkCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .fouleeGlass(cornerRadius: 22)
         .onAppear(perform: refresh)
-        // After `RootView` stored the answer: a task runs once every handler
+        // After `FouleeApp` stored the answer: a task runs once every handler
         // of this URL has.
         .onOpenURL { _ in Task { refresh() } }
     }
