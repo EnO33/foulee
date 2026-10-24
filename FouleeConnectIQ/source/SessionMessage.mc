@@ -20,8 +20,9 @@ module SessionMessage {
     const SPORT_RUNNING = "running";
 
     //! `summary` is `SessionRecorder.summary()`: seconds recorded (pauses
-    //! excluded), metres, steps, heart rate, and the start and end instants in
-    //! epoch seconds. `route` is `SessionRecorder.route()`, `RouteMath`'s flat
+    //! excluded), metres, climb in metres (`ascentM`, #536: a phone that
+    //! predates it ignores the key), steps, heart rate, and the start and end
+    //! instants in epoch seconds. `route` is `SessionRecorder.route()`, `RouteMath`'s flat
     //! fixed-point points, empty without a fix.
     function summary(
         summary as Dictionary<Symbol, Number>,
@@ -36,6 +37,7 @@ module SessionMessage {
             "end" => summary[:endedAt] as Number,
             "duration" => summary[:seconds] as Number,
             "distanceM" => summary[:meters] as Number,
+            "ascentM" => summary[:ascent] as Number,
             "steps" => summary[:steps] as Number,
             "route" => route
         };
