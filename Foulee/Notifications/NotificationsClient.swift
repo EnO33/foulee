@@ -56,6 +56,11 @@ nonisolated struct NotificationsClient: Sendable {
     /// per kind. An empty array wipes them.
     var replaceRecapReminders: @Sendable (_ kinds: [RecapPeriod.Kind]) async throws -> Void
         = { _ in }
+
+    /// Schedule the notification of an outing that just landed (issue #529),
+    /// replacing a pending one under the same identifier.
+    var scheduleSessionNotice: @Sendable (_ notice: SessionNotice) async throws -> Void
+        = { _ in }
 }
 
 nonisolated extension NotificationsClient: DependencyKey {

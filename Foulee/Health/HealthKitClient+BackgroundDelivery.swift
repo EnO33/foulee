@@ -50,6 +50,10 @@ nonisolated func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Senda
                     defer { done.value() }
                     await refreshSnapshotMetrics(store: store, wake: wake)
                     WidgetCenter.shared.reloadAllTimelines()
+                    // An outing that just landed in Santé: announce it (#529).
+                    if wake == .workout {
+                        await SessionNotifier().outingsChanged()
+                    }
                     if isWater {
                         await reshiftHydrationRemindersIfWaterIncreased(store: store)
                     }

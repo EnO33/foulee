@@ -55,7 +55,12 @@ extension UserPreferences {
     /// Reminders that will actually be scheduled: water ones only count while
     /// hydration tracking itself is on, as `HydrationReminderScheduler` does.
     var activeReminderCount: Int {
-        [notificationsEnabled, recapNotificationsEnabled, hydrationEnabled && hydrationRemindersEnabled]
+        [
+            notificationsEnabled,
+            recapNotificationsEnabled,
+            sessionNotificationsEnabled,
+            hydrationEnabled && hydrationRemindersEnabled
+        ]
             .filter { $0 }
             .count
     }

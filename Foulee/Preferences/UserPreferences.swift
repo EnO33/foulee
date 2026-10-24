@@ -73,6 +73,11 @@ final class UserPreferences {
     var recapNotificationsEnabled: Bool {
         didSet { defaults.set(recapNotificationsEnabled, forKey: Keys.recapNotificationsEnabled) }
     }
+    /// The notification of an outing that landed from a watch or another
+    /// app (issue #529). On unless turned off.
+    var sessionNotificationsEnabled: Bool {
+        didSet { defaults.set(sessionNotificationsEnabled, forKey: Keys.sessionNotificationsEnabled) }
+    }
 
     @ObservationIgnored
     private let defaults: UserDefaults
@@ -128,6 +133,7 @@ final class UserPreferences {
         let rawActivity = defaults.string(forKey: Keys.activityMode)
         self.activityMode = rawActivity.flatMap(ActivityMode.init(rawValue:)) ?? .walking
         self.recapNotificationsEnabled = (defaults.object(forKey: Keys.recapNotificationsEnabled) as? Bool) ?? true
+        self.sessionNotificationsEnabled = SessionNotifier.isEnabled(defaults)
     }
 }
 
@@ -167,4 +173,5 @@ private enum Keys {
     static let hydrationSnoozeMinutes = "preferences.hydrationSnoozeMinutes"
     static let activityMode = "preferences.activityMode"
     static let recapNotificationsEnabled = "preferences.recapNotificationsEnabled"
+    static let sessionNotificationsEnabled = SessionNotifier.enabledKey
 }

@@ -25,6 +25,12 @@ struct SettingsNotificationsPage: View {
                     detail: "Le dimanche à 19 h, et le 1er du mois à 9 h.",
                     isOn: $preferences.recapNotificationsEnabled
                 )
+                Divider()
+                reminderToggle(
+                    "Après une séance",
+                    detail: "Quand une sortie arrive de ta montre : rythme, records, régularité.",
+                    isOn: $preferences.sessionNotificationsEnabled
+                )
                 if preferences.hydrationEnabled {
                     Divider()
                     hydrationReminder

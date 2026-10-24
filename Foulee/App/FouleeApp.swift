@@ -109,6 +109,9 @@ struct FouleeApp: App {
     // and bootstrap still prompts on the first Today appearance.
     private static let startHealthObserversOnce: Void = {
         @Dependency(\.healthKit) var healthKit
+        // Opened before the observers can fire, so the first outing they
+        // announce is one that ended after this version arrived (#529).
+        SessionNotifier.prepare()
         Task { await healthKit.enableBackgroundDelivery() }
     }()
 
