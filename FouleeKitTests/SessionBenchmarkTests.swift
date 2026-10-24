@@ -81,7 +81,9 @@ struct SessionBenchmarkTests {
         ]
         let pace = try #require(SessionBenchmark.make(for: current, among: history, calendar: calendar).pace)
         #expect(pace.recent == 570)
+        #expect(pace.recentSessions == 2)
         #expect(pace.earlier == 630)
+        #expect(pace.earlierSessions == 2)
     }
 
     @Test("No pace for a hike, a short outing, or an implausible one")
@@ -120,7 +122,9 @@ struct SessionBenchmarkTests {
         let records = try #require(SessionBenchmark.make(for: current, among: history + [current], calendar: calendar).records)
         #expect(records.sessions == 2)
         #expect(records.longestKm == 11)
+        #expect(records.climbingSessions == 2)
         #expect(records.highestElevationMeters == 450)
+        #expect(records.averageElevationMeters == 375)
     }
 
     /// Garmin Connect and Strava both write the same walk: one outing, not a
@@ -139,12 +143,13 @@ struct SessionBenchmarkTests {
     @Test("The week and the month count every sport, up to the outing")
     func volume() {
         let current = outing(at: now, km: 5, secondsPerKm: 600)
+        // 30 + 10 m before it this month; the 23rd's 100 m come after.
         let history = [
-            outing(.running, at: day(2026, 10, 20), km: 6, secondsPerKm: 300),
-            outing(at: day(2026, 10, 23), km: 4),
+            outing(.running, at: day(2026, 10, 20), km: 6, secondsPerKm: 300, elevation: 30),
+            outing(at: day(2026, 10, 23), km: 4, elevation: 100),
             outing(at: day(2026, 10, 14), km: 3, secondsPerKm: 600),
-            outing(at: day(2026, 10, 2), km: 2),
-            outing(at: day(2026, 9, 10), km: 7)
+            outing(at: day(2026, 10, 2), km: 2, elevation: 10),
+            outing(at: day(2026, 9, 10), km: 7, elevation: 25)
         ]
         let volume = SessionBenchmark.make(for: current, among: history, calendar: calendar).volume
         #expect(volume.outingsThisWeek == 2)
@@ -152,6 +157,8 @@ struct SessionBenchmarkTests {
         #expect(volume.minutesLastWeek == 30)
         #expect(volume.kmThisMonth == 16)
         #expect(volume.kmLastMonth == 7)
+        #expect(volume.climbThisMonth == 40)
+        #expect(volume.climbLastMonth == 25)
         #expect(volume.lastMonth == day(2026, 9, 1, hour: 0))
     }
 }
