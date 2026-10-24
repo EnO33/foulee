@@ -29,6 +29,10 @@ struct RecapScreen: View {
     @State private var arrival: Edge = .trailing
     @State private var store = RecapStore()
     @State private var isSharing = false
+    /// The outings pushed: the one a session notification opened (#530).
+    @State private var path: [WorkoutSummary] = []
+    /// That outing, until the period's outings are read.
+    @State private var pendingOuting: DateInterval?
     /// A sheet presented from a sheet doesn't inherit the theme.
     @Environment(\.colorScheme) private var colorScheme
 
@@ -50,9 +54,12 @@ struct RecapScreen: View {
 
     /// `period` opens a given page — the month just ended, from the
     /// notification of the 1st (issue #444); `nil` opens the one in progress.
+    /// `outing` is pushed once read — the one a session notification
+    /// announced (issue #530).
     init(
         kind: RecapPeriod.Kind,
         period: RecapPeriod? = nil,
+        outing: DateInterval? = nil,
         goalMinutes: Int,
         activeDays: Set<Weekday>,
         waterGoalML: Int?,
@@ -64,6 +71,7 @@ struct RecapScreen: View {
         if let period { shown[period.kind] = period }
         _kind = State(initialValue: period?.kind ?? kind)
         _shown = State(initialValue: shown)
+        _pendingOuting = State(initialValue: outing)
         self.goalMinutes = goalMinutes
         self.activeDays = activeDays
         self.waterGoalML = waterGoalML
@@ -73,7 +81,7 @@ struct RecapScreen: View {
     var body: some View {
         // A stack so an outing opens its detail by a push, not a sheet on the
         // sheet (#218); its bar only shows once something is pushed.
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     SheetHeader(eyebrow: "Récap", title: "Ton bilan")
@@ -131,6 +139,7 @@ struct RecapScreen: View {
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: WorkoutSummary.self) { WorkoutDetailSheet(summary: $0) }
         }
+        .onChange(of: content?.outings, initial: true) { _, days in openPendingOuting(in: days) }
         .presentationBackground { SheetBackground() }
         .sensoryFeedback(.selection, trigger: period)
         .task {
@@ -141,6 +150,16 @@ struct RecapScreen: View {
                 RecapShareSheet(recap: shareable) { isSharing = false }
                     .preferredColorScheme(colorScheme)
             }
+        }
+    }
+
+    /// Push the outing a notification announced, once its days are read. Not
+    /// found — Santé dropped it meanwhile — the Bilan itself stays open.
+    private func openPendingOuting(in days: [OutingDay]?) {
+        guard let outing = pendingOuting, let days else { return }
+        pendingOuting = nil
+        if let summary = OutingDay.outing(overlapping: outing, in: days) {
+            path = [summary]
         }
     }
 

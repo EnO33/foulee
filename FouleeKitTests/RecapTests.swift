@@ -40,6 +40,16 @@ struct RecapTests {
         #expect(period.previous(calendar: calendar).start == day(2026, 8, 1))
     }
 
+    @Test("The whole week and month a date falls in")
+    func containing() {
+        let week = RecapPeriod.containing(day(2026, 10, 10, hour: 12), .week, calendar: calendar)
+        #expect(week.start == day(2026, 10, 5))
+        #expect(week.end == day(2026, 10, 12))
+        let month = RecapPeriod.containing(day(2026, 10, 10, hour: 12), .month, calendar: calendar)
+        #expect(month.start == day(2026, 10, 1))
+        #expect(month.end == day(2026, 11, 1))
+    }
+
     @Test("A calendar week's previous is the week before")
     func previousWeek() {
         let period = RecapPeriod.lastCompleted(.week, before: day(2026, 10, 10, hour: 12), calendar: calendar)

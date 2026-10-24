@@ -14,6 +14,15 @@ nonisolated public struct SessionNotice: Equatable, Sendable {
     /// The outing announced, to open it on a tap.
     public var startedAt: Date
     public var endedAt: Date
+
+    public init(identifier: String, fireAt: Date, title: String, body: String, startedAt: Date, endedAt: Date) {
+        self.identifier = identifier
+        self.fireAt = fireAt
+        self.title = title
+        self.body = body
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+    }
 }
 
 nonisolated public extension SessionAnnouncements {

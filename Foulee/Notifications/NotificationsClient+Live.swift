@@ -155,6 +155,7 @@ nonisolated extension NotificationsClient {
                 content.title = notice.title
                 content.body = notice.body
                 content.sound = .default
+                content.userInfo = SessionNotification.userInfo(for: notice)
                 // A notice is due a minute after the outing is seen; one read
                 // late is due now, and iOS refuses an interval of zero.
                 let trigger = UNTimeIntervalNotificationTrigger(

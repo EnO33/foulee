@@ -108,6 +108,7 @@ struct RecapPresentation: ViewModifier {
                 RecapScreen(
                     kind: request.kind,
                     period: request.period(at: date.now),
+                    outing: request.outing,
                     goalMinutes: goalMinutes,
                     activeDays: activeDays,
                     waterGoalML: waterGoalML
