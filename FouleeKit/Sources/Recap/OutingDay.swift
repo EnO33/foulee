@@ -31,6 +31,13 @@ nonisolated public struct OutingDay: Identifiable, Equatable, Sendable {
         }
     }
 
+    /// The outing of `days` that covers any of `interval`: the one a session
+    /// notification announced (issue #530), whichever writer's copy the
+    /// Bilan kept.
+    public static func outing(overlapping interval: DateInterval, in days: [OutingDay]) -> WorkoutSummary? {
+        days.lazy.flatMap(\.workouts).first { $0.startedAt < interval.end && interval.start < $0.endedAt }
+    }
+
     /// The day the Bilan opens on (issue #443): today when the period holds
     /// it, outing or not, and otherwise the period's last day.
     ///

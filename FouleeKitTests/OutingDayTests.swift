@@ -135,4 +135,18 @@ extension OutingDayTests {
     func noDaysNoSelection() {
         #expect(OutingDay.initialSelection(among: [], today: Self.now, calendar: Self.calendar) == nil)
     }
+
+    /// A session notification (#530) names the clock its outing covered; the
+    /// Bilan may have kept another writer's copy, a few seconds off.
+    @Test("The outing a notification announced is found by its clock")
+    func outingOverlapping() {
+        let garmin = session(-60, lasting: 40, source: "Garmin Connect")
+        let found = OutingDay.outing(
+            overlapping: DateInterval(start: Self.now.addingTimeInterval(-3_590), duration: 2_390),
+            in: days([garmin, session(-300, lasting: 30, source: "Garmin Connect")])
+        )
+        #expect(found?.id == garmin.id)
+        let elsewhere = DateInterval(start: Self.now.addingTimeInterval(600), duration: 600)
+        #expect(OutingDay.outing(overlapping: elsewhere, in: days([garmin])) == nil)
+    }
 }

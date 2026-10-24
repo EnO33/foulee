@@ -102,6 +102,12 @@ nonisolated public struct RecapPeriod: Hashable, Sendable {
     ///
     /// The calendar is ISO, Monday first, like every week the app draws: a
     /// recap that cut its weeks on Sunday would disagree with the home's bars.
+    /// The whole week or month `date` falls in: where an outing announced by
+    /// a notification is read (issue #530).
+    public static func containing(_ date: Date, _ kind: Kind, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
+        period(kind, containing: date, calendar: calendar)
+    }
+
     public static func lastCompleted(_ kind: Kind, before now: Date, calendar: Calendar = .iso8601Monday) -> RecapPeriod {
         let current = calendar.dateInterval(of: kind.component, for: now)
             ?? DateInterval(start: calendar.startOfDay(for: now), duration: 0)

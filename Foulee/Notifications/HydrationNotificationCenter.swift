@@ -49,12 +49,16 @@ nonisolated final class HydrationNotificationCenter: NSObject, UNUserNotificatio
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        // A recap notification (issue #344) opens its recap. The tap itself
-        // brings the app to the foreground; the home presents the sheet.
-        if let kind = RecapNotification.kind(fromIdentifier: response.notification.request.identifier) {
+        // A recap notification (issue #344) opens its recap, a session one
+        // (#530) the Bilan of its outing. The tap itself brings the app to the
+        // foreground; the home presents the sheet.
+        let request = response.notification.request
+        let recap = RecapNotification.kind(fromIdentifier: request.identifier).map(RecapNotification.request(for:))
+            ?? SessionNotification.request(identifier: request.identifier, userInfo: request.content.userInfo)
+        if let recap {
             let completion = UncheckedSendableBox(completionHandler)
             Task { @MainActor in
-                RecapRouter.shared.open(RecapNotification.request(for: kind))
+                RecapRouter.shared.open(recap)
                 completion.value()
             }
             return

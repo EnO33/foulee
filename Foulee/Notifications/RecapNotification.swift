@@ -63,16 +63,23 @@ nonisolated enum RecapNotification {
 }
 
 /// A recap to open (issue #444): its kind, and whether on the period in
-/// progress or the last finished one.
+/// progress or the last finished one — or on the outing a session
+/// notification announced (issue #530).
 nonisolated struct RecapRequest: Hashable, Identifiable {
     let kind: RecapPeriod.Kind
     var lastCompleted = false
+    /// The outing to open, pushed once the Bilan has read it.
+    var outing: DateInterval?
 
     var id: Self { self }
 
     /// The page to open on, `nil` for the period in progress.
     func period(at now: Date) -> RecapPeriod? {
-        lastCompleted ? RecapPeriod.lastCompleted(kind, before: now) : nil
+        if let outing {
+            let current = RecapPeriod.current(kind, at: now)
+            return current.contains(outing.start) ? nil : RecapPeriod.containing(outing.start, kind)
+        }
+        return lastCompleted ? RecapPeriod.lastCompleted(kind, before: now) : nil
     }
 }
 
