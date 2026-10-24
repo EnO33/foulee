@@ -76,12 +76,14 @@ struct SettingsSummaryTests {
         let prefs = UserPreferences(defaults: UserDefaults(suiteName: "settings-summary-\(UUID())") ?? .standard)
         prefs.notificationsEnabled = true
         prefs.recapNotificationsEnabled = true
+        prefs.sessionNotificationsEnabled = true
         prefs.hydrationRemindersEnabled = true
         prefs.hydrationEnabled = false
-        #expect(prefs.activeReminderCount == 2)
-        prefs.hydrationEnabled = true
         #expect(prefs.activeReminderCount == 3)
+        prefs.hydrationEnabled = true
+        #expect(prefs.activeReminderCount == 4)
         prefs.notificationsEnabled = false
+        prefs.sessionNotificationsEnabled = false
         #expect(prefs.activeReminderCount == 2)
     }
 }

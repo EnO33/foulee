@@ -54,6 +54,10 @@ final class ActiveWalkStore {
     @ObservationIgnored
     @Dependency(\.watchLive) var watchLive
 
+    /// The register of announced outings, told of this one (issue #529).
+    @ObservationIgnored
+    @Dependency(\.sessionNotifications) private var sessionNotifications
+
     /// When the wrist was last told; paces `tellWatchIfDue`.
     @ObservationIgnored var lastWatchUpdateAt: Date?
 
@@ -167,6 +171,9 @@ final class ActiveWalkStore {
         let recorded = await settled(session)
         state = .finished(recorded)
         tellWatch()
+        // Before the save: the workout it writes wakes the Health observer,
+        // which must find the outing already told by the end screen (#529).
+        sessionNotifications.recordedHere(recorded.startedAt, recorded.endedAt ?? date.now)
         await runOrTrap { try await healthKit.saveWorkout(recorded) }
         await endLiveActivity(with: session)
 

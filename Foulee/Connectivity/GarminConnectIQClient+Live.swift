@@ -159,9 +159,11 @@ nonisolated final class GarminConnectIQBridge: NSObject, IQDeviceEventDelegate, 
         guard let message else { return }
         // A session saved on the watch: kept until Santé has the activity
         // Garmin Connect writes (ADR 0009, D2). The next HealthKit read counts
-        // it; nothing is published from here.
+        // it, and it is announced now rather than when Garmin Connect syncs
+        // (#529): the register knows the copy for the same outing.
         if let summary = GarminSessionSummary.decode(message) {
             GarminPendingOutingStore.add(summary)
+            Task { await SessionNotifier().outingsChanged() }
             return
         }
         // A glass noted at the watch (ADR 0009, D8): kept before anything

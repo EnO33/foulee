@@ -14,7 +14,7 @@ import Foundation
 /// it in the meantime. Once it has gone, the outing is done with.
 ///
 /// Persisted as JSON by the app; pure here.
-nonisolated struct SessionAnnouncements: Codable, Equatable, Sendable {
+nonisolated public struct SessionAnnouncements: Codable, Equatable, Sendable {
     nonisolated struct Entry: Codable, Equatable, Sendable {
         /// The notification's identifier, kept while the outing grows.
         var id: UUID
@@ -39,6 +39,10 @@ nonisolated struct SessionAnnouncements: Codable, Equatable, Sendable {
     /// earlier outings at once.
     var since: Date
     var entries: [Entry] = []
+
+    public init(since: Date) {
+        self.since = since
+    }
 
     /// The wait for the legs that follow.
     static let delay: TimeInterval = 60
@@ -73,7 +77,7 @@ nonisolated struct SessionAnnouncements: Codable, Equatable, Sendable {
 
     /// An outing already told some other way — recorded on this iPhone, its
     /// end screen in hand: on the register, never announced.
-    mutating func markAnnounced(from start: Date, to end: Date) {
+    public mutating func markAnnounced(from start: Date, to end: Date) {
         entries.append(Entry(id: UUID(), start: start, end: end, fireAt: .distantPast))
     }
 

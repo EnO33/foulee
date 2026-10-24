@@ -149,6 +149,20 @@ nonisolated extension NotificationsClient {
                     )
                     try await center.add(request)
                 }
+            },
+            scheduleSessionNotice: { notice in
+                let content = UNMutableNotificationContent()
+                content.title = notice.title
+                content.body = notice.body
+                content.sound = .default
+                // A notice is due a minute after the outing is seen; one read
+                // late is due now, and iOS refuses an interval of zero.
+                let trigger = UNTimeIntervalNotificationTrigger(
+                    timeInterval: max(notice.fireAt.timeIntervalSinceNow, 1),
+                    repeats: false
+                )
+                let request = UNNotificationRequest(identifier: notice.identifier, content: content, trigger: trigger)
+                try await center.add(request)
             }
         )
     }()
