@@ -9,6 +9,9 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     var distanceMeters: Double
     var activeCalories: Int
     var heartRate: Int?
+    /// The outing's climb so far, in metres (issue #535); 0 without a
+    /// barometer.
+    var climbMeters: Double = 0
     /// Virtual start of the session: the instant `elapsed` would have been zero
     /// (issue #266).
     ///

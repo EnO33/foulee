@@ -74,13 +74,16 @@ final class WorkoutHealthKitStub {
     /// `HKWorkoutSession.pause()` and `resume()` calls (issue #384).
     private(set) var pauseCalls = 0
     private(set) var resumeCalls = 0
+    /// The climb each leg was stamped with, in call order (issue #535).
+    private(set) var climbs: [Double] = []
     /// The time the store reads (issue #406). It stands still until a test
     /// moves it, so every date the store writes is one the test can name.
     let clock = ManualClock()
 
     func makeStore(
         detection: WatchActivityDetection = WatchActivityDetection(source: .inert, pedometer: .inert),
-        route: WatchRouteStore = WatchRouteStore(source: .inert)
+        route: WatchRouteStore = WatchRouteStore(source: .inert),
+        climb: WatchClimbStore = WatchClimbStore(source: .inert)
     ) -> WatchWorkoutStore {
         WatchWorkoutStore(healthKit: WatchWorkoutHealthKit(
             isAvailable: { self.isAvailable },
@@ -97,7 +100,7 @@ final class WorkoutHealthKitStub {
                 if let error = self.startError { throw error }
                 return self.makeHandle()
             }
-        ), detection: detection, route: route, clock: clock.read)
+        ), detection: detection, route: route, climb: climb, clock: clock.read)
     }
 
     private func makeHandle() -> WatchWorkoutSessionHandle {
@@ -142,7 +145,8 @@ final class WorkoutHealthKitStub {
             },
             collectionEndDate: { self.collectionEndDate },
             pause: { self.pauseCalls += 1 },
-            resume: { self.resumeCalls += 1 }
+            resume: { self.resumeCalls += 1 },
+            addClimb: { self.climbs.append($0) }
         )
     }
 }

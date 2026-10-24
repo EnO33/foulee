@@ -50,7 +50,7 @@ struct WatchFinishedView: View {
                     Text(metrics.elapsed.walkClockText)
                         .font(.system(size: 22, weight: .semibold, design: .rounded))
                         .monospacedDigit()
-                    Text("\(metrics.steps.formatted()) pas · \(metrics.distanceKm.kmText())")
+                    Text(figuresText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -87,6 +87,13 @@ struct WatchFinishedView: View {
     /// that printed nothing — and `lastError` outlives the failure that set it,
     /// so the guard is load-bearing, not decorative.
     var reasonText: String? { saveFailed ? errorMessage : nil }
+
+    /// « 3 100 pas · 2,40 km · ↑ 120 m »: the climb when the barometer
+    /// measured one (issue #535).
+    var figuresText: String {
+        let climb = metrics.climbMeters >= 1 ? " · ↑ \(Int(metrics.climbMeters.rounded())) m" : ""
+        return "\(metrics.steps.formatted()) pas · \(metrics.distanceKm.kmText())\(climb)"
+    }
 
     /// One line per sport, when the outing changed sport (issue #265).
     ///

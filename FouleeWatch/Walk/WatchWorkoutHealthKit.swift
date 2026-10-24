@@ -88,6 +88,10 @@ struct WatchWorkoutSessionHandle: Sendable {
     /// the paused stretch out of the workout's duration on its own.
     var pause: @MainActor () -> Void = {}
     var resume: @MainActor () -> Void = {}
+    /// Stamp the leg with its climb, in metres (issue #535), the key Santé
+    /// and the phone read (`HKMetadataKeyElevationAscended`). Before
+    /// `finishWorkout`, which seals the workout.
+    var addClimb: @MainActor (_ meters: Double) async throws -> Void = { _ in }
     // No way to open or close a nested activity, and there will not be one:
     // HealthKit refuses a subactivity whose sport differs from the session's
     // own (« Cannot add subactivity of type HKWorkoutActivityTypeRunning »,
@@ -244,7 +248,12 @@ extension WatchWorkoutHealthKit {
                     },
                     collectionEndDate: { builder.endDate },
                     pause: { session.pause() },
-                    resume: { session.resume() }
+                    resume: { session.resume() },
+                    addClimb: { meters in
+                        try await builder.addMetadata([
+                            HKMetadataKeyElevationAscended: HKQuantity(unit: .meter(), doubleValue: meters)
+                        ])
+                    }
                 )
             }
         )
