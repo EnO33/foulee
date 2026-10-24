@@ -221,15 +221,35 @@ jobs:
 
       - uses: ./.github/actions/prepare-project
 
-      - name: Ensure iPhone 17 Pro simulator exists
+      # The simulator is the one Xcode accepts, as for the watch (issue #462),
+      # not a model written down here: an image update retires models, and
+      # the iOS 27.1 runtime of the Xcode 27.2 image refuses an iPhone 17 Pro
+      # (« Incompatible device »). Without any, one is created from the
+      # newest iPhone the newest runtime supports.
+      - name: Pick the iPhone simulator
         run: |
-          if ! xcrun simctl list devices available | grep -q "iPhone 17 Pro"; then
-            RUNTIME=$(xcrun simctl list runtimes available -j | jq -r '.runtimes[] | select(.platform == "iOS") | .identifier' | sort -V | tail -1)
-            DEVICETYPE=$(xcrun simctl list devicetypes -j | jq -r '.devicetypes[] | select(.name == "iPhone 17 Pro") | .identifier')
-            echo "Creating iPhone 17 Pro on runtime $RUNTIME (devicetype $DEVICETYPE)"
-            xcrun simctl create "iPhone 17 Pro" "$DEVICETYPE" "$RUNTIME"
+          eligible_iphone() {
+            xcodebuild -workspace Foulee.xcworkspace -scheme Foulee -showdestinations 2>/dev/null \
+              | awk '/Ineligible destinations/ { exit } /platform:iOS Simulator/ && /name:iPhone/ && !/placeholder/' \
+              | sed -n 's/.*id:\([^,]*\),.*/\1/p' \
+              | head -1
+          }
+          IOS_UDID=$(eligible_iphone)
+          if [ -z "$IOS_UDID" ]; then
+            RUNTIME=$(xcrun simctl list runtimes available -j | jq -c '[.runtimes[] | select(.platform == "iOS")] | sort_by(.version) | last')
+            DEVICETYPE=$(echo "$RUNTIME" | jq -r '[.supportedDeviceTypes[] | select(.productFamily == "iPhone")] | last | .identifier')
+            echo "Creating an iPhone ($DEVICETYPE) on $(echo "$RUNTIME" | jq -r .identifier)"
+            xcrun simctl create "CI iPhone" "$DEVICETYPE" "$(echo "$RUNTIME" | jq -r .identifier)"
+            IOS_UDID=$(eligible_iphone)
           fi
-          xcrun simctl list devices available | grep -E "iPhone 17"
+          if [ -z "$IOS_UDID" ]; then
+            echo "No iOS simulator Xcode accepts"
+            xcodebuild -workspace Foulee.xcworkspace -scheme Foulee -showdestinations
+            exit 1
+          fi
+          echo "Testing on simulator $IOS_UDID"
+          echo "IOS_UDID=$IOS_UDID" >> "$GITHUB_ENV"
+          echo "IOS_DESTINATION=platform=iOS Simulator,id=$IOS_UDID" >> "$GITHUB_ENV"
 
       # A fixed derivedDataPath: `test-without-building` below reuses this
       # build.
@@ -239,7 +259,7 @@ jobs:
           xcodebuild \
             -workspace Foulee.xcworkspace \
             -scheme Foulee \
-            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+            -destination "$IOS_DESTINATION" \
             -configuration Debug \
             -derivedDataPath build/dd \
             build-for-testing | xcbeautify
@@ -252,9 +272,8 @@ jobs:
       - name: Boot the iPhone simulator
         timeout-minutes: 10
         run: |
-          UDID=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name == "iPhone 17 Pro")][0].udid')
-          echo "Booting iPhone 17 Pro ($UDID)"
-          xcrun simctl bootstatus "$UDID" -b
+          echo "Booting simulator $IOS_UDID"
+          xcrun simctl bootstatus "$IOS_UDID" -b
 
       # `-collect-test-diagnostics never` (issue #420): at the end of a run,
       # xcodebuild asks the simulator for diagnostics, and the iOS 27 one never
@@ -266,7 +285,7 @@ jobs:
           xcodebuild \
             -workspace Foulee.xcworkspace \
             -scheme Foulee \
-            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+            -destination "$IOS_DESTINATION" \
             -configuration Debug \
             -derivedDataPath build/dd \
             -resultBundlePath build/results/ios.xcresult \
