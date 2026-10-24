@@ -3,9 +3,11 @@ import Foundation
 /// The one line an outing is announced with (issue #527): the most
 /// encouraging thing its `SessionBenchmark` can truthfully say.
 ///
-/// In order: a record, a pace better than usual, a pace getting better, the
-/// regularity of the week or the month — and, when none applies, the outing
-/// itself. **Never a slower pace**: an outing that says nothing good on one
+/// In order: a record, a pace better than usual, a climb bigger than usual,
+/// a pace getting better, the distance or the climb of the month, the
+/// regularity of the week — and, when none applies, the outing itself. The
+/// climb counts as much as the distance: a hilly walk is an effort the pace
+/// alone would hide. **Never a slower pace**: an outing that says nothing good on one
 /// angle is told on the next, down to its own figures.
 nonisolated struct SessionHighlight: Equatable, Sendable {
     /// What the line is about. The notification after this one avoids it
@@ -14,6 +16,7 @@ nonisolated struct SessionHighlight: Equatable, Sendable {
     nonisolated enum Angle: String, Sendable {
         case record
         case pace
+        case climb
         case trend
         case regularity
         case arrival
@@ -27,6 +30,11 @@ nonisolated struct SessionHighlight: Equatable, Sendable {
     static let minimumSessions = 3
     /// The least gain on the usual pace worth stating: 2 %.
     static let minimumPaceGain = 0.02
+    /// Below this, a climb is the lie of the land, not an effort.
+    static let minimumClimbMeters = 30.0
+    /// A climb a quarter above the usual one, and 20 m at least, is worth
+    /// saying.
+    static let minimumClimbGain = 0.25
 
     /// The line for `benchmark`, avoiding `previous` when another angle
     /// applies.
@@ -38,8 +46,10 @@ nonisolated struct SessionHighlight: Equatable, Sendable {
         let candidates = [
             record(benchmark),
             pace(benchmark),
+            climb(benchmark),
             trend(benchmark),
             month(benchmark),
+            monthClimb(benchmark),
             week(benchmark)
         ].compactMap { $0 }
         if let record = candidates.first(where: { $0.angle == .record }) { return record }
@@ -48,25 +58,42 @@ nonisolated struct SessionHighlight: Equatable, Sendable {
 
     // MARK: - Angles
 
+    /// The longest, the biggest climb, the fastest: the climb first for a
+    /// hike, which is told by it.
     private static func record(_ benchmark: SessionBenchmark) -> SessionHighlight? {
-        guard let activity = benchmark.activity, let records = benchmark.records,
-              records.sessions >= minimumSessions else { return nil }
-        let outing = benchmark.outing
-        if let longest = records.longestKm, outing.distanceKm - longest >= 0.1 {
-            return SessionHighlight(
-                angle: .record,
-                title: "Ta plus longue \(activity.noun) depuis 6 mois",
-                body: "\(km(outing.distanceKm)) aujourd'hui. La précédente faisait \(km(longest))."
-            )
-        }
-        if activity == .hiking, let highest = records.highestElevationMeters, outing.elevationMeters - highest >= 10 {
-            return SessionHighlight(
-                angle: .record,
-                title: "Ton plus gros dénivelé depuis 6 mois",
-                body: "\(meters(outing.elevationMeters)) de montée aujourd'hui. Le précédent : \(meters(highest))."
-            )
-        }
-        guard let pace = benchmark.pace, pace.sessions >= minimumSessions,
+        guard let activity = benchmark.activity, let records = benchmark.records else { return nil }
+        let distance = distanceRecord(benchmark, records)
+        let climb = climbRecord(benchmark, records)
+        let ordered = activity == .hiking ? [climb, distance] : [distance, climb]
+        return (ordered + [paceRecord(benchmark)]).compactMap { $0 }.first
+    }
+
+    private static func distanceRecord(_ benchmark: SessionBenchmark, _ records: SessionBenchmark.Records) -> SessionHighlight? {
+        guard let activity = benchmark.activity, records.sessions >= minimumSessions,
+              let longest = records.longestKm, benchmark.outing.distanceKm - longest >= 0.1 else { return nil }
+        return SessionHighlight(
+            angle: .record,
+            title: "Ta plus longue \(activity.noun) depuis 6 mois",
+            body: "\(km(benchmark.outing.distanceKm)) aujourd'hui. La précédente faisait \(km(longest))."
+        )
+    }
+
+    private static func climbRecord(_ benchmark: SessionBenchmark, _ records: SessionBenchmark.Records) -> SessionHighlight? {
+        let climb = benchmark.outing.elevationMeters
+        guard let activity = benchmark.activity, records.climbingSessions >= minimumSessions,
+              let highest = records.highestElevationMeters,
+              climb >= minimumClimbMeters, climb - highest >= 10 else { return nil }
+        return SessionHighlight(
+            angle: .record,
+            title: activity == .hiking
+                ? "Ton plus gros dénivelé depuis 6 mois"
+                : "Ta \(activity.noun) la plus vallonnée depuis 6 mois",
+            body: "\(meters(climb)) de dénivelé aujourd'hui. Le précédent record : \(meters(highest))."
+        )
+    }
+
+    private static func paceRecord(_ benchmark: SessionBenchmark) -> SessionHighlight? {
+        guard let activity = benchmark.activity, let pace = benchmark.pace, pace.sessions >= minimumSessions,
               let best = pace.best, let average = pace.average,
               seconds(pace.current) < seconds(best) else { return nil }
         return SessionHighlight(
@@ -83,6 +110,18 @@ nonisolated struct SessionHighlight: Equatable, Sendable {
             angle: .pace,
             title: "Plus rapide que d'habitude",
             body: "\(paceFigure(pace.current)), contre \(paceFigure(average)) en moyenne ces 6 derniers mois."
+        )
+    }
+
+    private static func climb(_ benchmark: SessionBenchmark) -> SessionHighlight? {
+        let climb = benchmark.outing.elevationMeters
+        guard let records = benchmark.records, records.climbingSessions >= minimumSessions,
+              let average = records.averageElevationMeters, climb >= minimumClimbMeters,
+              climb >= average * (1 + minimumClimbGain), climb - average >= 20 else { return nil }
+        return SessionHighlight(
+            angle: .climb,
+            title: "Plus de dénivelé que d'habitude",
+            body: "\(meters(climb)) de dénivelé, contre \(meters(average)) en moyenne ces 6 derniers mois."
         )
     }
 
@@ -108,6 +147,18 @@ nonisolated struct SessionHighlight: Equatable, Sendable {
         )
     }
 
+    private static func monthClimb(_ benchmark: SessionBenchmark) -> SessionHighlight? {
+        let volume = benchmark.volume
+        guard volume.climbLastMonth > 0, volume.climbThisMonth >= 100,
+              volume.climbThisMonth > volume.climbLastMonth else { return nil }
+        return SessionHighlight(
+            angle: .climb,
+            title: "Ton mois grimpe plus que le précédent",
+            body: "\(meters(volume.climbThisMonth)) de dénivelé depuis le 1er, "
+                + "contre \(meters(volume.climbLastMonth)) en \(monthName(volume.lastMonth))."
+        )
+    }
+
     private static func week(_ benchmark: SessionBenchmark) -> SessionHighlight? {
         let volume = benchmark.volume
         guard volume.outingsThisWeek >= 2 else { return nil }
@@ -127,7 +178,10 @@ nonisolated struct SessionHighlight: Equatable, Sendable {
     private static func arrival(_ benchmark: SessionBenchmark) -> SessionHighlight {
         let outing = benchmark.outing
         let minutes = durationText(minutes: Int((outing.durationSeconds / 60).rounded()))
-        let figures = outing.distanceKm >= 0.05 ? "\(km(outing.distanceKm)) en \(minutes)" : minutes
+        var figures = outing.distanceKm >= 0.05 ? "\(km(outing.distanceKm)) en \(minutes)" : minutes
+        if outing.elevationMeters >= 10 {
+            figures += ", \(meters(outing.elevationMeters)) de dénivelé"
+        }
         return SessionHighlight(
             angle: .arrival,
             title: benchmark.activity?.recordedLabel ?? "Sortie enregistrée",

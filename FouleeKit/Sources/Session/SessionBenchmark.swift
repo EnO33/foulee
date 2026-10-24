@@ -34,7 +34,12 @@ nonisolated struct SessionBenchmark: Equatable, Sendable {
         /// Earlier outings of the same sport.
         var sessions: Int
         var longestKm: Double?
+        /// Earlier outings of the same sport that recorded a climb: a source
+        /// that writes none says 0, which is no record to beat.
+        var climbingSessions: Int
         var highestElevationMeters: Double?
+        /// Their average climb.
+        var averageElevationMeters: Double?
     }
 
     /// Every sport together: the week and the month the outing falls in, up
@@ -46,6 +51,8 @@ nonisolated struct SessionBenchmark: Equatable, Sendable {
         var minutesLastWeek: Int
         var kmThisMonth: Double
         var kmLastMonth: Double
+        var climbThisMonth: Double
+        var climbLastMonth: Double
         /// The first day of last month, to name it.
         var lastMonth: Date
     }
@@ -90,10 +97,15 @@ nonisolated struct SessionBenchmark: Equatable, Sendable {
             activity: activity,
             pace: activity.flatMap { pace(of: outing, as: $0, against: sameSport, calendar: calendar) },
             records: activity.map { _ in
-                Records(
+                let climbing = sameSport.filter { $0.elevationMeters > 0 }
+                return Records(
                     sessions: sameSport.count,
                     longestKm: sameSport.map(\.distanceKm).max(),
-                    highestElevationMeters: sameSport.map(\.elevationMeters).max()
+                    climbingSessions: climbing.count,
+                    highestElevationMeters: climbing.map(\.elevationMeters).max(),
+                    averageElevationMeters: climbing.isEmpty
+                        ? nil
+                        : climbing.map(\.elevationMeters).reduce(0, +) / Double(climbing.count)
                 )
             },
             volume: volume(of: outing, among: others, calendar: calendar)
@@ -161,12 +173,16 @@ nonisolated struct SessionBenchmark: Equatable, Sendable {
             Int((rows.map(\.durationSeconds).reduce(0, +) / 60).rounded())
         }
         let week = outings(in: thisWeek, from: upToOuting)
+        let month = outings(in: thisMonth, from: upToOuting)
+        let previousMonth = outings(in: lastMonth, from: others)
         return Volume(
             outingsThisWeek: week.count,
             minutesThisWeek: minutes(week),
             minutesLastWeek: minutes(outings(in: lastWeek, from: others)),
-            kmThisMonth: outings(in: thisMonth, from: upToOuting).map(\.distanceKm).reduce(0, +),
-            kmLastMonth: outings(in: lastMonth, from: others).map(\.distanceKm).reduce(0, +),
+            kmThisMonth: month.map(\.distanceKm).reduce(0, +),
+            kmLastMonth: previousMonth.map(\.distanceKm).reduce(0, +),
+            climbThisMonth: month.map(\.elevationMeters).reduce(0, +),
+            climbLastMonth: previousMonth.map(\.elevationMeters).reduce(0, +),
             lastMonth: lastMonth?.start ?? outing.startedAt
         )
     }

@@ -5,17 +5,17 @@ import Testing
 /// The one line an outing is announced with (issue #527).
 @Suite("Session highlight")
 struct SessionHighlightTests {
-    private let calendar = Calendar.iso8601Monday
+    let calendar = Calendar.iso8601Monday
 
-    private var start: Date {
+    var start: Date {
         calendar.date(from: DateComponents(year: 2026, month: 10, day: 22, hour: 18))!
     }
 
-    private var september: Date {
+    var september: Date {
         calendar.date(from: DateComponents(year: 2026, month: 9, day: 1))!
     }
 
-    private func outing(
+    func outing(
         _ activity: RecordedActivity = .walking,
         km: Double = 5,
         minutes: Double = 50,
@@ -34,12 +34,14 @@ struct SessionHighlightTests {
         )
     }
 
-    private func volume(
+    func volume(
         outings: Int = 1,
         minutes: Int = 50,
         lastWeek: Int = 0,
         km: Double = 5,
-        lastMonth: Double = 0
+        lastMonth: Double = 0,
+        climb: Double = 0,
+        climbLastMonth: Double = 0
     ) -> SessionBenchmark.Volume {
         SessionBenchmark.Volume(
             outingsThisWeek: outings,
@@ -47,11 +49,29 @@ struct SessionHighlightTests {
             minutesLastWeek: lastWeek,
             kmThisMonth: km,
             kmLastMonth: lastMonth,
+            climbThisMonth: climb,
+            climbLastMonth: climbLastMonth,
             lastMonth: september
         )
     }
 
-    private func pace(
+    func records(
+        sessions: Int = 5,
+        longestKm: Double = 20,
+        climbing: Int = 5,
+        highestClimb: Double = 2_000,
+        averageClimb: Double = 1_500
+    ) -> SessionBenchmark.Records {
+        SessionBenchmark.Records(
+            sessions: sessions,
+            longestKm: longestKm,
+            climbingSessions: climbing,
+            highestElevationMeters: highestClimb,
+            averageElevationMeters: averageClimb
+        )
+    }
+
+    func pace(
         _ current: TimeInterval,
         sessions: Int = 5,
         average: TimeInterval? = nil,
@@ -71,7 +91,7 @@ struct SessionHighlightTests {
         )
     }
 
-    private func benchmark(
+    func benchmark(
         _ outing: WorkoutSummary,
         pace: SessionBenchmark.Pace? = nil,
         records: SessionBenchmark.Records? = nil,
@@ -81,7 +101,7 @@ struct SessionHighlightTests {
             outing: outing,
             activity: outing.activities.count == 1 ? outing.activity : nil,
             pace: pace,
-            records: records ?? SessionBenchmark.Records(sessions: 5, longestKm: 20, highestElevationMeters: 2_000),
+            records: records ?? self.records(),
             volume: volume ?? self.volume()
         )
     }
@@ -90,7 +110,7 @@ struct SessionHighlightTests {
 
     @Test("A longer outing than any of six months is a record")
     func longest() {
-        let records = SessionBenchmark.Records(sessions: 4, longestKm: 7.1, highestElevationMeters: 0)
+        let records = records(sessions: 4, longestKm: 7.1)
         let highlight = SessionHighlight.pick(for: benchmark(outing(km: 8.4), records: records))
         #expect(highlight == SessionHighlight(
             angle: .record,
@@ -101,10 +121,10 @@ struct SessionHighlightTests {
 
     @Test("A hike's record is its climb")
     func highestClimb() {
-        let records = SessionBenchmark.Records(sessions: 3, longestKm: 15, highestElevationMeters: 450)
+        let records = records(sessions: 3, longestKm: 15, climbing: 3, highestClimb: 450, averageClimb: 300)
         let highlight = SessionHighlight.pick(for: benchmark(outing(.hiking, km: 12, elevation: 620), records: records))
         #expect(highlight.title == "Ton plus gros dénivelé depuis 6 mois")
-        #expect(highlight.body == "620 m de montée aujourd'hui. Le précédent : 450 m.")
+        #expect(highlight.body == "620 m de dénivelé aujourd'hui. Le précédent record : 450 m.")
     }
 
     @Test("A faster pace than any of six months is a record")
@@ -122,7 +142,7 @@ struct SessionHighlightTests {
 
     @Test("A record is told even right after another one")
     func recordRepeats() {
-        let records = SessionBenchmark.Records(sessions: 4, longestKm: 7.1, highestElevationMeters: 0)
+        let records = records(sessions: 4, longestKm: 7.1)
         let highlight = SessionHighlight.pick(
             for: benchmark(outing(km: 8.4), records: records, volume: volume(outings: 3)),
             avoiding: .record
@@ -132,7 +152,7 @@ struct SessionHighlightTests {
 
     @Test("Under three earlier outings, nothing is a record")
     func tooFewForRecord() {
-        let records = SessionBenchmark.Records(sessions: 2, longestKm: 3, highestElevationMeters: 0)
+        let records = records(sessions: 2, longestKm: 3, climbing: 2, highestClimb: 10, averageClimb: 10)
         #expect(SessionHighlight.pick(for: benchmark(outing(km: 8.4), records: records)).angle == .arrival)
     }
 
