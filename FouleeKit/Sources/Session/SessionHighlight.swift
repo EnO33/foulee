@@ -9,7 +9,7 @@ import Foundation
 /// climb counts as much as the distance: a hilly walk is an effort the pace
 /// alone would hide. **Never a slower pace**: an outing that says nothing good on one
 /// angle is told on the next, down to its own figures.
-nonisolated struct SessionHighlight: Equatable, Sendable {
+nonisolated public struct SessionHighlight: Equatable, Sendable {
     /// What the line is about. The notification after this one avoids it
     /// when another angle applies, so two outings in a row don't read the
     /// same.
@@ -23,8 +23,8 @@ nonisolated struct SessionHighlight: Equatable, Sendable {
     }
 
     var angle: Angle
-    var title: String
-    var body: String
+    public var title: String
+    public var body: String
 
     /// Fewer earlier outings than this, and « the usual » is a guess.
     static let minimumSessions = 3
@@ -54,6 +54,22 @@ nonisolated struct SessionHighlight: Equatable, Sendable {
         ].compactMap { $0 }
         if let record = candidates.first(where: { $0.angle == .record }) { return record }
         return candidates.first { $0.angle != previous } ?? candidates.first ?? arrival(benchmark)
+    }
+
+    /// What the end screen of an outing recorded on this iPhone adds
+    /// (issue #531): its highlight, once Santé has it, or `nil` when there is
+    /// nothing to add — the screen already shows the outing's own figures.
+    public static func ofOuting(
+        from start: Date,
+        to end: Date,
+        among workouts: [WorkoutSummary],
+        calendar: Calendar = .iso8601Monday
+    ) -> SessionHighlight? {
+        let outing = WorkoutDeduplication.collapsingOverlaps(OutingGrouping.groupingLegs(workouts))
+            .first { $0.startedAt < end && start < $0.endedAt }
+        guard let outing else { return nil }
+        let highlight = pick(for: SessionBenchmark.make(for: outing, among: workouts, calendar: calendar))
+        return highlight.angle == .arrival ? nil : highlight
     }
 
     // MARK: - Angles

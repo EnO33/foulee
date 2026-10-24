@@ -46,6 +46,12 @@ goals, planning, hydration, notifications, appearance, the Garmin guide and
 The notifications page gathers every reminder, and says so — with a way to
 fix it — when iOS blocks Foulée's notifications.
 
+**After an outing** from a watch or another app, one notification says it
+arrived, with what it has best against the six months before — a record, a
+pace better than usual, a trend, the week or the month — and opens it in the
+Bilan. An outing recorded on the iPhone shows the same on its end screen: see
+[ADR 0010](docs/adr/0010-notification-de-seance.md) (French).
+
 ## Compatible watches
 
 - **Apple Watch** — native support (companion app, complications, live workouts).
@@ -73,7 +79,8 @@ fix it — when iOS blocks Foulée's notifications.
 - **ActivityKit** — Live Activity for the active walk (Dynamic Island + Lock Screen)
 - **WeatherKit** — local weather card
 - **WidgetKit** — iPhone + Watch streak widgets and complications
-- **UserNotifications** — pre-walk reminder, weekly and monthly recap
+- **UserNotifications** — pre-walk reminder, weekly and monthly recap, the
+  outing just landed
 - **CoreLocation / MapKit** — walk route recording + map
 - **UserDefaults** — on-device preferences (goal, walk window, theme). Walk
   history isn't stored locally — it's read live from HealthKit.

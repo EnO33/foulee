@@ -331,6 +331,10 @@ private extension ActiveWalkScreen {
                     .font(FouleeFont.callout)
                     .foregroundStyle(.secondary)
             }
+            if let highlight = store.highlight {
+                highlightCard(highlight)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            }
             if let lastError = store.lastError {
                 Text(lastError)
                     .font(FouleeFont.footnote)
@@ -343,6 +347,20 @@ private extension ActiveWalkScreen {
                 .padding(.horizontal, 24)
         }
         .padding(.bottom, 32)
+        .animation(.snappy, value: store.highlight)
+    }
+
+    /// The outing's best, as a session notification would say it (#531).
+    func highlightCard(_ highlight: SessionHighlight) -> some View {
+        VStack(spacing: 4) {
+            Text(highlight.title)
+                .font(FouleeFont.headline)
+            Text(highlight.body)
+                .font(FouleeFont.callout)
+                .foregroundStyle(.secondary)
+        }
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 32)
     }
 
     func finishedSummary(session: WalkSession) -> String {
