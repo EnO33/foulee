@@ -13,7 +13,7 @@ nonisolated struct SessionHighlight: Equatable, Sendable {
     /// What the line is about. The notification after this one avoids it
     /// when another angle applies, so two outings in a row don't read the
     /// same.
-    nonisolated enum Angle: String, Sendable {
+    nonisolated enum Angle: String, Codable, Sendable {
         case record
         case pace
         case climb
