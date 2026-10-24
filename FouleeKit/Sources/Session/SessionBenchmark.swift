@@ -23,8 +23,10 @@ nonisolated struct SessionBenchmark: Equatable, Sendable {
         var best: TimeInterval?
         /// The last four weeks, the outing included.
         var recent: TimeInterval?
+        var recentSessions: Int
         /// The rest of the window, before those four weeks.
         var earlier: TimeInterval?
+        var earlierSessions: Int
     }
 
     /// The best earlier outings of the same sport, in the window.
@@ -118,13 +120,16 @@ nonisolated struct SessionBenchmark: Equatable, Sendable {
         let paced = earlier.filter { pace(of: $0) != nil }
         let recentStart = calendar.date(byAdding: .day, value: -recentDays, to: outing.startedAt) ?? outing.startedAt
         let recent = paced.filter { $0.startedAt >= recentStart } + [outing]
+        let before = paced.filter { $0.startedAt < recentStart }
         return Pace(
             current: current,
             sessions: paced.count,
             average: averagePace(of: paced),
             best: paced.compactMap(pace(of:)).min(),
             recent: averagePace(of: recent),
-            earlier: averagePace(of: paced.filter { $0.startedAt < recentStart })
+            recentSessions: recent.count,
+            earlier: averagePace(of: before),
+            earlierSessions: before.count
         )
     }
 

@@ -81,7 +81,9 @@ struct SessionBenchmarkTests {
         ]
         let pace = try #require(SessionBenchmark.make(for: current, among: history, calendar: calendar).pace)
         #expect(pace.recent == 570)
+        #expect(pace.recentSessions == 2)
         #expect(pace.earlier == 630)
+        #expect(pace.earlierSessions == 2)
     }
 
     @Test("No pace for a hike, a short outing, or an implausible one")
