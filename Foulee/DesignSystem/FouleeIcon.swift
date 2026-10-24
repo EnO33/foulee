@@ -19,6 +19,7 @@ nonisolated enum FouleeIcon {
     static let check = "checkmark"
     static let footsteps = "shoe"
     static let distance = "location"
+    static let climb = "mountain.2.fill"
     static let flame = "flame.fill"
     static let bell = "bell.fill"
     static let sun = "sun.max.fill"

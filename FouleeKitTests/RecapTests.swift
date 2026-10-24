@@ -186,7 +186,7 @@ struct RecapTests {
         RecapPeriod.lastCompleted(.month, before: day(2026, 10, 10), calendar: calendar)
     }
 
-    private func workout(on date: Date, outing: OutingLeg? = nil) -> WorkoutSummary {
+    private func workout(on date: Date, outing: OutingLeg? = nil, climb: Double = 0) -> WorkoutSummary {
         WorkoutSummary(
             id: UUID(),
             startedAt: date,
@@ -194,6 +194,7 @@ struct RecapTests {
             durationSeconds: 1_200,
             distanceKm: 2,
             activeCalories: 90,
+            elevationMeters: climb,
             sourceName: "Foulée",
             activity: .walking,
             outing: outing
@@ -202,6 +203,7 @@ struct RecapTests {
 
     private func recap(activeDays: Set<Weekday> = Set(Weekday.allCases)) -> Recap {
         let sharedOuting = UUID()
+        let secondLeg = day(2026, 9, 1, hour: 12).addingTimeInterval(1_200)
         let inputs = Recap.Inputs(
             minutes: [
                 DailyMinutes(date: day(2026, 8, 20), minutes: 30),   // August: the period before
@@ -215,10 +217,10 @@ struct RecapTests {
             calories: [MetricPoint(date: day(2026, 9, 1), value: 210.4)],
             workouts: [
                 // Two legs of one outing, then a walk on its own.
-                workout(on: day(2026, 9, 1, hour: 12), outing: OutingLeg(outingID: sharedOuting, index: 0)),
-                workout(on: day(2026, 9, 1, hour: 12).addingTimeInterval(1_200), outing: OutingLeg(outingID: sharedOuting, index: 1)),
-                workout(on: day(2026, 9, 15, hour: 18)),
-                workout(on: day(2026, 10, 2, hour: 12))
+                workout(on: day(2026, 9, 1, hour: 12), outing: OutingLeg(outingID: sharedOuting, index: 0), climb: 30),
+                workout(on: secondLeg, outing: OutingLeg(outingID: sharedOuting, index: 1), climb: 20),
+                workout(on: day(2026, 9, 15, hour: 18), climb: 45),
+                workout(on: day(2026, 10, 2, hour: 12), climb: 300)
             ]
         )
         return Recap.make(period: september, from: inputs, goalMinutes: 20, activeDays: activeDays, calendar: calendar)
@@ -308,5 +310,17 @@ struct RecapTests {
         #expect(recap(met: 1, planned: 5, minutes: 100, before: 50).verdict == .improving)
         #expect(recap(met: 1, planned: 5, minutes: 40, before: 50).verdict == .started)
         #expect(recap(met: 1, planned: 5, minutes: 40, before: 0).verdict == .started)
+    }
+}
+
+/// The climb of a period (issue #537), outside the suite's body for its
+/// length.
+extension RecapTests {
+    /// Both legs of the outing climbed: their climbs add up, as their
+    /// distances do.
+    @Test("The climb is the period's outings' own")
+    func climb() {
+        #expect(recap().totals.climbMeters == 95)
+        #expect(recap().previous.climbMeters == 0)
     }
 }

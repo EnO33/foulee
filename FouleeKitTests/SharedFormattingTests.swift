@@ -4,6 +4,22 @@ import Testing
 
 @Suite("WalkFormatting")
 struct WalkFormattingTests {
+    /// A source that wrote no climb shows none, not « ↑ 0 m » (#534).
+    @Test("A climb reads « ↑ 1 250 m », and none under a metre")
+    func climbText() {
+        func outing(climb: Double) -> WorkoutSummary {
+            WorkoutSummary(
+                id: UUID(), startedAt: .distantPast, endedAt: .distantPast, durationSeconds: 0,
+                distanceKm: 0, activeCalories: 0, elevationMeters: climb, sourceName: "Foulée"
+            )
+        }
+        #expect(outing(climb: 120).climbText == "↑ 120 m")
+        #expect(outing(climb: 1_249.6).climbText == "↑ \(1_250.formattedFR) m")
+        #expect(outing(climb: 0.4).climbText == nil)
+        #expect(outing(climb: 120).climbSpokenText == "120 mètres de dénivelé")
+        #expect(outing(climb: 0.4).climbSpokenText == nil)
+    }
+
     @Test("Under an hour reads as mm:ss")
     func clockUnderHour() {
         #expect(TimeInterval(0).walkClockText == "00:00")

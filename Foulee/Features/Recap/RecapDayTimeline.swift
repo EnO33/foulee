@@ -92,6 +92,15 @@ struct RecapDayTimeline: View {
         }
     }
 
+    /// « 5,2 km · ↑ 120 m · 142 kcal · Garmin Connect »: the climb beside the
+    /// distance, when the source wrote one (#537).
+    private func figures(of workout: WorkoutSummary, spoken: Bool = false) -> String {
+        let climb = spoken ? workout.climbSpokenText : workout.climbText
+        return [workout.distanceKm.kmText(fractionDigits: 1), climb, workout.caloriesText, workout.sourceName]
+            .compactMap { $0 }
+            .joined(separator: " · ")
+    }
+
     private func card(_ workout: WorkoutSummary, tint: Color) -> some View {
         HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -106,7 +115,8 @@ struct RecapDayTimeline: View {
                 Text(workout.activityLabel)
                     .font(FouleeFont.headline)
                     .foregroundStyle(.primary)
-                Text("\(workout.distanceKm.kmText(fractionDigits: 1)) · \(workout.caloriesText) · \(workout.sourceName)")
+                Text(figures(of: workout))
+                    .accessibilityLabel(figures(of: workout, spoken: true))
                     .font(FouleeFont.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

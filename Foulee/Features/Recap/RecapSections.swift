@@ -101,13 +101,20 @@ struct RecapComparison: View {
     private var rows: [Row] {
         let now = recap.totals
         let before = recap.previous
+        // The climb only when one of the two periods has one (#537): a source
+        // that writes none would otherwise show two empty bars.
+        let climb = now.climbMeters > 0 || before.climbMeters > 0
+            ? [Row(label: "Dénivelé", icon: FouleeIcon.climb, tint: AnyShapeStyle(FouleeColor.success),
+                   now: now.climbMeters, before: before.climbMeters) { "\(Int($0.rounded()).formattedFR) m" }]
+            : []
         return [
             Row(label: "Minutes", icon: FouleeIcon.timer, tint: AnyShapeStyle(FouleeColor.activityGradient),
                 now: Double(now.minutes), before: Double(before.minutes)) { durationText(minutes: Int($0)) },
             Row(label: "Pas", icon: FouleeIcon.footsteps, tint: AnyShapeStyle(FouleeColor.accentGradient),
                 now: Double(now.steps), before: Double(before.steps)) { Int($0).formattedFR },
             Row(label: "Distance", icon: FouleeIcon.distance, tint: AnyShapeStyle(WalkMetric.distance.tint),
-                now: now.distanceKm, before: before.distanceKm) { $0.kmText(fractionDigits: 1) },
+                now: now.distanceKm, before: before.distanceKm) { $0.kmText(fractionDigits: 1) }
+        ] + climb + [
             Row(label: "Sorties", icon: "figure.walk", tint: AnyShapeStyle(FouleeColor.accentMid),
                 now: Double(now.outings), before: Double(before.outings)) { "\(Int($0))" }
         ]

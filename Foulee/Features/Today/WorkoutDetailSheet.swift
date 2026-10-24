@@ -132,13 +132,8 @@ struct WorkoutDetailSheet: View {
                     label: "Allure",
                     value: paceText(detail)
                 )
-                if detail.summary.elevationMeters >= 1 {
-                    metricCard(
-                        icon: "mountain.2.fill",
-                        tint: FouleeColor.success,
-                        label: "Dénivelé",
-                        value: "↑ \(Int(detail.summary.elevationMeters)) m"
-                    )
+                if let climb = detail.summary.climbText {
+                    metricCard(icon: FouleeIcon.climb, tint: FouleeColor.success, label: "Dénivelé", value: climb)
                 }
             }
         }
