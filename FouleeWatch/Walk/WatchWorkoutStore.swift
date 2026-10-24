@@ -90,16 +90,20 @@ final class WatchWorkoutStore: NSObject {
     /// The path of the outing, for the « Plan » page (issue #312). Spans every
     /// leg: a change of sport is not a change of route.
     @ObservationIgnored let route: WatchRouteStore
+    /// The outing's climb, stamped on each leg as it is saved (issue #535).
+    @ObservationIgnored let climb: WatchClimbStore
 
     init(
         healthKit: WatchWorkoutHealthKit = .live,
         detection: WatchActivityDetection = WatchActivityDetection(),
         route: WatchRouteStore = WatchRouteStore(),
+        climb: WatchClimbStore = WatchClimbStore(),
         clock: @escaping @MainActor () -> Date = { .now }
     ) {
         self.healthKit = healthKit
         self.detection = detection
         self.route = route
+        self.climb = climb
         self.clock = clock
         legStartedAt = clock()
         super.init()
@@ -158,6 +162,7 @@ final class WatchWorkoutStore: NSObject {
         defer { isSaving = false }
         detection.stop()
         route.stop()
+        climb.stop()
         let end = clock()
         // Close the leg in flight so every leg of the outing has an end, and
         // the summary can give each sport its own figures (issue #265).
@@ -176,6 +181,7 @@ final class WatchWorkoutStore: NSObject {
             state = .ended(metrics, saveFailed: false)
             return
         }
+        await stampClimb(on: handle, from: legStartedAt, to: end)
         handle.end()
         let saved = await runOrTrap("enregistrement de la séance") {
             try await handle.endCollection(end)
@@ -254,6 +260,7 @@ final class WatchWorkoutStore: NSObject {
         state = .active(.empty(for: activity))
         beginActivityDetection(from: activity)
         route.start()
+        climb.start(clock: clock)
     }
 
     func ingest(builder: HKLiveWorkoutBuilder) {
@@ -353,6 +360,7 @@ extension WatchWorkoutStore {
         metrics.steps = outing.steps
         metrics.distanceMeters = outing.distanceMeters
         metrics.activeCalories = outing.activeCalories
+        metrics.climbMeters = climb.trail.total
         // The instant the clock would have read zero, so the screen can run it
         // on its own between batches (issue #266).
         // None while paused: the clock stands still on `elapsed` (issue #384).
@@ -429,6 +437,7 @@ extension WatchWorkoutStore {
     /// session that keeps running while recording nothing.
     private func splitLeg(to activity: SessionActivity, at boundary: Date) async {
         guard let handle = sessionHandle else { return }
+        await stampClimb(on: handle, from: legStartedAt, to: boundary)
         let closed = await runOrTrap("fermeture de la jambe") {
             handle.end()
             try await handle.endCollection(boundary)

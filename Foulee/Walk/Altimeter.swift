@@ -1,23 +1,6 @@
 import Dependencies
 import Foundation
 
-/// Turns a stream of (signed) relative-altitude readings into cumulative
-/// elevation *gain* — the sum of the positive changes, ignoring descents.
-/// Pure + value type so it's trivially unit-testable.
-nonisolated struct ElevationAccumulator {
-    private var last: Double?
-    private(set) var gain: Double = 0
-
-    /// Feed the next reading; returns the running gain in metres.
-    mutating func add(relativeAltitude: Double) -> Double {
-        defer { last = relativeAltitude }
-        guard let last else { return gain }
-        let delta = relativeAltitude - last
-        if delta > 0 { gain += delta }
-        return gain
-    }
-}
-
 /// CoreMotion's `CMAltimeter` wrapped as a struct-of-closures (DI parity with
 /// `Pedometer`). `startUpdates()` yields the cumulative elevation gain in
 /// metres each time the barometer reports a fresh reading.
