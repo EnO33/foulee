@@ -81,7 +81,7 @@ téléphone n'est pas à portée, la montre n'envoie rien et attend simplement l
 prochain passage.
 
 **À la fin d'une séance enregistrée**, elle envoie aussi son résumé : marche ou
-course, heure de début et de fin, durée, distance, pas et **le tracé de la
+course, heure de début et de fin, durée, distance, dénivelé, pas et **le tracé de la
 séance**, réduit à 64 points au plus. Il sert à l'iPhone à afficher la sortie
 et sa carte en attendant que Garmin Connect l'écrive dans Santé, qui la reçoit
 sans tracé. Le résumé attend sur la montre que l'iPhone l'ait reçu (avec les
@@ -166,6 +166,10 @@ Dans les deux cas, la lecture sert à enregistrer ta sortie sous le bon sport
 dans Santé. Rien n'est transmis, rien n'est conservé en dehors de la séance
 elle-même.
 
+Pendant une séance, le **baromètre** de l'iPhone et de l'Apple Watch mesure le
+dénivelé que tu gravis. Seul ce total est gardé : il est enregistré avec la
+séance dans Santé, comme sa distance.
+
 ## Ce que Foulée ne fait pas
 
 - ❌ Aucun compte, aucune inscription, aucune adresse e-mail collectée.
@@ -180,6 +184,11 @@ Tes réglages (objectif, activité, fenêtre, thème, rappels) sont enregistrés
 Le **bilan** des 7 derniers jours et du mois est calculé sur ton iPhone, à partir des
 données Santé que Foulée lit déjà. Sa notification est programmée localement :
 rien n'est envoyé nulle part pour la produire.
+
+La **notification qui suit une séance** arrivée d'une montre se calcule de la
+même façon : ton iPhone compare la sortie à celles des six derniers mois, lues
+dans Santé, et programme lui-même la notification. Rien ne quitte ton iPhone
+pour l'écrire.
 
 ## Manifeste de confidentialité Apple
 
