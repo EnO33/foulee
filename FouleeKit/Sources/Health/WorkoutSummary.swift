@@ -87,6 +87,18 @@ nonisolated public extension WorkoutSummary {
         return labels.dropLast().joined(separator: ", ") + " et " + last
     }
 
+    /// « ↑ 120 m », or `nil` when the source wrote no climb (issue #534):
+    /// absent, not « ↑ 0 m », which would read as a flat outing.
+    var climbText: String? {
+        elevationMeters >= 1 ? "↑ \(Int(elevationMeters.rounded()).formattedFR) m" : nil
+    }
+
+    /// The same climb as VoiceOver says it: « 120 mètres de dénivelé »,
+    /// not « flèche vers le haut ».
+    var climbSpokenText: String? {
+        elevationMeters >= 1 ? "\(Int(elevationMeters.rounded())) mètres de dénivelé" : nil
+    }
+
     /// « 08:00 → 08:41 » — the row, the detail and the bubbles all say it so.
     var timeRangeText: String { "\(startedAt.clockText) → \(endedAt.clockText)" }
 

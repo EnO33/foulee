@@ -14,13 +14,25 @@ nonisolated public struct Recap: Equatable, Sendable {
         /// Outings, counted like the résumé counts them: the legs of one
         /// outing are one, and a Strava copy of a watch session is the same.
         public var outings = 0
+        /// The outings' climb, in metres (issue #537): summed from the
+        /// outings rather than a daily series, Santé having none for it. An
+        /// outing whose source wrote no climb adds nothing.
+        public var climbMeters: Double = 0
 
-        public init(minutes: Int = 0, steps: Int = 0, distanceKm: Double = 0, calories: Int = 0, outings: Int = 0) {
+        public init(
+            minutes: Int = 0,
+            steps: Int = 0,
+            distanceKm: Double = 0,
+            calories: Int = 0,
+            outings: Int = 0,
+            climbMeters: Double = 0
+        ) {
             self.minutes = minutes
             self.steps = steps
             self.distanceKm = distanceKm
             self.calories = calories
             self.outings = outings
+            self.climbMeters = climbMeters
         }
     }
 
@@ -146,12 +158,14 @@ nonisolated public struct Recap: Equatable, Sendable {
             func sum(_ points: [MetricPoint]) -> Double {
                 points.filter { range.contains($0.date) }.map(\.value).reduce(0, +)
             }
+            let periodOutings = outings.filter { range.contains($0.startedAt) }
             return Totals(
                 minutes: minutes.filter { range.contains($0.date) }.map(\.minutes).reduce(0, +),
                 steps: Int(sum(inputs.steps).rounded()),
                 distanceKm: sum(inputs.distance),
                 calories: Int(sum(inputs.calories).rounded()),
-                outings: outings.filter { range.contains($0.startedAt) }.count
+                outings: periodOutings.count,
+                climbMeters: periodOutings.map(\.elevationMeters).reduce(0, +)
             )
         }
 
