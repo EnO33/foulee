@@ -23,6 +23,8 @@ final class ActiveWalkStore {
 
     private(set) var state: State = .idle
     private(set) var lastError: String?
+    /// What the finished outing has best, once Santé has it (issue #531).
+    private(set) var highlight: SessionHighlight?
 
     /// Fixes recorded since the walk started, drawn by the route map. Keeps
     /// recording across pauses — a pause just leaves a straight gap.
@@ -181,6 +183,11 @@ final class ActiveWalkStore {
         // exercise-minute widgets to refresh right away rather than
         // waiting for the next 1 h tick.
         WidgetCenter.shared.reloadAllTimelines()
+        // Read back from Santé: an outing that failed to save shows none.
+        if let workouts = try? await healthKit.recentWorkouts(SessionNotifier.daysBack) {
+            let end = recorded.endedAt ?? date.now
+            highlight = SessionHighlight.ofOuting(from: recorded.startedAt, to: end, among: workouts)
+        }
     }
 
     /// Return to idle so a second walk can be started in the same screen.
@@ -203,6 +210,7 @@ final class ActiveWalkStore {
         route = []
         state = .idle
         lastError = nil
+        highlight = nil
         tellWatch()
     }
 

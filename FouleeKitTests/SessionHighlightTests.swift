@@ -261,4 +261,23 @@ struct SessionHighlightTests {
         #expect(highlight.title == "Sortie enregistrée")
         #expect(highlight.body == "1 h 15. Le détail t'attend.")
     }
+
+    // MARK: - End screen
+
+    @Test("The end screen finds its outing in Santé, and adds nothing plain")
+    func ofOuting() {
+        let history = [
+            outing(km: 4), outing(km: 5), outing(km: 6)
+        ].enumerated().map { index, walk in
+            var earlier = walk
+            earlier.startedAt = start.addingTimeInterval(-Double(index + 1) * 86_400)
+            earlier.endedAt = earlier.startedAt.addingTimeInterval(walk.durationSeconds)
+            return earlier
+        }
+        let today = outing(km: 8.4)
+        let found = SessionHighlight.ofOuting(from: today.startedAt, to: today.endedAt, among: history + [today])
+        #expect(found?.title == "Ta plus longue marche depuis 6 mois")
+        #expect(SessionHighlight.ofOuting(from: today.startedAt, to: today.endedAt, among: [today]) == nil)
+        #expect(SessionHighlight.ofOuting(from: today.startedAt, to: today.endedAt, among: history) == nil)
+    }
 }
