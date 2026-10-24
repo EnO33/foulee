@@ -46,6 +46,17 @@ struct RecapShareTests {
         #expect(card.message == "Ma semaine sur Foulée : 8 h 30 d'activité, objectif tenu 4 jours sur 5.")
     }
 
+    /// Only when the period climbed: a source that writes no climb must not
+    /// put « 0 m » on the image (#539).
+    @Test("The climb joins the figures, after the distance")
+    func climbStat() {
+        var recap = week()
+        recap.totals.climbMeters = 1_249.6
+        let card = RecapShareCard(recap: recap)
+        #expect(card.stats.map(\.label) == ["Distance", "Dénivelé", "Pas", "Sorties"])
+        #expect(card.stats[1].value == "\(1_250.formattedFR) m")
+    }
+
     @Test("A month is « Mon mois »")
     func monthCard() {
         var recap = week()

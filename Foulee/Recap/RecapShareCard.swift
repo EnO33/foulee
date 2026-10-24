@@ -26,7 +26,8 @@ struct RecapShareCard: Equatable, Sendable {
     var minutes: String
     /// « Objectif tenu 6 jours sur 7 », or `nil` when no day was planned.
     var goalLine: String?
-    /// Distance, steps and outings, in that order.
+    /// Distance, climb (when the period has one, #539), steps and outings,
+    /// in that order.
     var stats: [Stat]
     /// « Lundi 5 oct. · 2 h 06 », or `nil` for a period without minutes.
     var bestDay: String?
@@ -40,11 +41,15 @@ struct RecapShareCard: Equatable, Sendable {
         minutes = durationText(minutes: recap.totals.minutes)
         goalLine = Self.goalText(met: recap.goalDaysMet, planned: recap.goalDaysPlanned)
         let outings = recap.totals.outings
-        stats = [
-            Stat(label: "Distance", value: recap.totals.distanceKm.kmText(fractionDigits: 1), icon: FouleeIcon.distance),
-            Stat(label: "Pas", value: recap.totals.steps.formattedFR, icon: FouleeIcon.footsteps),
-            Stat(label: outings > 1 ? "Sorties" : "Sortie", value: "\(outings)", icon: "figure.walk")
-        ]
+        let climb = recap.totals.climbMeters >= 1
+            ? [Stat(label: "Dénivelé", value: "\(Int(recap.totals.climbMeters.rounded()).formattedFR) m", icon: FouleeIcon.climb)]
+            : []
+        stats = [Stat(label: "Distance", value: recap.totals.distanceKm.kmText(fractionDigits: 1), icon: FouleeIcon.distance)]
+            + climb
+            + [
+                Stat(label: "Pas", value: recap.totals.steps.formattedFR, icon: FouleeIcon.footsteps),
+                Stat(label: outings > 1 ? "Sorties" : "Sortie", value: "\(outings)", icon: "figure.walk")
+            ]
         bestDay = recap.bestDay.map {
             "\(Self.dayFormatter.string(from: $0.date).capitalized(with: Self.french)) · \(durationText(minutes: $0.minutes))"
         }
