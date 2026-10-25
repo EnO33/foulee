@@ -49,14 +49,18 @@ nonisolated public enum OutingMerges {
         return gap >= 0 && gap <= maximumGap
     }
 
-    /// The outings `outing` can be merged with, among the rows of the same
-    /// list: the one right before it and the one right after, when close
-    /// enough. Never one further away — merging across another outing would
-    /// swallow it.
+    /// The outings `outing` can be merged with, among `workouts` as read: the
+    /// one right before it and the one right after, when close enough. Never
+    /// one further away — merging across another outing would swallow it.
+    ///
+    /// The workouts are rejoined and deduplicated first, as every list of
+    /// outings is, so a neighbour is a row the wearer sees, never a leg of one
+    /// or the Strava copy of another.
     public static func neighbours(
         of outing: WorkoutSummary,
-        among outings: [WorkoutSummary]
+        in workouts: [WorkoutSummary]
     ) -> (previous: WorkoutSummary?, next: WorkoutSummary?) {
+        let outings = WorkoutDeduplication.collapsingOverlaps(OutingGrouping.groupingLegs(workouts))
         let others = outings.filter { $0.id != outing.id }
         let previous = others.filter { $0.startedAt < outing.startedAt }.max { $0.startedAt < $1.startedAt }
         let next = others.filter { $0.startedAt > outing.startedAt }.min { $0.startedAt < $1.startedAt }

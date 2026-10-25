@@ -72,16 +72,26 @@ struct OutingMergeTests {
         let next = outing(from: 560, lasting: 20)
         let evening = outing(from: 1_080, lasting: 30)
 
-        let neighbours = OutingMerges.neighbours(of: target, among: [evening, next, target, first, morning])
+        let neighbours = OutingMerges.neighbours(of: target, in: [evening, next, target, first, morning])
 
         #expect(neighbours.previous?.id == first.id)
+        #expect(neighbours.next?.id == next.id)
+    }
+
+    @Test("A neighbour is an outing as listed: a copy of the outing is none")
+    func neighboursAreRows() {
+        let target = outing(from: 480, lasting: 30)
+        let strava = outing(from: 480.1, lasting: 29.8, source: "Strava")
+        let next = outing(from: 520, lasting: 20)
+        let neighbours = OutingMerges.neighbours(of: target, in: [target, strava, next])
+        #expect(neighbours.previous == nil)
         #expect(neighbours.next?.id == next.id)
     }
 
     @Test("A neighbour too far away is not offered")
     func distantNeighbourIsNotOffered() {
         let target = outing(from: 480, lasting: 30)
-        let neighbours = OutingMerges.neighbours(of: target, among: [target, outing(from: 600, lasting: 20)])
+        let neighbours = OutingMerges.neighbours(of: target, in: [target, outing(from: 600, lasting: 20)])
         #expect(neighbours.previous == nil)
         #expect(neighbours.next == nil)
     }
