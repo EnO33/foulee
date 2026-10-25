@@ -1,4 +1,5 @@
 #if DEBUG
+import FouleeKit
 import Foundation
 
 /// The dependency doubles the capture mode installs. Same struct-of-closures
