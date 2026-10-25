@@ -81,7 +81,7 @@ téléphone n'est pas à portée, la montre n'envoie rien et attend simplement l
 prochain passage.
 
 **À la fin d'une séance enregistrée**, elle envoie aussi son résumé : marche ou
-course, heure de début et de fin, durée, distance, dénivelé, pas et **le tracé de la
+course, heure de début et de fin, durée, distance, montée et descente, pas et **le tracé de la
 séance**, réduit à 64 points au plus. Il sert à l'iPhone à afficher la sortie
 et sa carte en attendant que Garmin Connect l'écrive dans Santé, qui la reçoit
 sans tracé. Le résumé attend sur la montre que l'iPhone l'ait reçu (avec les
@@ -167,8 +167,8 @@ dans Santé. Rien n'est transmis, rien n'est conservé en dehors de la séance
 elle-même.
 
 Pendant une séance, le **baromètre** de l'iPhone et de l'Apple Watch mesure le
-dénivelé que tu gravis. Seul ce total est gardé : il est enregistré avec la
-séance dans Santé, comme sa distance.
+dénivelé que tu gravis et celui que tu descends. Seuls ces deux totaux sont
+gardés : ils sont enregistrés avec la séance dans Santé, comme sa distance.
 
 ## Ce que Foulée ne fait pas
 
