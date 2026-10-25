@@ -1,6 +1,6 @@
 # Politique de confidentialité — Foulée
 
-_Dernière mise à jour : 8 octobre 2026_
+_Dernière mise à jour : 25 octobre 2026_
 
 Foulée est une application **locale**. Elle t'aide à entretenir une série de
 sorties — marche ou course — à partir de tes données d'activité. **Aucune
@@ -189,6 +189,10 @@ La **notification qui suit une séance** arrivée d'une montre se calcule de la
 même façon : ton iPhone compare la sortie à celles des six derniers mois, lues
 dans Santé, et programme lui-même la notification. Rien ne quitte ton iPhone
 pour l'écrire.
+
+Quand tu **fusionnes deux sorties**, Foulée retient sur ton iPhone quelles
+séances n'en font qu'une, et rien d'autre : Santé n'est pas modifié, et la
+fusion ne quitte pas ton iPhone. Séparer les sorties efface ce lien.
 
 ## Manifeste de confidentialité Apple
 
