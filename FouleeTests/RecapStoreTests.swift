@@ -188,6 +188,10 @@ struct RecapStoreTests {
             await store.load(goalMinutes: 20, activeDays: Set(Weekday.allCases))
             #expect(store.recaps[.week]?.totals.outings == 2)
 
+            #expect(store.mergeNeighbours(of: parts[0]).next?.id == parts[1].id)
+            #expect(store.mergeNeighbours(of: parts[1]).previous?.id == parts[0].id)
+            #expect(!store.isMerged(parts[0]))
+
             await store.merge(parts[0], with: parts[1])
 
             #expect(reads.value == 2)
@@ -195,6 +199,7 @@ struct RecapStoreTests {
             #expect(store.recaps[.week]?.totals.outings == 1)
             let merged = try #require(store.outings[.week]?.flatMap(\.workouts).first)
             #expect(merged.legs.count == 2)
+            #expect(store.isMerged(merged))
 
             await store.separate(merged)
 
