@@ -3,12 +3,12 @@ import FouleeKit
 import Foundation
 
 /// The barometer during an outing, as one closure (issue #535): the
-/// cumulative climb in metres, each time it changes.
+/// cumulative climb and descent in metres, each time they change (#564).
 ///
 /// Hand-written like `WatchRouteSource`: the watch target links no
 /// dependency container, and the real `CMAltimeter` only answers on a wrist.
 struct WatchClimbSource: Sendable {
-    var updates: @Sendable () -> AsyncStream<Double>
+    var updates: @Sendable () -> AsyncStream<Elevation>
 
     static let live = WatchClimbSource {
         AsyncStream { continuation in
@@ -32,8 +32,9 @@ struct WatchClimbSource: Sendable {
     static let inert = WatchClimbSource { AsyncStream { $0.finish() } }
 }
 
-/// The outing's climb over time (issue #535): the screen reads its total,
-/// and each leg's workout is stamped with its own share as it is saved.
+/// The outing's climb and descent over time (issues #535, #564): the screen
+/// reads its total, and each leg's workout is stamped with its own share as
+/// it is saved.
 ///
 /// Spans every leg, as the route does: a change of sport is not a change of
 /// slope. **Writes nothing itself**, and whatever happens here, the outing
@@ -54,15 +55,15 @@ final class WatchClimbStore {
         stop()
         trail = ClimbTrail()
         recording = Task { [weak self, source] in
-            for await gain in source.updates() {
-                self?.record(gain, at: clock())
+            for await elevation in source.updates() {
+                self?.record(elevation, at: clock())
             }
         }
     }
 
-    /// The outing's climb as of `date`.
-    func record(_ gain: Double, at date: Date) {
-        trail.record(gain, at: date)
+    /// The outing's climb and descent as of `date`.
+    func record(_ elevation: Elevation, at date: Date) {
+        trail.record(elevation, at: date)
     }
 
     /// Stop measuring and keep what was climbed. Idempotent.

@@ -1,5 +1,27 @@
 import Foundation
 
+/// The climb and the descent of an outing, in metres (issue #564). Measured
+/// apart and never added: 100 m up and 100 m down is a 100 m climb.
+nonisolated public struct Elevation: Equatable, Sendable {
+    public var ascent: Double
+    public var descent: Double
+
+    public static let zero = Elevation(ascent: 0, descent: 0)
+
+    public init(ascent: Double, descent: Double) {
+        self.ascent = ascent
+        self.descent = descent
+    }
+
+    public static func + (lhs: Elevation, rhs: Elevation) -> Elevation {
+        Elevation(ascent: lhs.ascent + rhs.ascent, descent: lhs.descent + rhs.descent)
+    }
+
+    public static func += (lhs: inout Elevation, rhs: Elevation) {
+        lhs = lhs + rhs
+    }
+}
+
 /// Turns a stream of (signed) relative-altitude readings into the climb and
 /// the descent of an outing, the barometer's noise left out (issue #563).
 /// Pure + value type so it's trivially unit-testable. In the kit since the
@@ -20,26 +42,24 @@ nonisolated public struct ElevationAccumulator: Sendable {
 
     /// The last altitude a change was counted from.
     private var anchor: Double?
-    public private(set) var gain: Double = 0
-    /// The descent, measured the same way.
-    private(set) var loss: Double = 0
+    public private(set) var elevation = Elevation.zero
 
     public init() {}
 
-    /// Feed the next reading; returns the running gain in metres.
-    public mutating func add(relativeAltitude: Double) -> Double {
+    /// Feed the next reading; returns the running climb and descent.
+    public mutating func add(relativeAltitude: Double) -> Elevation {
         guard let anchor else {
             self.anchor = relativeAltitude
-            return gain
+            return elevation
         }
         let delta = relativeAltitude - anchor
-        guard abs(delta) >= Self.threshold else { return gain }
+        guard abs(delta) >= Self.threshold else { return elevation }
         if delta > 0 {
-            gain += delta
+            elevation.ascent += delta
         } else {
-            loss -= delta
+            elevation.descent -= delta
         }
         self.anchor = relativeAltitude
-        return gain
+        return elevation
     }
 }
