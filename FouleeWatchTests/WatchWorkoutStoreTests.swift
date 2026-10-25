@@ -79,6 +79,14 @@ final class WorkoutHealthKitStub {
     /// The time the store reads (issue #406). It stands still until a test
     /// moves it, so every date the store writes is one the test can name.
     let clock = ManualClock()
+    /// A session left running by an app that died (issue #554), handed out
+    /// once by `recoverSession`.
+    var recoverable: RecoverableSession?
+    /// What Santé holds for the recovered outing.
+    var savedLegs: [WatchWorkoutSegment] = []
+    private(set) var recoverCalls = 0
+    /// The outings whose saved legs were read back.
+    private(set) var savedLegsAsked: [UUID] = []
 
     func makeStore(
         detection: WatchActivityDetection = WatchActivityDetection(source: .inert, pedometer: .inert),
@@ -99,6 +107,23 @@ final class WorkoutHealthKitStub {
                 self.outingLegs.append(leg)
                 if let error = self.startError { throw error }
                 return self.makeHandle()
+            },
+            recoverSession: { _ in
+                self.recoverCalls += 1
+                guard let session = self.recoverable else { return nil }
+                self.recoverable = nil
+                return WatchRecoveredSession(
+                    handle: self.makeHandle(),
+                    activity: session.activity,
+                    startedAt: session.startedAt,
+                    leg: session.leg,
+                    elapsed: session.elapsed,
+                    isPaused: session.isPaused
+                )
+            },
+            savedLegs: { outingID in
+                self.savedLegsAsked.append(outingID)
+                return self.savedLegs
             }
         ), detection: detection, route: route, climb: climb, clock: clock.read)
     }
@@ -149,6 +174,16 @@ final class WorkoutHealthKitStub {
             addClimb: { self.climbs.append($0) }
         )
     }
+}
+
+/// What a stub session left running says about itself (issue #554): a
+/// `WatchRecoveredSession` without its handle, which the stub makes.
+struct RecoverableSession {
+    var activity: SessionActivity
+    var startedAt: Date
+    var leg: OutingLeg?
+    var elapsed: TimeInterval
+    var isPaused = false
 }
 
 @MainActor

@@ -26,8 +26,8 @@ import os
 /// * `WatchWorkoutStore.start(activity:)` — shows the seeded session without
 ///   opening an `HKWorkoutSession`, so nothing is recorded and there is no
 ///   handle for `stop()` to finish.
-/// * `WatchWorkoutRecovery.run()` — a stranded session is *not* finished during
-///   a capture; finishing one is an `HKWorkout` write.
+/// * `WatchWorkoutStore.recover()` — a session left running is *not* picked
+///   up during a capture; it would put a real outing on camera, and write it.
 /// * `WatchWaterBackgroundDelivery.start()` — no background delivery, no
 ///   persistent observer.
 ///
@@ -46,8 +46,8 @@ enum WatchScreenshotMode {
     static let launchArgument = "-FouleeScreenshotMode"
 
     /// Set once at launch and read from wherever a HealthKit call would be
-    /// made, including `WatchWorkoutRecovery`, which runs off the main actor.
-    /// A lock rather than an actor-isolated `var` for exactly that reason.
+    /// made, some of it off the main actor. A lock rather than an
+    /// actor-isolated `var` for exactly that reason.
     private static let active = OSAllocatedUnfairLock(initialState: false)
 
     /// Whether the current process activated the mode. False in every normal
