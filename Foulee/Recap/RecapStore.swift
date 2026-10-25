@@ -27,6 +27,8 @@ final class RecapStore {
 
     /// What the last read returned, kept to work out any period on demand.
     private var source: Source?
+    /// What the last read was asked for, so a merge reads the same again.
+    @ObservationIgnored private var lastRequest: Request?
     /// Periods already worked out: paging back and forth recomputes nothing.
     @ObservationIgnored private var cache: [RecapPeriod: RecapPeriodContent] = [:]
 
@@ -36,6 +38,9 @@ final class RecapStore {
     @ObservationIgnored
     @Dependency(\.date) private var date
 
+    @ObservationIgnored
+    @Dependency(\.outingMerges) private var outingMerges
+
     /// `waterGoalML` is the hydration goal, `nil` while hydration is off.
     ///
     /// `withHistory` reaches back `RecapPeriod.historyMonths` for the screen
@@ -43,6 +48,7 @@ final class RecapStore {
     /// so its record is the home's (issue #445); the home's card only needs the
     /// periods in progress, and reads no further.
     func load(goalMinutes: Int, activeDays: Set<Weekday>, waterGoalML: Int? = nil, withHistory: Bool = false) async {
+        lastRequest = Request(goalMinutes: goalMinutes, activeDays: activeDays, waterGoalML: waterGoalML, withHistory: withHistory)
         isLoading = true
         defer { isLoading = false }
         let now = date.now
@@ -94,6 +100,39 @@ final class RecapStore {
         )
         cache[period] = content
         return content
+    }
+
+    /// Make `outing` and `other` one outing (issue #549), then read the
+    /// Bilan again: Santé is not rewritten, the merge applies when it is read.
+    func merge(_ outing: WorkoutSummary, with other: WorkoutSummary) async {
+        guard OutingMerges.canMerge(outing, other) else { return }
+        outingMerges.write(OutingMerges.merging(outing, other, in: outingMerges.read()))
+        await reload()
+    }
+
+    /// Undo the merge `outing` stands for, then read the Bilan again.
+    func separate(_ outing: WorkoutSummary) async {
+        let merges = outingMerges.read()
+        guard OutingMerges.isMerged(outing, in: merges) else { return }
+        outingMerges.write(OutingMerges.separating(outing, in: merges))
+        await reload()
+    }
+
+    private func reload() async {
+        guard let request = lastRequest else { return }
+        await load(
+            goalMinutes: request.goalMinutes,
+            activeDays: request.activeDays,
+            waterGoalML: request.waterGoalML,
+            withHistory: request.withHistory
+        )
+    }
+
+    private struct Request {
+        var goalMinutes: Int
+        var activeDays: Set<Weekday>
+        var waterGoalML: Int?
+        var withHistory: Bool
     }
 
     private struct Source {

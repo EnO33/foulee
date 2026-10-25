@@ -147,4 +147,87 @@ struct RecapStoreTests {
             #expect(store.lastError != nil)
         }
     }
+
+    /// Merging writes the merge and reads the Bilan again, where the two
+    /// parts are one outing (#551). The read applies the merges, as the live
+    /// client does.
+    @Test("A merge, then a separation, each read the Bilan again")
+    func mergeAndSeparate() async throws {
+        let thursday = calendar.date(from: DateComponents(year: 2026, month: 10, day: 8, hour: 12))!
+        let parts = [0.0, 2_400].map { offset in
+            WorkoutSummary(
+                id: UUID(),
+                startedAt: thursday.addingTimeInterval(offset),
+                endedAt: thursday.addingTimeInterval(offset + 1_800),
+                durationSeconds: 1_800,
+                distanceKm: 2.4,
+                activeCalories: 120,
+                sourceName: "Foulée",
+                activity: .walking
+            )
+        }
+        let stored = LockedRef<[OutingMerge]>([])
+        let reads = LockedRef(0)
+        try await withDependencies {
+            $0.date = .constant(saturday)
+            $0.outingMerges = OutingMergeClient(read: { stored.value }, write: { stored.set($0) })
+            $0.healthKit = HealthKitClient(
+                requestAuthorization: { true },
+                todayMetrics: { .zero },
+                saveWorkout: { _ in },
+                dailyMinutes: { _ in [] },
+                recentWorkouts: { _ in
+                    reads.set(reads.value + 1)
+                    return OutingMerges.applying(stored.value, to: parts)
+                },
+                workoutDetail: { WorkoutDetail(summary: $0, heartRateSamples: [], stepsCount: 0) },
+                metricSeries: { _, _ in [] }
+            )
+        } operation: {
+            let store = RecapStore()
+            await store.load(goalMinutes: 20, activeDays: Set(Weekday.allCases))
+            #expect(store.recaps[.week]?.totals.outings == 2)
+
+            await store.merge(parts[0], with: parts[1])
+
+            #expect(reads.value == 2)
+            #expect(stored.value.count == 1)
+            #expect(store.recaps[.week]?.totals.outings == 1)
+            let merged = try #require(store.outings[.week]?.flatMap(\.workouts).first)
+            #expect(merged.legs.count == 2)
+
+            await store.separate(merged)
+
+            #expect(reads.value == 3)
+            #expect(stored.value.isEmpty)
+            #expect(store.recaps[.week]?.totals.outings == 2)
+        }
+    }
+
+    @Test("Outings that cannot be merged are left alone, and nothing is read")
+    func refusedMerge() async {
+        let thursday = calendar.date(from: DateComponents(year: 2026, month: 10, day: 8, hour: 8))!
+        let morning = WorkoutSummary(
+            id: UUID(),
+            startedAt: thursday,
+            endedAt: thursday.addingTimeInterval(1_800),
+            durationSeconds: 1_800,
+            distanceKm: 2.4,
+            activeCalories: 120,
+            sourceName: "Foulée"
+        )
+        var evening = morning
+        evening.id = UUID()
+        evening.startedAt = thursday.addingTimeInterval(36_000)
+        evening.endedAt = thursday.addingTimeInterval(37_800)
+        let written = LockedRef(false)
+        await withDependencies {
+            $0.date = .constant(saturday)
+            $0.outingMerges = OutingMergeClient(read: { [] }, write: { _ in written.set(true) })
+        } operation: {
+            let store = RecapStore()
+            await store.merge(morning, with: evening)
+            #expect(!written.value)
+        }
+    }
 }
