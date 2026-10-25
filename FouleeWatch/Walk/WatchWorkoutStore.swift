@@ -28,8 +28,12 @@ final class WatchWorkoutStore: NSObject {
     /// From the tap on « Arrêter » until the summary: saving takes seconds, and
     /// the screen has to say so — and ignore a second tap (issue #380).
     private(set) var isSaving = false
+    /// From launch until a session left running is picked up, or found absent
+    /// (issue #554): a second launch signal must not recover it twice.
+    @ObservationIgnored var isRecovering = false
 
-    @ObservationIgnored private let healthKit: WatchWorkoutHealthKit
+    /// Internal for `WatchWorkoutStore+Recovery` (issue #554).
+    @ObservationIgnored let healthKit: WatchWorkoutHealthKit
     /// The time every pause, leg and batch is dated with. Injected so tests
     /// drive it instead of racing the runner's clock (issue #406): a pause
     /// test once failed because a slow machine took over a second to start a
@@ -244,14 +248,27 @@ final class WatchWorkoutStore: NSObject {
             try await healthKit.startSession(Self.configuration(for: activity), now, leg, self)
         }
         guard let handle else { return }
+        await adopt(handle, activity: activity, legStartedAt: now, after: [])
+    }
+
+    /// Make `handle` the leg in flight of an outing whose earlier legs are
+    /// `finished`, and show it. Internal for `recover()` (issue #554).
+    func adopt(
+        _ handle: WatchWorkoutSessionHandle,
+        activity: SessionActivity,
+        legStartedAt start: Date,
+        after finished: [WatchWorkoutSegment],
+        outing: UUID? = nil
+    ) async {
+        if let outing { outingID = outing }
         sessionHandle = handle
         lastMirrorSendAt = nil
         paceEstimator = PaceEstimator()
         distanceTrail = DistanceTrail()
         splitRecorder = SplitRecorder()
         await offerMirror(handle)
-        finishedLegs = []
-        legStartedAt = now
+        finishedLegs = finished
+        legStartedAt = start
         legActivity = activity
         legIdentity = UUID()
         currentLeg = .zero

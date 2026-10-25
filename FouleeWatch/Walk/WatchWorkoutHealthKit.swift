@@ -30,6 +30,31 @@ struct WatchWorkoutHealthKit: Sendable {
         _ leg: OutingLeg,
         _ delegate: any HKWorkoutSessionDelegate & HKLiveWorkoutBuilderDelegate
     ) async throws -> WatchWorkoutSessionHandle
+    /// The session watchOS kept running while the app was gone — a crash, a
+    /// relaunch for memory, a reboot — wired to `delegate`, or `nil` when
+    /// there is none (issue #554). Defaulted so a stub that has nothing to
+    /// recover needs no closure.
+    var recoverSession: @MainActor (
+        _ delegate: any HKWorkoutSessionDelegate & HKLiveWorkoutBuilderDelegate
+    ) async -> WatchRecoveredSession? = { _ in nil }
+    /// The legs of the outing `outingID` already saved in Santé, oldest first:
+    /// what a recovered outing did before the app went (issue #554).
+    var savedLegs: @MainActor (_ outingID: UUID) async -> [WatchWorkoutSegment] = { _ in [] }
+}
+
+/// A session found running at launch, and what the store needs to pick it up
+/// where it was (issue #554).
+struct WatchRecoveredSession: Sendable {
+    var handle: WatchWorkoutSessionHandle
+    var activity: SessionActivity
+    /// When the leg began: its builder's start.
+    var startedAt: Date
+    /// The stamp the leg was opened with (#316); `nil` for a session older
+    /// than the stamp, which then starts an outing of its own.
+    var leg: OutingLeg?
+    /// The builder's own clock, paused stretches left out.
+    var elapsed: TimeInterval
+    var isPaused: Bool
 }
 
 /// One live session/builder pair reduced to the operations the store needs.
@@ -183,9 +208,9 @@ extension WatchWorkoutHealthKit {
     /// Built in one go once the leg is saved, not fed fix by fix while it runs:
     /// a leg's end is only known after the fact (it is dated at the detected
     /// boundary, up to a minute back), and a fix inserted live past that
-    /// boundary could not be taken back out. The cost is a route lost if the
-    /// app dies mid-leg — the workout recovery of `WatchWorkoutRecovery` saves
-    /// the workout, not the route.
+    /// boundary could not be taken back out. The cost is the route so far lost
+    /// if the app dies mid-leg: `WatchWorkoutStore.recover()` picks the
+    /// session up, not the fixes the app held (issue #554).
     @MainActor private static func saveRoute(
         _ fixes: [CLLocation],
         for workout: HKWorkout,
@@ -235,27 +260,127 @@ extension WatchWorkoutHealthKit {
                     )
                 }
 
-                return WatchWorkoutSessionHandle(
-                    sessionID: ObjectIdentifier(session),
-                    builderID: ObjectIdentifier(builder),
-                    startMirroring: { try await session.startMirroringToCompanionDevice() },
-                    sendToRemote: { try await session.sendToRemoteWorkoutSession(data: $0) },
-                    end: { session.end() },
-                    endCollection: { try await builder.endCollection(at: $0) },
-                    finishWorkout: { route in
-                        guard let workout = try await builder.finishWorkout() else { return }
-                        await saveRoute(route, for: workout, in: store)
-                    },
-                    collectionEndDate: { builder.endDate },
-                    pause: { session.pause() },
-                    resume: { session.resume() },
-                    addClimb: { meters in
-                        try await builder.addMetadata([
-                            HKMetadataKeyElevationAscended: HKQuantity(unit: .meter(), doubleValue: meters)
-                        ])
-                    }
-                )
+                return handle(for: session, builder: builder, in: store)
+            },
+            recoverSession: { delegate in
+                await recoverSession(in: store, delegate: delegate)
+            },
+            savedLegs: { outingID in
+                await savedLegs(of: outingID, in: store)
             }
         )
+    }
+
+    @MainActor private static func handle(
+        for session: HKWorkoutSession,
+        builder: HKLiveWorkoutBuilder,
+        in store: HKHealthStore
+    ) -> WatchWorkoutSessionHandle {
+        WatchWorkoutSessionHandle(
+            sessionID: ObjectIdentifier(session),
+            builderID: ObjectIdentifier(builder),
+            startMirroring: { try await session.startMirroringToCompanionDevice() },
+            sendToRemote: { try await session.sendToRemoteWorkoutSession(data: $0) },
+            end: { session.end() },
+            endCollection: { try await builder.endCollection(at: $0) },
+            finishWorkout: { route in
+                guard let workout = try await builder.finishWorkout() else { return }
+                await saveRoute(route, for: workout, in: store)
+            },
+            collectionEndDate: { builder.endDate },
+            pause: { session.pause() },
+            resume: { session.resume() },
+            addClimb: { meters in
+                try await builder.addMetadata([
+                    HKMetadataKeyElevationAscended: HKQuantity(unit: .meter(), doubleValue: meters)
+                ])
+            }
+        )
+    }
+
+    /// Pick up the session watchOS kept running (issue #554): the delegates
+    /// and the data source go back on, collection never stopped.
+    ///
+    /// A session of a sport this app does not record cannot be shown: it is
+    /// finished instead, as recovery always did, so it still lands in Santé.
+    @MainActor private static func recoverSession(
+        in store: HKHealthStore,
+        delegate: any HKWorkoutSessionDelegate & HKLiveWorkoutBuilderDelegate
+    ) async -> WatchRecoveredSession? {
+        let found = await withCheckedContinuation { (continuation: CheckedContinuation<RecoveredSessionBox, Never>) in
+            store.recoverActiveWorkoutSession { session, error in
+                if let error {
+                    FouleeLog.session.error("séance non retrouvée : \(error.localizedDescription, privacy: .public)")
+                }
+                continuation.resume(returning: RecoveredSessionBox(session: session))
+            }
+        }
+        guard let session = found.session else { return nil }
+        let builder = session.associatedWorkoutBuilder()
+        session.delegate = delegate
+        builder.delegate = delegate
+        builder.dataSource = makeDataSource(healthStore: store, configuration: session.workoutConfiguration)
+        guard let activity = SessionActivity(session.workoutConfiguration.activityType),
+              let startedAt = builder.startDate ?? session.startDate else {
+            FouleeLog.session.error("séance retrouvée illisible, enregistrée telle quelle")
+            session.end()
+            builder.endCollection(withEnd: .now) { _, _ in
+                builder.finishWorkout { _, _ in }
+            }
+            return nil
+        }
+        FouleeLog.session.notice("séance retrouvée après relance : \(activity.label, privacy: .public)")
+        return WatchRecoveredSession(
+            handle: handle(for: session, builder: builder, in: store),
+            activity: activity,
+            startedAt: startedAt,
+            leg: OutingLeg(metadata: builder.metadata),
+            elapsed: builder.elapsedTime(at: .now),
+            isPaused: session.state == .paused
+        )
+    }
+
+    /// The legs Santé already holds for `outingID`, with the totals the
+    /// screen sums. Nothing on a failed read: the outing goes on from the leg
+    /// in flight.
+    @MainActor private static func savedLegs(of outingID: UUID, in store: HKHealthStore) async -> [WatchWorkoutSegment] {
+        let predicate = HKQuery.predicateForObjects(
+            withMetadataKey: FouleeWorkoutMetadata.outingID,
+            allowedValues: [outingID.uuidString]
+        )
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.workout(predicate)],
+            sortDescriptors: [SortDescriptor(\.startDate)]
+        )
+        guard let workouts = try? await descriptor.result(for: store) else { return [] }
+        return workouts.map(segment(of:))
+    }
+
+    /// One saved leg as the store counts it.
+    nonisolated static func segment(of workout: HKWorkout) -> WatchWorkoutSegment {
+        func sum(_ identifier: HKQuantityTypeIdentifier, in unit: HKUnit) -> Double {
+            workout.statistics(for: HKQuantityType(identifier))?.sumQuantity()?.doubleValue(for: unit) ?? 0
+        }
+        return WatchWorkoutSegment(
+            id: workout.uuid,
+            activity: SessionActivity(workout.workoutActivityType) ?? .walking,
+            start: workout.startDate,
+            end: workout.endDate,
+            steps: Int(sum(.stepCount, in: .count())),
+            distanceMeters: sum(.distanceWalkingRunning, in: .meter()),
+            activeCalories: Int(sum(.activeEnergyBurned, in: .kilocalorie())),
+            pausedDuration: max(0, workout.endDate.timeIntervalSince(workout.startDate) - workout.duration)
+        )
+    }
+}
+
+/// Carries the recovered session out of HealthKit's callback. Unchecked
+/// because `HKWorkoutSession` is not `Sendable`; it is only ever touched on
+/// the main actor once out.
+private final class RecoveredSessionBox: @unchecked Sendable {
+    let session: HKWorkoutSession?
+
+    init(session: HKWorkoutSession?) {
+        self.session = session
     }
 }

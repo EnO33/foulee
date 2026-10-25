@@ -9,6 +9,8 @@ struct WatchRootView: View {
     /// Local to the idle route — a session in flight clears it.
     @State private var isChoosingActivity = false
     private let pendingStart = WatchPendingStart.shared
+    /// A session that outlived the app, to pick up (issue #554).
+    private let recovery = WatchWorkoutRecovery.shared
     /// The phone's session in flight, shown while the wrist records nothing
     /// itself (issue #342).
     private let phoneSession = WatchPhoneSession.shared
@@ -58,10 +60,16 @@ struct WatchRootView: View {
         .animation(.easeOut(duration: 0.25), value: store.state)
         .animation(.easeOut(duration: 0.25), value: isChoosingActivity)
         .task { await WatchWaterBackgroundDelivery.start() }
-        // A start asked for by the phone (issue #283). Drained on appear *and*
+        // A session that outlived the app first (issue #554): a start the
+        // phone asked for must not open a second one beside it. Then a start
+        // asked for by the phone (issue #283), drained on appear *and*
         // watched, because both orders happen: the request may have launched
         // this app, or landed while it was already on screen.
-        .task { startIfPhoneAsked() }
+        .task {
+            await store.recover()
+            startIfPhoneAsked()
+        }
+        .onChange(of: recovery.requests) { _, _ in Task { await store.recover() } }
         .onChange(of: pendingStart.activity) { _, _ in startIfPhoneAsked() }
     }
 

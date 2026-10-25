@@ -19,10 +19,8 @@ struct FouleeWatchApp: App {
         // Handle "J'ai bu" / "Rappelle-moi" taps on the hydration banner when
         // it's shown on the watch — without this the tap only opens the app.
         WatchHydrationNotificationCenter.shared.configure()
-        // A workout session survives a crashed process; finish it so the walk
-        // is saved even when the system doesn't route the relaunch through
-        // `handleActiveWorkoutRecovery`.
-        WatchWorkoutRecovery.run()
+        // A workout session that survived a crashed process is picked up by
+        // `WatchRootView`, which owns the store (issue #554).
     }
 
     var body: some Scene {

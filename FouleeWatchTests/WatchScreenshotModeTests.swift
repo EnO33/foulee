@@ -310,8 +310,8 @@ struct WatchScreenshotModeTests {
             GuardSite(path: "FouleeWatch/Today/WatchTodayStore.swift", expected: 4),
             // start(activity:)
             GuardSite(path: "FouleeWatch/Walk/WatchWorkoutStore.swift", expected: 1),
-            // run()
-            GuardSite(path: "FouleeWatch/Walk/WatchWorkoutRecovery.swift", expected: 1),
+            // recover()
+            GuardSite(path: "FouleeWatch/Walk/WatchWorkoutStore+Recovery.swift", expected: 1),
             // start()
             GuardSite(path: "FouleeWatch/Health/WatchWaterBackgroundDelivery.swift", expected: 1),
             // …and the one call that can ever turn the flag on.
