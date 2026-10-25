@@ -285,13 +285,14 @@ nonisolated private func fetchWorkoutDetail(
     // not a failed detail.
     async let routeTask = fetchRouteSegments(for: summary, store: store)
     // Foulée walks carry their measured step count in metadata (we don't write
-    // step samples); fall back to a window query for walks from other sources
-    // (Watch, Apple Workouts).
+    // step samples); fall back to a query for walks from other sources
+    // (Watch, Apple Workouts), leg by leg: the steps of a stop between the
+    // parts of a merged outing are not the outing's (#553).
     let steps: Int
     if summary.steps > 0 {
         steps = summary.steps
     } else {
-        steps = try await fetchStepsCount(in: window, store: store)
+        steps = try await fetchStepsCount(in: OutingBreakdown.stepWindows(of: summary), store: store)
     }
     return WorkoutDetail(
         summary: summary,
@@ -374,6 +375,19 @@ nonisolated private func fetchHeartRateSamples(
 /// when the recording app didn't link them to the workout; treat
 /// `HKError.noDataAvailable` as 0 since "0 steps" is the right UI
 /// answer when nothing matched.
+/// The steps of every window of `windows`, read in parallel and summed.
+nonisolated private func fetchStepsCount(
+    in windows: [DateInterval],
+    store: HKHealthStore
+) async throws -> Int {
+    try await withThrowingTaskGroup(of: Int.self) { group in
+        for window in windows {
+            group.addTask { try await fetchStepsCount(in: window, store: store) }
+        }
+        return try await group.reduce(0, +)
+    }
+}
+
 nonisolated private func fetchStepsCount(
     in window: DateInterval,
     store: HKHealthStore
