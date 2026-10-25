@@ -9,16 +9,16 @@ import Foundation
 /// outing would stay anyway. The merge is kept on the iPhone and applied when
 /// the workouts are read: the parts become the legs of one outing, the way the
 /// watch's legs are (#317).
-nonisolated public struct OutingMerge: Codable, Hashable, Sendable, Identifiable {
+nonisolated struct OutingMerge: Codable, Hashable, Sendable {
     /// Stamped as the outing identifier of every part (`OutingLeg`).
-    public var id: UUID
+    var id: UUID
     /// The Santé workouts the outing is made of, whichever row showed them.
-    public var workoutIDs: Set<UUID>
+    var workoutIDs: Set<UUID>
     /// When the first part began: what a merge is forgotten by, once no read
     /// can reach it any more.
-    public var startedAt: Date
+    var startedAt: Date
 
-    public init(id: UUID = UUID(), workoutIDs: Set<UUID>, startedAt: Date) {
+    init(id: UUID = UUID(), workoutIDs: Set<UUID>, startedAt: Date) {
         self.id = id
         self.workoutIDs = workoutIDs
         self.startedAt = startedAt
@@ -26,14 +26,14 @@ nonisolated public struct OutingMerge: Codable, Hashable, Sendable, Identifiable
 }
 
 /// The rules of `OutingMerge`. Pure and total, like `OutingGrouping`.
-nonisolated public enum OutingMerges {
+nonisolated enum OutingMerges {
     /// How long a stop may last between two parts of one outing. Beyond an
     /// hour, two outings are two outings: a walk to work and the walk back.
-    public static let maximumGap: TimeInterval = 60 * 60
+    static let maximumGap: TimeInterval = 60 * 60
 
     /// A merge older than this is forgotten: the Bilan reads twelve months
     /// back, and a merge nothing reads only weighs on the store.
-    public static let retention: TimeInterval = 400 * 24 * 60 * 60
+    static let retention: TimeInterval = 400 * 24 * 60 * 60
 
     /// Whether `first` and `second`, in either order, can be one outing.
     ///
@@ -42,7 +42,7 @@ nonisolated public enum OutingMerges {
     /// with at most `maximumGap` between them. A Garmin outing Santé doesn't
     /// have yet (#479) is refused: its id changes the day Garmin Connect
     /// writes it, and the merge would silently come undone.
-    public static func canMerge(_ first: WorkoutSummary, _ second: WorkoutSummary) -> Bool {
+    static func canMerge(_ first: WorkoutSummary, _ second: WorkoutSummary) -> Bool {
         let (earlier, later) = first.startedAt <= second.startedAt ? (first, second) : (second, first)
         guard !GarminPendingOutings.isPending(earlier), !GarminPendingOutings.isPending(later) else { return false }
         let gap = later.startedAt.timeIntervalSince(earlier.endedAt)
@@ -56,7 +56,7 @@ nonisolated public enum OutingMerges {
     /// The workouts are rejoined and deduplicated first, as every list of
     /// outings is, so a neighbour is a row the wearer sees, never a leg of one
     /// or the Strava copy of another.
-    public static func neighbours(
+    static func neighbours(
         of outing: WorkoutSummary,
         in workouts: [WorkoutSummary]
     ) -> (previous: WorkoutSummary?, next: WorkoutSummary?) {
@@ -75,7 +75,7 @@ nonisolated public enum OutingMerges {
     /// A part that already belongs to a merge brings it whole: merging a third
     /// outing into two already merged leaves one merge of three, never two
     /// merges sharing a workout.
-    public static func merging(
+    static func merging(
         _ first: WorkoutSummary,
         _ second: WorkoutSummary,
         in merges: [OutingMerge],
@@ -93,14 +93,14 @@ nonisolated public enum OutingMerges {
 
     /// `merges` without the one `outing` belongs to: its parts read back as
     /// the outings they were.
-    public static func separating(_ outing: WorkoutSummary, in merges: [OutingMerge]) -> [OutingMerge] {
+    static func separating(_ outing: WorkoutSummary, in merges: [OutingMerge]) -> [OutingMerge] {
         let parts = workoutIDs(of: outing)
         return merges.filter { $0.workoutIDs.isDisjoint(with: parts) }
     }
 
     /// Whether `outing` is one the wearer merged — what « Séparer » is offered
     /// for. A watch outing regrouped from its legs is not: nothing can undo it.
-    public static func isMerged(_ outing: WorkoutSummary, in merges: [OutingMerge]) -> Bool {
+    static func isMerged(_ outing: WorkoutSummary, in merges: [OutingMerge]) -> Bool {
         let parts = workoutIDs(of: outing)
         return merges.contains { !$0.workoutIDs.isDisjoint(with: parts) }
     }
@@ -112,7 +112,7 @@ nonisolated public enum OutingMerges {
     /// The stamp replaces a watch outing's own: every leg of it belongs to the
     /// merge too, and one identifier is what ties them all together. Nothing
     /// is lost, since the stamp only lives in what was read.
-    public static func applying(_ merges: [OutingMerge], to workouts: [WorkoutSummary]) -> [WorkoutSummary] {
+    static func applying(_ merges: [OutingMerge], to workouts: [WorkoutSummary]) -> [WorkoutSummary] {
         var legs: [UUID: OutingLeg] = [:]
         for merge in merges {
             let parts = workouts
@@ -132,7 +132,7 @@ nonisolated public enum OutingMerges {
     }
 
     /// `merges` without those begun more than `retention` before `now`.
-    public static func kept(_ merges: [OutingMerge], now: Date) -> [OutingMerge] {
+    static func kept(_ merges: [OutingMerge], now: Date) -> [OutingMerge] {
         merges.filter { now.timeIntervalSince($0.startedAt) < retention }
     }
 
