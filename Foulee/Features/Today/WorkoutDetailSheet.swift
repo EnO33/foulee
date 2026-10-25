@@ -13,6 +13,8 @@ import SwiftUI
 /// yet (#479) shows its summary alone.
 struct WorkoutDetailSheet: View {
     let summary: WorkoutSummary
+    /// What the outing can be merged with, from the Bilan (issue #552).
+    var merging: OutingMergeOptions?
 
     @Dependency(\.healthKit) private var healthKit
 
@@ -59,6 +61,9 @@ struct WorkoutDetailSheet: View {
                         heartRateSection(detail: detail)
                     }
                     metricsGrid(detail: detail)
+                    if let merging, !merging.isEmpty {
+                        WorkoutDetailMerge(summary: summary, options: merging)
+                    }
                     source(of: detail.summary)
                         .padding(.top, 4)
                     if let lastError {

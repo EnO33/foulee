@@ -102,6 +102,16 @@ final class RecapStore {
         return content
     }
 
+    /// The outings of the last read `outing` can be merged with (issue #552).
+    func mergeNeighbours(of outing: WorkoutSummary) -> (previous: WorkoutSummary?, next: WorkoutSummary?) {
+        OutingMerges.neighbours(of: outing, in: source?.inputs.workouts ?? [])
+    }
+
+    /// Whether `outing` is one the wearer merged, and can separate.
+    func isMerged(_ outing: WorkoutSummary) -> Bool {
+        OutingMerges.isMerged(outing, in: outingMerges.read())
+    }
+
     /// Make `outing` and `other` one outing (issue #549), then read the
     /// Bilan again: Santé is not rewritten, the merge applies when it is read.
     func merge(_ outing: WorkoutSummary, with other: WorkoutSummary) async {

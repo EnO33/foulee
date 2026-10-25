@@ -137,7 +137,7 @@ struct RecapScreen: View {
             }
             .overlay(alignment: .topTrailing) { cornerButtons }
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: WorkoutSummary.self) { WorkoutDetailSheet(summary: $0) }
+            .navigationDestination(for: WorkoutSummary.self) { WorkoutDetailSheet(summary: $0, merging: mergeOptions(for: $0)) }
         }
         .onChange(of: content?.outings, initial: true) { _, days in openPendingOuting(in: days) }
         .presentationBackground { SheetBackground() }
@@ -161,6 +161,25 @@ struct RecapScreen: View {
         if let summary = OutingDay.outing(overlapping: outing, in: days) {
             path = [summary]
         }
+    }
+
+    /// What `outing` can be merged with (issue #552). Merging or separating
+    /// closes the detail on the Bilan, read again with the outing changed.
+    private func mergeOptions(for outing: WorkoutSummary) -> OutingMergeOptions {
+        let neighbours = store.mergeNeighbours(of: outing)
+        return OutingMergeOptions(
+            previous: neighbours.previous,
+            next: neighbours.next,
+            isMerged: store.isMerged(outing),
+            merge: { other in
+                path = []
+                Task { await store.merge(outing, with: other) }
+            },
+            separate: {
+                path = []
+                Task { await store.separate(outing) }
+            }
+        )
     }
 
     /// One page back (`-1`) or forward (`1`), within the history. A swipe to

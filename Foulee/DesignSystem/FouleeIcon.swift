@@ -31,4 +31,6 @@ nonisolated enum FouleeIcon {
     static let sparkle = "sparkles"
     static let target = "target"
     static let watch = "applewatch"
+    static let merge = "arrow.triangle.merge"
+    static let separate = "arrow.triangle.branch"
 }
