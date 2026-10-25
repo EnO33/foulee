@@ -56,7 +56,7 @@ nonisolated public enum OutingMerges {
     /// The workouts are rejoined and deduplicated first, as every list of
     /// outings is, so a neighbour is a row the wearer sees, never a leg of one
     /// or the Strava copy of another.
-    static func neighbours(
+    public static func neighbours(
         of outing: WorkoutSummary,
         in workouts: [WorkoutSummary]
     ) -> (previous: WorkoutSummary?, next: WorkoutSummary?) {
