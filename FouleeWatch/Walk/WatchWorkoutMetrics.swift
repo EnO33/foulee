@@ -12,6 +12,8 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// The outing's climb so far, in metres (issue #535); 0 without a
     /// barometer.
     var climbMeters: Double = 0
+    /// Its descent, measured the same way (issue #565).
+    var descentMeters: Double = 0
     /// Virtual start of the session: the instant `elapsed` would have been zero
     /// (issue #266).
     ///

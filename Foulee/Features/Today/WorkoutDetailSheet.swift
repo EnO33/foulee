@@ -137,8 +137,13 @@ struct WorkoutDetailSheet: View {
                     label: "Allure",
                     value: paceText(detail)
                 )
+                // Climb and descent apart (#565), each only when the source
+                // wrote one.
                 if let climb = detail.summary.climbText {
-                    metricCard(icon: FouleeIcon.climb, tint: FouleeColor.success, label: "Dénivelé", value: climb)
+                    metricCard(icon: FouleeIcon.climb, tint: FouleeColor.success, label: "D+", value: climb)
+                }
+                if let descent = detail.summary.descentText {
+                    metricCard(icon: FouleeIcon.descent, tint: FouleeColor.success, label: "D−", value: descent)
                 }
             }
         }
