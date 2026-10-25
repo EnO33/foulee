@@ -7,12 +7,19 @@ import HealthKit
 // HealthKitClient+Live.swift within the file-length limit.
 
 /// The résumé's workouts of the last `daysBack` days: Santé's, plus the
-/// Garmin outings it doesn't have yet (ADR 0009, D2; #479). Newest first.
+/// Garmin outings it doesn't have yet (ADR 0009, D2; #479), the parts of an
+/// outing the wearer merged stamped as its legs (#549). Newest first.
+///
+/// The merges are applied here, once, so every reader — the Bilan, the
+/// session's highlight, its notification — sees the merged outing.
 nonisolated func recentWorkoutSummaries(
     store: HKHealthStore,
     daysBack: Int
 ) async throws -> [WorkoutSummary] {
-    let healthKit = try await healthKitWorkoutSummaries(store: store, daysBack: daysBack)
+    let healthKit = OutingMerges.applying(
+        OutingMergeStore.read(),
+        to: try await healthKitWorkoutSummaries(store: store, daysBack: daysBack)
+    )
     guard let window = WorkoutActivityFilter.recentWindow(daysBack: daysBack) else { return healthKit }
     let pending = GarminPendingOutingStore.remaining(healthKitWorkouts: healthKit.map {
         ActiveMinutes.WorkoutInterval(start: $0.startedAt, duration: $0.durationSeconds)
