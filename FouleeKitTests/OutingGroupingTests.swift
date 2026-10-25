@@ -66,6 +66,24 @@ struct OutingGroupingTests {
         #expect(row.activityIcon == ActivityGlyph.mixedCardio)
     }
 
+    /// Each leg brings its own climb and descent (#565); the outing adds them
+    /// up apart.
+    @Test("An outing climbs and descends what its legs did, each on its own")
+    func legsElevation() throws {
+        let id = UUID()
+        var walk = leg(.walking, from: 480, lasting: 10, outing: OutingLeg(outingID: id, index: 0))
+        walk.elevationMeters = 40
+        walk.descentMeters = 5
+        var run = leg(.running, from: 490, lasting: 10, outing: OutingLeg(outingID: id, index: 1))
+        run.elevationMeters = 10
+        run.descentMeters = 45
+
+        let row = try #require(OutingGrouping.groupingLegs([walk, run]).first)
+
+        #expect(row.elevationMeters == 50)
+        #expect(row.descentMeters == 50)
+    }
+
     @Test("Two outings the same day stay two rows, however close")
     func distinctOutingsStayApart() {
         let morning = UUID()

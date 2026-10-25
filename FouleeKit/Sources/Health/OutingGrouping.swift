@@ -79,6 +79,7 @@ nonisolated enum OutingGrouping {
         row.activeCalories = legs.map(\.activeCalories).reduce(0, +)
         row.steps = legs.map(\.steps).reduce(0, +)
         row.elevationMeters = legs.map(\.elevationMeters).reduce(0, +)
+        row.descentMeters = legs.map(\.descentMeters).reduce(0, +)
         row.activity = dominantActivity(of: legs)
         row.legs = legs
         return row

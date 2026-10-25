@@ -196,7 +196,10 @@ struct ActiveWalkScreen: View {
                     ringDivider
                     metric(value: "\(session.estimatedCalories) kcal", label: "Énergie")
                     ringDivider
-                    metric(value: "\(Int(session.elevationGainMeters)) m", label: "Dénivelé")
+                    metric(
+                        value: "\(Int(session.elevationGainMeters)) / \(Int(session.elevationLossMeters)) m",
+                        label: "D+ / D−"
+                    )
                 }
                 .padding(.top, 8)
             }
@@ -209,7 +212,8 @@ struct ActiveWalkScreen: View {
             "\(session.steps.formattedFR) pas, "
             + "\(session.distanceKm.kmText(fractionDigits: 1)), "
             + "\(session.estimatedCalories) kilocalories, "
-            + "\(Int(session.elevationGainMeters)) mètres de dénivelé"
+            + "\(Int(session.elevationGainMeters)) mètres de montée, "
+            + "\(Int(session.elevationLossMeters)) mètres de descente"
         )
     }
 
@@ -367,6 +371,9 @@ private extension ActiveWalkScreen {
         var parts = ["\(session.steps.formattedFR) pas", session.distanceKm.kmText()]
         if session.elevationGainMeters >= 1 {
             parts.append("↑ \(Int(session.elevationGainMeters)) m")
+        }
+        if session.elevationLossMeters >= 1 {
+            parts.append("↓ \(Int(session.elevationLossMeters)) m")
         }
         return parts.joined(separator: " · ")
     }

@@ -92,11 +92,13 @@ struct RecapDayTimeline: View {
         }
     }
 
-    /// « 5,2 km · ↑ 120 m · 142 kcal · Garmin Connect »: the climb beside the
-    /// distance, when the source wrote one (#537).
+    /// « 5,2 km · ↑ 120 m · ↓ 115 m · 142 kcal · Garmin Connect »: the climb
+    /// and the descent beside the distance, when the source wrote them (#537,
+    /// #565).
     private func figures(of workout: WorkoutSummary, spoken: Bool = false) -> String {
         let climb = spoken ? workout.climbSpokenText : workout.climbText
-        return [workout.distanceKm.kmText(fractionDigits: 1), climb, workout.caloriesText, workout.sourceName]
+        let descent = spoken ? workout.descentSpokenText : workout.descentText
+        return [workout.distanceKm.kmText(fractionDigits: 1), climb, descent, workout.caloriesText, workout.sourceName]
             .compactMap { $0 }
             .joined(separator: " · ")
     }

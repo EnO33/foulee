@@ -7,8 +7,9 @@ nonisolated extension WorkoutSummary {
     /// don't write those as samples — they'd double-count the daily totals);
     /// for sessions from other sources (Watch, Apple Workouts) they fall back
     /// to the workout's statistics. Energy goes the other way round — see
-    /// below. Elevation gain comes from the standard
-    /// `HKMetadataKeyElevationAscended` metadata (0 when not recorded).
+    /// below. Elevation gain and descent come from the standard
+    /// `HKMetadataKeyElevationAscended` and `HKMetadataKeyElevationDescended`
+    /// metadata (0 when not recorded).
     init(workout: HKWorkout) {
         let metadata = workout.metadata
         let distanceMeters = (metadata?[FouleeWorkoutMetadata.distanceMeters] as? Double)
@@ -39,6 +40,8 @@ nonisolated extension WorkoutSummary {
         let steps = metadata?[FouleeWorkoutMetadata.steps] as? Int ?? 0
         let elevation = (metadata?[HKMetadataKeyElevationAscended] as? HKQuantity)?
             .doubleValue(for: .meter()) ?? 0
+        let descent = (metadata?[HKMetadataKeyElevationDescended] as? HKQuantity)?
+            .doubleValue(for: .meter()) ?? 0
         self.init(
             id: workout.uuid,
             startedAt: workout.startDate,
@@ -48,6 +51,7 @@ nonisolated extension WorkoutSummary {
             activeCalories: Int(kcal),
             steps: steps,
             elevationMeters: elevation,
+            descentMeters: descent,
             sourceName: workout.sourceRevision.source.name,
             // Already on the workout, and read at last (issue #245): the type
             // was available here all along, it simply went nowhere.

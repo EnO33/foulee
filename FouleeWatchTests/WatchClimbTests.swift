@@ -21,6 +21,7 @@ struct WatchClimbTests {
         store.refreshActivityTotals(at: stub.clock.now)
         if case .active(let metrics) = store.state {
             #expect(metrics.climbMeters == 85.4)
+            #expect(metrics.descentMeters == 42)
         } else {
             Issue.record("expected an active outing, got \(store.state)")
         }
@@ -52,5 +53,8 @@ struct WatchClimbTests {
         metrics.climbMeters = 119.6
         let hilly = WatchFinishedView(metrics: metrics, saveFailed: false, errorMessage: nil, onRetry: {}, onDone: {})
         #expect(hilly.figuresText.hasSuffix(" · ↑ 120 m"))
+        metrics.descentMeters = 114.8
+        let loop = WatchFinishedView(metrics: metrics, saveFailed: false, errorMessage: nil, onRetry: {}, onDone: {})
+        #expect(loop.figuresText.hasSuffix(" · ↑ 120 m · ↓ 115 m"))
     }
 }

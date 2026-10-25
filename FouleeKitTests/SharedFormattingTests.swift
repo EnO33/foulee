@@ -16,8 +16,23 @@ struct WalkFormattingTests {
         #expect(outing(climb: 120).climbText == "↑ 120 m")
         #expect(outing(climb: 1_249.6).climbText == "↑ \(1_250.formattedFR) m")
         #expect(outing(climb: 0.4).climbText == nil)
-        #expect(outing(climb: 120).climbSpokenText == "120 mètres de dénivelé")
+        #expect(outing(climb: 120).climbSpokenText == "120 mètres de montée")
         #expect(outing(climb: 0.4).climbSpokenText == nil)
+    }
+
+    /// The descent beside the climb, never added to it (#565).
+    @Test("A descent reads « ↓ 115 m », and none under a metre")
+    func descentText() {
+        func outing(descent: Double) -> WorkoutSummary {
+            WorkoutSummary(
+                id: UUID(), startedAt: .distantPast, endedAt: .distantPast, durationSeconds: 0,
+                distanceKm: 0, activeCalories: 0, descentMeters: descent, sourceName: "Foulée"
+            )
+        }
+        #expect(outing(descent: 115).descentText == "↓ 115 m")
+        #expect(outing(descent: 0.4).descentText == nil)
+        #expect(outing(descent: 115).descentSpokenText == "115 mètres de descente")
+        #expect(outing(descent: 0.4).descentSpokenText == nil)
     }
 
     @Test("Under an hour reads as mm:ss")

@@ -16,6 +16,9 @@ nonisolated public struct WorkoutSummary: Equatable, Hashable, Sendable, Identif
     /// Elevation gain (metres) from `HKMetadataKeyElevationAscended` — 0 when
     /// the source didn't record it. Defaulted so existing initialisers compile.
     public var elevationMeters: Double = 0
+    /// Descent (metres) from `HKMetadataKeyElevationDescended` — 0 when the
+    /// source didn't record it (issue #565). Never added to the climb.
+    public var descentMeters: Double = 0
     /// "Foulée", "Forme", "Apple Watch", etc. — read from
     /// `HKWorkout.sourceRevision.source.name`.
     public var sourceName: String
@@ -46,6 +49,7 @@ nonisolated public struct WorkoutSummary: Equatable, Hashable, Sendable, Identif
         activeCalories: Int,
         steps: Int = 0,
         elevationMeters: Double = 0,
+        descentMeters: Double = 0,
         sourceName: String,
         activity: RecordedActivity = .other,
         outing: OutingLeg? = nil,
@@ -59,6 +63,7 @@ nonisolated public struct WorkoutSummary: Equatable, Hashable, Sendable, Identif
         self.activeCalories = activeCalories
         self.steps = steps
         self.elevationMeters = elevationMeters
+        self.descentMeters = descentMeters
         self.sourceName = sourceName
         self.activity = activity
         self.outing = outing
@@ -93,10 +98,20 @@ nonisolated public extension WorkoutSummary {
         elevationMeters >= 1 ? "↑ \(Int(elevationMeters.rounded()).formattedFR) m" : nil
     }
 
-    /// The same climb as VoiceOver says it: « 120 mètres de dénivelé »,
-    /// not « flèche vers le haut ».
+    /// The same climb as VoiceOver says it: « 120 mètres de montée », not
+    /// « flèche vers le haut ».
     var climbSpokenText: String? {
-        elevationMeters >= 1 ? "\(Int(elevationMeters.rounded())) mètres de dénivelé" : nil
+        elevationMeters >= 1 ? "\(Int(elevationMeters.rounded())) mètres de montée" : nil
+    }
+
+    /// « ↓ 115 m », or `nil` when the source wrote no descent (issue #565).
+    var descentText: String? {
+        descentMeters >= 1 ? "↓ \(Int(descentMeters.rounded()).formattedFR) m" : nil
+    }
+
+    /// « 115 mètres de descente », for VoiceOver.
+    var descentSpokenText: String? {
+        descentMeters >= 1 ? "\(Int(descentMeters.rounded())) mètres de descente" : nil
     }
 
     /// « 08:00 → 08:41 » — the row, the detail and the bubbles all say it so.
