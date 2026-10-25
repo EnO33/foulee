@@ -16,6 +16,7 @@ struct GarminSessionSummaryTests {
             "duration": 1_800,
             "distanceM": 2_400,
             "ascentM": 120,
+            "descentM": 115,
             "steps": 3_100,
         ].merging(overrides) { _, new in new }
     }
@@ -29,6 +30,7 @@ struct GarminSessionSummaryTests {
         #expect(summary.durationSeconds == 1_800)
         #expect(summary.distanceMeters == 2_400)
         #expect(summary.ascentMeters == 120)
+        #expect(summary.descentMeters == 115)
         #expect(summary.steps == 3_100)
     }
 
@@ -38,6 +40,14 @@ struct GarminSessionSummaryTests {
         message["ascentM"] = nil
         #expect(try #require(GarminSessionSummary.decode(message)).ascentMeters == 0)
         #expect(try #require(GarminSessionSummary.decode(Self.message(["ascentM": -5]))).ascentMeters == 0)
+    }
+
+    @Test("A watch on an older build sends no descent: 0, the outing kept")
+    func withoutDescent() throws {
+        var message = Self.message()
+        message["descentM"] = nil
+        #expect(try #require(GarminSessionSummary.decode(message)).descentMeters == 0)
+        #expect(try #require(GarminSessionSummary.decode(Self.message(["descentM": -5]))).descentMeters == 0)
     }
 
     @Test("Another type, another version or no clock is refused whole")
@@ -88,6 +98,7 @@ struct GarminSessionSummaryTests {
         let summary = try JSONDecoder().decode(GarminSessionSummary.self, from: stored)
         #expect(summary.steps == 3_100)
         #expect(summary.ascentMeters == 0)
+        #expect(summary.descentMeters == 0)
         #expect(summary.route.isEmpty)
     }
 }
