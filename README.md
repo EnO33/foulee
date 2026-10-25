@@ -52,6 +52,13 @@ pace better than usual, a trend, the week or the month — and opens it in the
 Bilan. An outing recorded on the iPhone shows the same on its end screen: see
 [ADR 0010](docs/adr/0010-notification-de-seance.md) (French).
 
+An outing **cut in two** — the watch app relaunched mid-walk, a stop pressed
+by mistake — is merged back from its detail in the Bilan, with the outing
+right before or after it, an hour apart at most. Santé is not rewritten: the
+merge is kept on the iPhone and can be undone. The watch now picks up a
+session that outlived its app rather than finishing it: see
+[ADR 0011](docs/adr/0011-fusion-de-sorties.md) (French).
+
 ## Compatible watches
 
 - **Apple Watch** — native support (companion app, complications, live workouts).
