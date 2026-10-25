@@ -10,6 +10,7 @@ function sessionMessageCarriesTheWholeSummary(logger as Logger) as Boolean {
         :seconds => 1800,
         :meters => 2400,
         :ascent => 120,
+        :descent => 115,
         :steps => 3100
     }, false, [4884000, 235000, 4884100, 235000] as Array<Number>);
     Test.assertEqual(message["t"] as Object, "summary");
@@ -20,6 +21,7 @@ function sessionMessageCarriesTheWholeSummary(logger as Logger) as Boolean {
     Test.assertEqual(message["duration"] as Object, 1800);
     Test.assertEqual(message["distanceM"] as Object, 2400);
     Test.assertEqual(message["ascentM"] as Object, 120);
+    Test.assertEqual(message["descentM"] as Object, 115);
     Test.assertEqual(message["steps"] as Object, 3100);
     Test.assertEqual((message["route"] as Array<Number>).size(), 4);
 
@@ -30,7 +32,7 @@ function sessionMessageCarriesTheWholeSummary(logger as Logger) as Boolean {
 (:test)
 function sessionMessageNamesTheRun(logger as Logger) as Boolean {
     var message = SessionMessage.summary({
-        :startedAt => 0, :endedAt => 0, :seconds => 0, :meters => 0, :ascent => 0, :steps => 0
+        :startedAt => 0, :endedAt => 0, :seconds => 0, :meters => 0, :ascent => 0, :descent => 0, :steps => 0
     }, true, [] as Array<Number>);
     Test.assertEqual(message["sport"] as Object, "running");
     return true;

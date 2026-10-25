@@ -20,8 +20,9 @@ module SessionMessage {
     const SPORT_RUNNING = "running";
 
     //! `summary` is `SessionRecorder.summary()`: seconds recorded (pauses
-    //! excluded), metres, climb in metres (`ascentM`, #536: a phone that
-    //! predates it ignores the key), steps, heart rate, and the start and end
+    //! excluded), metres, climb and descent in metres (`ascentM`, #536;
+    //! `descentM`, #566: a phone that predates them ignores the keys), steps,
+    //! heart rate, and the start and end
     //! instants in epoch seconds. `route` is `SessionRecorder.route()`, `RouteMath`'s flat
     //! fixed-point points, empty without a fix.
     function summary(
@@ -38,6 +39,7 @@ module SessionMessage {
             "duration" => summary[:seconds] as Number,
             "distanceM" => summary[:meters] as Number,
             "ascentM" => summary[:ascent] as Number,
+            "descentM" => summary[:descent] as Number,
             "steps" => summary[:steps] as Number,
             "route" => route
         };

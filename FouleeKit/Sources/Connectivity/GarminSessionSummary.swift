@@ -9,13 +9,13 @@ import Foundation
 /// `FouleeConnectIQ/source/SessionMessage.mc`:
 ///
 ///     { "t": "summary", "v", "sport", "start", "end", "duration",
-///       "distanceM", "ascentM", "steps", "route" }
+///       "distanceM", "ascentM", "descentM", "steps", "route" }
 ///
 /// `start` and `end` are epoch seconds; `duration` is the recorded time in
 /// seconds, pauses excluded, so it can be shorter than `end - start`. `route`
 /// is flat `[lat, lon, lat, lon, …]` in degrees × 100 000, thinned on the
 /// watch (`RouteMath.mc`); a watch on an older build sends none, nor any
-/// `ascentM`, the climb in metres (#536).
+/// `ascentM`, the climb in metres (#536), nor `descentM`, the descent (#566).
 nonisolated public struct GarminSessionSummary: Codable, Equatable, Sendable {
     public static let messageType = "summary"
 
@@ -31,6 +31,8 @@ nonisolated public struct GarminSessionSummary: Codable, Equatable, Sendable {
     public var distanceMeters: Int
     /// The climb, in metres; 0 from a watch on an older build (#536).
     public var ascentMeters: Int
+    /// The descent, in metres; 0 from a watch on an older build (#566).
+    public var descentMeters: Int
     public var steps: Int
     /// The outing's route, thinned on the watch. Empty without a fix.
     public var route: [Coordinate]
@@ -42,6 +44,7 @@ nonisolated public struct GarminSessionSummary: Codable, Equatable, Sendable {
         durationSeconds: TimeInterval,
         distanceMeters: Int,
         ascentMeters: Int = 0,
+        descentMeters: Int = 0,
         steps: Int,
         route: [Coordinate] = []
     ) {
@@ -51,12 +54,13 @@ nonisolated public struct GarminSessionSummary: Codable, Equatable, Sendable {
         self.durationSeconds = durationSeconds
         self.distanceMeters = distanceMeters
         self.ascentMeters = ascentMeters
+        self.descentMeters = descentMeters
         self.steps = steps
         self.route = route
     }
 
-    /// By hand for `route` and `ascentMeters`: summaries stored before they
-    /// existed have neither, and must still read back.
+    /// By hand for `route`, `ascentMeters` and `descentMeters`: summaries
+    /// stored before they existed have none, and must still read back.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         activity = try container.decode(SessionActivity.self, forKey: .activity)
@@ -65,6 +69,7 @@ nonisolated public struct GarminSessionSummary: Codable, Equatable, Sendable {
         durationSeconds = try container.decode(TimeInterval.self, forKey: .durationSeconds)
         distanceMeters = try container.decode(Int.self, forKey: .distanceMeters)
         ascentMeters = try container.decodeIfPresent(Int.self, forKey: .ascentMeters) ?? 0
+        descentMeters = try container.decodeIfPresent(Int.self, forKey: .descentMeters) ?? 0
         steps = try container.decode(Int.self, forKey: .steps)
         route = try container.decodeIfPresent([Coordinate].self, forKey: .route) ?? []
     }
@@ -80,6 +85,7 @@ nonisolated public extension GarminSessionSummary {
         static let duration = "duration"
         static let distance = "distanceM"
         static let ascent = "ascentM"
+        static let descent = "descentM"
         static let steps = "steps"
         static let route = "route"
     }
@@ -114,6 +120,7 @@ nonisolated public extension GarminSessionSummary {
             durationSeconds: min(duration, end.timeIntervalSince(start)),
             distanceMeters: ConnectIQField.nonNegative(fields[Key.distance]),
             ascentMeters: ConnectIQField.nonNegative(fields[Key.ascent]),
+            descentMeters: ConnectIQField.nonNegative(fields[Key.descent]),
             steps: ConnectIQField.nonNegative(fields[Key.steps]),
             route: route(fields[Key.route])
         )

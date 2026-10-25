@@ -14,6 +14,7 @@ struct GarminPendingOutingsTests {
             durationSeconds: minutes * 60,
             distanceMeters: 2_400,
             ascentMeters: 85,
+            descentMeters: 80,
             steps: 3_100
         )
     }
@@ -67,6 +68,7 @@ struct GarminPendingOutingsTests {
         #expect(row.durationSeconds == inside.durationSeconds)
         #expect(row.distanceKm == 2.4 && row.steps == 3_100)
         #expect(row.elevationMeters == 85)
+        #expect(row.descentMeters == 80)
         #expect(row.activity == .walking)
         #expect(GarminPendingOutings.isPending(row))
         #expect(row.caloriesText == "— kcal")

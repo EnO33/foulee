@@ -96,6 +96,7 @@ nonisolated public enum GarminPendingOutings {
             activeCalories: 0,
             steps: outing.steps,
             elevationMeters: Double(outing.ascentMeters),
+            descentMeters: Double(outing.descentMeters),
             sourceName: sourceName,
             activity: RecordedActivity(rawValue: outing.activity.rawValue) ?? .other
         )

@@ -49,7 +49,8 @@ class SessionRecorder {
         _startedAt = Time.now().value();
     }
 
-    //! Duration (s), distance (m), climb (m, #536), steps, heart rate (bpm, 0
+    //! Duration (s), distance (m), climb (m, #536), descent (m, #566), steps,
+    //! heart rate (bpm, 0
     //! when none), start and end (epoch s) of the session so far, for the
     //! summary and the mirror. Read before `save`, while the recorder still
     //! holds them.
@@ -57,6 +58,7 @@ class SessionRecorder {
         var seconds = 0;
         var meters = 0;
         var ascent = 0;
+        var descent = 0;
         var heartRate = 0;
         var info = Activity.getActivityInfo();
         if (info != null) {
@@ -76,11 +78,16 @@ class SessionRecorder {
             if (totalAscent != null) {
                 ascent = totalAscent.toNumber();
             }
+            var totalDescent = info.totalDescent;
+            if (totalDescent != null) {
+                descent = totalDescent.toNumber();
+            }
         }
         return {
             :seconds => seconds,
             :meters => meters,
             :ascent => ascent,
+            :descent => descent,
             :steps => SessionMath.stepsBetween(_startSteps, todaySteps()),
             :heartRate => heartRate,
             :startedAt => _startedAt,
