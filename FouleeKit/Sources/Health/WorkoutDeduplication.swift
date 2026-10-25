@@ -81,11 +81,40 @@ nonisolated enum WorkoutDeduplication {
 
     /// The stretch of clock a session covers — built through
     /// `ActiveMinutes.span(of:)` so it is literally the span the ring counted.
+    ///
+    /// A regrouped outing spans first leg to last (issue #549): its duration
+    /// leaves out the stops between its legs, and an outing merged across a
+    /// forty-minute stop would end, by its duration alone, before its second
+    /// part began — and miss the Strava copy of that part.
     private static func span(of workout: WorkoutSummary) -> Range<Date>? {
-        ActiveMinutes.span(of: ActiveMinutes.WorkoutInterval(
+        guard workout.legs.isEmpty else {
+            return workout.startedAt < workout.endedAt ? workout.startedAt..<workout.endedAt : nil
+        }
+        return ActiveMinutes.span(of: ActiveMinutes.WorkoutInterval(
             start: workout.startedAt,
             duration: workout.durationSeconds
         ))
+    }
+
+    /// The clock a group actually exercised: the union of its sessions' spans,
+    /// each regrouped outing counted leg by leg, so a stop between two legs
+    /// that no copy covers stays out of the row's duration.
+    private static func exercisedDuration(of group: [WorkoutSummary]) -> TimeInterval {
+        let spans = group
+            .flatMap { $0.legs.isEmpty ? [$0] : $0.legs }
+            .compactMap(span(of:))
+            .sorted { $0.lowerBound < $1.lowerBound }
+        var total: TimeInterval = 0
+        var current: Range<Date>?
+        for span in spans {
+            guard let open = current, span.lowerBound <= open.upperBound else {
+                total += current.map { $0.upperBound.timeIntervalSince($0.lowerBound) } ?? 0
+                current = span
+                continue
+            }
+            current = open.lowerBound..<max(open.upperBound, span.upperBound)
+        }
+        return total + (current.map { $0.upperBound.timeIntervalSince($0.lowerBound) } ?? 0)
     }
 
     /// A total order over sessions by start time. The tie-breaks (longest
@@ -112,7 +141,7 @@ nonisolated enum WorkoutDeduplication {
         guard group.count > 1, let span else { return [row] }
         row.startedAt = span.lowerBound
         row.endedAt = span.upperBound
-        row.durationSeconds = span.upperBound.timeIntervalSince(span.lowerBound)
+        row.durationSeconds = exercisedDuration(of: group)
         return [row]
     }
 
