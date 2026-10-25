@@ -75,7 +75,7 @@ final class WorkoutHealthKitStub {
     private(set) var pauseCalls = 0
     private(set) var resumeCalls = 0
     /// The climb each leg was stamped with, in call order (issue #535).
-    private(set) var climbs: [Double] = []
+    private(set) var climbs: [Elevation] = []
     /// The time the store reads (issue #406). It stands still until a test
     /// moves it, so every date the store writes is one the test can name.
     let clock = ManualClock()

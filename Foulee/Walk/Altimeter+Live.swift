@@ -5,9 +5,9 @@ import Foundation
 // Read by swift-dependencies from any thread.
 nonisolated extension Altimeter {
     /// Real CoreMotion-backed implementation. `CMAltimeter` reports barometric
-    /// relative altitude (metres since updates began); we accumulate the
-    /// positive deltas into elevation gain. Needs `NSMotionUsageDescription`
-    /// (already declared for the pedometer).
+    /// relative altitude (metres since updates began); `ElevationAccumulator`
+    /// turns it into the climb and the descent, its noise left out. Needs
+    /// `NSMotionUsageDescription` (already declared for the pedometer).
     static let liveValue: Altimeter = {
         let altimeter = CMAltimeter()
         return Altimeter(

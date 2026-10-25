@@ -85,15 +85,13 @@ nonisolated extension HealthKitClient {
                 // *metadata* — metadata isn't summed into any daily total, so it
                 // can't double-count, yet it lets the résumé/detail show real
                 // values (see WorkoutSummary). Elevation uses the standard key.
-                var metadata: [String: Any] = [
+                let metadata: [String: Any] = [
                     FouleeWorkoutMetadata.steps: session.steps,
                     FouleeWorkoutMetadata.distanceMeters: session.distanceMeters,
                     FouleeWorkoutMetadata.calories: session.estimatedCalories
-                ]
-                if session.elevationGainMeters > 0 {
-                    metadata[HKMetadataKeyElevationAscended] =
-                        HKQuantity(unit: .meter(), doubleValue: session.elevationGainMeters)
-                }
+                ].merging(
+                    Elevation(ascent: session.elevationGainMeters, descent: session.elevationLossMeters).metadata
+                ) { own, _ in own }
                 try await builder.addMetadata(metadata)
 
                 try await builder.endCollection(at: endedAt)

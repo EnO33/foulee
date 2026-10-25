@@ -120,7 +120,7 @@ nonisolated enum ScreenshotDoubles {
             AsyncStream { continuation in
                 Task {
                     while !Task.isCancelled {
-                        continuation.yield(ScreenshotSeed.sessionElevationMeters)
+                        continuation.yield(Elevation(ascent: ScreenshotSeed.sessionElevationMeters, descent: 0))
                         try? await Task.sleep(for: .milliseconds(250))
                     }
                     continuation.finish()

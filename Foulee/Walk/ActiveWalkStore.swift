@@ -85,11 +85,11 @@ final class ActiveWalkStore {
     @ObservationIgnored private var bankedElapsed: TimeInterval = 0
     @ObservationIgnored private var bankedSteps = 0
     @ObservationIgnored private var bankedDistance: Double = 0
-    @ObservationIgnored private var bankedElevation: Double = 0
+    @ObservationIgnored private var bankedElevation = Elevation.zero
     @ObservationIgnored private var segmentStart = Date.distantPast
     @ObservationIgnored private var segmentSteps = 0
     @ObservationIgnored private var segmentDistance: Double = 0
-    @ObservationIgnored private var segmentElevation: Double = 0
+    @ObservationIgnored private var segmentElevation = Elevation.zero
 
     /// Begin a fresh session. No-op when already active or finished — call
     /// `reset()` first to start a second walk in the same screen lifetime.
@@ -115,7 +115,7 @@ final class ActiveWalkStore {
         bankedElapsed = 0
         bankedSteps = 0
         bankedDistance = 0
-        bankedElevation = 0
+        bankedElevation = .zero
         route = []
         beginSegment()
         routeTask = makeRouteTask()
@@ -133,7 +133,8 @@ final class ActiveWalkStore {
         session.elapsed = bankedElapsed
         session.steps = bankedSteps
         session.distanceMeters = bankedDistance
-        session.elevationGainMeters = bankedElevation
+        session.elevationGainMeters = bankedElevation.ascent
+        session.elevationLossMeters = bankedElevation.descent
         state = .paused(session)
         tellWatch()
         await pushLiveActivity(session: session, isPaused: true)
@@ -159,7 +160,8 @@ final class ActiveWalkStore {
             live.elapsed = bankedElapsed
             live.steps = bankedSteps
             live.distanceMeters = bankedDistance
-            live.elevationGainMeters = bankedElevation
+            live.elevationGainMeters = bankedElevation.ascent
+            live.elevationLossMeters = bankedElevation.descent
             live.endedAt = date.now
             session = live
         case .paused(var held):
@@ -203,10 +205,10 @@ final class ActiveWalkStore {
         bankedElapsed = 0
         bankedSteps = 0
         bankedDistance = 0
-        bankedElevation = 0
+        bankedElevation = .zero
         segmentSteps = 0
         segmentDistance = 0
-        segmentElevation = 0
+        segmentElevation = .zero
         route = []
         state = .idle
         lastError = nil
@@ -222,7 +224,7 @@ final class ActiveWalkStore {
         segmentStart = date.now
         segmentSteps = 0
         segmentDistance = 0
-        segmentElevation = 0
+        segmentElevation = .zero
         pedometerTask = makePedometerTask(from: segmentStart)
         altimeterTask = makeAltimeterTask()
     }
@@ -235,7 +237,7 @@ final class ActiveWalkStore {
         bankedElevation += segmentElevation
         segmentSteps = 0
         segmentDistance = 0
-        segmentElevation = 0
+        segmentElevation = .zero
     }
 
     private func cancelObservers() {
@@ -266,11 +268,13 @@ final class ActiveWalkStore {
 
     private func makeAltimeterTask() -> Task<Void, Never> {
         Task { [altimeter] in
-            for await gain in altimeter.startUpdates() {
+            for await elevation in altimeter.startUpdates() {
                 await MainActor.run {
                     guard case .active(var session) = self.state else { return }
-                    self.segmentElevation = gain
-                    session.elevationGainMeters = self.bankedElevation + gain
+                    self.segmentElevation = elevation
+                    let total = self.bankedElevation + elevation
+                    session.elevationGainMeters = total.ascent
+                    session.elevationLossMeters = total.descent
                     self.state = .active(session)
                 }
             }

@@ -241,6 +241,8 @@ let project = Project(
                 // The watch writes its own workouts, with the phone's mapping
                 // to HealthKit (issue #223). HealthKit stays out of the kit.
                 "Foulee/Shared/SessionActivity+HealthKit.swift",
+                // Its climb and descent too, under the same keys (issue #564).
+                "Foulee/Shared/Elevation+HealthKit.swift",
                 // The colours an outing is drawn in by sport, shared with the
                 // phone's detail (issue #320), and the colour of each daily
                 // metric, the phone's rings' (#372). SwiftUI, so not in the kit.

@@ -10,6 +10,8 @@ nonisolated public struct WalkSession: Equatable, Sendable {
     public var distanceMeters: Double = 0
     /// Cumulative elevation gain (metres) measured by the barometer.
     public var elevationGainMeters: Double = 0
+    /// Cumulative descent (metres), measured the same way (issue #564).
+    public var elevationLossMeters: Double = 0
 
     /// What this session is, and what Santé will record it as (issue #223).
     /// Defaults to `.walking`: it is what every session the app ever wrote was

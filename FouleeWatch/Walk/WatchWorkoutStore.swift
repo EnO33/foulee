@@ -377,7 +377,7 @@ extension WatchWorkoutStore {
         metrics.steps = outing.steps
         metrics.distanceMeters = outing.distanceMeters
         metrics.activeCalories = outing.activeCalories
-        metrics.climbMeters = climb.trail.total
+        metrics.climbMeters = climb.trail.total.ascent
         // The instant the clock would have read zero, so the screen can run it
         // on its own between batches (issue #266).
         // None while paused: the clock stands still on `elapsed` (issue #384).
