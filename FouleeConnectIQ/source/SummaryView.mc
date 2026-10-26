@@ -3,7 +3,8 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 //! The end of a saved session, like the Apple Watch's recap: duration, steps,
-//! distance, and « Terminer » back to the home.
+//! distance, the climb and descent when the watch measured any (#536), and
+//! « Terminer » back to the home.
 (:typecheck([disableBackgroundCheck, disableGlanceCheck]))
 class SummaryView extends WatchUi.View {
 
@@ -24,6 +25,11 @@ class SummaryView extends WatchUi.View {
         var seconds = _summary[:seconds] as Number;
         var steps = _summary[:steps] as Number;
         var meters = _summary[:meters] as Number;
+        var elevation = SessionMath.elevation(_summary[:ascent] as Number, _summary[:descent] as Number);
+        // One more line when there is a climb: the figures move up to make
+        // room, and a flat outing keeps the layout it always had.
+        var stepsY = elevation != null ? 52 : 55;
+        var distanceY = elevation != null ? 64 : 69;
 
         dc.setColor(MetricPalette.SECONDARY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(width / 2, height * 18 / 100, Graphics.FONT_XTINY,
@@ -31,9 +37,13 @@ class SummaryView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(width / 2, height * 36 / 100, Graphics.FONT_NUMBER_MILD, SessionMath.clock(seconds), centered);
         dc.setColor(MetricPalette.STEPS, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(width / 2, height * 55 / 100, Graphics.FONT_SMALL, SnapshotFormat.steps(steps), centered);
+        dc.drawText(width / 2, height * stepsY / 100, Graphics.FONT_SMALL, SnapshotFormat.steps(steps), centered);
         dc.setColor(MetricPalette.DISTANCE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(width / 2, height * 69 / 100, Graphics.FONT_SMALL, SnapshotFormat.distance(meters * 100), centered);
+        dc.drawText(width / 2, height * distanceY / 100, Graphics.FONT_SMALL, SnapshotFormat.distance(meters * 100), centered);
+        if (elevation != null) {
+            dc.setColor(MetricPalette.SECONDARY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(width / 2, height * 75 / 100, Graphics.FONT_XTINY, elevation, centered);
+        }
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(width / 2, height * 85 / 100, Graphics.FONT_TINY,
             WatchUi.loadResource($.Rez.Strings.Done) as String, centered);

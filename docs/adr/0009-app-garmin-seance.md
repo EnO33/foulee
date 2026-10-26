@@ -26,6 +26,7 @@ Le pendant de l'ADR 0003 D1. Une sortie démarrée sur la Garmin est mesurée pa
 - **`ActivityRecording.createSession`**, avec `SPORT_WALKING` ou `SPORT_RUNNING`. Pas d'enregistreur maison : GPS, fréquence cardiaque, pause et sauvegarde sont ceux du système, et la sortie apparaît dans Garmin Connect comme n'importe quelle activité.
 - **Elle rejoint Santé par Garmin Connect**, sous le même nom que les autres sorties de l'utilisateur. Foulée n'écrit **rien** dans Santé depuis ce canal, pour la raison de l'ADR 0001 (annexe #189, règle 1) : Garmin Connect écrira la même sortie plus tard, et un doublon dans Santé ne se reprend pas.
 - **En attendant Garmin Connect, la sortie existe quand même dans Foulée.** Le résumé de fin, envoyé par BLE, devient une sortie en attente sur l'iPhone, de même forme que `PendingWalk`. Elle compte pour la série du jour et disparaît dès que Santé contient l'activité Garmin qui la recouvre (`WorkoutDeduplication`).
+- **Le dénivelé est celui de la montre** (#536, ADR 0012) : `totalAscent` et `totalDescent`, mesurés et filtrés par Garmin, sur l'écran de fin et dans le résumé (`ascentM`, `descentM`). Une fois la sortie dans Santé, Foulée lit les clés standard (`HKMetadataKeyElevationAscended`, `HKMetadataKeyElevationDescended`) quelle que soit la source. Que Garmin Connect les écrive reste à vérifier sur une vraie montre (#191) : s'il ne le fait pas, la sortie perd son dénivelé quand Garmin Connect la remplace dans le Bilan.
 
 ### D3 — Le sport se choisit au départ, jamais en route
 

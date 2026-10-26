@@ -67,6 +67,23 @@ module SessionMath {
         return now > before ? now : 0;
     }
 
+    //! "D+ 120 m · D- 115 m", either half left out under a metre, or null
+    //! when neither was measured (#536): absent, not "D+ 0 m". Letters rather
+    //! than arrows, which not every device's system font draws.
+    function elevation(ascent as Number, descent as Number) as String? {
+        var parts = [] as Array<String>;
+        if (ascent >= 1) {
+            parts.add(Lang.format("D+ $1$ m", [ascent]));
+        }
+        if (descent >= 1) {
+            parts.add(Lang.format("D- $1$ m", [descent]));
+        }
+        if (parts.size() == 0) {
+            return null;
+        }
+        return parts.size() == 1 ? parts[0] : parts[0] + " · " + parts[1];
+    }
+
     //! The steps taken during the session, from the day's counter read at the
     //! start and at the end. The counter restarts at midnight: a session that
     //! crosses it counts the new day's steps only, never a negative figure.
