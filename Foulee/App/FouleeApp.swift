@@ -28,6 +28,7 @@ struct FouleeApp: App {
         _ = Self.startHealthObserversOnce
         _ = Self.startGarminConnectIQOnce
         _ = Self.startMirrorObserverOnce
+        _ = Self.recordLaunchOnce
     }
 
     var body: some Scene {
@@ -48,13 +49,15 @@ struct FouleeApp: App {
     /// Where the app reads the user's preferences from — always `.standard`,
     /// except during a screenshot capture, which gets a throwaway suite so it
     /// can seed goals and a theme without touching the real install.
-    private static var preferencesDefaults: UserDefaults {
+    static var preferencesDefaults: UserDefaults {
         #if DEBUG
         ScreenshotMode.preferencesDefaults ?? .standard
         #else
         .standard
         #endif
     }
+
+    private static let recordLaunchOnce: Void = ReviewPromptStore.shared.recordLaunch()
 
     private static let registerAppRefreshOnce: Void = {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: refreshTaskID, using: nil) { task in

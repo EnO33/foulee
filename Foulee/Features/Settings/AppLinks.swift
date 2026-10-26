@@ -26,9 +26,18 @@ nonisolated enum AppLinks {
 nonisolated enum AppVersion {
     static var current: String {
         text(
-            version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+            version: shortVersion,
             build: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
         )
+    }
+
+    /// The App Store version alone, « 1.52 ».
+    static var marketing: String {
+        shortVersion ?? "0"
+    }
+
+    private static var shortVersion: String? {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
     }
 
     static func text(version: String?, build: String?) -> String {
