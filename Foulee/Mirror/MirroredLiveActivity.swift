@@ -67,7 +67,8 @@ final class MirroredLiveActivity {
     /// elapsed »: the wrist already pushes that start back by every pause, and
     /// the system runs the clock from it between two wakes.
     ///
-    /// A Garmin watch states no calories: none are drawn.
+    /// A Garmin watch states no calories, nor any climb while it runs: none
+    /// are drawn.
     nonisolated static func state(
         figures: WatchSessionSnapshot?,
         outingStartedAt: Date,
@@ -85,7 +86,9 @@ final class MirroredLiveActivity {
             elapsed: figures.elapsed(at: figures.sentAt),
             steps: figures.steps,
             distanceKm: figures.distanceKm,
-            activeCalories: device == .garmin ? nil : figures.activeCalories
+            activeCalories: device == .garmin ? nil : figures.activeCalories,
+            climbMeters: device == .garmin ? nil : figures.climbMeters,
+            descentMeters: device == .garmin ? nil : figures.descentMeters
         )
     }
 

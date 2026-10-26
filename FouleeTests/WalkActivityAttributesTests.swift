@@ -180,3 +180,30 @@ struct WalkActivityAttributesTests {
         }
     }
 }
+
+/// The climb on the Lock Screen (issue #576).
+@Suite("Live Activity state — climb")
+struct WalkActivityStateClimbTests {
+    @Test("A state written before the climb decodes, with none to draw")
+    func legacyStateDecodes() throws {
+        let legacy = Data("""
+        {"timerBasis": 0, "elapsed": 600, "steps": 1200, "distanceKm": 2.5, "activeCalories": 140}
+        """.utf8)
+        let state = try JSONDecoder().decode(WalkActivityAttributes.WalkActivityState.self, from: legacy)
+        #expect(state.steps == 1_200)
+        #expect(state.elevation == nil)
+    }
+
+    @Test("A measured climb and descent read « ↑ 120 m · ↓ 115 m », a flat outing nothing")
+    func elevationText() {
+        var state = WalkActivityAttributes.WalkActivityState(
+            timerBasis: .distantPast, pausedAt: nil, elapsed: 0,
+            steps: 0, distanceKm: 0, activeCalories: 0,
+            climbMeters: 120, descentMeters: 115
+        )
+        #expect(state.elevation?.text == "↑ 120 m · ↓ 115 m")
+        state.climbMeters = 0
+        state.descentMeters = 0.4
+        #expect(state.elevation?.text == nil)
+    }
+}

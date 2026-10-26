@@ -1,11 +1,12 @@
 import ActivityKit
+import FouleeKit
 import SwiftUI
 import WidgetKit
 
 /// Live Activity rendered while a session is active. Three surfaces:
 /// - Lock Screen / banner: full row with timer + ring + counters
 /// - Dynamic Island compact: activity icon left, elapsed right
-/// - Dynamic Island expanded: timer + steps + km + kcal
+/// - Dynamic Island expanded: timer + km and climb + steps + kcal
 /// - Dynamic Island minimal: activity icon
 ///
 /// The copy and the glyph follow the session's own activity (issue #225):
@@ -43,9 +44,20 @@ struct WalkLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(context.state.distanceKm.kmText())
-                        .font(.system(.title3, design: .rounded, weight: .semibold))
-                        .monospacedDigit()
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text(context.state.distanceKm.kmText())
+                            .font(.system(.title3, design: .rounded, weight: .semibold))
+                            .monospacedDigit()
+                        // The climb under the distance, when there is one
+                        // (issue #576); never in the compact views.
+                        if let elevation = context.state.elevation, let text = elevation.text {
+                            Text(text)
+                                .font(.caption2)
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                                .accessibilityLabel(elevation.spokenText ?? text)
+                        }
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack {
@@ -139,6 +151,15 @@ struct LockScreenView: View {
                 Text("\(state.steps) pas · \(state.distanceKm.kmText())")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                // Its own line: beside the steps and the distance it would
+                // truncate on a small phone (issue #576).
+                if let elevation = state.elevation, let text = elevation.text {
+                    Text(text)
+                        .font(.footnote)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(elevation.spokenText ?? text)
+                }
             }
             Spacer(minLength: 0)
         }

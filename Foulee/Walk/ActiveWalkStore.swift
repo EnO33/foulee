@@ -476,7 +476,9 @@ private extension ActiveWalkStore {
             elapsed: session.elapsed,
             steps: session.steps,
             distanceKm: session.distanceKm,
-            activeCalories: session.estimatedCalories
+            activeCalories: session.estimatedCalories,
+            climbMeters: session.elevationGainMeters,
+            descentMeters: session.elevationLossMeters
         )
     }
 
