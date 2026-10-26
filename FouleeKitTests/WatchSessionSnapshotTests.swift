@@ -55,7 +55,24 @@ struct WatchSessionSnapshotTests {
 
         #expect(decoded.steps == 0)
         #expect(decoded.heartRate == nil)
+        #expect(decoded.climbMeters == 0)
+        #expect(decoded.descentMeters == 0)
         #expect(decoded.isEnded == false)
+    }
+
+    /// The climb and descent the wrist measured (#535), and none from a watch
+    /// without a barometer: absent, not « ↑ 0 m ».
+    @Test("The elevation reads « ↑ 120 m · ↓ 115 m », and nothing unmeasured")
+    func elevationText() {
+        var figures = snapshot()
+        #expect(figures.elevationText == nil)
+        figures.climbMeters = 119.6
+        #expect(figures.elevationText == "↑ 120 m")
+        figures.descentMeters = 115
+        #expect(figures.elevationText == "↑ 120 m · ↓ 115 m")
+        #expect(figures.elevationSpokenText == "120 mètres de montée, 115 mètres de descente")
+        figures.climbMeters = 0.4
+        #expect(figures.elevationText == "↓ 115 m")
     }
 
     /// The two dates are the ones nothing can stand in for, so they are the two

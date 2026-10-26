@@ -20,6 +20,26 @@ nonisolated public struct Elevation: Equatable, Sendable {
     public static func += (lhs: inout Elevation, rhs: Elevation) {
         lhs = lhs + rhs
     }
+
+    /// « ↑ 120 m · ↓ 115 m », either half left out under a metre, or `nil`
+    /// when neither was measured (issue #535): absent, not « ↑ 0 m ».
+    public var text: String? {
+        let parts = [
+            ascent >= 1 ? "↑ \(Int(ascent.rounded()).formattedFR) m" : nil,
+            descent >= 1 ? "↓ \(Int(descent.rounded()).formattedFR) m" : nil
+        ].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    /// The same, as VoiceOver says it: « 120 mètres de montée, 115 mètres de
+    /// descente ».
+    public var spokenText: String? {
+        let parts = [
+            ascent >= 1 ? "\(Int(ascent.rounded())) mètres de montée" : nil,
+            descent >= 1 ? "\(Int(descent.rounded())) mètres de descente" : nil
+        ].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
+    }
 }
 
 /// Turns a stream of (signed) relative-altitude readings into the climb and

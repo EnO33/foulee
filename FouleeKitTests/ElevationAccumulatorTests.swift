@@ -111,3 +111,14 @@ struct ElevationTests {
         #expect(total == Elevation(ascent: 15, descent: 10))
     }
 }
+
+@Suite("Elevation text")
+struct ElevationTextTests {
+    @Test("Each half shows from a metre, both or neither")
+    func text() {
+        #expect(Elevation.zero.text == nil)
+        #expect(Elevation.zero.spokenText == nil)
+        #expect(Elevation(ascent: 1_249.6, descent: 0).text == "↑ \(1_250.formattedFR) m")
+        #expect(Elevation(ascent: 0.2, descent: 12).spokenText == "12 mètres de descente")
+    }
+}

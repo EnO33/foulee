@@ -41,6 +41,23 @@ struct WatchSessionRoutePage: View {
             UserAnnotation()
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
+        .overlay(alignment: .top) { elevation }
+    }
+
+    /// « ↑ 120 m · ↓ 115 m » over the map (issue #535). Here rather than on
+    /// the counters' page: a 40 mm has no room there for a fifth tile, and the
+    /// climb is the route's, the way Exercice puts it beside its own map.
+    @ViewBuilder
+    private var elevation: some View {
+        if let text = metrics.elevation.text {
+            Text(text)
+                .font(.caption2.weight(.semibold))
+                .monospacedDigit()
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(.ultraThinMaterial, in: Capsule())
+                .accessibilityLabel(metrics.elevation.spokenText ?? text)
+        }
     }
 
     /// Two cases, two sentences: waiting for GPS resolves on its own, a refusal

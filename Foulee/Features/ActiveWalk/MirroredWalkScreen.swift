@@ -129,6 +129,14 @@ struct MirroredWalkScreen: View {
                         .monospacedDigit()
                         .accessibilityLabel("Allure moyenne \(pace)")
                 }
+                // The wrist's climb and descent, when its barometer measured
+                // any (issue #535).
+                if let elevation = figures.elevationText {
+                    Label(elevation, systemImage: FouleeIcon.climb)
+                        .font(.subheadline)
+                        .monospacedDigit()
+                        .accessibilityLabel(figures.elevationSpokenText ?? elevation)
+                }
                 freshness(figures)
             }
         } else {
