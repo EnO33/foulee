@@ -17,6 +17,8 @@ struct MirroredLiveActivityTests {
             distanceMeters: 2_500,
             activeCalories: 140,
             heartRate: 150,
+            climbMeters: 85,
+            descentMeters: 40,
             isEnded: false,
             isPaused: isPaused
         )
@@ -40,6 +42,7 @@ struct MirroredLiveActivityTests {
         #expect(state.steps == 1_200)
         #expect(state.distanceKm == 2.5)
         #expect(state.activeCalories == 140)
+        #expect(state.elevation?.text == "↑ 85 m · ↓ 40 m")
     }
 
     /// The system clock stands still on `pausedAt`, which must be the instant
@@ -56,6 +59,7 @@ struct MirroredLiveActivityTests {
     func garminHasNoCalories() {
         let state = MirroredLiveActivity.state(figures: figures(at: 600), outingStartedAt: start, device: .garmin)
         #expect(state.activeCalories == nil)
+        #expect(state.elevation == nil)
         #expect(state.steps == 1_200)
     }
 }

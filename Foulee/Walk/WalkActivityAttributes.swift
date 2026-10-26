@@ -87,8 +87,19 @@ nonisolated struct WalkActivityAttributes: ActivityAttributes {
         /// D7): the Lock Screen says « — » rather than a measured-looking 0.
         /// Optional, so a state written before it decodes as is.
         var activeCalories: Int?
+        /// The climb and descent so far, in metres (issue #576); `nil` when
+        /// the source states none live — a Garmin watch. Optional, so a state
+        /// written before them decodes as is.
+        var climbMeters: Double?
+        var descentMeters: Double?
 
         var isPaused: Bool { pausedAt != nil }
+
+        /// « ↑ 120 m · ↓ 115 m », or `nil` with nothing measured.
+        var elevation: Elevation? {
+            guard climbMeters != nil || descentMeters != nil else { return nil }
+            return Elevation(ascent: climbMeters ?? 0, descent: descentMeters ?? 0)
+        }
     }
 }
 
