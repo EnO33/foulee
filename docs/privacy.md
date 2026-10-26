@@ -218,6 +218,21 @@ iOS** :
 Supprimer l'application efface toutes les préférences qu'elle a stockées. Les
 données dans l'app Santé restent gérées par Santé.
 
+## Et ce site ?
+
+getfoulee.app est hébergé par **Cloudflare**. Pour savoir combien de personnes
+le visitent, il utilise **Cloudflare Web Analytics**, une mesure d'audience
+**sans cookie** :
+
+- rien n'est enregistré dans ton navigateur, ni cookie ni stockage local ;
+- ni ton adresse IP ni ton navigateur ne servent à te reconnaître d'une visite
+  à l'autre ;
+- seuls des totaux sont gardés : pages vues, site d'où tu arrives, pays, type
+  d'appareil et de navigateur, temps de chargement.
+
+Ce que tu fais sur le site n'est jamais relié à l'app, qui n'envoie toujours
+rien.
+
 ## Contact
 
 Une question sur cette politique ? Écris à **contact@getfoulee.app**.
