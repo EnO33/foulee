@@ -50,3 +50,12 @@ function sessionKilometerAlertFiresOnceAtTheBoundary(logger as Logger) as Boolea
     Test.assertEqual(SessionMath.kilometerCrossed(1950, 3020), 3);
     return true;
 }
+
+(:test)
+function sessionElevationShowsWhatWasMeasured(logger as Logger) as Boolean {
+    Test.assert("D+ 120 m · D- 115 m".equals(SessionMath.elevation(120, 115)));
+    Test.assert("D+ 120 m".equals(SessionMath.elevation(120, 0)));
+    Test.assert("D- 40 m".equals(SessionMath.elevation(0, 40)));
+    Test.assert(SessionMath.elevation(0, 0) == null);
+    return true;
+}
