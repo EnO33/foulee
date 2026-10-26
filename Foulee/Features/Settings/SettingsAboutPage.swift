@@ -21,6 +21,8 @@ struct SettingsAboutPage: View {
         GlassSection {
             link("Politique de confidentialité", icon: "hand.raised.fill", url: AppLinks.privacyPolicy)
             Divider()
+            link("Assistance", icon: "lifepreserver.fill", url: AppLinks.support)
+            Divider()
             link("FAQ Garmin", icon: "questionmark.circle.fill", url: AppLinks.garminFAQ)
             Divider()
             link("Signaler un problème", icon: "exclamationmark.bubble.fill", url: AppLinks.reportIssue)

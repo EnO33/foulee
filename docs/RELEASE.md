@@ -77,13 +77,14 @@ Under the app's **App Privacy** section, declare:
 - **Location** — used while in use (local weather + the route of an outing).
 
 A **privacy policy URL** is mandatory because the app touches Health and
-Location data. Host a short policy somewhere stable (GitHub Pages works) and
-paste the URL in App Store Connect.
+Location data.
 
-The policy is [`docs/privacy.md`](privacy.md). The app already links to it on
-GitHub from **Réglages › À propos** (`AppLinks.privacyPolicy`): use that same
-URL, or update `AppLinks` if the policy moves, so the app and the store page
-never point to two different texts.
+The policy is [`docs/privacy.md`](privacy.md), published on the site at
+<https://getfoulee.app/confidentialite> (the site's repository, getfoulee/web,
+keeps a copy: update it with this file). The app links to that page from
+**Réglages › À propos** (`AppLinks.privacyPolicy`): paste the same URL in App
+Store Connect, and <https://getfoulee.app/assistance> as the support URL, so
+the app and the store page never point to two different texts.
 
 ## 5. Distribution certificate (`.p12`)
 
