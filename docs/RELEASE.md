@@ -82,9 +82,10 @@ Location data.
 The policy is [`docs/privacy.md`](privacy.md), published on the site at
 <https://getfoulee.app/confidentialite> (the site's repository, getfoulee/web,
 keeps a copy: update it with this file). The app links to that page from
-**Réglages › À propos** (`AppLinks.privacyPolicy`): paste the same URL in App
-Store Connect, and <https://getfoulee.app/assistance> as the support URL, so
-the app and the store page never point to two different texts.
+**Réglages › À propos** (`AppLinks.privacyPolicy`). The listing in
+`fastlane/metadata/fr-FR/` (§ 10.1) gives App Store Connect the same URL, and
+<https://getfoulee.app/assistance> as the support URL, so the app and the store
+page never point to two different texts.
 
 ## 5. Distribution certificate (`.p12`)
 
@@ -447,16 +448,49 @@ TestFlight.
 TestFlight is the CI's final step on purpose — promotion to the store stays a
 deliberate, manual action:
 
-1. App Store Connect → your app → **+ Version**, set the version string.
-2. Attach the processed build.
-3. Fill the listing: description, keywords, support URL, **screenshots**
-   (step 9), age rating, category.
-4. **Submit for Review**.
+1. Update `fastlane/metadata/fr-FR/release_notes.txt` for this version (a
+   PR, like any change: CI checks the listing).
+2. **Actions → Store listing → Run workflow**, with the version string
+   (e.g. `1.55`). It creates the version in App Store Connect when there is
+   none to edit yet, and writes the listing (§ 10.1) to it.
+3. Attach the processed build, then the **screenshots** (step 9).
+4. **Submit for Review**, by hand: the workflow never submits.
 
-> The full listing is only needed at this promotion step, not for TestFlight.
-> If you later want CI to submit for review too (via `fastlane deliver` with
-> versioned metadata/screenshots), that's a small follow-up to the `release`
-> lane.
+### 10.1 The listing lives in the repository
+
+The listing is versioned in [`fastlane/metadata/`](../fastlane/metadata/)
+(issue #581), one text file per field. To change it, edit the file in a PR and
+run the workflow. A change made directly in App Store Connect is overwritten
+the next time the workflow runs.
+
+| File (`fr-FR/`) | Field | Limit |
+|-----------------|-------|-------|
+| `name.txt` | App name | 30 characters |
+| `subtitle.txt` | Subtitle | 30 characters |
+| `keywords.txt` | Keywords, comma-separated, no spaces | 100 bytes |
+| `promotional_text.txt` | Promotional text | 170 characters |
+| `description.txt` | Description | 4000 characters |
+| `release_notes.txt` | What's New | 4000 characters |
+| `support_url.txt`, `privacy_url.txt`, `marketing_url.txt` | URLs (getfoulee.app) | https |
+
+The name and the subtitle are indexed for search as well as the keywords, so
+`keywords.txt` does not repeat their words. Search already covers « marche »
+and « course » through the name, and « podomètre », « série » and « habitude »
+through the subtitle. The keywords add what is left: Apple Watch, Garmin, the
+goal, the reminders, hydration. The count is in bytes, so each accented letter
+takes two.
+
+[`tools/check_store_metadata.py`](../tools/check_store_metadata.py) checks all
+of this. It runs in the CI **Store listing** job, on every pull request that
+touches the listing, and again before the workflow uploads anything:
+
+```sh
+tools/check_store_metadata.py
+```
+
+The workflow (`.github/workflows/store-listing.yml`, lane `metadata`) uses the
+same App Store Connect key as the release (step 6), with no binary and no
+screenshots: those still go through the release and step 9.
 
 ## 11. The Garmin watch app (separate store, separate cadence)
 

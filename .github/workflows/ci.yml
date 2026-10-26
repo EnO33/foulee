@@ -26,6 +26,7 @@ jobs:
     outputs:
       apple: ${{ steps.filter.outputs.apple }}
       garmin: ${{ steps.filter.outputs.garmin }}
+      store: ${{ steps.filter.outputs.store }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -66,6 +67,10 @@ jobs:
               - FouleeConnectIQ/**
               # The validator checks the app ids the iPhone listens to.
               - Foulee/Connectivity/GarminConnectIQClient.swift
+            store:
+              - *workflow
+              - fastlane/metadata/**
+              - tools/check_store_metadata.py
 
   lint:
     name: Lint
@@ -101,6 +106,20 @@ jobs:
             swiftc -typecheck "$script" || failures=1
           done
           exit $failures
+
+  store:
+    # The App Store listing in fastlane/metadata (issue #581): every field
+    # present and within App Store Connect's limits, checked here rather than
+    # halfway through the « Store listing » workflow's upload.
+    name: Store listing
+    needs: changes
+    if: needs.changes.outputs.store == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check the listing
+        run: tools/check_store_metadata.py
 
   connectiq:
     # Static checks on the Garmin watch app (FouleeConnectIQ/) that need no
@@ -465,12 +484,12 @@ jobs:
     # Every job but `changes` may skip: it runs only when the change touches
     # its side (and the dead-code job only on pull requests).
     name: Build & Test
-    needs: [changes, lint, connectiq, connectiq-build, kit, ios, watchos, deadcode]
+    needs: [changes, lint, store, connectiq, connectiq-build, kit, ios, watchos, deadcode]
     if: always()
     runs-on: ubuntu-24.04
     steps:
       - name: Every platform passed
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
-          allowed-skips: lint, connectiq, connectiq-build, kit, ios, watchos, deadcode
+          allowed-skips: lint, store, connectiq, connectiq-build, kit, ios, watchos, deadcode
           jobs: ${{ toJSON(needs) }}
