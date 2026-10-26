@@ -62,19 +62,20 @@ session that outlived its app rather than finishing it: see
 ## Compatible watches
 
 - **Apple Watch** — native support (companion app, complications, live workouts).
-- **Garmin** — support in progress, via the **Garmin Connect → Apple Health** sync:
+- **Garmin** — via the **Garmin Connect → Apple Health** sync:
   steps, distance, workouts and water intake flow into HealthKit, which Foulée
-  already reads. The streak's active-minutes metric now uses the
+  already reads. The streak's active-minutes metric uses the
   source-agnostic fallback shipped in
-  [#181](https://github.com/getfoulee/foulee/issues/181); full rollout is tracked in
-  the [Garmin epic](https://github.com/getfoulee/foulee/issues/179). Architecture
+  [#181](https://github.com/getfoulee/foulee/issues/181). Architecture
   decision: [ADR 0001](docs/adr/0001-garmin-integration.md) (French).
   Troubleshooting: [Garmin FAQ](docs/faq-garmin.md) (French).
-- **Phase 2 (in progress)** — a Connect IQ app on the watch for direct
-  watch↔iPhone sync (freshness + Garmin-native intensity minutes). The Monkey C
-  side lives in [`FouleeConnectIQ/`](FouleeConnectIQ/README.md), outside the
-  Tuist build; iOS ingestion is tracked in
-  [#189](https://github.com/getfoulee/foulee/issues/189).
+- **Garmin Connect IQ app** — [on the Connect IQ Store](https://apps.garmin.com/apps/8c11aa2c-7fc7-4e3d-8441-b2771626cbc7):
+  the streak and the day's counters on the wrist, outings started from the
+  watch, and direct watch↔iPhone sync (freshness + Garmin-native intensity
+  minutes, ingested without double counting —
+  [#189](https://github.com/getfoulee/foulee/issues/189)). The Monkey C side
+  lives in [`FouleeConnectIQ/`](FouleeConnectIQ/README.md), outside the
+  Tuist build.
 
 ## Stack
 
