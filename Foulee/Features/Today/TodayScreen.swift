@@ -15,6 +15,7 @@ struct TodayScreen: View {
     /// mirror can arrive while no UI is mounted at all.
     @State private var isShowingMirroredWalk = false
     private let mirroredSession = MirroredSessionStore.shared
+    private let review = ReviewPromptStore.shared
     @State private var isShowingSettings = false
     @State private var selectedMetric: WalkMetric?
     @State private var isShowingWeather = false
@@ -73,6 +74,11 @@ struct TodayScreen: View {
                 // foulee://hydration — widget tap lands on the hydration card.
                 if url.host() == "hydration" { scrollToHydration = true }
             }
+            .reviewRequest(
+                store: review,
+                at: store.snapshot.map { ReviewProgress($0, outings: review.outings) },
+                isAllowed: store.lastError == nil
+            )
             .mirroredWalkCover(
                 store: mirroredSession,
                 isPresented: $isShowingMirroredWalk,
@@ -90,7 +96,10 @@ struct TodayScreen: View {
                     intent: store.startIntent,
                     onDismiss: { session in
                         isWalking = false
-                        Task { await store.registerFinishedWalk(session) }
+                        Task {
+                            await store.registerFinishedWalk(session)
+                            review.recordOuting()
+                        }
                     },
                     // Backed out of the picker: close, and register nothing.
                     // The baseline `walkWillStart` captured is simply left
