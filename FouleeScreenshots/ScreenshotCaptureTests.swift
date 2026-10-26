@@ -4,10 +4,11 @@ import XCTest
 /// set (issue #235). Names match `appstore-screenshots/iphone-6.9/`, minus the
 /// composition — the marketing frames are the composer's job, not this one's.
 ///
-/// Two tests, so two launches: the onboarding capture needs an install that has
-/// *not* finished onboarding, which is a launch-time decision. Everything else
-/// is one pass through a single launch, in the cheapest navigation order —
-/// the file numbers below are the store's ordering, not the capture's.
+/// Four tests, so four launches: the onboarding needs an install that has *not*
+/// finished it, and the two mirror boards a wrist recording from the start —
+/// both launch-time decisions. Everything else is one pass
+/// through a single launch, in the cheapest navigation order — the file numbers
+/// below are the store's ordering (issue #582), not the capture's.
 ///
 /// Determinism does not depend on that order: every number on screen comes from
 /// `ScreenshotSeed`, and the one clock move the run performs (starting a
@@ -22,25 +23,27 @@ final class ScreenshotCaptureTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    // MARK: - 01 — Onboarding
+    // MARK: - Onboarding
 
+    /// Captured for the review sets (issue #408), not boarded for the store:
+    /// the composer's `shots` table decides what the listing shows.
     func testCaptureOnboarding() {
         let app = launchInCaptureMode(onboarding: true)
         waitForScreen(app.buttons["Commencer"], "Onboarding welcome step")
-        capture("01_onboarding")
+        capture("13_onboarding")
     }
 
-    // MARK: - 02 … 10 — the app itself
+    // MARK: - The app itself
 
     func testCaptureMainScreens() throws {
         let app = launchInCaptureMode()
         let streakCard = app.buttons[ScreenshotCapture.Card.streak]
         waitForScreen(streakCard, "Home")
 
-        capture("02_home")
+        capture("01_home")
         captureStreak(app)
-        captureMetric(app, metric: "steps", name: "05_stats")
-        captureMetric(app, metric: "minutes", name: "06_minutes")
+        captureMetric(app, metric: "steps", name: "09_stats")
+        captureMetric(app, metric: "minutes", name: "11_minutes")
         captureHydration(app)
         captureSummary(app)
         captureSettings(app)
@@ -49,6 +52,18 @@ final class ScreenshotCaptureTests: XCTestCase {
         // session and moves the capture clock, so nothing after it has to be
         // reasoned about.
         captureSession(app)
+    }
+
+    // MARK: - An outing on the wrist
+
+    /// One launch per watch: once a wrist is recording, the home offers that
+    /// outing instead of « Repartir », which the main pass needs.
+    func testCaptureWatchOuting() {
+        captureWristOuting(.watch, button: "Séance en cours sur ta Watch", name: "02_watch")
+    }
+
+    func testCaptureGarminOuting() {
+        captureWristOuting(.garmin, button: "Séance en cours sur ta Garmin", name: "05_garmin")
     }
 
     // MARK: - Steps
@@ -60,8 +75,17 @@ final class ScreenshotCaptureTests: XCTestCase {
         waitForScreen(app.staticTexts["SÉRIE ACTUELLE"], "Bilan streak")
         // The link only shows once the month has loaded.
         waitForScreen(app.buttons["Voir dans Santé"], "Bilan month")
-        capture("04_streak")
+        capture("06_streak")
         close(app)
+    }
+
+    /// The outing the wrist is recording, as the phone shows it: opened from
+    /// the hero, which offers it in place of « Repartir ».
+    private func captureWristOuting(_ wrist: ScreenshotCapture.Wrist, button: String, name: String) {
+        let app = launchInCaptureMode(wrist: wrist)
+        tapWhenReady(app.buttons[button], "Hero outing button")
+        waitForScreen(app.buttons["Arrêter la séance"], "Mirrored outing")
+        capture(name)
     }
 
     private func captureMetric(_ app: XCUIApplication, metric: String, name: String) {
@@ -84,23 +108,30 @@ final class ScreenshotCaptureTests: XCTestCase {
         settleAfterScrolling()
         tapWhenReady(app.staticTexts["Hydratation"].firstMatch, "Hydration card title")
         waitForScreen(app.staticTexts["Verre par verre"], "Hydration screen")
-        capture("07_hydration")
+        capture("08_hydration")
         close(app)
         for _ in 0..<Self.scrollSwipes { app.swipeDown(velocity: .fast) }
     }
 
+    /// The Bilan on the current week, then today's outing in it: a walk that
+    /// became a run, whose detail shows the two portions (issue #318).
     private func captureSummary(_ app: XCUIApplication) {
         tapWhenReady(app.buttons["Voir le bilan"], "Voir le bilan")
         // The link only shows once the Bilan has loaded (issues #348, #350).
         waitForScreen(app.buttons["Voir dans Santé"], "Bilan")
-        capture("08_summary")
+        capture("04_summary")
+        tapWhenReady(app.staticTexts["Marche et course"].firstMatch, "Today's outing")
+        waitForScreen(app.staticTexts["PORTIONS"], "Outing detail")
+        capture("03_outing")
+        // The detail is pushed over the Bilan, whose close button it hides.
+        tapWhenReady(app.navigationBars.buttons.firstMatch, "Back to the Bilan")
         close(app)
     }
 
     private func captureSettings(_ app: XCUIApplication) {
         tapWhenReady(app.buttons["Réglages"], "Settings button")
         waitForScreen(app.staticTexts["Réglages"], "Settings")
-        capture("09_settings")
+        capture("12_settings")
         close(app)
     }
 
@@ -120,7 +151,7 @@ final class ScreenshotCaptureTests: XCTestCase {
     private func captureSession(_ app: XCUIApplication) {
         tapWhenReady(app.buttons["Repartir"], "Repartir")
         waitForScreen(app.staticTexts["EN COURS"], "Session in progress")
-        capture("03_session")
+        capture("07_session")
     }
 
     private func close(_ app: XCUIApplication) {

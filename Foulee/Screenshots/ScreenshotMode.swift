@@ -54,6 +54,13 @@ enum ScreenshotMode {
     /// (issue #408), where every screen has to be seen in both.
     static let darkArgument = "-FouleeScreenshotDark"
 
+    /// Fourth and fifth, optional: an outing is running on an Apple Watch, or
+    /// on a Garmin, when the app opens — what the mirror boards photograph.
+    /// One launch each, because the home stops offering « Repartir » once a
+    /// wrist is recording, and the other boards need it.
+    static let watchOutingArgument = "-FouleeScreenshotWatchOuting"
+    static let garminOutingArgument = "-FouleeScreenshotGarminOuting"
+
     /// The throwaway suite the seeded preferences live in.
     static let preferencesSuite = "com.eno33.foulee.screenshots"
 
@@ -99,6 +106,8 @@ enum ScreenshotMode {
             themeMode: arguments.contains(darkArgument) ? .dark : .light
         )
         divertSharedWrites()
+        let wrist: MirroredDevice? = arguments.contains(watchOutingArgument) ? .appleWatch
+            : arguments.contains(garminOutingArgument) ? .garmin : nil
         prepareDependencies { values in
             // Every date the app shows is derived from this one clock, so the
             // capture reads the same day whatever day it is run on. The only
@@ -110,7 +119,8 @@ enum ScreenshotMode {
             values.weather = ScreenshotDoubles.weather
             values.location = ScreenshotDoubles.location
             values.notifications = ScreenshotDoubles.notifications
-            values.garminConnectIQ = ScreenshotDoubles.garminConnectIQ
+            values.garminConnectIQ = ScreenshotDoubles.garminConnectIQ(outing: wrist == .garmin)
+            values.mirroredWorkout = ScreenshotDoubles.mirroredWorkout(outing: wrist == .appleWatch)
             values.pedometer = ScreenshotDoubles.pedometer
             values.altimeter = ScreenshotDoubles.altimeter
         }

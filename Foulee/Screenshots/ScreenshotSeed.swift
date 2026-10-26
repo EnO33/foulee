@@ -116,6 +116,30 @@ nonisolated extension ScreenshotSeed {
         Coordinate(latitude: 48.8612, longitude: 2.3492)
     ]
 
+    // MARK: - Outing on the wrist
+
+    /// The outing the mirror boards show running on a watch: the wrist's own
+    /// session numbers (`ScreenshotSeedCore`), stated now, so the screen reads
+    /// 18:24 and « Relevé à l'instant ». A run, as on the watch board.
+    ///
+    /// A Garmin states no calories and no climb while it runs (ADR 0009, D7):
+    /// its board carries neither, as a real one would.
+    static func wristFigures(from device: MirroredDevice) -> WatchSessionSnapshot {
+        let isGarmin = device == .garmin
+        return WatchSessionSnapshot(
+            sentAt: instant,
+            outingStartedAt: instant.addingTimeInterval(-sessionElapsed),
+            activity: .running,
+            steps: sessionSteps,
+            distanceMeters: sessionDistanceMeters,
+            activeCalories: isGarmin ? 0 : sessionCalories,
+            heartRate: sessionHeartRate,
+            climbMeters: isGarmin ? 0 : sessionElevationMeters,
+            isEnded: false,
+            route: [MirroredRoutePortion(activity: .running, coordinates: route)]
+        )
+    }
+
     /// Paris, so the weather double is reached (`TodayStore` only fetches the
     /// forecast once the location client answers).
     static let coordinate = Coordinate(latitude: 48.8566, longitude: 2.3522)

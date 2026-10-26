@@ -51,6 +51,8 @@ struct ScreenshotModeTests {
         #expect(ScreenshotMode.launchArgument == "-FouleeScreenshotMode")
         #expect(ScreenshotMode.onboardingArgument == "-FouleeScreenshotOnboarding")
         #expect(ScreenshotMode.darkArgument == "-FouleeScreenshotDark")
+        #expect(ScreenshotMode.watchOutingArgument == "-FouleeScreenshotWatchOuting")
+        #expect(ScreenshotMode.garminOutingArgument == "-FouleeScreenshotGarminOuting")
     }
 
     // MARK: - Deterministic

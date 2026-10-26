@@ -105,37 +105,43 @@ struct Shot {
 let sheetDimBand = 210
 
 let shots: [Shot] = [
-    // iPhone 6.9"
-    Shot(family: .iphone, file: "01_onboarding", lines: ["Bouge un peu,", "chaque jour"]),
-    Shot(family: .iphone, file: "02_home", lines: ["Ta journée,", "en un coup d'œil"], scrolls: true),
-    Shot(family: .iphone, file: "03_session", lines: ["Suis ta sortie", "en direct"]),
-    Shot(family: .iphone, file: "04_streak", lines: ["Ta série,", "mois après mois"], scrolls: true, trimTop: sheetDimBand),
-    Shot(family: .iphone, file: "05_stats", lines: ["Visualise", "tes progrès"], scrolls: true),
-    Shot(family: .iphone, file: "06_minutes", lines: ["Chaque métrique", "compte"], scrolls: true),
-    Shot(family: .iphone, file: "07_hydration", lines: ["Ton eau,", "verre après verre"], scrolls: true, trimTop: sheetDimBand),
-    Shot(family: .iphone, file: "08_summary", lines: ["Ta semaine,", "jour par jour"], scrolls: true, trimTop: sheetDimBand),
-    Shot(family: .iphone, file: "09_settings", lines: ["Tes objectifs,", "ton rythme"], scrolls: true),
+    // iPhone 6.9" — the store order of issue #582: the streak, the watch, the
+    // walk/run detection, the Bilan, Garmin. The first three are what the
+    // product page shows without scrolling. App Store Connect takes ten per
+    // family at most; the review-only captures (11_minutes, 12_settings,
+    // 13_onboarding) are never boarded.
+    Shot(family: .iphone, file: "01_home", lines: ["Ta série,", "chaque jour"], scrolls: true),
+    Shot(family: .iphone, file: "02_watch", lines: ["Ta sortie Watch,", "sur ton iPhone"]),
+    // Pushed inside the Bilan's sheet, so it carries the same dimmed band.
+    Shot(family: .iphone, file: "03_outing", lines: ["Marche et course,", "chacune comptée"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "04_summary", lines: ["Ta semaine,", "en un bilan"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "05_garmin", lines: ["Ta Garmin aussi,", "en direct"]),
+    Shot(family: .iphone, file: "06_streak", lines: ["Ta série,", "mois après mois"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "07_session", lines: ["Sans montre,", "l'iPhone suffit"]),
+    Shot(family: .iphone, file: "08_hydration", lines: ["Ton eau,", "verre après verre"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "09_stats", lines: ["Tes progrès,", "jour après jour"], scrolls: true),
     Shot(family: .iphone, file: "10_weather", lines: ["La météo,", "avant de sortir"], trimTop: sheetDimBand),
 
-    // iPad 13" — same captures as the iPhone, on a wider canvas. See
-    // `Shot.sourceFamily` for why these are not captured on an iPad.
-    Shot(family: .ipad, sourceFamily: .iphone, file: "01_onboarding", lines: ["Bouge un peu,", "chaque jour"]),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "02_home", lines: ["Ta journée,", "en un coup d'œil"], scrolls: true),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "03_session", lines: ["Suis ta sortie", "en direct"]),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "04_streak", lines: ["Ta série,", "mois après mois"], scrolls: true, trimTop: sheetDimBand),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "05_stats", lines: ["Visualise", "tes progrès"], scrolls: true),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "07_hydration", lines: ["Ton eau,", "verre après verre"], scrolls: true, trimTop: sheetDimBand),
+    // iPad 13" — same captures as the iPhone, on a wider canvas, the first six
+    // in the same order. See `Shot.sourceFamily` for why these are not
+    // captured on an iPad.
+    Shot(family: .ipad, sourceFamily: .iphone, file: "01_home", lines: ["Ta série,", "chaque jour"], scrolls: true),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "02_watch", lines: ["Ta sortie Watch,", "sur ton iPhone"]),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "03_outing", lines: ["Marche et course,", "chacune comptée"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "04_summary", lines: ["Ta semaine,", "en un bilan"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "05_garmin", lines: ["Ta Garmin aussi,", "en direct"]),
+    Shot(family: .ipad, sourceFamily: .iphone, file: "06_streak", lines: ["Ta série,", "mois après mois"], scrolls: true, trimTop: sheetDimBand),
 
-    // Apple Watch
+    // Apple Watch — the same order as the phone: the streak, the outing, the
+    // walk/run split, then hydration.
     Shot(family: .watch, file: "watch-01-today", lines: ["Ta série", "au poignet"], scrolls: true),
-    Shot(family: .watch, file: "watch-02-hydration", lines: ["Bois,", "d'un tap"], scrolls: true),
     // The one watch board that does **not** scroll, since issue #274. It used
     // to: « Arrêter » and the per-sport counters shared the screen with the
     // clock and the tiles, so the capture cut below the tiles and the fade said
     // so. Those two moved to their own pages, and the « Séance » page now fits
     // whole — a fade drawn under a complete screen would claim content that
     // isn't there.
-    Shot(family: .watch, file: "watch-03-session", lines: ["Ta sortie", "en direct"]),
+    Shot(family: .watch, file: "watch-02-session", lines: ["Ta sortie", "en direct"]),
     // The board that shows what issue #265 actually does: one outing, two
     // records in Santé.
     //
@@ -143,8 +149,12 @@ let shots: [Shot] = [
     // scroll: the seeded outing has two legs and they both fit, so a fade here
     // would promise a third that does not exist. Re-check this flag if the seed
     // ever gains a leg.
-    Shot(family: .watch, file: "watch-04-jambes", lines: ["Marche et course,", "chacune comptée"])
+    Shot(family: .watch, file: "watch-03-jambes", lines: ["Marche et course,", "chacune comptée"]),
+    Shot(family: .watch, file: "watch-04-hydration", lines: ["Bois,", "d'un tap"], scrolls: true)
 ]
+
+/// App Store Connect's ceiling per display family.
+let maximumBoardsPerFamily = 10
 
 // MARK: - Layout
 
@@ -457,6 +467,13 @@ func parseArguments(known: [String]) -> [String: String] {
         values[name] = value
     }
     return values
+}
+
+for family in [Family.iphone, .ipad, .watch] {
+    let count = shots.filter { $0.family == family }.count
+    if count > maximumBoardsPerFamily {
+        fail("\(count) \(family.rawValue) boards in `shots`; App Store Connect takes \(maximumBoardsPerFamily)")
+    }
 }
 
 let options = parseArguments(known: ["--input", "--output"])

@@ -95,4 +95,45 @@ platform :ios do
       force: true
     )
   end
+
+  # The boards composed by tools/compose_appstore_screenshots.swift (issue
+  # #582), uploaded in place of the version's screenshots: no binary, no
+  # metadata, never submitted for review. deliver tells the iPhone 6.9", iPad
+  # 13" and Apple Watch boards apart by their size and orders each set by file
+  # name, so the family prefix keeps the iPhone and iPad boards — same capture
+  # names — from overwriting each other, and the number keeps the store order.
+  desc "Upload the composed App Store boards to the version being prepared"
+  lane :screenshots do
+    boards = File.expand_path("../appstore-screenshots", __dir__)
+    staging = File.expand_path("screenshots/fr-FR", __dir__)
+    FileUtils.rm_rf(staging)
+    FileUtils.mkdir_p(staging)
+    { "iphone-6.9" => "iphone", "ipad-13" => "ipad", "watch" => nil }.each do |family, prefix|
+      files = Dir[File.join(boards, family, "*.png")].sort
+      UI.user_error!("No boards in #{File.join(boards, family)}: capture and compose first") if files.empty?
+      files.each do |file|
+        name = prefix ? "#{prefix}-#{File.basename(file)}" : File.basename(file)
+        FileUtils.cp(file, File.join(staging, name))
+      end
+    end
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: ENV.fetch("ASC_KEY_PATH"),
+      in_house: false
+    )
+
+    deliver(
+      api_key: api_key,
+      app_version: ENV.fetch("FOULEE_MARKETING_VERSION"),
+      screenshots_path: File.expand_path("screenshots", __dir__),
+      overwrite_screenshots: true,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      submit_for_review: false,
+      # No HTML preview to confirm on CI.
+      force: true
+    )
+  end
 end
