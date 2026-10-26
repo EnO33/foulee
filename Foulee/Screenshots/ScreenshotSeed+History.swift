@@ -160,8 +160,14 @@ nonisolated extension ScreenshotSeed {
     /// Newest first, one session per day that reached the goal — so the résumé's
     /// "aucune sortie" placeholder lands on exactly the weekend days the week
     /// bars show empty.
+    ///
+    /// Raw, as Santé hands them over: today's outing is its two legs, and the
+    /// app ties them back into one row the way it does for a real watch outing.
     static func recentWorkouts(daysBack: Int) -> [WorkoutSummary] {
-        (0..<max(daysBack, 0)).compactMap(workout(offset:))
+        (0..<max(daysBack, 0)).flatMap { offset -> [WorkoutSummary] in
+            guard let workout = workout(offset: offset) else { return [] }
+            return offset == 0 ? todayLegs(of: workout) : [workout]
+        }
     }
 
     private static func workout(offset: Int) -> WorkoutSummary? {
@@ -183,6 +189,51 @@ nonisolated extension ScreenshotSeed {
             sourceName: sourceName(offset: offset),
             activity: activity(offset: offset)
         )
+    }
+
+    /// Today's outing, as the watch records it since issue #265: a walk that
+    /// became a run, one `HKWorkout` per sport, tied by one outing identifier
+    /// (#316). The « marche et course » board opens its detail, whose portions
+    /// are these two legs (#318).
+    ///
+    /// The run is the longer leg, so the row still reads as the run the rest
+    /// of the seed calls today's outing.
+    ///
+    /// **The legs add up to the outing, exactly**: 18 + 24 = 42 min,
+    /// 1,5 + 2,7 = 4,2 km, 133 + 177 = 310 kcal, 1 890 + 3 066 = 4 956 pas,
+    /// 5 + 7 = 12 m. The row is their sum (`OutingGrouping`), so a board that
+    /// did not add up would show a different outing from the Bilan's.
+    private static func todayLegs(of outing: WorkoutSummary) -> [WorkoutSummary] {
+        let walkSeconds: TimeInterval = 18 * 60
+        let boundary = outing.startedAt.addingTimeInterval(walkSeconds)
+        let outingID = UUID(uuidString: "5C0EE7ED-0002-4000-8000-000000000000") ?? UUID()
+        let walk = WorkoutSummary(
+            id: outing.id,
+            startedAt: outing.startedAt,
+            endedAt: boundary,
+            durationSeconds: walkSeconds,
+            distanceKm: 1.5,
+            activeCalories: 133,
+            steps: 1_890,
+            elevationMeters: 5,
+            sourceName: outing.sourceName,
+            activity: .walking,
+            outing: OutingLeg(outingID: outingID, index: 0)
+        )
+        let run = WorkoutSummary(
+            id: UUID(uuidString: "5C0EE7ED-0002-4000-8000-000000000001") ?? UUID(),
+            startedAt: boundary,
+            endedAt: outing.endedAt,
+            durationSeconds: outing.durationSeconds - walkSeconds,
+            distanceKm: outing.distanceKm - walk.distanceKm,
+            activeCalories: outing.activeCalories - walk.activeCalories,
+            steps: outing.steps - walk.steps,
+            elevationMeters: outing.elevationMeters - walk.elevationMeters,
+            sourceName: outing.sourceName,
+            activity: .running,
+            outing: OutingLeg(outingID: outingID, index: 1)
+        )
+        return [walk, run]
     }
 
     /// What each seeded session was recorded as (issue #245).

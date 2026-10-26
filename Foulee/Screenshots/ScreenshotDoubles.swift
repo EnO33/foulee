@@ -70,22 +70,55 @@ nonisolated enum ScreenshotDoubles {
         scheduleHydrationSnooze: { _ in }
     )
 
-    static let garminConnectIQ = GarminConnectIQClient(
-        // No SDK initialization, no BLE, no Garmin Connect round-trip.
-        initialize: {},
-        presentDeviceSelection: {},
-        handleDeviceSelection: { _ in ScreenshotSeed.garminDevices },
-        knownDevices: { ScreenshotSeed.garminDevices },
-        startReceiving: {},
-        snapshots: { AsyncStream { $0.finish() } },
-        sessionStates: { AsyncStream { $0.finish() } },
-        waterArrivals: { AsyncStream { $0.finish() } },
-        requestStop: {},
-        // nil, not a contribution: the seeded counters are already the whole
-        // day's story, and an overlay on top of them would lift the hero card
-        // above the numbers every other screen shows.
-        todayOverlay: { _ in nil }
-    )
+    /// `outing`: the Garmin states one outing in progress, once — the Garmin
+    /// mirror board. Otherwise it states nothing.
+    static func garminConnectIQ(outing: Bool) -> GarminConnectIQClient {
+        GarminConnectIQClient(
+            // No SDK initialization, no BLE, no Garmin Connect round-trip.
+            initialize: {},
+            presentDeviceSelection: {},
+            handleDeviceSelection: { _ in ScreenshotSeed.garminDevices },
+            knownDevices: { ScreenshotSeed.garminDevices },
+            startReceiving: {},
+            snapshots: { AsyncStream { $0.finish() } },
+            sessionStates: { once(outing ? ScreenshotSeed.wristFigures(from: .garmin) : nil) },
+            waterArrivals: { AsyncStream { $0.finish() } },
+            requestStop: {},
+            // nil, not a contribution: the seeded counters are already the whole
+            // day's story, and an overlay on top of them would lift the hero card
+            // above the numbers every other screen shows.
+            todayOverlay: { _ in nil }
+        )
+    }
+
+    /// `outing`: an Apple Watch is recording when the app opens, and says so
+    /// once — the Apple Watch mirror board. Otherwise no wrist ever mirrors.
+    /// Nothing is sent and nothing is woken either way: there is no watch.
+    static func mirroredWorkout(outing: Bool) -> MirroredWorkoutClient {
+        let figures = ScreenshotSeed.wristFigures(from: .appleWatch)
+        let events: [MirroredSessionEvent] = outing ? [
+            .started(MirroredSession(startedAt: figures.outingStartedAt, activity: figures.activity)),
+            .snapshot(figures)
+        ] : []
+        return MirroredWorkoutClient(
+            events: {
+                AsyncStream { continuation in
+                    events.forEach { continuation.yield($0) }
+                    continuation.finish()
+                }
+            },
+            send: { _ in },
+            startWatchSession: { _ in },
+            isWatchAppInstalled: { false }
+        )
+    }
+
+    private static func once<Element: Sendable>(_ element: Element?) -> AsyncStream<Element> {
+        AsyncStream { continuation in
+            if let element { continuation.yield(element) }
+            continuation.finish()
+        }
+    }
 
     /// Drives the session-in-progress capture. Emits the same sample forever —
     /// the store drops samples that arrive before it has set its state, so a

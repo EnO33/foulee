@@ -212,17 +212,37 @@ tools/capture_screenshots.sh 02175924-56FF-…-0216  # by UDID
 ```
 
 It boots the simulator, pins the status bar to 09:41 / full bars / charged,
-runs the `FouleeScreenshots` UI-test target and exports the ten PNGs into
+runs the `FouleeScreenshots` UI-test target and exports the thirteen PNGs into
 `appstore-screenshots/raw/iphone-6.9/`. About two minutes, unsupervised, no
 Health data to enter by hand.
 
 The set follows the app, not the other way round: when a screen changes, its
 capture step in `FouleeScreenshots/ScreenshotCaptureTests.swift` and its
 caption in the composer's `shots` table change in the same PR (issue #378).
-`04_streak` is the Bilan opened from the streak badge, on the month in
-progress with the streak at its head; `07_hydration` the Hydratation screen
-opened from its card; and `08_summary` the Bilan on the current week. All
-three are sheets, so their boards trim the dimmed band above them.
+The numbers are the store order (issue #582): the streak, the watch, the
+walk/run detection, the Bilan, Garmin, then the rest.
+
+| Capture | Screen |
+|---------|--------|
+| `01_home` | Aujourd'hui: the ring and the streak |
+| `02_watch` | An outing running on the Apple Watch, as the iPhone shows it |
+| `03_outing` | Today's outing in the Bilan, a walk that became a run, with its portions |
+| `04_summary` | The Bilan on the current week |
+| `05_garmin` | An outing running on a Garmin, as the iPhone shows it |
+| `06_streak` | The Bilan opened from the streak badge, on the month in progress |
+| `07_session` | An outing recorded by the iPhone alone |
+| `08_hydration` | The Hydratation screen, opened from its card |
+| `09_stats` | The steps statistics |
+| `10_weather` | The weather sheet |
+| `11_minutes`, `12_settings`, `13_onboarding` | For the review sets only: never boarded |
+
+`03_outing`, `04_summary`, `06_streak`, `08_hydration` and `10_weather` are
+sheets, so their boards trim the dimmed band above them. The two wrist boards
+each need their own launch, with `-FouleeScreenshotWatchOuting` or
+`-FouleeScreenshotGarminOuting`: once a wrist is recording, the home offers
+that outing instead of « Repartir », which `07_session` needs. The doubles
+state the watch board's own session (18:24, 2 480 pas), and nothing reaches a
+watch.
 
 What makes it repeatable is the **capture mode** (issue #235): the target
 launches the app with `-FouleeScreenshotMode`, which swaps every `@Dependency`
@@ -246,7 +266,7 @@ Four things worth knowing:
   group are diverted into throwaway suites, so the fabricated counters never
   reach your real widgets; the Watch push is muted.
 - The **runtime is part of the output**: the same device model on iOS 26.0 and
-  on 26.5 renders all ten PNGs differently. That is why the script refuses a
+  on 26.5 renders every PNG differently. That is why the script refuses a
   simulator name shared by two available devices and asks for a UDID instead —
   reproducibility that depends on which runtimes happen to be installed is not
   reproducibility.
@@ -352,7 +372,7 @@ the output, nothing tracked by git):
   still cut « kcal » and « bpm » off the bottom of a **46 mm**, because a paged
   `TabView` keeps more room above its content than a scroll view does. What made
   it fit was two-line metric tiles, a 34 pt clock and no divider — all of it
-  verified on `appstore-screenshots/raw/probe-40mm/watch-03-session.png`, not on
+  verified on `appstore-screenshots/raw/probe-40mm/watch-02-session.png`, not on
   paper.
 - **The capture seed must draw what the app draws, or the probe measures
   nothing.** Issue #299: the seed left `activityTotals` empty, so the board
@@ -370,12 +390,12 @@ the output, nothing tracked by git):
 - **The watch is uninstalled first**, which clears its app-group container, so
   « Démarrer » starts a session outright instead of asking which activity. That
   question depends on what the phone last synced; the uninstall is what keeps
-  the third capture from depending on the developer's own wrist. (The phone
+  the session capture from depending on the developer's own wrist. (The phone
   stopped asking altogether in issue #246 — the watch still does, because it
   freezes its `activityType` when the session is created.)
-- **The seeded outing changed sport, and the fourth board is where that shows.**
+- **The seeded outing changed sport, and the third board is where that shows.**
   Since issue #276 the seed carries two legs — a 12:04 walk that became a 06:20
-  run — and `watch-04-jambes` photographs them. The « Séance » board is
+  run — and `watch-03-jambes` photographs them. The « Séance » board is
   unaffected: it shows the outing's totals and the sport being done, never a
   breakdown.
   The legs **add up to those totals exactly** (1 650 + 830 pas, 1 000 + 830 m,
@@ -430,18 +450,30 @@ what the user does, « séance » is reserved for a HealthKit workout record.
 
 ### 9.3 Upload
 
-App Store Connect → your app → the version → **Media Manager**, one tab per
-size class:
+**Actions → Store screenshots → Run workflow** (`.github/workflows/store-screenshots.yml`,
+lane `screenshots`), with the version string. It creates its own iPhone and
+Apple Watch simulators, captures both sets, composes the boards and keeps them
+as the `store-screenshots` artifact. Run it once with « publish » unticked and
+look at the artifact; run it again ticked, with that run's id in « boards_from_run », to publish exactly those boards in place of the version's screenshots
+in App Store Connect. It never uploads a binary or the listing, and never
+submits.
 
-| Tab | Folder | Required |
-|-----|--------|----------|
-| iPhone 6.9" Display | `appstore-screenshots/iphone-6.9/` | yes |
-| iPad 13" Display | `appstore-screenshots/ipad-13/` | yes — the app runs on iPad |
-| Apple Watch | `appstore-screenshots/watch/` | yes — the app ships a Watch app |
+The lane reads the boards from `appstore-screenshots/`, so a set composed on a
+Mac goes up the same way (`fastlane screenshots`, with the App Store Connect
+key of step 6 in the environment):
 
-Order matters: the first three are what shows on the product page without
-scrolling. Screenshots are only needed at promotion (step 10), never for
-TestFlight.
+| App Store Connect tab | Folder | Uploaded as |
+|-----------------------|--------|-------------|
+| iPhone 6.9" Display | `appstore-screenshots/iphone-6.9/` | `iphone-01_home.png` … |
+| iPad 13" Display | `appstore-screenshots/ipad-13/` | `ipad-01_home.png` … |
+| Apple Watch | `appstore-screenshots/watch/` | `watch-01-today.png` … |
+
+deliver files each board under its tab by its size and orders a tab by file
+name, so the numbers are the store order. The first three are what shows on
+the product page without scrolling, and App Store Connect takes ten per tab at
+most: the composer refuses an eleventh. On CI the watch boards show the
+runner's hour (UTC) in the corner, where watchOS draws its clock.
+Screenshots are only needed at promotion (step 10), never for TestFlight.
 
 ## 10. Promote to the public App Store (manual, when you're ready)
 
@@ -453,7 +485,8 @@ deliberate, manual action:
 2. **Actions → Store listing → Run workflow**, with the version string
    (e.g. `1.55`). It creates the version in App Store Connect when there is
    none to edit yet, and writes the listing (§ 10.1) to it.
-3. Attach the processed build, then the **screenshots** (step 9).
+3. Attach the processed build. Upload the **screenshots** (step 9.3) when the
+   set has changed.
 4. **Submit for Review**, by hand: the workflow never submits.
 
 ### 10.1 The listing lives in the repository
@@ -490,7 +523,7 @@ tools/check_store_metadata.py
 
 The workflow (`.github/workflows/store-listing.yml`, lane `metadata`) uses the
 same App Store Connect key as the release (step 6), with no binary and no
-screenshots: those still go through the release and step 9.
+screenshots: those go through the release and step 9.3.
 
 ## 11. The Garmin watch app (separate store, separate cadence)
 

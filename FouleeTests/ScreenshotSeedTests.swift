@@ -60,7 +60,7 @@ struct ScreenshotSeedTests {
             $0.weather = ScreenshotDoubles.weather
             $0.location = ScreenshotDoubles.location
             $0.notifications = ScreenshotDoubles.notifications
-            $0.garminConnectIQ = ScreenshotDoubles.garminConnectIQ
+            $0.garminConnectIQ = ScreenshotDoubles.garminConnectIQ(outing: false)
         } operation: {
             let store = TodayStore()
             store.apply(preferences: preferences)
@@ -147,27 +147,102 @@ struct ScreenshotSeedTests {
     }
 
     @Test("The résumé lists a session on every day the week bars fill")
-    func resumeMatchesTheWeekBars() throws {
+    func resumeMatchesTheWeekBars() {
         let workouts = ScreenshotSeed.recentWorkouts(daysBack: 7)
-        // Mon → Thu recorded, the weekend empty: the placeholder row the sheet
-        // shows on a rest day is part of the capture.
-        #expect(workouts.count == 5)
-        let today = try #require(workouts.first)
-        #expect(today.durationSeconds == TimeInterval(42 * 60))
-        #expect(today.sourceName == "Foulée")
         let calendar = Calendar.current
-        for workout in workouts {
-            let minutes = Int(workout.durationSeconds / 60)
-            let offset = calendar.dateComponents(
+        let byDay = Dictionary(grouping: workouts) { workout in
+            calendar.dateComponents(
                 [.day],
                 from: calendar.startOfDay(for: workout.startedAt),
                 to: ScreenshotSeed.today
             ).day ?? -1
-            #expect(minutes == ScreenshotSeed.minutes(offset: offset))
-            // A session is never longer than the exercise minutes credited
-            // that day, and it always ends before the pinned instant.
-            #expect(workout.endedAt <= ScreenshotSeed.instant)
         }
+        // Mon → Thu recorded, the weekend empty: the placeholder row the sheet
+        // shows on a rest day is part of the capture.
+        #expect(byDay.keys.sorted() == [0, 1, 2, 3, 6])
+        for (offset, sessions) in byDay {
+            // The day's sessions — today's outing is two legs — add up to the
+            // exercise minutes credited that day, and end before the pinned
+            // instant.
+            let minutes = Int(sessions.map(\.durationSeconds).reduce(0, +) / 60)
+            #expect(minutes == ScreenshotSeed.minutes(offset: offset))
+            #expect(sessions.allSatisfy { $0.endedAt <= ScreenshotSeed.instant })
+        }
+    }
+
+    /// The « marche et course » board opens today's outing. It has to be what
+    /// a watch writes — two legs, one outing identifier, touching — or the
+    /// Bilan shows two rows and the detail has no portions to draw.
+    @Test("Today's outing is a walk that became a run, and its legs add up")
+    func todayIsAWalkThenARun() throws {
+        let legs = ScreenshotSeed.recentWorkouts(daysBack: 1)
+        try #require(legs.count == 2)
+        let walk = legs[0], run = legs[1]
+        #expect(walk.activity == .walking)
+        #expect(run.activity == .running)
+        #expect(run.durationSeconds > walk.durationSeconds)
+        #expect(walk.endedAt == run.startedAt)
+        let outing = try #require(walk.outing)
+        #expect(run.outing == OutingLeg(outingID: outing.outingID, index: 1))
+        #expect(outing.index == 0)
+        #expect(walk.sourceName == "Foulée" && run.sourceName == "Foulée")
+
+        #expect(walk.durationSeconds + run.durationSeconds == TimeInterval(42 * 60))
+        #expect(abs(walk.distanceKm + run.distanceKm - 4.2) < 1e-9)
+        #expect(walk.activeCalories + run.activeCalories == 310)
+        #expect(walk.steps + run.steps == 4_956)
+        #expect(walk.elevationMeters + run.elevationMeters == 12)
+    }
+
+    // MARK: - The outing on the wrist
+
+    @Test("The Apple Watch mirror board shows the wrist's session")
+    func watchOutingReachesTheStore() async {
+        let store = withDependencies {
+            $0.mirroredWorkout = ScreenshotDoubles.mirroredWorkout(outing: true)
+        } operation: {
+            MirroredSessionStore()
+        }
+        await store.observe()
+        #expect(store.session?.device == .appleWatch)
+        #expect(store.session?.activity == .running)
+        #expect(store.outingStartedAt == ScreenshotSeed.instant.addingTimeInterval(-ScreenshotSeed.sessionElapsed))
+        #expect(store.figures?.steps == ScreenshotSeed.sessionSteps)
+        #expect(store.figures?.activeCalories == ScreenshotSeed.sessionCalories)
+        #expect(store.figures?.age(at: ScreenshotSeed.instant) == 0)
+        #expect(store.figures?.route.isDrawable == true)
+    }
+
+    /// A Garmin states no calories and no climb while it runs: the board must
+    /// not claim either.
+    @Test("The Garmin mirror board shows a Garmin's session")
+    func garminOutingReachesTheStore() async {
+        let store = withDependencies {
+            $0.mirroredWorkout = ScreenshotDoubles.mirroredWorkout(outing: false)
+            $0.garminConnectIQ = ScreenshotDoubles.garminConnectIQ(outing: true)
+        } operation: {
+            MirroredSessionStore()
+        }
+        await store.observe()
+        #expect(store.session == nil)
+        await store.observeGarmin()
+        #expect(store.session?.device == .garmin)
+        #expect(store.figures?.steps == ScreenshotSeed.sessionSteps)
+        #expect(store.figures?.activeCalories == 0)
+        #expect(store.figures?.climbMeters == 0)
+    }
+
+    @Test("Without the argument, no wrist is recording")
+    func noOutingByDefault() async {
+        let store = withDependencies {
+            $0.mirroredWorkout = ScreenshotDoubles.mirroredWorkout(outing: false)
+            $0.garminConnectIQ = ScreenshotDoubles.garminConnectIQ(outing: false)
+        } operation: {
+            MirroredSessionStore()
+        }
+        await store.observe()
+        await store.observeGarmin()
+        #expect(store.isMirroring == false)
     }
 
     /// The session-in-progress boards show one walk on two devices, and the two

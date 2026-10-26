@@ -2,8 +2,8 @@ import XCTest
 
 /// Drives the watch app in capture mode and photographs the four screens of
 /// the App Store watch set (issues #239, #276). Names match the composer's
-/// `shots` table — `watch-01-today`, `watch-02-hydration`, `watch-03-session`,
-/// `watch-04-jambes`.
+/// `shots` table — `watch-01-today`, `watch-02-session`, `watch-03-jambes`,
+/// `watch-04-hydration` (the store order since issue #582).
 ///
 /// One launch, one pass: the home, the same home scrolled to the hydration
 /// card, then the live session, then the session's own « Jambes » page. The
@@ -62,7 +62,7 @@ final class WatchScreenshotCaptureTests: XCTestCase {
         // scroll, and a home that had stopped scrolling still passed this step
         // and photographed itself twice (issue #440).
         XCTAssertTrue(drank.isHittable, "The home did not scroll to the hydration card")
-        captureWatch("watch-02-hydration")
+        captureWatch("watch-04-hydration")
     }
 
     /// Starting a session records nothing: capture mode returns before
@@ -96,7 +96,7 @@ final class WatchScreenshotCaptureTests: XCTestCase {
         let sentinel = app.staticTexts["bpm"]
         waitForWatchScreen(sentinel, "Session in progress")
         XCTAssertTrue(sentinel.isHittable, "Session page is not the page on screen")
-        captureWatch("watch-03-session")
+        captureWatch("watch-02-session")
     }
 
     /// The fourth board: the same outing, split (issue #276).
@@ -141,6 +141,6 @@ final class WatchScreenshotCaptureTests: XCTestCase {
         waitForWatchScreen(sentinel, "Legs page")
         XCTAssertTrue(sentinel.isHittable, "Legs page is not the page on screen")
         settleWatchScrolling()
-        captureWatch("watch-04-jambes")
+        captureWatch("watch-03-jambes")
     }
 }

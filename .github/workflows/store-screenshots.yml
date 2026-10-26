@@ -1,0 +1,135 @@
+name: Store screenshots
+
+# Captures the App Store screenshots on fresh simulators, composes the boards
+# (issue #582) and keeps them as an artifact. With « publish » ticked, uploads
+# them to the version being prepared in App Store Connect in place of its
+# screenshots: no binary, no metadata, never submitted for review. Run it by
+# hand from Actions, unticked first, and look at the artifact.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version being prepared in App Store Connect (e.g. 1.55)
+        required: true
+        type: string
+      boards_from_run:
+        description: Publish the boards of this earlier run (its id) instead of capturing again
+        required: false
+        default: ""
+        type: string
+      publish:
+        description: Upload the boards to App Store Connect
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: store-screenshots
+  cancel-in-progress: false
+
+# Reads the repo and talks to App Store Connect with its own key only.
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  screenshots:
+    name: Capture, compose and publish
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Passed through the environment, never interpolated into the script:
+      # the input is free text typed in the Actions form.
+      - name: Check the version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::« $VERSION » is not a version like 1.55"
+            exit 1
+          fi
+
+      # The boards reviewed in an earlier run, so what is published is what
+      # was looked at, not a second capture.
+      - name: Fetch the reviewed boards
+        if: inputs.boards_from_run != ''
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: store-screenshots
+          path: appstore-screenshots
+          run-id: ${{ inputs.boards_from_run }}
+          github-token: ${{ github.token }}
+
+      - uses: ./.github/actions/prepare-project
+        if: inputs.boards_from_run == ''
+
+      # One simulator per set, created here on the newest runtime: the capture
+      # script refuses a name two runtimes share, and a fresh device carries
+      # nothing from an earlier run. The models are the ones whose grabs are
+      # the App Store sizes (docs/RELEASE.md § 9.1); the script checks the size
+      # again before writing.
+      - name: Create the capture simulators
+        if: inputs.boards_from_run == ''
+        run: |
+          create() {
+            local name="$1" platform="$2" model="$3"
+            local runtime devicetype
+            runtime=$(xcrun simctl list runtimes available -j \
+              | jq -r --arg p "$platform" '[.runtimes[] | select(.platform == $p)] | sort_by(.version) | last | .identifier')
+            devicetype=$(xcrun simctl list devicetypes -j \
+              | jq -r --arg m "$model" '.devicetypes[] | select(.name == $m) | .identifier')
+            if [ -z "$runtime" ] || [ "$runtime" = "null" ] || [ -z "$devicetype" ]; then
+              echo "::error::No $platform runtime or no « $model » device type on this runner"
+              exit 1
+            fi
+            xcrun simctl create "$name" "$devicetype" "$runtime"
+          }
+          echo "IPHONE_UDID=$(create 'Store iPhone' iOS 'iPhone 17 Pro Max')" >> "$GITHUB_ENV"
+          echo "WATCH_UDID=$(create 'Store Watch' watchOS 'Apple Watch Series 11 (46mm)')" >> "$GITHUB_ENV"
+
+      - name: Capture the iPhone set
+        if: inputs.boards_from_run == ''
+        run: tools/capture_screenshots.sh "$IPHONE_UDID"
+
+      # watchOS draws the host's clock over every app (docs/RELEASE.md § 9.1),
+      # so the watch boards show the hour this step ran at, in UTC.
+      - name: Capture the Apple Watch set
+        if: inputs.boards_from_run == ''
+        run: tools/capture_screenshots.sh --watch "$WATCH_UDID"
+
+      - name: Compose the boards
+        if: inputs.boards_from_run == ''
+        run: swift tools/compose_appstore_screenshots.swift
+
+      - name: Upload the boards
+        if: inputs.boards_from_run == ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: store-screenshots
+          path: |
+            appstore-screenshots/iphone-6.9
+            appstore-screenshots/ipad-13
+            appstore-screenshots/watch
+
+      - name: Materialise the App Store Connect key
+        if: inputs.publish
+        env:
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          set -euo pipefail
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > fastlane/asc_key.p8
+
+      - name: Publish with deliver
+        if: inputs.publish
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: ${{ github.workspace }}/fastlane/asc_key.p8
+          FOULEE_MARKETING_VERSION: ${{ inputs.version }}
+        run: fastlane screenshots
+
+      - name: Tidy the key
+        if: always()
+        run: rm -f fastlane/asc_key.p8

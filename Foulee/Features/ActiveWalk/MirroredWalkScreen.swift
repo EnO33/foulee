@@ -1,3 +1,4 @@
+import Dependencies
 import FouleeKit
 import SwiftUI
 
@@ -21,6 +22,11 @@ import SwiftUI
 struct MirroredWalkScreen: View {
     let store: MirroredSessionStore
     var onDismiss: () -> Void
+
+    /// The app's clock, not the timeline's: the same instant in production,
+    /// and the pinned one in a capture run, where the outing's start is seeded
+    /// against it.
+    @Dependency(\.date) private var date
 
     @State private var isShowingRoute = false
 
@@ -77,9 +83,10 @@ struct MirroredWalkScreen: View {
     /// The one figure that can be honest between two deliveries: derived from
     /// the outing's start date, so it advances on this device's own clock.
     private var clock: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
+        TimelineView(.periodic(from: .now, by: 1)) { _ in
+            let now = date.now
             VStack(spacing: 4) {
-                Text(elapsed(at: context.date).walkClockText)
+                Text(elapsed(at: now).walkClockText)
                     .font(.system(size: 56, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                 Text(store.figures?.isPaused == true ? "En pause" : store.session?.activity.label ?? "Séance")
@@ -89,7 +96,7 @@ struct MirroredWalkScreen: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
                 "\(store.session?.activity.label ?? "Séance") en cours depuis "
-                    + elapsed(at: context.date).walkClockText
+                    + elapsed(at: now).walkClockText
             )
         }
     }
@@ -150,8 +157,8 @@ struct MirroredWalkScreen: View {
 
     /// « Relevé il y a 2 min ». The line that keeps this screen from lying.
     private func freshness(_ figures: WatchSessionSnapshot) -> some View {
-        TimelineView(.periodic(from: .now, by: 30)) { context in
-            Text(Self.ageText(figures.age(at: context.date)))
+        TimelineView(.periodic(from: .now, by: 30)) { _ in
+            Text(Self.ageText(figures.age(at: date.now)))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

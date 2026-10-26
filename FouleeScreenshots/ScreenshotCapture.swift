@@ -15,6 +15,20 @@ enum ScreenshotCapture {
     /// Must equal `ScreenshotMode.darkArgument`.
     static let darkArgument = "-FouleeScreenshotDark"
 
+    /// A wrist recording an outing when the app opens.
+    enum Wrist {
+        case watch, garmin
+
+        /// Must equal `ScreenshotMode.watchOutingArgument` and
+        /// `ScreenshotMode.garminOutingArgument`.
+        var argument: String {
+            switch self {
+            case .watch: "-FouleeScreenshotWatchOuting"
+            case .garmin: "-FouleeScreenshotGarminOuting"
+            }
+        }
+    }
+
     /// French, whatever the host runs (issue #408): the boards are French, and
     /// a simulator left in English groups thousands as « 8,240 ». CI runners
     /// are in English; a developer's Mac usually is not, which is why the
@@ -44,12 +58,13 @@ enum ScreenshotCapture {
 extension XCTestCase {
     /// Launch the app in capture mode. `onboarding` seeds the preferences as a
     /// fresh install so `RootView` renders the onboarding flow instead of the
-    /// home.
+    /// home; `wrist` starts it with an outing running on that watch.
     @discardableResult
-    func launchInCaptureMode(onboarding: Bool = false) -> XCUIApplication {
+    func launchInCaptureMode(onboarding: Bool = false, wrist: ScreenshotCapture.Wrist? = nil) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [ScreenshotCapture.launchArgument] + ScreenshotCapture.localeArguments
         if onboarding { app.launchArguments.append(ScreenshotCapture.onboardingArgument) }
+        if let wrist { app.launchArguments.append(wrist.argument) }
         if ScreenshotCapture.isDark { app.launchArguments.append(ScreenshotCapture.darkArgument) }
         app.launch()
         return app
