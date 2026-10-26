@@ -27,6 +27,10 @@ nonisolated public struct WatchSessionSnapshot: Codable, Equatable, Sendable {
     public var distanceMeters: Double
     public var activeCalories: Int
     public var heartRate: Int?
+    /// The outing's climb and descent so far, in metres (issue #535); 0 from
+    /// a watch without a barometer, or on a build that predates them.
+    public var climbMeters: Double
+    public var descentMeters: Double
     /// The outing is over.
     ///
     /// **The only mechanism that ends the display**, together with staleness.
@@ -50,6 +54,8 @@ nonisolated public struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         distanceMeters: Double,
         activeCalories: Int,
         heartRate: Int?,
+        climbMeters: Double = 0,
+        descentMeters: Double = 0,
         isEnded: Bool,
         isPaused: Bool = false,
         route: [MirroredRoutePortion] = []
@@ -61,6 +67,8 @@ nonisolated public struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         self.distanceMeters = distanceMeters
         self.activeCalories = activeCalories
         self.heartRate = heartRate
+        self.climbMeters = climbMeters
+        self.descentMeters = descentMeters
         self.isEnded = isEnded
         self.isPaused = isPaused
         self.route = route
@@ -83,6 +91,8 @@ nonisolated public struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         distanceMeters = try container.decodeIfPresent(Double.self, forKey: .distanceMeters) ?? 0
         activeCalories = try container.decodeIfPresent(Int.self, forKey: .activeCalories) ?? 0
         heartRate = try container.decodeIfPresent(Int.self, forKey: .heartRate)
+        climbMeters = try container.decodeIfPresent(Double.self, forKey: .climbMeters) ?? 0
+        descentMeters = try container.decodeIfPresent(Double.self, forKey: .descentMeters) ?? 0
         isEnded = try container.decodeIfPresent(Bool.self, forKey: .isEnded) ?? false
         // A watch on a build without pause never sends it, and never pauses.
         isPaused = try container.decodeIfPresent(Bool.self, forKey: .isPaused) ?? false
@@ -93,6 +103,15 @@ nonisolated public struct WatchSessionSnapshot: Codable, Equatable, Sendable {
     /// Drawn by `MirroredWalkScreen` — the phone's only view of a distance it
     /// did not measure.
     public var distanceKm: Double { distanceMeters / 1_000 }
+
+    /// « ↑ 120 m · ↓ 115 m », or `nil` when the wrist measured neither
+    /// (issue #535).
+    public var elevationText: String? { elevation.text }
+
+    /// The same, for VoiceOver.
+    public var elevationSpokenText: String? { elevation.spokenText }
+
+    private var elevation: Elevation { Elevation(ascent: climbMeters, descent: descentMeters) }
 
     /// How long the outing has run, read at `date`.
     ///

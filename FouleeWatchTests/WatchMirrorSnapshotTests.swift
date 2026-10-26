@@ -61,6 +61,8 @@ struct WatchMirrorSnapshotTests {
         metrics.distanceMeters = 1_830
         metrics.activeCalories = 108
         metrics.heartRate = 118
+        metrics.climbMeters = 85
+        metrics.descentMeters = 40
         metrics.activity = .running
         let snapshot = metrics.snapshot(at: base, isEnded: false)
 
@@ -68,6 +70,8 @@ struct WatchMirrorSnapshotTests {
         #expect(snapshot.distanceMeters == 1_830)
         #expect(snapshot.activeCalories == 108)
         #expect(snapshot.heartRate == 118)
+        #expect(snapshot.climbMeters == 85)
+        #expect(snapshot.descentMeters == 40)
         #expect(snapshot.activity == .running)
         #expect(snapshot.sentAt == base)
     }

@@ -14,6 +14,9 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     var climbMeters: Double = 0
     /// Its descent, measured the same way (issue #565).
     var descentMeters: Double = 0
+
+    /// Both, as one value (issue #535).
+    var elevation: Elevation { Elevation(ascent: climbMeters, descent: descentMeters) }
     /// Virtual start of the session: the instant `elapsed` would have been zero
     /// (issue #266).
     ///
@@ -204,6 +207,8 @@ extension WatchWorkoutMetrics {
             distanceMeters: distanceMeters,
             activeCalories: activeCalories,
             heartRate: heartRate,
+            climbMeters: climbMeters,
+            descentMeters: descentMeters,
             isEnded: isEnded,
             isPaused: isPaused
         )
