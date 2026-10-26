@@ -31,7 +31,7 @@ import Foundation
 
 // MARK: - Families
 
-enum Family: String {
+enum Family: String, CaseIterable {
     case iphone = "iphone-6.9"
     case ipad = "ipad-13"
     case watch = "watch"
@@ -104,7 +104,7 @@ struct Shot {
 /// captures rather than inheriting this number.
 let sheetDimBand = 210
 
-let shots: [Shot] = [
+let iphoneShots: [Shot] = [
     // iPhone 6.9" — the store order of issue #582: the streak, the watch, the
     // walk/run detection, the Bilan, Garmin. The first three are what the
     // product page shows without scrolling. App Store Connect takes ten per
@@ -120,18 +120,10 @@ let shots: [Shot] = [
     Shot(family: .iphone, file: "07_session", lines: ["Sans montre,", "l'iPhone suffit"]),
     Shot(family: .iphone, file: "08_hydration", lines: ["Ton eau,", "verre après verre"], scrolls: true, trimTop: sheetDimBand),
     Shot(family: .iphone, file: "09_stats", lines: ["Tes progrès,", "jour après jour"], scrolls: true),
-    Shot(family: .iphone, file: "10_weather", lines: ["La météo,", "avant de sortir"], trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "10_weather", lines: ["La météo,", "avant de sortir"], trimTop: sheetDimBand)
+]
 
-    // iPad 13" — same captures as the iPhone, on a wider canvas, the first six
-    // in the same order. See `Shot.sourceFamily` for why these are not
-    // captured on an iPad.
-    Shot(family: .ipad, sourceFamily: .iphone, file: "01_home", lines: ["Ta série,", "chaque jour"], scrolls: true),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "02_watch", lines: ["Ta sortie Watch,", "sur ton iPhone"]),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "03_outing", lines: ["Marche et course,", "chacune comptée"], scrolls: true, trimTop: sheetDimBand),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "04_summary", lines: ["Ta semaine,", "en un bilan"], scrolls: true, trimTop: sheetDimBand),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "05_garmin", lines: ["Ta Garmin aussi,", "en direct"]),
-    Shot(family: .ipad, sourceFamily: .iphone, file: "06_streak", lines: ["Ta série,", "mois après mois"], scrolls: true, trimTop: sheetDimBand),
-
+let watchShots: [Shot] = [
     // Apple Watch — the same order as the phone: the streak, the outing, the
     // walk/run split, then hydration.
     Shot(family: .watch, file: "watch-01-today", lines: ["Ta série", "au poignet"], scrolls: true),
@@ -152,6 +144,18 @@ let shots: [Shot] = [
     Shot(family: .watch, file: "watch-03-jambes", lines: ["Marche et course,", "chacune comptée"]),
     Shot(family: .watch, file: "watch-04-hydration", lines: ["Bois,", "d'un tap"], scrolls: true)
 ]
+
+/// iPad 13" — the first six iPhone boards, in the same order and with the same
+/// captions, on a wider canvas. See `Shot.sourceFamily` for why these are not
+/// captured on an iPad.
+let ipadShots = iphoneShots.prefix(6).map { shot in
+    Shot(
+        family: .ipad, sourceFamily: .iphone, file: shot.file, lines: shot.lines,
+        scrolls: shot.scrolls, trimTop: shot.trimTop, trimBottom: shot.trimBottom
+    )
+}
+
+let shots = iphoneShots + ipadShots + watchShots
 
 /// App Store Connect's ceiling per display family.
 let maximumBoardsPerFamily = 10
@@ -469,7 +473,7 @@ func parseArguments(known: [String]) -> [String: String] {
     return values
 }
 
-for family in [Family.iphone, .ipad, .watch] {
+for family in Family.allCases {
     let count = shots.filter { $0.family == family }.count
     if count > maximumBoardsPerFamily {
         fail("\(count) \(family.rawValue) boards in `shots`; App Store Connect takes \(maximumBoardsPerFamily)")

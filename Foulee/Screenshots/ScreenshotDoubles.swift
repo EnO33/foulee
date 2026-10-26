@@ -81,7 +81,7 @@ nonisolated enum ScreenshotDoubles {
             knownDevices: { ScreenshotSeed.garminDevices },
             startReceiving: {},
             snapshots: { AsyncStream { $0.finish() } },
-            sessionStates: { once(outing ? ScreenshotSeed.wristFigures(from: .garmin) : nil) },
+            sessionStates: { finite(outing ? [ScreenshotSeed.wristFigures(from: .garmin)] : []) },
             waterArrivals: { AsyncStream { $0.finish() } },
             requestStop: {},
             // nil, not a contribution: the seeded counters are already the whole
@@ -101,21 +101,17 @@ nonisolated enum ScreenshotDoubles {
             .snapshot(figures)
         ] : []
         return MirroredWorkoutClient(
-            events: {
-                AsyncStream { continuation in
-                    events.forEach { continuation.yield($0) }
-                    continuation.finish()
-                }
-            },
+            events: { finite(events) },
             send: { _ in },
             startWatchSession: { _ in },
             isWatchAppInstalled: { false }
         )
     }
 
-    private static func once<Element: Sendable>(_ element: Element?) -> AsyncStream<Element> {
+    /// Every element, then the end.
+    private static func finite<Element: Sendable>(_ elements: [Element]) -> AsyncStream<Element> {
         AsyncStream { continuation in
-            if let element { continuation.yield(element) }
+            elements.forEach { continuation.yield($0) }
             continuation.finish()
         }
     }

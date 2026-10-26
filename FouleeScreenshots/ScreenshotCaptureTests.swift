@@ -59,11 +59,11 @@ final class ScreenshotCaptureTests: XCTestCase {
     /// One launch per watch: once a wrist is recording, the home offers that
     /// outing instead of « Repartir », which the main pass needs.
     func testCaptureWatchOuting() {
-        captureWristOuting(.watch, button: "Séance en cours sur ta Watch", name: "02_watch")
+        captureWristOuting(.watch, name: "02_watch")
     }
 
     func testCaptureGarminOuting() {
-        captureWristOuting(.garmin, button: "Séance en cours sur ta Garmin", name: "05_garmin")
+        captureWristOuting(.garmin, name: "05_garmin")
     }
 
     // MARK: - Steps
@@ -81,9 +81,9 @@ final class ScreenshotCaptureTests: XCTestCase {
 
     /// The outing the wrist is recording, as the phone shows it: opened from
     /// the hero, which offers it in place of « Repartir ».
-    private func captureWristOuting(_ wrist: ScreenshotCapture.Wrist, button: String, name: String) {
+    private func captureWristOuting(_ wrist: ScreenshotCapture.Wrist, name: String) {
         let app = launchInCaptureMode(wrist: wrist)
-        tapWhenReady(app.buttons[button], "Hero outing button")
+        tapWhenReady(app.buttons[wrist.heroButton], "Hero outing button")
         waitForScreen(app.buttons["Arrêter la séance"], "Mirrored outing")
         capture(name)
     }

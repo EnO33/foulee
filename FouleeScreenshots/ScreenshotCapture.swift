@@ -27,6 +27,14 @@ enum ScreenshotCapture {
             case .garmin: "-FouleeScreenshotGarminOuting"
             }
         }
+
+        /// The hero's button for that outing (`TodayHeroCard`).
+        var heroButton: String {
+            switch self {
+            case .watch: "Séance en cours sur ta Watch"
+            case .garmin: "Séance en cours sur ta Garmin"
+            }
+        }
     }
 
     /// French, whatever the host runs (issue #408): the boards are French, and
