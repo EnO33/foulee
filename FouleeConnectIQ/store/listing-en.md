@@ -74,10 +74,10 @@ iPhone app is in French.
 PRIVACY
 Foulée is a local app: nothing goes to a server of ours, there is no account to
 create, and nothing is sold to anyone.
-Full policy: https://github.com/EnO33/foulee/blob/main/docs/privacy.md
+Full policy: https://github.com/getfoulee/foulee/blob/main/docs/privacy.md
 
 SUPPORT
-Questions and bugs: https://github.com/EnO33/foulee/issues
+Questions and bugs: https://github.com/getfoulee/foulee/issues
 Answered within a week, in French or English.
 ```
 
@@ -115,7 +115,7 @@ displays today's counters and transmits nothing.
 |---|---|
 | Category | Health & Fitness |
 | App type | Watch App |
-| Website / support | <https://github.com/EnO33/foulee/issues> |
-| Privacy policy | <https://github.com/EnO33/foulee/blob/main/docs/privacy.md> |
+| Website / support | <https://github.com/getfoulee/foulee/issues> |
+| Privacy policy | <https://github.com/getfoulee/foulee/blob/main/docs/privacy.md> |
 | Price | Free |
 | ANT+ | No |

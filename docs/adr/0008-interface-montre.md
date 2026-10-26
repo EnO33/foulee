@@ -1,7 +1,7 @@
 # ADR 0008 — Interface de la montre : l'action principale à portée, l'ordre d'Exercice
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#438](https://github.com/EnO33/foulee/issues/438)
+- **Issues** : [#438](https://github.com/getfoulee/foulee/issues/438)
 
 ## Contexte
 

@@ -11,7 +11,7 @@ struct AppLinksTests {
     func links(url: URL) {
         #expect(url.scheme == "https")
         #expect(url.host() == "github.com")
-        #expect(url.path().hasPrefix("/EnO33/foulee"))
+        #expect(url.path().hasPrefix("/getfoulee/foulee"))
     }
 
     @Test("The version carries its build when there is one")

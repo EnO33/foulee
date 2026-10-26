@@ -1,7 +1,7 @@
 # ADR 0011 — Fusionner une sortie coupée en deux
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#549](https://github.com/EnO33/foulee/issues/549), [#550](https://github.com/EnO33/foulee/issues/550), [#551](https://github.com/EnO33/foulee/issues/551), [#552](https://github.com/EnO33/foulee/issues/552), [#553](https://github.com/EnO33/foulee/issues/553), [#554](https://github.com/EnO33/foulee/issues/554), [#555](https://github.com/EnO33/foulee/issues/555)
+- **Issues** : [#549](https://github.com/getfoulee/foulee/issues/549), [#550](https://github.com/getfoulee/foulee/issues/550), [#551](https://github.com/getfoulee/foulee/issues/551), [#552](https://github.com/getfoulee/foulee/issues/552), [#553](https://github.com/getfoulee/foulee/issues/553), [#554](https://github.com/getfoulee/foulee/issues/554), [#555](https://github.com/getfoulee/foulee/issues/555)
 
 ## Contexte
 

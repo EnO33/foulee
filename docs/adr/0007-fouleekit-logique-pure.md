@@ -1,7 +1,7 @@
 # ADR 0007 — FouleeKit : la logique pure dans un framework testé sur macOS
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#425](https://github.com/EnO33/foulee/issues/425)
+- **Issues** : [#425](https://github.com/getfoulee/foulee/issues/425)
 
 ## Contexte
 

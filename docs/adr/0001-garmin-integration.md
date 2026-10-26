@@ -1,7 +1,7 @@
 # ADR 0001 — Routes d'intégration Garmin
 
 - **Statut** : acceptée (2026-08). Le rôle de l'app Connect IQ (décision 2) est revu par l'[ADR 0009](0009-app-garmin-seance.md).
-- **Issues** : [#179](https://github.com/EnO33/foulee/issues/179) (épic), [#180](https://github.com/EnO33/foulee/issues/180)
+- **Issues** : [#179](https://github.com/getfoulee/foulee/issues/179) (épic), [#180](https://github.com/getfoulee/foulee/issues/180)
 
 ## Contexte
 
@@ -32,9 +32,9 @@ Précédent rassurant : **StepsApp** et **Gentler Streak** font exactement le ch
 
 ## Conséquences
 
-- **La définition des « minutes actives » devient source-agnostique** ([#181](https://github.com/EnO33/foulee/issues/181)) : puisque `appleExerciseTime` ne peut jamais exister sans Apple Watch, le streak doit accepter des minutes dérivées d'autres échantillons (workouts, pas) — c'est le prérequis commun aux deux phases.
+- **La définition des « minutes actives » devient source-agnostique** ([#181](https://github.com/getfoulee/foulee/issues/181)) : puisque `appleExerciseTime` ne peut jamais exister sans Apple Watch, le streak doit accepter des minutes dérivées d'autres échantillons (workouts, pas) — c'est le prérequis commun aux deux phases.
 - La synchro en rafales de la phase 1 impose des verdicts de jour **réparables après coup** (#182).
-- **L'agrégation multi-sources reste déléguée à HealthKit** ([#183](https://github.com/EnO33/foulee/issues/183)) : audit fait — tous les totaux passent par `HKStatisticsQuery`/`HKStatisticsCollectionQuery`, jamais par une somme manuelle d'échantillons.
+- **L'agrégation multi-sources reste déléguée à HealthKit** ([#183](https://github.com/getfoulee/foulee/issues/183)) : audit fait — tous les totaux passent par `HKStatisticsQuery`/`HKStatisticsCollectionQuery`, jamais par une somme manuelle d'échantillons.
 - Aucune donnée de santé ne transite par un serveur : la politique de confidentialité reste inchangée sur le fond (mise à jour éditoriale suivie dans #186).
 - La validation de bout en bout (phase 1 comme phase 2) exige une **montre physique** — aucun simulateur ne couvre ni la chaîne Garmin Connect → Santé, ni le canal BLE iOS (#191).
 - **Le chemin d'activation de la phase 1 est confirmé de première main** (05/08/2026, iPhone du propriétaire, Garmin Connect FR), là où la recherche documentaire de #205/#206 n'avait pas su trancher : `Garmin Connect → Plus → Paramètres → Applications connectées → Apple Health → « Se connecter avec Apple Health »`. L'entrée garde son **nom anglais** dans l'app française. Corollaire vérifié le même jour : **une app qui n'a jamais demandé l'accès n'apparaît pas** dans `Santé → Confidentialité → Apps` — l'écran Santé est donc vide de Garmin pour tout utilisateur en cours d'installation. Le guide part par conséquent de Garmin Connect et ne garde Santé que pour vérifier ou réparer (#210). Seuls les **libellés** restent incertains (menu renommé au moins deux fois) ; le chemin, lui, ne l'est plus. À ne pas re-dériver depuis le web : les sources publiques se contredisent et le « consensus » apparent vient de pages générées.

@@ -3,7 +3,7 @@ import Foundation
 /// Every web page the app links to (issue #396), in one place: fixed https
 /// addresses on the public repository, never built from user input.
 nonisolated enum AppLinks {
-    private static let repository = "https://github.com/EnO33/foulee"
+    private static let repository = "https://github.com/getfoulee/foulee"
 
     static let privacyPolicy = link("\(repository)/blob/main/docs/privacy.md")
     static let garminFAQ = link("\(repository)/blob/main/docs/faq-garmin.md")

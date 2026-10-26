@@ -1,7 +1,7 @@
 # ADR 0010 — Une notification à l'arrivée de chaque séance
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#525](https://github.com/EnO33/foulee/issues/525), [#526](https://github.com/EnO33/foulee/issues/526), [#527](https://github.com/EnO33/foulee/issues/527), [#528](https://github.com/EnO33/foulee/issues/528), [#529](https://github.com/EnO33/foulee/issues/529), [#530](https://github.com/EnO33/foulee/issues/530), [#531](https://github.com/EnO33/foulee/issues/531)
+- **Issues** : [#525](https://github.com/getfoulee/foulee/issues/525), [#526](https://github.com/getfoulee/foulee/issues/526), [#527](https://github.com/getfoulee/foulee/issues/527), [#528](https://github.com/getfoulee/foulee/issues/528), [#529](https://github.com/getfoulee/foulee/issues/529), [#530](https://github.com/getfoulee/foulee/issues/530), [#531](https://github.com/getfoulee/foulee/issues/531)
 
 ## Contexte
 

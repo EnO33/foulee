@@ -1,7 +1,7 @@
 # ADR 0005 — Hydratation : la carte, l'annulation et l'écran dédié
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#353](https://github.com/EnO33/foulee/issues/353), [#354](https://github.com/EnO33/foulee/issues/354), [#355](https://github.com/EnO33/foulee/issues/355), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363)
+- **Issues** : [#353](https://github.com/getfoulee/foulee/issues/353), [#354](https://github.com/getfoulee/foulee/issues/354), [#355](https://github.com/getfoulee/foulee/issues/355), [#361](https://github.com/getfoulee/foulee/issues/361), [#363](https://github.com/getfoulee/foulee/issues/363)
 
 ## Contexte
 

@@ -1,7 +1,7 @@
 # ADR 0003 — Séance partagée entre l'iPhone et l'Apple Watch
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#272](https://github.com/EnO33/foulee/issues/272) (épic), #277, #278, #279, #282, #283, [#334](https://github.com/EnO33/foulee/issues/334), [#342](https://github.com/EnO33/foulee/issues/342), [#458](https://github.com/EnO33/foulee/issues/458)
+- **Issues** : [#272](https://github.com/getfoulee/foulee/issues/272) (épic), #277, #278, #279, #282, #283, [#334](https://github.com/getfoulee/foulee/issues/334), [#342](https://github.com/getfoulee/foulee/issues/342), [#458](https://github.com/getfoulee/foulee/issues/458)
 
 ## Contexte
 
