@@ -5,10 +5,18 @@ import Testing
 /// Réglages › À propos (issue #396).
 @Suite("App links")
 struct AppLinksTests {
-    @Test("Every link is https on the project's repository", arguments: [
-        AppLinks.privacyPolicy, AppLinks.garminFAQ, AppLinks.reportIssue, AppLinks.sourceCode
+    @Test("What a user reads is https on the site", arguments: [
+        AppLinks.privacyPolicy, AppLinks.support, AppLinks.garminFAQ
     ])
-    func links(url: URL) {
+    func siteLinks(url: URL) {
+        #expect(url.scheme == "https")
+        #expect(url.host() == "getfoulee.app")
+    }
+
+    @Test("The tracker and the code are https on the project's repository", arguments: [
+        AppLinks.reportIssue, AppLinks.sourceCode
+    ])
+    func repositoryLinks(url: URL) {
         #expect(url.scheme == "https")
         #expect(url.host() == "github.com")
         #expect(url.path().hasPrefix("/getfoulee/foulee"))

@@ -71,10 +71,10 @@ cardiaque ne s'allument que pendant une séance.
 CONFIDENTIALITÉ
 Foulée est une app locale : rien ne part vers un serveur qui nous
 appartiendrait, il n'y a aucun compte à créer, et rien n'est vendu à personne.
-Politique complète : https://github.com/getfoulee/foulee/blob/main/docs/privacy.md
+Politique complète : https://getfoulee.app/confidentialite
 
 SUPPORT
-Une question, un bug : https://github.com/getfoulee/foulee/issues
+Une question, un bug : https://getfoulee.app/assistance
 Réponse sous une semaine, en français ou en anglais.
 ```
 
@@ -112,7 +112,7 @@ l'app affiche simplement les compteurs du jour et n'émet rien.
 |---|---|
 | Catégorie | Health & Fitness (« Santé et forme ») |
 | Type d'app | Watch App |
-| Site web / support | <https://github.com/getfoulee/foulee/issues> |
-| Politique de confidentialité | <https://github.com/getfoulee/foulee/blob/main/docs/privacy.md> |
+| Site web / support | <https://getfoulee.app/assistance> |
+| Politique de confidentialité | <https://getfoulee.app/confidentialite> |
 | Prix | Gratuit |
 | ANT+ | Non |
