@@ -126,4 +126,4 @@ donnée manquante. Si elle n'y est pas, Foulée ne peut pas l'afficher — repre
 ouvre Garmin Connect pour déclencher une synchro. Si elle y est mais pas dans Foulée, vérifie d'abord
 qu'il ne s'agit pas des minutes d'exercice (voir « Ma série ne valide pas alors
 que j'ai marché » : elles viennent de tes activités enregistrées, pas de tes
-pas) — sinon, écris-nous : **mattmar33@gmail.com**.
+pas) — sinon, écris-nous : **contact@getfoulee.app**.

@@ -1,7 +1,7 @@
 # ADR 0012 — Un dénivelé juste, montée et descente séparées
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#562](https://github.com/EnO33/foulee/issues/562), [#563](https://github.com/EnO33/foulee/issues/563), [#564](https://github.com/EnO33/foulee/issues/564), [#565](https://github.com/EnO33/foulee/issues/565), [#566](https://github.com/EnO33/foulee/issues/566), [#567](https://github.com/EnO33/foulee/issues/567)
+- **Issues** : [#562](https://github.com/getfoulee/foulee/issues/562), [#563](https://github.com/getfoulee/foulee/issues/563), [#564](https://github.com/getfoulee/foulee/issues/564), [#565](https://github.com/getfoulee/foulee/issues/565), [#566](https://github.com/getfoulee/foulee/issues/566), [#567](https://github.com/getfoulee/foulee/issues/567)
 
 ## Contexte
 

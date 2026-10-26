@@ -1,7 +1,7 @@
 # ADR 0004 — Récap de la semaine et du mois
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#344](https://github.com/EnO33/foulee/issues/344), [#346](https://github.com/EnO33/foulee/issues/346), [#348](https://github.com/EnO33/foulee/issues/348), [#350](https://github.com/EnO33/foulee/issues/350), [#356](https://github.com/EnO33/foulee/issues/356), [#361](https://github.com/EnO33/foulee/issues/361), [#363](https://github.com/EnO33/foulee/issues/363), [#443](https://github.com/EnO33/foulee/issues/443), [#444](https://github.com/EnO33/foulee/issues/444), [#445](https://github.com/EnO33/foulee/issues/445), [#454](https://github.com/EnO33/foulee/issues/454)
+- **Issues** : [#344](https://github.com/getfoulee/foulee/issues/344), [#346](https://github.com/getfoulee/foulee/issues/346), [#348](https://github.com/getfoulee/foulee/issues/348), [#350](https://github.com/getfoulee/foulee/issues/350), [#356](https://github.com/getfoulee/foulee/issues/356), [#361](https://github.com/getfoulee/foulee/issues/361), [#363](https://github.com/getfoulee/foulee/issues/363), [#443](https://github.com/getfoulee/foulee/issues/443), [#444](https://github.com/getfoulee/foulee/issues/444), [#445](https://github.com/getfoulee/foulee/issues/445), [#454](https://github.com/getfoulee/foulee/issues/454)
 
 ## Contexte
 

@@ -1,6 +1,6 @@
 # Politique de confidentialité — Foulée
 
-_Dernière mise à jour : 25 octobre 2026_
+_Dernière mise à jour : 26 octobre 2026_
 
 Foulée est une application **locale**. Elle t'aide à entretenir une série de
 sorties — marche ou course — à partir de tes données d'activité. **Aucune
@@ -220,4 +220,4 @@ données dans l'app Santé restent gérées par Santé.
 
 ## Contact
 
-Une question sur cette politique ? Écris à **mattmar33@gmail.com**.
+Une question sur cette politique ? Écris à **contact@getfoulee.app**.

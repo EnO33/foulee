@@ -66,15 +66,15 @@ session that outlived its app rather than finishing it: see
   steps, distance, workouts and water intake flow into HealthKit, which Foulée
   already reads. The streak's active-minutes metric now uses the
   source-agnostic fallback shipped in
-  [#181](https://github.com/EnO33/foulee/issues/181); full rollout is tracked in
-  the [Garmin epic](https://github.com/EnO33/foulee/issues/179). Architecture
+  [#181](https://github.com/getfoulee/foulee/issues/181); full rollout is tracked in
+  the [Garmin epic](https://github.com/getfoulee/foulee/issues/179). Architecture
   decision: [ADR 0001](docs/adr/0001-garmin-integration.md) (French).
   Troubleshooting: [Garmin FAQ](docs/faq-garmin.md) (French).
 - **Phase 2 (in progress)** — a Connect IQ app on the watch for direct
   watch↔iPhone sync (freshness + Garmin-native intensity minutes). The Monkey C
   side lives in [`FouleeConnectIQ/`](FouleeConnectIQ/README.md), outside the
   Tuist build; iOS ingestion is tracked in
-  [#189](https://github.com/EnO33/foulee/issues/189).
+  [#189](https://github.com/getfoulee/foulee/issues/189).
 
 ## Stack
 

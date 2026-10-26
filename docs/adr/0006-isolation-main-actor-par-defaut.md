@@ -1,7 +1,7 @@
 # ADR 0006 — Isolation sur le main actor par défaut
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#407](https://github.com/EnO33/foulee/issues/407)
+- **Issues** : [#407](https://github.com/getfoulee/foulee/issues/407)
 
 ## Contexte
 

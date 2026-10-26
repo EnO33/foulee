@@ -1,7 +1,7 @@
 # ADR 0002 — Détection automatique marche / course
 
 - **Statut** : acceptée (2026-08)
-- **Issues** : [#244](https://github.com/EnO33/foulee/issues/244) (épic), #248, #249, #250, #246, #247, #256, #265, #266, #267, #331
+- **Issues** : [#244](https://github.com/getfoulee/foulee/issues/244) (épic), #248, #249, #250, #246, #247, #256, #265, #266, #267, #331
 
 ## Contexte
 

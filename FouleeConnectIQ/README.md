@@ -2,7 +2,7 @@
 
 App Garmin de Foulée, l'équivalent de l'app Apple Watch (ADR 0009) : l'accueil du jour (série, objectifs), une séance lancée depuis le poignet et enregistrée par la montre elle-même, et un instantané compact des compteurs du jour (`Toybox.ActivityMonitor`) poussé vers l'iPhone toutes les 5 minutes.
 
-Voir [ADR 0001](../docs/adr/0001-garmin-integration.md) (phase 2) et les issues [#188](https://github.com/EnO33/foulee/issues/188) / [#179](https://github.com/EnO33/foulee/issues/179).
+Voir [ADR 0001](../docs/adr/0001-garmin-integration.md) (phase 2) et les issues [#188](https://github.com/getfoulee/foulee/issues/188) / [#179](https://github.com/getfoulee/foulee/issues/179).
 
 Ce dossier est **hors du build Tuist / Xcode** : il n'est référencé par aucune cible Swift et ne participe pas à `tuist generate`.
 
@@ -325,7 +325,7 @@ pas à la main.
 
 **Ce n'est pas un bug de l'app.** C'est la limite du simulateur, et c'est aussi ce que verra quiconque tente une validation bout-en-bout sans matériel.
 
-Restent donc non validés sans une montre physique + un iPhone (cf. [#191](https://github.com/EnO33/foulee/issues/191)) :
+Restent donc non validés sans une montre physique + un iPhone (cf. [#191](https://github.com/getfoulee/foulee/issues/191)) :
 
 - la réception effective par le Companion App SDK iOS ;
 - la fiabilité du `transmit` depuis le contexte arrière-plan vers un iPhone suspendu ;
@@ -390,7 +390,7 @@ sur lui :
 
 Ce que la fiche store promet, donc ce qu'il faut tenir :
 
-- **Canal unique** : les [issues GitHub](https://github.com/EnO33/foulee/issues)
+- **Canal unique** : les [issues GitHub](https://github.com/getfoulee/foulee/issues)
   du dépôt. Pas d'adresse e-mail dédiée, pas de support par les avis du store.
 - **Délai** : une réponse sous une semaine, en français ou en anglais.
 - **Périmètre** : l'app montre et sa synchronisation avec l'iPhone. Tout ce qui
