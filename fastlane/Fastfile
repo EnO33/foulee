@@ -71,4 +71,28 @@ platform :ios do
       skip_submission: true
     )
   end
+
+  # The store listing is versioned in fastlane/metadata (issue #581) and
+  # published by the « Store listing » workflow: no binary, no screenshots,
+  # never submitted for review. The version is the one being prepared; deliver
+  # creates it when App Store Connect has none to edit yet.
+  desc "Publish the App Store listing in fastlane/metadata to the version being prepared"
+  lane :metadata do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: ENV.fetch("ASC_KEY_PATH"),
+      in_house: false
+    )
+
+    deliver(
+      api_key: api_key,
+      app_version: ENV.fetch("FOULEE_MARKETING_VERSION"),
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      # No HTML preview to confirm on CI.
+      force: true
+    )
+  end
 end

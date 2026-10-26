@@ -1,0 +1,5 @@
+Après chaque sortie, une notification te dit ce qu'elle a de mieux : ta plus longue marche depuis 6 mois, un rythme plus rapide que d'habitude, plus de dénivelé que d'habitude, ou ta régularité de la semaine. Touche-la pour ouvrir ta sortie dans le Bilan.
+
+Le dénivelé prend sa place partout : dans le Bilan de la semaine et du mois, sur chaque sortie, sur l'image à partager, et l'Apple Watch le mesure désormais pendant tes séances.
+
+La notification se règle dans Réglages › Notifications › « Après une séance ».

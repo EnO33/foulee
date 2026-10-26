@@ -1,0 +1,62 @@
+name: Store listing
+
+# Publishes the App Store listing versioned in fastlane/metadata (issue #581)
+# to the version being prepared in App Store Connect: name, subtitle,
+# keywords, description, promotional text, release notes and URLs. No binary,
+# no screenshots, never submitted for review. Run it by hand from Actions,
+# once the release notes in fastlane/metadata are those of that version.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version being prepared in App Store Connect (e.g. 1.55)
+        required: true
+        type: string
+
+concurrency:
+  group: store-listing
+  cancel-in-progress: false
+
+# Reads the repo and talks to App Store Connect with its own key only.
+permissions:
+  contents: read
+
+jobs:
+  deliver:
+    name: Publish the listing
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check the listing
+        run: tools/check_store_metadata.py
+
+      # Passed through the environment, never interpolated into the script:
+      # the input is free text typed in the Actions form.
+      - name: Check the version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::« $VERSION » is not a version like 1.55"
+            exit 1
+          fi
+
+      - name: Materialise the App Store Connect key
+        env:
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          set -euo pipefail
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > fastlane/asc_key.p8
+
+      - name: Publish with deliver
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: ${{ github.workspace }}/fastlane/asc_key.p8
+          FOULEE_MARKETING_VERSION: ${{ inputs.version }}
+        run: fastlane metadata
+
+      - name: Tidy the key
+        if: always()
+        run: rm -f fastlane/asc_key.p8
