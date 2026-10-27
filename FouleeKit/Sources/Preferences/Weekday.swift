@@ -1,7 +1,7 @@
 import Foundation
 
-/// Day-of-week aligned to Apple's "Lundi = first" convention, with French
-/// short labels used by the onboarding chips and the Today week bars.
+/// Day-of-week aligned to Apple's "Lundi = first" convention, with the short
+/// labels the onboarding chips and the Today week bars use.
 nonisolated public enum Weekday: Int, CaseIterable, Codable, Sendable, Identifiable {
     case monday = 1
     case tuesday
@@ -13,29 +13,26 @@ nonisolated public enum Weekday: Int, CaseIterable, Codable, Sendable, Identifia
 
     public var id: Int { rawValue }
 
-    public var shortLabel: String {
-        switch self {
-        case .monday: "L"
-        case .tuesday: "M"
-        case .wednesday: "M"
-        case .thursday: "J"
-        case .friday: "V"
-        case .saturday: "S"
-        case .sunday: "D"
-        }
+    /// The day's initial in `locale` — « L », « M » in French, « M », « T » in
+    /// English (issue #587).
+    public func shortLabel(locale: Locale = .app) -> String {
+        calendar(locale).veryShortStandaloneWeekdaySymbols[calendarWeekday - 1]
     }
 
-    /// Full French day name, lowercased for use mid-sentence ("le mardi").
-    public var fullName: String {
-        switch self {
-        case .monday: "lundi"
-        case .tuesday: "mardi"
-        case .wednesday: "mercredi"
-        case .thursday: "jeudi"
-        case .friday: "vendredi"
-        case .saturday: "samedi"
-        case .sunday: "dimanche"
-        }
+    public var shortLabel: String { shortLabel() }
+
+    /// The day's name in `locale`, as written mid-sentence: « mardi » in
+    /// French, « Tuesday » in English.
+    public func fullName(locale: Locale = .app) -> String {
+        calendar(locale).weekdaySymbols[calendarWeekday - 1]
+    }
+
+    public var fullName: String { fullName() }
+
+    private func calendar(_ locale: Locale) -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = locale
+        return calendar
     }
 
     /// Default "weekday" set used at onboarding (Mon → Fri).

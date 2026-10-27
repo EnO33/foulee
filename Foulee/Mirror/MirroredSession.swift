@@ -33,8 +33,8 @@ nonisolated enum MirroredDevice: Equatable, Sendable {
     /// « ta Watch », as the home and the mirror screen name it.
     var name: String {
         switch self {
-        case .appleWatch: "ta Watch"
-        case .garmin: "ta Garmin"
+        case .appleWatch: String(localized: "ta Watch")
+        case .garmin: String(localized: "ta Garmin")
         }
     }
 

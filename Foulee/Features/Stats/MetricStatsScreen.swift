@@ -224,7 +224,7 @@ struct MetricStatsScreen: View {
         }
     }
 
-    private var chartTitle: String {
+    private var chartTitle: LocalizedStringResource {
         switch store.range {
         case .today: "\(metric.title) par heure"
         case .week, .month, .year: "\(metric.title) par jour"
@@ -246,7 +246,7 @@ struct MetricStatsScreen: View {
         .fouleeGlass(cornerRadius: 22)
     }
 
-    private var summaryItems: [(label: String, value: String)] {
+    private var summaryItems: [(label: LocalizedStringResource, value: String)] {
         switch store.range {
         case .today:
             [("Total", metric.formattedWithUnit(store.total)),
@@ -258,7 +258,7 @@ struct MetricStatsScreen: View {
         }
     }
 
-    private func summaryCell(label: String, value: String) -> some View {
+    private func summaryCell(label: LocalizedStringResource, value: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
                 .scaledNumericFont(size: 20, weight: .semibold)
@@ -270,7 +270,7 @@ struct MetricStatsScreen: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(label)
+        .accessibilityLabel(Text(label))
         .accessibilityValue(value)
     }
 }

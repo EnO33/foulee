@@ -81,15 +81,14 @@ nonisolated public extension WorkoutSummary {
     }
 
     /// How the row names what was done: « Course », or « Marche et course » for
-    /// an outing that changed sport. French grammar, not a list format: the
-    /// app speaks French only, and a locale-driven formatter would write
-    /// « Marche and course » on an English device.
+    /// an outing that changed sport — « Walk and run » in English. The list is
+    /// joined in `Locale.app`, the language the labels are written in.
     var activityLabel: String {
         let labels = activities.enumerated().map { index, activity in
-            index == 0 ? activity.label : activity.label.lowercased()
+            index == 0 ? activity.label : activity.label.lowercased(with: .app)
         }
-        guard let last = labels.last, labels.count > 1 else { return labels.first ?? activity.label }
-        return labels.dropLast().joined(separator: ", ") + " et " + last
+        guard labels.count > 1 else { return labels.first ?? activity.label }
+        return labels.formatted(.list(type: .and).locale(.app))
     }
 
     /// « ↑ 120 m », or `nil` when the source wrote no climb (issue #534):
@@ -101,7 +100,7 @@ nonisolated public extension WorkoutSummary {
     /// The same climb as VoiceOver says it: « 120 mètres de montée », not
     /// « flèche vers le haut ».
     var climbSpokenText: String? {
-        elevationMeters >= 1 ? "\(Int(elevationMeters.rounded())) mètres de montée" : nil
+        elevationMeters >= 1 ? kitText("\(Int(elevationMeters.rounded())) mètres de montée") : nil
     }
 
     /// « ↓ 115 m », or `nil` when the source wrote no descent (issue #565).
@@ -111,7 +110,7 @@ nonisolated public extension WorkoutSummary {
 
     /// « 115 mètres de descente », for VoiceOver.
     var descentSpokenText: String? {
-        descentMeters >= 1 ? "\(Int(descentMeters.rounded())) mètres de descente" : nil
+        descentMeters >= 1 ? kitText("\(Int(descentMeters.rounded())) mètres de descente") : nil
     }
 
     /// « 08:00 → 08:41 » — the row, the detail and the bubbles all say it so.

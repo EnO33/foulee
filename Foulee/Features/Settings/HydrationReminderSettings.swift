@@ -28,7 +28,7 @@ struct HydrationReminderSettings: View {
                         range: 20...240,
                         step: 10,
                         tint: FouleeColor.water
-                    ) { "toutes les \(durationText(minutes: $0))" }
+                    ) { String(localized: "toutes les \(durationText(minutes: $0))") }
                 }
             }
         }

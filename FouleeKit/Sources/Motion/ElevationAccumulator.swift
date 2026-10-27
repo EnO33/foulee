@@ -35,8 +35,8 @@ nonisolated public struct Elevation: Equatable, Sendable {
     /// descente ».
     public var spokenText: String? {
         let parts = [
-            ascent >= 1 ? "\(Int(ascent.rounded())) mètres de montée" : nil,
-            descent >= 1 ? "\(Int(descent.rounded())) mètres de descente" : nil
+            ascent >= 1 ? kitText("\(Int(ascent.rounded())) mètres de montée") : nil,
+            descent >= 1 ? kitText("\(Int(descent.rounded())) mètres de descente") : nil
         ].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }

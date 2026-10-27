@@ -34,7 +34,7 @@ struct StreakWeekdayBreakdown: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(stat.weekday.fullName)
-        .accessibilityValue(stat.isActive ? "\(stat.rate) % de réussite" : "jour de repos")
+        .accessibilityValue(stat.isActive ? Text("\(stat.rate) % de réussite") : Text("jour de repos"))
     }
 
     private func fill(for stat: WeekdayStat) -> AnyShapeStyle {

@@ -38,7 +38,7 @@ struct SettingsGoalsPage: View {
                 range: 2_000...15_000,
                 step: 500,
                 tint: FouleeColor.accentMid
-            ) { "\($0.groupedText()) pas" }
+            ) { String(localized: "\($0.groupedText()) pas") }
         }
     }
 }

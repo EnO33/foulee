@@ -31,7 +31,7 @@ struct RouteLines: MapContent {
                 )
         }
         if let start = strokes.first?.coordinates.first {
-            Annotation("Départ", coordinate: start) {
+            Annotation(String(localized: "Départ"), coordinate: start) {
                 Circle()
                     .fill(FouleeColor.success)
                     .frame(width: 14, height: 14)

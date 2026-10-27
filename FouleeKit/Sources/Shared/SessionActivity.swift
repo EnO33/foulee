@@ -28,8 +28,8 @@ nonisolated public enum SessionActivity: String, Codable, Sendable, CaseIterable
     /// `ActivityStartIntent`, which asks instead of inventing.
     public var label: String {
         switch self {
-        case .walking: "Marche"
-        case .running: "Course"
+        case .walking: kitText("Marche")
+        case .running: kitText("Course")
         }
     }
 
@@ -61,8 +61,8 @@ nonisolated public enum SessionActivity: String, Codable, Sendable, CaseIterable
     /// (`WalkActivityAttributes`, for a payload written before #225).
     public var sessionTitle: String {
         switch self {
-        case .walking: "Ta marche"
-        case .running: "Ta course"
+        case .walking: kitText("Ta marche")
+        case .running: kitText("Ta course")
         }
     }
 

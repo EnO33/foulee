@@ -35,10 +35,10 @@ nonisolated public enum RecordedActivity: String, Equatable, Hashable, Sendable,
     /// #222: the same « Marche » and « Course » the pickers use.
     public var label: String {
         switch self {
-        case .walking: "Marche"
-        case .running: "Course"
-        case .hiking: "Randonnée"
-        case .other: "Séance"
+        case .walking: kitText("Marche")
+        case .running: kitText("Course")
+        case .hiking: kitText("Randonnée")
+        case .other: kitText("Séance")
         }
     }
 

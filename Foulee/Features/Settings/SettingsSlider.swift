@@ -7,7 +7,7 @@ import SwiftUI
 /// Works on whole numbers: every slider in Réglages stores an `Int`, so the
 /// `Double` bridge lives here once instead of in each call site.
 struct SettingsSlider: View {
-    var title: String
+    var title: LocalizedStringResource
     @Binding var value: Int
     var range: ClosedRange<Int>
     var step: Int

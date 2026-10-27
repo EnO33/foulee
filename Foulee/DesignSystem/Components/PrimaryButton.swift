@@ -3,7 +3,7 @@ import SwiftUI
 /// Pill-shaped CTA with the accent gradient — "Démarrer ta sortie",
 /// "Continuer", "Terminer l'installation".
 struct PrimaryButton: View {
-    var title: String
+    var title: LocalizedStringResource
     var systemIcon: String?
     var action: () -> Void
 
@@ -29,7 +29,7 @@ struct PrimaryButton: View {
 /// button pair shown in `DesignSystemGallery`; kept as the design-system
 /// counterpart to `PrimaryButton`.
 struct SecondaryButton: View {
-    var title: String
+    var title: LocalizedStringResource
     var systemIcon: String?
     var action: () -> Void
 

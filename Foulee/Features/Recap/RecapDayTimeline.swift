@@ -147,14 +147,14 @@ struct RecapDayTimeline: View {
     }
 
     /// Today is still open: it is « pas encore », not « aucune ».
-    private var emptyTitle: String {
+    private var emptyTitle: LocalizedStringResource {
         guard ring.isPlanned else { return "Jour de repos : rien de prévu" }
         return isToday ? "Pas encore de sortie aujourd'hui" : "Aucune séance enregistrée"
     }
 
     /// What is left to do today, the question the Bilan is opened with at
     /// midday. Nothing on a past day: it can no longer change.
-    private var emptyHint: String? {
+    private var emptyHint: LocalizedStringResource? {
         guard isToday, ring.isPlanned, ring.minutes < goalMinutes else { return nil }
         return "Encore \(durationText(minutes: goalMinutes - ring.minutes)) pour ton objectif"
     }
@@ -162,9 +162,9 @@ struct RecapDayTimeline: View {
     private var title: String {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: date.now)
-        if calendar.isDate(outings.day, inSameDayAs: today) { return "Aujourd'hui" }
+        if calendar.isDate(outings.day, inSameDayAs: today) { return String(localized: "Aujourd'hui") }
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
-           calendar.isDate(outings.day, inSameDayAs: yesterday) { return "Hier" }
+           calendar.isDate(outings.day, inSameDayAs: yesterday) { return String(localized: "Hier") }
         return outings.day.dayText.capitalized(with: .app)
     }
 }

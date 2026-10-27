@@ -200,23 +200,24 @@ the boards are versioned — the capture and upload procedure is, in
 ## Localization
 
 Strings are localized via **String Catalogs** (`.xcstrings`) — one per target:
-- `Foulee/Resources/Localizable.xcstrings` (iPhone app, ~100 strings)
+- `Foulee/Resources/Localizable.xcstrings` (iPhone app, French and English)
+- `FouleeKit/Resources/Localizable.xcstrings` (text the kit writes itself — activity names, highlights — French and English)
 - `FouleeWatch/Resources/Localizable.xcstrings` (Watch app)
 - `FouleeWatchWidget/Resources/Localizable.xcstrings` (Watch widget)
 
 `Project.swift` enables:
-- `SWIFT_EMIT_LOC_STRINGS` — Xcode extracts `Text("…")` into the catalog on every build (any key you forgot gets added automatically).
+- `SWIFT_EMIT_LOC_STRINGS` — the compiler extracts every localizable literal (`Text("…")`, `String(localized:)`, a `LocalizedStringResource` argument).
 - `STRING_CATALOG_GENERATE_SYMBOLS` — generates type-safe accessors (`Text(.welcomeTitle)` works once a key is in the catalog).
 - `LOCALIZATION_PREFERS_STRING_CATALOGS` — makes `.xcstrings` the canonical store.
 
-Source language is **French**. To add English (or any other locale):
+Source language is **French**. The rules that keep a string translatable:
 
-1. Open the relevant `.xcstrings` in Xcode
-2. Click the **+** at the bottom-left → pick **English** (or any language)
-3. Translate entries inline — Xcode marks untranslated keys in yellow
-4. Build the app — Xcode swaps the strings based on device language
+- A component takes its text as `LocalizedStringResource`, never `String`: `Text(someString)` is shown verbatim. Text already in the screen's language (a figure, a label the kit wrote) goes through `.verbatim(_:)`.
+- Text built outside a view is `String(localized: "…")` in the apps, `kitText("…")` in FouleeKit. `kitText` reads the kit's catalog in `Locale.app`, the language of the app showing it, so an English iPhone and a French-only watch never mix.
+- One literal per sentence: `"a " + "b"` is never extracted. Counts are plural variations in the catalog (`%lld jours` → « 1 jour », "1 day"), not `count > 1 ? "s" : ""`.
+- `Locale.app` follows the languages whose `Localizable` table the app actually ships: a target speaks English once its catalog does.
 
-Existing `Text("…")` calls don't need any change — SwiftUI's `Text` already accepts `LocalizedStringKey`, so the catalog lookup is automatic.
+To refresh the catalogs from the code: `xcodebuild -exportLocalizations -project Foulee.xcodeproj -localizationPath <dir> -exportLanguage en`, then translate the new keys in Xcode.
 
 ## Release
 

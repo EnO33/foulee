@@ -1,0 +1,684 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "%@ aujourd'hui. La précédente faisait %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ today. The previous one was %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ aujourd'hui. La précédente faisait %2$@."
+          }
+        }
+      }
+    },
+    "%@ de dénivelé aujourd'hui. Le précédent record : %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of climb today. The previous record: %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ de dénivelé aujourd'hui. Le précédent record : %2$@."
+          }
+        }
+      }
+    },
+    "%@ de dénivelé depuis le 1er, contre %@ en %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of climb since the 1st, against %2$@ in %3$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ de dénivelé depuis le 1er, contre %2$@ en %3$@."
+          }
+        }
+      }
+    },
+    "%@ de dénivelé, contre %@ en moyenne ces 6 derniers mois." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of climb, against %2$@ on average over the last 6 months."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ de dénivelé, contre %2$@ en moyenne ces 6 derniers mois."
+          }
+        }
+      }
+    },
+    "%@ de moyenne, %lld s de mieux que d'habitude." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ on average, %2$lld s better than usual."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ de moyenne, %2$lld s de mieux que d'habitude."
+          }
+        }
+      }
+    },
+    "%@ depuis le 1er, contre %@ en %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ since the 1st, against %2$@ in %3$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ depuis le 1er, contre %2$@ en %3$@."
+          }
+        }
+      }
+    },
+    "%@ en %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ in %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ en %2$@"
+          }
+        }
+      }
+    },
+    "%@ enregistrée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ saved"
+          }
+        }
+      }
+    },
+    "%@ sortie de la semaine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ workout this week"
+          }
+        }
+      }
+    },
+    "%@, contre %@ en moyenne ces 6 derniers mois." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, against %2$@ on average over the last 6 months."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, contre %2$@ en moyenne ces 6 derniers mois."
+          }
+        }
+      }
+    },
+    "%@. Le détail t'attend." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@. The details are waiting."
+          }
+        }
+      }
+    },
+    "%lld minutes" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minute"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minutes"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minute"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minutes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld mètres de descente" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld meter down"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld meters down"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld mètre de descente"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld mètres de descente"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld mètres de montée" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld meter up"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld meters up"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld mètre de montée"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld mètres de montée"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld pas/min" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld steps/min"
+          }
+        }
+      }
+    },
+    ", %@ de dénivelé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", %@ of climb"
+          }
+        }
+      }
+    },
+    "Calories" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Course" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run"
+          }
+        }
+      }
+    },
+    "Depuis un mois, %@ %lld s/km plus vite qu'avant." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Over the past month, %1$@ %2$lld s/km faster than before."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Depuis un mois, %1$@ %2$lld s/km plus vite qu'avant."
+          }
+        }
+      }
+    },
+    "Distance" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Du %@ au %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ – %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Du %1$@ au %2$@"
+          }
+        }
+      }
+    },
+    "Déjà %@ cette semaine, autant que toute la semaine dernière." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already %@ this week, as much as all of last week."
+          }
+        }
+      }
+    },
+    "Déjà %@ cette semaine, plus que toute la semaine dernière." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already %@ this week, more than all of last week."
+          }
+        }
+      }
+    },
+    "Déjà %@ cette semaine." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already %@ this week."
+          }
+        }
+      }
+    },
+    "Le %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
+          }
+        }
+      }
+    },
+    "Les deux" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Both"
+          }
+        }
+      }
+    },
+    "Marche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walk"
+          }
+        }
+      }
+    },
+    "Minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes"
+          }
+        }
+      }
+    },
+    "Mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Month"
+          }
+        }
+      }
+    },
+    "Montre Garmin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin watch"
+          }
+        }
+      }
+    },
+    "Pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steps"
+          }
+        }
+      }
+    },
+    "Plus de dénivelé que d'habitude" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More climb than usual"
+          }
+        }
+      }
+    },
+    "Plus rapide que d'habitude" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faster than usual"
+          }
+        }
+      }
+    },
+    "Randonnée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hike"
+          }
+        }
+      }
+    },
+    "Semaine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week"
+          }
+        }
+      }
+    },
+    "Sortie enregistrée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout saved"
+          }
+        }
+      }
+    },
+    "Séance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
+          }
+        }
+      }
+    },
+    "Ta %@ la plus rapide depuis 6 mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your fastest %@ in 6 months"
+          }
+        }
+      }
+    },
+    "Ta %@ la plus vallonnée depuis 6 mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your hilliest %@ in 6 months"
+          }
+        }
+      }
+    },
+    "Ta course" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your run"
+          }
+        }
+      }
+    },
+    "Ta marche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your walk"
+          }
+        }
+      }
+    },
+    "Ta plus longue %@ depuis 6 mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your longest %@ in 6 months"
+          }
+        }
+      }
+    },
+    "Ton mois dépasse déjà le précédent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your month already beats the last one"
+          }
+        }
+      }
+    },
+    "Ton mois grimpe plus que le précédent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your month climbs more than the last one"
+          }
+        }
+      }
+    },
+    "Ton plus gros dénivelé depuis 6 mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your biggest climb in 6 months"
+          }
+        }
+      }
+    },
+    "arrêt de %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ stop"
+          }
+        }
+      }
+    },
+    "course" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "run"
+          }
+        }
+      }
+    },
+    "marche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "walk"
+          }
+        }
+      }
+    },
+    "pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "steps"
+          }
+        }
+      }
+    },
+    "randonnée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hike"
+          }
+        }
+      }
+    },
+    "sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "workout"
+          }
+        }
+      }
+    },
+    "tu cours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "you run"
+          }
+        }
+      }
+    },
+    "tu marches" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "you walk"
+          }
+        }
+      }
+    },
+    "Ça progresse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getting better"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -10,7 +10,7 @@ enum SettingsPage: Hashable {
     case appearance
     case about
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
         case .goals: "Objectifs"
         case .schedule: "Planning"

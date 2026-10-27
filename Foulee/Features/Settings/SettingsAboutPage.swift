@@ -31,7 +31,7 @@ struct SettingsAboutPage: View {
         }
     }
 
-    private func row(label: String, value: String) -> some View {
+    private func row(label: LocalizedStringResource, value: String) -> some View {
         HStack {
             Text(label).font(FouleeFont.body)
             Spacer()
@@ -43,7 +43,7 @@ struct SettingsAboutPage: View {
 
     /// Opens in the browser — `Link` hands the URL to the system, which
     /// shows it outside the app.
-    private func link(_ title: String, icon: String, url: URL) -> some View {
+    private func link(_ title: LocalizedStringResource, icon: String, url: URL) -> some View {
         Link(destination: url) {
             HStack(spacing: 12) {
                 Image(systemName: icon)

@@ -82,7 +82,8 @@ nonisolated public func cadenceText(stepsPerSecond: Double) -> String? {
     // « pas/min » on the next reads as badly as the « pa/s » of issue #261. The
     // line still wraps on a 40 mm — it just wraps before the number rather than
     // between the number and what it counts.
-    return "\(Int((stepsPerSecond * 60 / 5).rounded()) * 5)\u{00A0}pas/min"
+    let cadence = Int((stepsPerSecond * 60 / 5).rounded()) * 5
+    return kitText("\(cadence)\u{00A0}pas/min")
 }
 
 nonisolated public extension Double {

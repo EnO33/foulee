@@ -3,11 +3,11 @@ import SwiftUI
 /// A headline over a control, with an optional footnote — one row inside a
 /// settings card that holds several (the Hydratation page).
 struct SettingsField<Content: View>: View {
-    var title: String
-    var footer: String?
+    var title: LocalizedStringResource
+    var footer: LocalizedStringResource?
     let content: Content
 
-    init(_ title: String, footer: String? = nil, @ViewBuilder content: () -> Content) {
+    init(_ title: LocalizedStringResource, footer: LocalizedStringResource? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
         self.footer = footer
         self.content = content()

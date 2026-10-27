@@ -89,15 +89,14 @@ struct MirroredWalkScreen: View {
                 Text(elapsed(at: now).walkClockText)
                     .font(.system(size: 56, weight: .semibold, design: .rounded))
                     .monospacedDigit()
-                Text(store.figures?.isPaused == true ? "En pause" : store.session?.activity.label ?? "Séance")
+                Text(store.figures?.isPaused == true ? String(localized: "En pause") : activityLabel)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel(
-                "\(store.session?.activity.label ?? "Séance") en cours depuis "
-                    + elapsed(at: now).walkClockText
-            )
+            .accessibilityLabel(Text(
+                "\(activityLabel) en cours depuis \(elapsed(at: now).walkClockText)"
+            ))
         }
     }
 
@@ -170,12 +169,16 @@ struct MirroredWalkScreen: View {
     /// Static and internal so the wording is asserted rather than eyeballed —
     /// this is the line that keeps the screen from claiming to be live, and a
     /// `View` body is not somewhere a test can reach.
-    static func ageText(_ age: TimeInterval) -> String {
-        guard age >= 60 else { return "Relevé à l'instant" }
-        return "Relevé il y a \(Int(age / 60)) min"
+    private var activityLabel: String {
+        store.session?.activity.label ?? String(localized: "Séance")
     }
 
-    private func tile(_ value: String, _ label: String) -> some View {
+    static func ageText(_ age: TimeInterval) -> String {
+        guard age >= 60 else { return String(localized: "Relevé à l'instant") }
+        return String(localized: "Relevé il y a \(Int(age / 60)) min")
+    }
+
+    private func tile(_ value: String, _ label: LocalizedStringResource) -> some View {
         VStack(spacing: 2) {
             Text(value)
                 .font(.system(size: 28, weight: .semibold, design: .rounded))
@@ -190,7 +193,7 @@ struct MirroredWalkScreen: View {
         .padding(.vertical, 14)
         .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(value) \(label)")
+        .accessibilityLabel(Text("\(value) \(label)"))
     }
 
     /// Ends the outing — on the wrist (issue #282).

@@ -12,7 +12,7 @@ enum MetricRange: String, CaseIterable, Identifiable, Sendable {
 
     var id: String { rawValue }
 
-    var label: String {
+    var label: LocalizedStringResource {
         switch self {
         case .today: "Auj."
         case .week: "Semaine"
