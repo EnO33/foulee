@@ -91,6 +91,9 @@ platform :ios do
       skip_binary_upload: true,
       skip_screenshots: true,
       submit_for_review: false,
+      # Precheck guards a submission, and this lane never submits; with an API
+      # key it also fails outright on in-app purchases, after the upload.
+      run_precheck_before_submit: false,
       # No HTML preview to confirm on CI.
       force: true
     )
