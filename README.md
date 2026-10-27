@@ -68,7 +68,7 @@ session that outlived its app rather than finishing it: see
   source-agnostic fallback shipped in
   [#181](https://github.com/getfoulee/foulee/issues/181). Architecture
   decision: [ADR 0001](docs/adr/0001-garmin-integration.md) (French).
-  Troubleshooting: [Garmin FAQ](docs/faq-garmin.md) (French).
+  Troubleshooting: [Garmin FAQ](docs/faq-garmin.en.md) ([French](docs/faq-garmin.md)).
 - **Garmin Connect IQ app** — [on the Connect IQ Store](https://apps.garmin.com/apps/8c11aa2c-7fc7-4e3d-8441-b2771626cbc7):
   the streak and the day's counters on the wrist, outings started from the
   watch, and direct watch↔iPhone sync (freshness + Garmin-native intensity

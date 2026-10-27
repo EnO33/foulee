@@ -127,3 +127,5 @@ ouvre Garmin Connect pour déclencher une synchro. Si elle y est mais pas dans F
 qu'il ne s'agit pas des minutes d'exercice (voir « Ma série ne valide pas alors
 que j'ai marché » : elles viennent de tes activités enregistrées, pas de tes
 pas) — sinon, écris-nous : **contact@getfoulee.app**.
+
+_Cette FAQ existe aussi [en anglais](faq-garmin.en.md)._

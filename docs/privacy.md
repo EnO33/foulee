@@ -236,3 +236,5 @@ rien.
 ## Contact
 
 Une question sur cette politique ? Écris à **contact@getfoulee.app**.
+
+_Cette politique existe aussi [en anglais](privacy.en.md)._
