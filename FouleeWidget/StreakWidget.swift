@@ -144,7 +144,7 @@ struct StreakWidgetView: View {
                     .font(.system(size: 56, weight: .heavy, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(.white)
-                Text("jours d'affilée")
+                Text(daysInARow)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.7))
             }
@@ -164,7 +164,7 @@ struct StreakWidgetView: View {
                     .font(.system(size: 56, weight: .heavy, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(.white)
-                Text("jours d'affilée")
+                Text(daysInARow)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.7))
             }
@@ -190,7 +190,13 @@ struct StreakWidgetView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    private var streakCopy: String {
+    /// Under the big figure, which it does not repeat: a catalog plural must
+    /// show its number, hence two strings.
+    private var daysInARow: LocalizedStringResource {
+        entry.streak == 1 ? "jour d'affilée" : "jours d'affilée"
+    }
+
+    private var streakCopy: LocalizedStringResource {
         switch entry.streak {
         case 0: "C'est l'occasion de démarrer une série."
         case 1...4: "Continue, le rythme se prend."

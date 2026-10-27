@@ -1,0 +1,556 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "%@ / %@" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%@ / %@ L" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%@ kcal" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%@ km" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%@ L" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%@ min" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%@ pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ steps"
+          }
+        }
+      }
+    },
+    "%@ pas · %lld min" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ steps · %2$lld min"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ pas · %2$lld min"
+          }
+        }
+      }
+    },
+    "%lld" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%lld %% de l'objectif" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% of goal"
+          }
+        }
+      }
+    },
+    "%lld / %lld min" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%lld j" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld j"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld j"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld days"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld j d'affilée" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld j d'affilée"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld j d'affilée"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld day in a row"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld days in a row"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "+%lld" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "+%lld ml" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "/ %@" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Active-la dans Foulée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn it on in Foulée"
+          }
+        }
+      }
+    },
+    "Activité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activity"
+          }
+        }
+      }
+    },
+    "Aujourd'hui Foulée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée Today"
+          }
+        }
+      }
+    },
+    "Belle constance — garde le cap." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nice and steady — keep it up."
+          }
+        }
+      }
+    },
+    "Bouge un peu, chaque jour." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move a little, every day."
+          }
+        }
+      }
+    },
+    "C'est l'occasion de démarrer une série." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A good day to start a streak."
+          }
+        }
+      }
+    },
+    "C'est noté : +%lld ml d'eau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noted: +%lld ml of water."
+          }
+        }
+      }
+    },
+    "calories" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "calories"
+          }
+        }
+      }
+    },
+    "Calories" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Choisis la donnée du jour à afficher." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose which of today’s figures to show."
+          }
+        }
+      }
+    },
+    "Continue, le rythme se prend." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep going, the habit is forming."
+          }
+        }
+      }
+    },
+    "Distance" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Donnée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metric"
+          }
+        }
+      }
+    },
+    "Enregistre un verre d'eau dans Santé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logs a glass of water in Health."
+          }
+        }
+      }
+    },
+    "Foulée" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Foulée n'a pas l'autorisation d'écrire dans Santé. Active l'eau dans Santé > Profil > Apps > Foulée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée isn’t allowed to write to Health. Turn on water in Health > Profile > Apps > Foulée."
+          }
+        }
+      }
+    },
+    "Hydratation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hydration"
+          }
+        }
+      }
+    },
+    "Hydratation à activer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hydration is off"
+          }
+        }
+      }
+    },
+    "j" : {
+      "comment" : "Short for « jours », under the streak figure on the Lock Screen.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "d"
+          }
+        }
+      }
+    },
+    "J'ai bu un verre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I had a glass"
+          }
+        }
+      }
+    },
+    "jour d'affilée" : {
+      "comment" : "Under a streak of 1, drawn above it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "day in a row"
+          }
+        }
+      }
+    },
+    "jours d'affilée" : {
+      "comment" : "Under the streak figure, drawn above it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "days in a row"
+          }
+        }
+      }
+    },
+    "kilomètres" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kilometers"
+          }
+        }
+      }
+    },
+    "Le nombre de jours d'affilée où tu as bougé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The number of days in a row you’ve moved."
+          }
+        }
+      }
+    },
+    "MAJ %@" : {
+      "comment" : "Followed by how long ago the figures were read: « MAJ 3 min ».",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updated %@"
+          }
+        }
+      }
+    },
+    "min" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "min d'activité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "active min"
+          }
+        }
+      }
+    },
+    "Ouvre d'abord Foulée pour autoriser l'accès à Santé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Foulée first to allow access to Health."
+          }
+        }
+      }
+    },
+    "pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "steps"
+          }
+        }
+      }
+    },
+    "Pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steps"
+          }
+        }
+      }
+    },
+    "pas aujourd'hui" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "steps today"
+          }
+        }
+      }
+    },
+    "Santé n'est pas disponible sur cet appareil." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health isn’t available on this device."
+          }
+        }
+      }
+    },
+    "Statistique" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stat"
+          }
+        }
+      }
+    },
+    "Statistique Foulée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée Stat"
+          }
+        }
+      }
+    },
+    "sur %@ L" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "of %@ L"
+          }
+        }
+      }
+    },
+    "série Foulée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée streak"
+          }
+        }
+      }
+    },
+    "Série Foulée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée Streak"
+          }
+        }
+      }
+    },
+    "Tes pas et tes minutes d'activité du jour, par rapport à tes objectifs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today’s steps and active minutes against your goals."
+          }
+        }
+      }
+    },
+    "Ton eau bue du jour, par rapport à ton objectif." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today’s water against your goal."
+          }
+        }
+      }
+    },
+    "Tu tiens un sacré rythme. Bravo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You’re on a roll. Well done."
+          }
+        }
+      }
+    },
+    "Une donnée du jour : pas, activité, distance ou calories." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One of today’s figures: steps, activity, distance or calories."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

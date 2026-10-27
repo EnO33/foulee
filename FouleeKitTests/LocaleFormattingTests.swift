@@ -101,6 +101,13 @@ struct LocaleFormattingTests {
     func screenLanguages() {
         #expect(Bundle(for: LocaleToken.self).screenLanguages.isEmpty)
     }
+
+    @Test("The source language counts once a translation ships")
+    func sourceLanguage() {
+        #expect(Bundle.screenLanguages(translated: ["en"], source: "fr") == ["fr", "en"])
+        #expect(Bundle.screenLanguages(translated: ["fr", "en"], source: "fr") == ["fr", "en"])
+        #expect(Bundle.screenLanguages(translated: [], source: "fr").isEmpty)
+    }
 }
 
 private final class LocaleToken {}

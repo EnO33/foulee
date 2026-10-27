@@ -62,7 +62,7 @@ struct WalkLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack {
                         statCell(
-                            value: "\(context.state.steps)",
+                            value: context.state.steps.groupedText(),
                             label: "pas",
                             icon: "shoe"
                         )
@@ -99,7 +99,7 @@ struct WalkLiveActivity: Widget {
         }
     }
 
-    private func statCell(value: String, label: String, icon: String) -> some View {
+    private func statCell(value: String, label: LocalizedStringResource, icon: String) -> some View {
         VStack(spacing: 2) {
             Image(systemName: icon)
                 .font(.caption2)
@@ -148,7 +148,7 @@ struct LockScreenView: View {
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(state.isPaused ? .secondary : .primary)
-                Text("\(state.steps) pas · \(state.distanceKm.kmText())")
+                Text("\(state.steps.groupedText()) pas · \(state.distanceKm.kmText())")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 // Its own line: beside the steps and the distance it would

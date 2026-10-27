@@ -40,11 +40,22 @@ nonisolated extension Bundle {
     ///
     /// Empty for a bundle without screens, such as a test runner.
     var screenLanguages: [String] {
-        localizations.filter { language in
-            ["strings", "stringsdict"].contains { kind in
-                path(forResource: "Localizable", ofType: kind, inDirectory: nil, forLocalization: language) != nil
-            }
-        }
+        Self.screenLanguages(
+            translated: localizations.filter { language in
+                ["strings", "stringsdict"].contains { kind in
+                    path(forResource: "Localizable", ofType: kind, inDirectory: nil, forLocalization: language) != nil
+                }
+            },
+            source: developmentLocalization
+        )
+    }
+
+    /// `translated` plus the `source` language, whose text is compiled into the
+    /// code rather than into a table (issue #589): the Live Activity ships an
+    /// `en.lproj` and no `fr.lproj`, yet speaks French.
+    internal static func screenLanguages(translated: [String], source: String?) -> [String] {
+        guard !translated.isEmpty, let source, !translated.contains(source) else { return translated }
+        return [source] + translated
     }
 }
 

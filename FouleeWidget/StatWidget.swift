@@ -184,7 +184,7 @@ struct StatWidgetView: View {
     }
 
     private var inline: some View {
-        Label("\(valueText) \(unit)", systemImage: icon)
+        Label { Text(inlineText) } icon: { Image(systemName: icon) }
     }
 
     private var small: some View {
@@ -223,16 +223,18 @@ struct StatWidgetView: View {
         }
     }
 
-    private var unit: String {
+    /// The value and its unit, one phrase per metric so the unit is translated
+    /// with the number around it.
+    private var inlineText: LocalizedStringResource {
         switch entry.metric {
-        case .steps: "pas"
-        case .minutes: "min"
-        case .distance: "km"
-        case .calories: "kcal"
+        case .steps: "\(valueText) pas"
+        case .minutes: "\(valueText) min"
+        case .distance: "\(valueText) km"
+        case .calories: "\(valueText) kcal"
         }
     }
 
-    private var label: String {
+    private var label: LocalizedStringResource {
         switch entry.metric {
         case .steps: "pas aujourd'hui"
         case .minutes: "min d'activité"

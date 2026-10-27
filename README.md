@@ -204,6 +204,7 @@ Strings are localized via **String Catalogs** (`.xcstrings`) — one per target:
 - `FouleeKit/Resources/Localizable.xcstrings` (text the kit writes itself — activity names, highlights — French and English)
 - `FouleeWatch/Resources/Localizable.xcstrings` (Watch app)
 - `FouleeWatchWidget/Resources/Localizable.xcstrings` (Watch widget)
+- `FouleeWidget/Resources/Localizable.xcstrings` and `FouleeLiveActivity/Resources/Localizable.xcstrings` (iPhone widgets and Live Activity, French and English), with an `InfoPlist.xcstrings` each for the extension's name
 
 `Project.swift` enables:
 - `SWIFT_EMIT_LOC_STRINGS` — the compiler extracts every localizable literal (`Text("…")`, `String(localized:)`, a `LocalizedStringResource` argument).
@@ -215,7 +216,7 @@ Source language is **French**. The rules that keep a string translatable:
 - A component takes its text as `LocalizedStringResource`, never `String`: `Text(someString)` is shown verbatim. Text already in the screen's language (a figure, a label the kit wrote) goes through `.verbatim(_:)`.
 - Text built outside a view is `String(localized: "…")` in the apps, `kitText("…")` in FouleeKit. `kitText` reads the kit's catalog in `Locale.app`, the language of the app showing it, so an English iPhone and a French-only watch never mix.
 - One literal per sentence: `"a " + "b"` is never extracted. Counts are plural variations in the catalog (`%lld jours` → « 1 jour », "1 day"), not `count > 1 ? "s" : ""`.
-- `Locale.app` follows the languages whose `Localizable` table the app actually ships: a target speaks English once its catalog does.
+- `Locale.app` follows the languages whose `Localizable` table the app actually ships, plus French, the source: a target speaks English once its catalog does.
 
 To refresh the catalogs from the code: `xcodebuild -exportLocalizations -project Foulee.xcodeproj -localizationPath <dir> -exportLanguage en`, then translate the new keys in Xcode.
 
