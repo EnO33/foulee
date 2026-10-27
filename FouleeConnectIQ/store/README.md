@@ -72,11 +72,11 @@ changement d'une option, et cette note existe pour qu'on sache quoi essayer.
 
 ## 2. Les images
 
-Les **icônes** sont dans le dépôt, sous [`assets/`](assets/), rendues depuis
-l'icône de l'app iPhone : le marcheur blanc sur dégradé violet, une seule
-identité Foulée sur l'iPhone, l'Apple Watch et Garmin (#468). Les **captures
-d'écran** n'y sont pas encore : elles viennent du simulateur graphique (voir
-§ 3).
+Les **icônes** et l'**image d'en-tête** sont dans le dépôt, sous
+[`assets/`](assets/), rendues depuis l'icône de l'app iPhone : le marcheur blanc
+sur dégradé violet, une seule identité Foulée sur l'iPhone, l'Apple Watch et
+Garmin (#468). Les **captures d'écran** n'y sont pas encore : elles viennent du
+simulateur graphique (voir § 3).
 
 ### Tailles exigées
 
@@ -93,18 +93,30 @@ Le forum développeurs mentionne en plus un plafond de **300 ko** pour les
 icônes et images de couverture et de **150 ko** par capture d'écran. Ce chiffre
 est communautaire, pas documenté par Garmin : le vérifier sur le formulaire.
 
-`assets/icon-500.png` et `assets/icon-128.png` sont produites, avec les icônes
-de lancement de chaque appareil, par :
+| Fichier | Pour | Poids |
+|---|---|---|
+| `assets/icon-500.png` | icône de la fiche | 105 ko |
+| `assets/icon-128.png` | icône du store embarqué, écrans AMOLED | 10 ko |
+| `assets/icon-128-mip.png` | la même, écrans *memory-in-pixel* : le marcheur blanc sur le violet le plus proche de la palette 64 couleurs, sans dégradé ni tramage (un dégradé ramené à 64 couleurs fait des bandes, un tramage du bruit) | 0,5 ko |
+| `assets/hero.png` | image d'en-tête, 1440 × 720 : la carte de partage de getfoulee.app en thème sombre, sans phrase à traduire puisque le store est mondial | 186 ko |
+
+Tous tiennent sous les plafonds annoncés par le forum. Ils sont produits, avec
+les icônes de lancement de chaque appareil, par :
 
 ```sh
-tools/render_icons.py     # ImageMagick : brew install imagemagick
+tools/render_icons.py     # brew install imagemagick librsvg
 ```
 
 Le script part de `Foulee/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png`
 à la taille de chaque appareil. À relancer, puis committer, si l'icône iPhone
 change.
-Le rendu est reproductible : relancé sur une source inchangée, il ne modifie
-aucun fichier. L'image d'en-tête reste à faire.
+Le rendu est reproductible : relancé sur une source inchangée, avec la même
+version d'ImageMagick, il ne modifie aucun fichier. Une autre version
+d'ImageMagick décale quelques pixels d'un niveau (0,2 % mesurés entre deux
+versions) : inutile de committer ce bruit si l'icône n'a pas changé.
+L'image d'en-tête reprend les couleurs de `scripts/generate-assets.mjs` dans
+`getfoulee/web` : si la carte du site change, reporter ses couleurs dans
+`HERO_SVG`.
 
 ### Captures d'écran, par format d'écran
 
