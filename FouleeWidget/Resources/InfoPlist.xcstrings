@@ -1,0 +1,24 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée Streak"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée Série"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

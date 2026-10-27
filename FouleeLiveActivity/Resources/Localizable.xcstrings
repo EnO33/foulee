@@ -1,0 +1,70 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "%@ pas · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ steps · %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ pas · %2$@"
+          }
+        }
+      }
+    },
+    "%@ · En pause" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · Paused"
+          }
+        }
+      }
+    },
+    "%lld%%" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "kcal" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "min objectif" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "min goal"
+          }
+        }
+      }
+    },
+    "pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "steps"
+          }
+        }
+      }
+    },
+    "Ta sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your workout"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

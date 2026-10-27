@@ -53,7 +53,7 @@ nonisolated struct WalkActivityAttributes: ActivityAttributes {
     /// « sortie » stays the noun for a session whose activity is unknown; no
     /// third word is introduced here. The paused suffix keeps #222's shape.
     func title(isPaused: Bool) -> String {
-        isPaused ? "\(baseTitle) · En pause" : baseTitle
+        isPaused ? String(localized: "\(baseTitle) · En pause") : baseTitle
     }
 
     /// SF Symbol for the same session, read from `ActivityGlyph` rather than
@@ -68,7 +68,7 @@ nonisolated struct WalkActivityAttributes: ActivityAttributes {
     }
 
     private var baseTitle: String {
-        activity?.sessionTitle ?? "Ta sortie"
+        activity?.sessionTitle ?? String(localized: "Ta sortie")
     }
 
     /// Pushed on walk events (start, pause, resume, pedometer samples) —

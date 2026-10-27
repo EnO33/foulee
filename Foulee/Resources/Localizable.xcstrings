@@ -24,6 +24,16 @@
       },
       "shouldTranslate" : false
     },
+    "%@ · En pause" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · Paused"
+          }
+        }
+      }
+    },
     "%@ / %@ L" : {
       "localizations" : {
         "fr" : {

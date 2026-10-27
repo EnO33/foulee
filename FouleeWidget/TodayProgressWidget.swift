@@ -196,7 +196,7 @@ struct TodayProgressView: View {
         .padding(14)
     }
 
-    private func legendRow(color: Color, value: String, unit: String) -> some View {
+    private func legendRow(color: Color, value: String, unit: LocalizedStringResource) -> some View {
         HStack(spacing: 6) {
             Circle().fill(color).frame(width: 7, height: 7)
             Text(value).font(.system(size: 15, weight: .bold, design: .rounded)).monospacedDigit()
