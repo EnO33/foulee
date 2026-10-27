@@ -123,7 +123,7 @@ struct WorkoutDetailSheet: View {
                     icon: WalkMetric.steps.icon,
                     tint: WalkMetric.steps.tint,
                     label: "Pas",
-                    value: detail.stepsCount.formattedFR
+                    value: detail.stepsCount.groupedText()
                 )
                 metricCard(
                     icon: WalkMetric.calories.icon,

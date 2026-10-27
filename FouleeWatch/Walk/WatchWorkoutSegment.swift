@@ -144,7 +144,7 @@ struct WatchActivityTotals: Equatable, Sendable {
     /// One decimal for the distance, not two: this line refreshes with the
     /// session and a second decimal would flicker without saying anything.
     var countersText: String {
-        "\(steps) pas  \(distanceKm.kmText(fractionDigits: 1))  \(activeCalories) kcal"
+        "\(steps.groupedText()) pas  \(distanceKm.kmText(fractionDigits: 1))  \(activeCalories.groupedText()) kcal"
     }
 
     /// Sum every leg, whatever its sport — the outing's own figures.

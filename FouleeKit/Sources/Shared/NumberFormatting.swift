@@ -1,33 +1,26 @@
 import Foundation
 
 nonisolated public extension Double {
-    /// `self` with `fractionDigits` decimals and a French decimal comma, no
-    /// unit — e.g. `1,5`. The whole app formats decimals this way, so the
-    /// comma lives in one place.
-    func decimalComma(fractionDigits: Int = 1) -> String {
-        String(format: "%.\(fractionDigits)f", self)
-            .replacingOccurrences(of: ".", with: ",")
+    /// `self` with `fractionDigits` decimals, no unit, in `locale`'s numerals —
+    /// `1,5` in France, `1.5` in the US (issue #586). The whole app formats
+    /// decimals this way, so the separator lives in one place.
+    func decimalText(fractionDigits: Int = 1, locale: Locale = .app) -> String {
+        formatted(.number.locale(locale).precision(.fractionLength(fractionDigits)))
     }
 }
 
-/// Millilitres rendered as litres with one decimal + comma, no unit — e.g.
-/// `1,5`. Callers append " L" where they want the unit.
-nonisolated public func litres(_ millilitres: Int) -> String {
-    (Double(millilitres) / 1_000).decimalComma()
+/// Millilitres rendered as litres with one decimal, no unit — e.g. `1,5`.
+/// Callers append " L" where they want the unit.
+nonisolated public func litres(_ millilitres: Int, locale: Locale = .app) -> String {
+    (Double(millilitres) / 1_000).decimalText(locale: locale)
 }
 
-nonisolated private let frenchDecimalFormatter: NumberFormatter = {
-    let formatter = NumberFormatter()
-    formatter.locale = Locale(identifier: "fr_FR")
-    formatter.numberStyle = .decimal
-    return formatter
-}()
-
 nonisolated public extension Int {
-    /// French-locale thousands grouping (`4218` → `"4 218"`). Uses a shared
-    /// cached formatter — allocating a `NumberFormatter` per call is costly and
-    /// this runs on every render of the step counters.
-    var formattedFR: String {
-        frenchDecimalFormatter.string(from: NSNumber(value: self)) ?? "\(self)"
+    /// `self` grouped by thousands the way `locale` groups them — `4 218` in
+    /// France, `4,218` in the US (issue #586). `FormatStyle` keeps its
+    /// formatters cached, which matters: this runs on every render of the step
+    /// counters.
+    func groupedText(locale: Locale = .app) -> String {
+        formatted(.number.locale(locale))
     }
 }

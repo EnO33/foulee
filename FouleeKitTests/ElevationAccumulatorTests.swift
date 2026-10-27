@@ -118,7 +118,7 @@ struct ElevationTextTests {
     func text() {
         #expect(Elevation.zero.text == nil)
         #expect(Elevation.zero.spokenText == nil)
-        #expect(Elevation(ascent: 1_249.6, descent: 0).text == "↑ \(1_250.formattedFR) m")
+        #expect(Elevation(ascent: 1_249.6, descent: 0).text == "↑ \(1_250.groupedText()) m")
         #expect(Elevation(ascent: 0.2, descent: 12).spokenText == "12 mètres de descente")
     }
 }

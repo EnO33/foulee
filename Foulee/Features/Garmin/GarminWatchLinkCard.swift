@@ -20,7 +20,7 @@ struct GarminWatchLinkCard: View {
                 .font(FouleeFont.footnote)
                 .foregroundStyle(.secondary)
             if !devices.isEmpty {
-                Label(devices.map(\.friendlyName).formatted(), systemImage: "checkmark.circle.fill")
+                Label(devices.map(\.friendlyName).formatted(.list(type: .and).locale(.app)), systemImage: "checkmark.circle.fill")
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(FouleeColor.success)
             }

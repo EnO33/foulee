@@ -8,9 +8,9 @@ struct SettingsSummaryTests {
     @Test("Goals read mode, minutes and steps")
     func goals() {
         #expect(SettingsSummary.goals(mode: .walking, minutesGoal: 20, stepsGoal: 6_000)
-            == "Marche · 20 min · \(6_000.formattedFR) pas")
+            == "Marche · 20 min · \(6_000.groupedText()) pas")
         #expect(SettingsSummary.goals(mode: .both, minutesGoal: 60, stepsGoal: 10_000)
-            == "Les deux · 1 h · \(10_000.formattedFR) pas")
+            == "Les deux · 1 h · \(10_000.groupedText()) pas")
     }
 
     @Test("Usual day sets are named, others counted", arguments: [

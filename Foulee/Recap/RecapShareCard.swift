@@ -42,16 +42,16 @@ struct RecapShareCard: Equatable, Sendable {
         goalLine = Self.goalText(met: recap.goalDaysMet, planned: recap.goalDaysPlanned)
         let outings = recap.totals.outings
         let climb = recap.totals.climbMeters >= 1
-            ? [Stat(label: "Dénivelé", value: "\(Int(recap.totals.climbMeters.rounded()).formattedFR) m", icon: FouleeIcon.climb)]
+            ? [Stat(label: "Dénivelé", value: "\(Int(recap.totals.climbMeters.rounded()).groupedText()) m", icon: FouleeIcon.climb)]
             : []
         stats = [Stat(label: "Distance", value: recap.totals.distanceKm.kmText(fractionDigits: 1), icon: FouleeIcon.distance)]
             + climb
             + [
-                Stat(label: "Pas", value: recap.totals.steps.formattedFR, icon: FouleeIcon.footsteps),
+                Stat(label: "Pas", value: recap.totals.steps.groupedText(), icon: FouleeIcon.footsteps),
                 Stat(label: outings > 1 ? "Sorties" : "Sortie", value: "\(outings)", icon: "figure.walk")
             ]
         bestDay = recap.bestDay.map {
-            "\(Self.dayFormatter.string(from: $0.date).capitalized(with: Self.french)) · \(durationText(minutes: $0.minutes))"
+            "\($0.date.shortDayText.capitalized(with: .app)) · \(durationText(minutes: $0.minutes))"
         }
         var message = "\(heading) sur Foulée : \(minutes) d'activité"
         if let goalLine { message += ", \(goalLine.prefix(1).lowercased())\(goalLine.dropFirst())" }
@@ -64,15 +64,6 @@ struct RecapShareCard: Equatable, Sendable {
         guard planned > 0 else { return nil }
         return "Objectif tenu \(met) jour\(met > 1 ? "s" : "") sur \(planned)"
     }
-
-    private static let french = Locale(identifier: "fr_FR")
-
-    private static let dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = french
-        formatter.dateFormat = "EEEE d MMM"
-        return formatter
-    }()
 }
 
 nonisolated extension Recap {

@@ -1,3 +1,4 @@
+import FouleeKit
 import MapKit
 import SwiftUI
 
@@ -91,9 +92,8 @@ struct WatchFinishedView: View {
     /// « 3 100 pas · 2,40 km · ↑ 120 m · ↓ 115 m »: the climb and the
     /// descent when the barometer measured them (issues #535, #565).
     var figuresText: String {
-        let climb = metrics.climbMeters >= 1 ? " · ↑ \(Int(metrics.climbMeters.rounded())) m" : ""
-        let descent = metrics.descentMeters >= 1 ? " · ↓ \(Int(metrics.descentMeters.rounded())) m" : ""
-        return "\(metrics.steps.formatted()) pas · \(metrics.distanceKm.kmText())\(climb)\(descent)"
+        let elevation = Elevation(ascent: metrics.climbMeters, descent: metrics.descentMeters).text.map { " · \($0)" } ?? ""
+        return "\(metrics.steps.groupedText()) pas · \(metrics.distanceKm.kmText())\(elevation)"
     }
 
     /// One line per sport, when the outing changed sport (issue #265).

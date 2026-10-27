@@ -25,8 +25,8 @@ nonisolated public struct Elevation: Equatable, Sendable {
     /// when neither was measured (issue #535): absent, not « ↑ 0 m ».
     public var text: String? {
         let parts = [
-            ascent >= 1 ? "↑ \(Int(ascent.rounded()).formattedFR) m" : nil,
-            descent >= 1 ? "↓ \(Int(descent.rounded()).formattedFR) m" : nil
+            ascent >= 1 ? "↑ \(Int(ascent.rounded()).groupedText()) m" : nil,
+            descent >= 1 ? "↓ \(Int(descent.rounded()).groupedText()) m" : nil
         ].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }

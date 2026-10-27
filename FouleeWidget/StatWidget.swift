@@ -251,20 +251,20 @@ struct StatWidgetView: View {
     }
 
     private var valueText: String {
-        entry.metric == .distance ? entry.value.decimalComma() : Int(entry.value).formatted()
+        entry.metric == .distance ? entry.value.decimalText() : Int(entry.value).groupedText()
     }
 
     private var goalText: String {
-        entry.metric == .distance ? entry.goal.decimalComma() : Int(entry.goal).formatted()
+        entry.metric == .distance ? entry.goal.decimalText() : Int(entry.goal).groupedText()
     }
 
     /// Shorter form for the tight Lock Screen circle (e.g. `4,2k`).
     private var compactValue: String {
         switch entry.metric {
         case .steps, .calories:
-            entry.value >= 1_000 ? (entry.value / 1_000).decimalComma() + "k" : "\(Int(entry.value))"
+            entry.value >= 1_000 ? (entry.value / 1_000).decimalText() + "k" : "\(Int(entry.value))"
         case .minutes: "\(Int(entry.value))"
-        case .distance: entry.value.decimalComma()
+        case .distance: entry.value.decimalText()
         }
     }
 }

@@ -7,7 +7,7 @@ import Foundation
 enum SettingsSummary {
     /// « Marche · 20 min · 6 000 pas ».
     static func goals(mode: ActivityMode, minutesGoal: Int, stepsGoal: Int) -> String {
-        "\(mode.label) · \(durationText(minutes: minutesGoal)) · \(stepsGoal.formattedFR) pas"
+        "\(mode.label) · \(durationText(minutes: minutesGoal)) · \(stepsGoal.groupedText()) pas"
     }
 
     /// « En semaine · 11:30–13:30 ».

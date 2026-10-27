@@ -87,7 +87,7 @@ struct WatchSessionDayPage: View {
                 Image(systemName: icon)
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(tint)
-                Text("\(value.formatted()) / \(goal.formatted()) \(label)")
+                Text("\(value.groupedText()) / \(goal.groupedText()) \(label)")
                     .font(.caption2)
                     .monospacedDigit()
                     .minimumScaleFactor(0.7)

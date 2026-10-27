@@ -4,6 +4,11 @@ import ProjectDescriptionHelpers
 
 let deploymentTargets: DeploymentTargets = .iOS("26.0")
 
+/// The tests read figures and dates the way a French device writes them —
+/// « 4 218 », « 1,5 km », « 20:05 » — whatever the Mac or simulator running
+/// them is set to (issue #586).
+let frenchTests: TestActionOptions = .options(language: "fr", region: "FR")
+
 // Main-actor isolation by default (issue #407, ADR 0006): code is on the main
 // actor unless it says otherwise, so what leaves it is marked `nonisolated` or
 // `@concurrent` where it is declared. Enabled target by target; a target
@@ -367,13 +372,13 @@ let project = Project(
             name: "FouleeKit",
             shared: true,
             buildAction: .buildAction(targets: ["FouleeKit"]),
-            testAction: .targets(["FouleeKitTests"])
+            testAction: .targets(["FouleeKitTests"], options: frenchTests)
         ),
         .scheme(
             name: "Foulee",
             shared: true,
             buildAction: .buildAction(targets: ["Foulee"]),
-            testAction: .targets(["FouleeTests"]),
+            testAction: .targets(["FouleeTests"], options: frenchTests),
             runAction: .runAction(executable: "Foulee")
         ),
         .scheme(
@@ -387,7 +392,7 @@ let project = Project(
             name: "FouleeWatch",
             shared: true,
             buildAction: .buildAction(targets: ["FouleeWatch"]),
-            testAction: .targets(["FouleeWatchTests"]),
+            testAction: .targets(["FouleeWatchTests"], options: frenchTests),
             runAction: .runAction(executable: "FouleeWatch")
         ),
         .scheme(

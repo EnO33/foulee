@@ -231,19 +231,14 @@ nonisolated public struct SessionHighlight: Equatable, Sendable {
     }
 
     private static func meters(_ value: Double) -> String {
-        "\(Int(value.rounded()).formattedFR) m"
+        "\(Int(value.rounded()).groupedText()) m"
     }
 
     private static func monthName(_ date: Date) -> String {
         monthFormatter.string(from: date)
     }
 
-    private static let monthFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "LLLL"
-        return formatter
-    }()
+    private static let monthFormatter = DateFormatter(template: "LLLL")
 }
 
 nonisolated private extension RecordedActivity {

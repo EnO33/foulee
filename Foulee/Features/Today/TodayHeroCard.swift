@@ -99,7 +99,7 @@ struct TodayHeroCard: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Progression du jour")
         .accessibilityValue(
-            "Pas \(snapshot.steps.formattedFR) sur \(snapshot.stepsGoal.formattedFR), "
+            "Pas \(snapshot.steps.groupedText()) sur \(snapshot.stepsGoal.groupedText()), "
                 + "activité \(snapshot.minutes) sur \(snapshot.minutesGoal) minutes"
         )
     }
