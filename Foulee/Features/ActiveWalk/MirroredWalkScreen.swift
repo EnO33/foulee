@@ -87,8 +87,7 @@ struct MirroredWalkScreen: View {
             let now = date.now
             VStack(spacing: 4) {
                 Text(elapsed(at: now).walkClockText)
-                    .font(.system(size: 56, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
+                    .scaledNumericFont(size: 56, weight: .semibold)
                 Text(store.figures?.isPaused == true ? String(localized: "En pause") : activityLabel)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -183,8 +182,7 @@ struct MirroredWalkScreen: View {
     private func tile(_ value: String, _ label: LocalizedStringResource, spokenUnit: LocalizedStringResource? = nil) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.system(size: 28, weight: .semibold, design: .rounded))
-                .monospacedDigit()
+                .scaledNumericFont(size: 28, weight: .semibold)
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
             Text(label)

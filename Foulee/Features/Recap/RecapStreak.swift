@@ -69,11 +69,9 @@ struct RecapYear: View {
 
     var body: some View {
         GlassSection("Sur 12 mois") {
-            HStack(spacing: 0) {
+            FigureRow {
                 total(value: "\(streak.walks)", label: streak.walks == 1 ? "objectif tenu" : "objectifs tenus")
-                divider
                 total(value: durationText(minutes: streak.minutes), label: "d'activité")
-                divider
                 total(value: "\(streak.rate) %", label: "réussite")
             }
         }
@@ -96,10 +94,6 @@ struct RecapYear: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
         .accessibilityValue(value)
-    }
-
-    private var divider: some View {
-        Rectangle().fill(Color.gray.opacity(0.25)).frame(width: 1, height: 34)
     }
 }
 

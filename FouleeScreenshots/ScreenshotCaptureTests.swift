@@ -98,7 +98,8 @@ final class ScreenshotCaptureTests: XCTestCase {
     /// The hydration screen, opened from its card below the fold: the
     /// drop, the quick servings, the glass-by-glass timeline and the week.
     ///
-    /// The card is a tap target, not a button, so the tap lands on its title.
+    /// VoiceOver reads the card's title as its button (#646), so the tap
+    /// lands there.
     /// The home is scrolled all the way down first — a clamped position, the
     /// same on every run whatever the swipe momentum did — and back to the top
     /// afterwards, because the next captures start from there.
@@ -106,7 +107,7 @@ final class ScreenshotCaptureTests: XCTestCase {
         for _ in 0..<Self.scrollSwipes { app.swipeUp(velocity: .fast) }
         waitForScreen(app.buttons.labeled(ScreenshotCapture.label.drankGlass), "Hydration card")
         settleAfterScrolling()
-        tapWhenReady(app.staticTexts.labeled(ScreenshotCapture.label.hydration).firstMatch, "Hydration card title")
+        tapWhenReady(app.buttons.labeled(ScreenshotCapture.label.hydration).firstMatch, "Hydration card title")
         waitForScreen(app.staticTexts.labeled(ScreenshotCapture.label.glassByGlass), "Hydration screen")
         capture("08_hydration")
         close(app)

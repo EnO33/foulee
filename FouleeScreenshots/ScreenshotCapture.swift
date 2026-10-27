@@ -61,6 +61,12 @@ enum ScreenshotCapture {
 
     static let pseudoArguments = isPseudo ? ["-NSDoubleLocalizedStrings", "YES"] : []
 
+    /// Set by `tools/capture_screenshots.sh --text-size` with an accessibility
+    /// size (issue #597): the home then runs well past the screen, and the card
+    /// a step taps may sit below the fold, not yet built by its lazy stack.
+    static let isAccessibilityTextSize = ProcessInfo.processInfo
+        .environment["FOULEE_CAPTURE_TEXT_SIZE"]?.hasPrefix("accessibility") == true
+
     /// The words the run finds its way by, in the run's language: the app's
     /// own strings, as `Foulee/Resources/Localizable.xcstrings` translates them.
     static let label = isEnglish ? Labels.english : Labels.french
@@ -157,11 +163,28 @@ extension XCTestCase {
     /// Wait for `element`, then tap it. Fails the run rather than tapping into
     /// the void — a capture of the wrong screen is worse than no capture.
     func tapWhenReady(_ element: XCUIElement, _ description: String) {
+        if ScreenshotCapture.isAccessibilityTextSize { scrollIntoView(element) }
         XCTAssertTrue(
             element.waitForExistence(timeout: ScreenshotCapture.timeout),
             "\(description) never appeared"
         )
         element.tap()
+    }
+
+    /// Swipe until `element` can be tapped: down the screen first, then back
+    /// up, since the previous step may have left it scrolled. Review runs only
+    /// — a store board must not depend on where a swipe's momentum stopped.
+    private func scrollIntoView(_ element: XCUIElement) {
+        let app = XCUIApplication()
+        _ = element.waitForExistence(timeout: 1)
+        for _ in 0..<6 {
+            if element.exists, element.isHittable { return }
+            app.swipeUp()
+        }
+        for _ in 0..<12 {
+            if element.exists, element.isHittable { return }
+            app.swipeDown()
+        }
     }
 
     /// Let a scroll come to rest and its indicator fade out before the shutter

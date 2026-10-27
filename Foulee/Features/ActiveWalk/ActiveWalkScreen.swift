@@ -20,6 +20,7 @@ struct ActiveWalkScreen: View {
 
     @State private var store: ActiveWalkStore
     @State private var showRoute = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// The store is a defaulted parameter for the same reason `WatchIdleScreen`
     /// takes its `onStart` from above: built inside the body it is invisible to
@@ -135,11 +136,18 @@ struct ActiveWalkScreen: View {
 
     private func walkBody(session: WalkSession, paused: Bool) -> some View {
         VStack(spacing: 0) {
-            header(paused: paused)
-            timer(session: session)
-            ring(session: session)
-            heartRatePlaceholder
-            Spacer(minLength: 0)
+            // Scrolls above the controls once the text is too large for the
+            // screen (#597): it used to push the title under the status bar
+            // and the controls' labels off the bottom.
+            ScrollView {
+                VStack(spacing: 0) {
+                    header(paused: paused)
+                    timer(session: session)
+                    ring(session: session)
+                    heartRatePlaceholder
+                }
+            }
+            .scrollBounceBehavior(.basedOnSize)
             controls(paused: paused)
         }
         .padding(.top, 60)
@@ -186,29 +194,30 @@ struct ActiveWalkScreen: View {
     private func ring(session: WalkSession) -> some View {
         let goalSeconds = TimeInterval(minutesGoal * 60)
         let progress = goalSeconds > 0 ? session.elapsed / goalSeconds : 0
-        return ProgressRing(progress: progress, lineWidth: 16) {
-            VStack(spacing: 4) {
-                Text(session.steps.groupedText())
-                    .scaledNumericFont(size: 56)
-                    .minimumScaleFactor(0.6)
-                    .lineLimit(1)
-                Text("PAS")
-                    .font(FouleeFont.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                HStack(spacing: 12) {
-                    metric(value: session.distanceKm.kmText(fractionDigits: 1), label: "Distance")
-                    ringDivider
-                    metric(value: "\(session.estimatedCalories) kcal", label: "Énergie")
-                    ringDivider
-                    metric(
-                        value: "\(Int(session.elevationGainMeters)) / \(Int(session.elevationLossMeters)) m",
-                        label: "D+ / D−"
-                    )
+        // The three figures leave the ring at the accessibility sizes: the
+        // ring is a fixed 232 pt, and in it they were cut to « Dis… ».
+        let isAccessibilitySize = dynamicTypeSize.isAccessibilitySize
+        return VStack(spacing: 16) {
+            ProgressRing(progress: progress, lineWidth: 16) {
+                VStack(spacing: 4) {
+                    Text(session.steps.groupedText())
+                        .scaledNumericFont(size: 56)
+                        .minimumScaleFactor(0.6)
+                        .lineLimit(1)
+                    Text("PAS")
+                        .font(FouleeFont.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    if !isAccessibilitySize {
+                        ringFigures(session: session)
+                            .padding(.top, 8)
+                    }
                 }
-                .padding(.top, 8)
+            }
+            .frame(width: 232, height: 232)
+            if isAccessibilitySize {
+                ringFigures(session: session)
             }
         }
-        .frame(width: 232, height: 232)
         .padding(.top, 22)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Sortie en cours")
@@ -221,10 +230,15 @@ struct ActiveWalkScreen: View {
         return Text("\(steps) pas, \(distance), \(kcal) kilocalories, \(up) mètres de montée, \(down) mètres de descente")
     }
 
-    private var ringDivider: some View {
-        Rectangle()
-            .fill(Color.gray.opacity(0.3))
-            .frame(width: 1, height: 28)
+    private func ringFigures(session: WalkSession) -> some View {
+        FigureRow(spacing: 12, ruleHeight: 28) {
+            metric(value: session.distanceKm.kmText(fractionDigits: 1), label: "Distance")
+            metric(value: "\(session.estimatedCalories) kcal", label: "Énergie")
+            metric(
+                value: "\(Int(session.elevationGainMeters)) / \(Int(session.elevationLossMeters)) m",
+                label: "D+ / D−"
+            )
+        }
     }
 
     private func metric(value: String, label: LocalizedStringResource) -> some View {
@@ -307,9 +321,16 @@ struct ActiveWalkScreen: View {
             }
             .buttonStyle(.pressable)
             .accessibilityLabel(label)
+            // Capped like a tab bar's labels, with the system's large content
+            // viewer past it: « Pause » broke in two, and the labels pushed
+            // the ring off screen.
+            .accessibilityShowsLargeContentViewer {
+                Label { Text(label) } icon: { Image(systemName: icon) }
+            }
             Text(label)
                 .font(FouleeFont.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
+                .cappedTextSize()
                 .accessibilityHidden(true)
         }
     }
