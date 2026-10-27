@@ -293,14 +293,28 @@ Four things worth knowing:
 - `appstore-screenshots/` is **not tracked by git** (issue #72) and must stay
   that way. `raw/` is the capture output; the boards are composed from it.
 
-Review sets come from two options of the script, for checking a new SDK or a
-redesign (issue #408). They refuse the default set name, so they can never
-overwrite a store set:
+Review sets come from three options of the script, for checking a new SDK, a
+redesign or a translation (issues #408, #594). They refuse the default set
+name, so they can never overwrite a store set:
 
 ```bash
 tools/capture_screenshots.sh --dark "" review-dark
 tools/capture_screenshots.sh --text-size accessibility-large "" review-a11y
+tools/capture_screenshots.sh --language en --pseudo "" review-pseudo
+tools/capture_screenshots.sh --watch --language en --pseudo "" review-pseudo
 ```
+
+`--pseudo` adds Xcode's double-length pseudo-language
+(`-NSDoubleLocalizedStrings YES`): every string written twice, to see what a
+longer translation would cut. It doubles the *format*, so an interpolated
+string reads « Session under way on @ Session under way on your Watch your
+Watch » and a count « lld 34 »: judge the lengths, not the words. The capture
+tests then find their way by « contains the label » instead of the exact
+label. What it cut on 27 October 2026, and was left as it is because the real
+English fits: the session ring's captions (a fixed 232 pt ring), the stats
+totals, the outing detail's one-line scrubbing hint and the hydration serving
+names — all one line by design, shrinking before they cut. The watch wraps
+rather than cuts.
 
 `--dark` seeds the dark theme through a third launch argument
 (`-FouleeScreenshotDark`); `--text-size` sets the simulator's text size for the

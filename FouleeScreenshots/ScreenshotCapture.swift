@@ -45,9 +45,21 @@ enum ScreenshotCapture {
     /// groups thousands as « 8,240 » on the French boards. CI runners are in
     /// English; a developer's Mac usually is not, which is why the difference
     /// went unseen until the captures moved to CI.
-    static let localeArguments = isEnglish
+    static let localeArguments = (isEnglish
         ? ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-        : ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"]
+        : ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"]) + pseudoArguments
+
+    /// Set by `tools/capture_screenshots.sh --pseudo` (issue #594): Xcode's
+    /// double-length pseudo-language, which writes every localized string twice
+    /// — « Get started Get started » — to show what a longer translation would
+    /// truncate. For the layout review only, never for the store boards.
+    ///
+    /// It doubles the format, not the result: « Session under way on @ Session
+    /// under way on your Watch your Watch ». No exact label survives that, so
+    /// the run looks elements up with `labeled(_:)`.
+    static let isPseudo = ProcessInfo.processInfo.environment["FOULEE_CAPTURE_PSEUDO"] == "1"
+
+    static let pseudoArguments = isPseudo ? ["-NSDoubleLocalizedStrings", "YES"] : []
 
     /// The words the run finds its way by, in the run's language: the app's
     /// own strings, as `Foulee/Resources/Localizable.xcstrings` translates them.
@@ -100,6 +112,15 @@ enum ScreenshotCapture {
     /// because a capture run is unattended and a cold simulator launch on a
     /// loaded machine is genuinely slow — not because anything here is racy.
     static let timeout: TimeInterval = 30
+}
+
+extension XCUIElementQuery {
+    /// The element showing `label`: that exact label, or under the
+    /// pseudo-language one that contains it (`ScreenshotCapture.isPseudo`).
+    func labeled(_ label: String) -> XCUIElement {
+        guard ScreenshotCapture.isPseudo else { return self[label] }
+        return matching(NSPredicate(format: "label CONTAINS %@", label)).firstMatch
+    }
 }
 
 extension XCTestCase {

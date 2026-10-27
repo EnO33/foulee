@@ -16,6 +16,7 @@
 #   tools/capture_screenshots.sh --text-size accessibility-large "" review-a11y
 #   tools/capture_screenshots.sh --language en          # the English set
 #   tools/capture_screenshots.sh --watch --language en
+#   tools/capture_screenshots.sh --language en --pseudo "" review-pseudo
 #
 # The first argument is a simulator NAME or a UDID. A name shared by two
 # available simulators is refused rather than resolved: the runtime a same-named
@@ -50,6 +51,11 @@
 # names, the same size guard, a tree of its own so neither language can
 # overwrite the other. French is the default and keeps raw/<set>/.
 #
+# `--pseudo` adds Xcode's double-length pseudo-language (issue #594): every
+# localized string written twice, to see what a longer translation truncates.
+# A review like `--dark`, so it needs a set name too. Combine it with
+# `--language` to review either language.
+#
 # Output is NOT tracked by git: appstore-screenshots/ is ignored on purpose
 # (#72), and generated PNGs must stay that way.
 set -euo pipefail
@@ -58,12 +64,14 @@ PLATFORM="iOS"
 DARK=""
 TEXT_SIZE=""
 LANGUAGE="fr"
+PSEUDO=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --watch) PLATFORM="watchOS"; shift ;;
     --dark) DARK="1"; shift ;;
     --text-size) TEXT_SIZE="${2:?--text-size needs a simctl content size}"; shift 2 ;;
     --language) LANGUAGE="${2:?--language needs fr or en}"; shift 2 ;;
+    --pseudo) PSEUDO="1"; shift ;;
     *) break ;;
   esac
 done
@@ -94,8 +102,8 @@ else
 fi
 SET_NAME="${2:-$DEFAULT_SET}"
 
-if { [ -n "$DARK" ] || [ -n "$TEXT_SIZE" ]; } && [ "$SET_NAME" = "$DEFAULT_SET" ]; then
-  echo "--dark and --text-size are for reviews: name the set (e.g. review-dark)." >&2
+if { [ -n "$DARK" ] || [ -n "$TEXT_SIZE" ] || [ -n "$PSEUDO" ]; } && [ "$SET_NAME" = "$DEFAULT_SET" ]; then
+  echo "--dark, --text-size and --pseudo are for reviews: name the set (e.g. review-dark)." >&2
   exit 1
 fi
 if [ -n "$DARK" ] && [ "$PLATFORM" = "watchOS" ]; then
@@ -238,6 +246,7 @@ xcrun simctl uninstall "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
 # after a two-minute capture. The PNGs are attachments, not diagnostics.
 echo "==> Running the capture"
 TEST_RUNNER_FOULEE_CAPTURE_DARK="$DARK" \
+TEST_RUNNER_FOULEE_CAPTURE_PSEUDO="$PSEUDO" \
 TEST_RUNNER_FOULEE_CAPTURE_LANGUAGE="$LANGUAGE" xcodebuild test \
   -workspace Foulee.xcworkspace \
   -scheme "$SCHEME" \

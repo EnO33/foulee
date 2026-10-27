@@ -69,9 +69,13 @@ struct RecapDayTimeline: View {
     private func row(_ workout: WorkoutSummary, isLast: Bool) -> some View {
         let tint = workout.activity.tint
         return HStack(alignment: .top, spacing: 10) {
+            // Shrunk rather than wrapped: « 12:05 PM » is wider than the
+            // column « 12:05 » was sized for (issue #594).
             Text(workout.startedAt.clockText)
                 .font(FouleeFont.caption.weight(.semibold).monospacedDigit())
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .frame(width: 42, alignment: .trailing)
                 .padding(.top, 16)
             VStack(spacing: 0) {
@@ -94,12 +98,13 @@ struct RecapDayTimeline: View {
 
     /// « 5,2 km · ↑ 120 m · ↓ 115 m · 142 kcal · Garmin Connect »: the climb
     /// and the descent beside the distance, when the source wrote them (#537,
-    /// #565).
+    /// #565). On two lines it breaks between figures, never inside one: no
+    /// « 310 » left above its « kcal » (issue #594).
     private func figures(of workout: WorkoutSummary, spoken: Bool = false) -> String {
         let climb = spoken ? workout.climbSpokenText : workout.climbText
         let descent = spoken ? workout.descentSpokenText : workout.descentText
         return [workout.distanceKm.kmText(fractionDigits: 1), climb, descent, workout.caloriesText, workout.sourceName]
-            .compactMap { $0 }
+            .compactMap { $0?.replacingOccurrences(of: " ", with: "\u{00A0}") }
             .joined(separator: " · ")
     }
 
@@ -121,7 +126,9 @@ struct RecapDayTimeline: View {
                     .accessibilityLabel(figures(of: workout, spoken: true))
                     .font(FouleeFont.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    // Two lines: with a climb and a source, one line cut the
+                    // calories and the source off, in French as in English.
+                    .lineLimit(2)
             }
             Spacer(minLength: 4)
             Text(durationText(minutes: Int(workout.durationSeconds / 60)))

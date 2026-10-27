@@ -32,6 +32,10 @@ enum WatchScreenshotCapture {
     /// `FouleeWatch/Resources/Localizable.xcstrings` translates them.
     static let label = isEnglish ? Labels.english : Labels.french
 
+    /// Set by `tools/capture_screenshots.sh --watch --pseudo` (issue #594) —
+    /// see `ScreenshotCapture.isPseudo` on the phone side, and `labeled(_:)`.
+    static let isPseudo = ProcessInfo.processInfo.environment["FOULEE_CAPTURE_PSEUDO"] == "1"
+
     struct Labels {
         let streak, drank, start, music, routeMap: String
         /// The start of the « Jambes » row's combined label, « Marche : … ».
@@ -49,6 +53,15 @@ enum WatchScreenshotCapture {
     }
 }
 
+extension XCUIElementQuery {
+    /// The element showing `label`: that exact label, or under the
+    /// pseudo-language one that contains it (`WatchScreenshotCapture.isPseudo`).
+    func labeled(_ label: String) -> XCUIElement {
+        guard WatchScreenshotCapture.isPseudo else { return self[label] }
+        return matching(NSPredicate(format: "label CONTAINS %@", label)).firstMatch
+    }
+}
+
 extension XCTestCase {
     /// Launch the watch app in capture mode.
     @discardableResult
@@ -59,7 +72,8 @@ extension XCTestCase {
         let locale = WatchScreenshotCapture.isEnglish
             ? ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
             : ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"]
-        app.launchArguments = [WatchScreenshotCapture.launchArgument] + locale
+        let pseudo = WatchScreenshotCapture.isPseudo ? ["-NSDoubleLocalizedStrings", "YES"] : []
+        app.launchArguments = [WatchScreenshotCapture.launchArgument] + locale + pseudo
         app.launch()
         return app
     }
