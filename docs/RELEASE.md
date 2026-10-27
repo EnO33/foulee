@@ -198,8 +198,18 @@ appstore-screenshots/
 │   └── watch/
 ├── iphone-6.9/          ← what the composer writes (what you upload)
 ├── ipad-13/
-└── watch/
+├── watch/
+└── en-US/               ← the English set (issue #592), the same tree again
+    ├── raw/
+    ├── iphone-6.9/
+    ├── ipad-13/
+    └── watch/
 ```
+
+French is the default everywhere. `tools/capture_screenshots.sh --language en`
+(with or without `--watch`) runs the app in US English and writes under
+`en-US/raw/`; `swift tools/compose_appstore_screenshots.swift --locale en-US`
+reads it and writes the English boards under `en-US/`.
 
 ### 9.1 Capture
 
@@ -457,12 +467,15 @@ capture below with rounded corners and a shadow. **Captions are data**: the
 short (they auto-shrink to fit, which is a safety net, not a licence), keep the
 tutoiement, and keep the vocabulary the app uses — « sortie » is the noun for
 what the user does, « séance » is reserved for a HealthKit workout record.
+Each board carries its French `lines` and its `english` ones; « outing » and
+« recap » are the English words for « sortie » and « bilan », as in the app.
 
 ### 9.3 Upload
 
 **Actions → Store screenshots → Run workflow** (`.github/workflows/store-screenshots.yml`,
 lane `screenshots`), with the version string. It creates its own iPhone and
-Apple Watch simulators, captures both sets, composes the boards and keeps them
+Apple Watch simulators, captures both sets in French then in English, composes
+the boards and keeps them
 as the `store-screenshots` artifact. Run it once with « publish » unticked and
 look at the artifact; run it again ticked, with that run's id in « boards_from_run », to publish exactly those boards in place of the version's screenshots
 in App Store Connect. It never uploads a binary or the listing, and never
@@ -478,6 +491,9 @@ key of step 6 in the environment):
 | iPad 13" Display | `appstore-screenshots/ipad-13/` | `ipad-01_home.png` … |
 | Apple Watch | `appstore-screenshots/watch/` | `watch-01-today.png` … |
 
+The English boards go up the same way from `appstore-screenshots/en-US/` to
+the English (U.S.) localization; the lane stops if either language is missing.
+
 deliver files each board under its tab by its size and orders a tab by file
 name, so the numbers are the store order. The first three are what shows on
 the product page without scrolling, and App Store Connect takes ten per tab at
@@ -490,8 +506,9 @@ Screenshots are only needed at promotion (step 10), never for TestFlight.
 TestFlight is the CI's final step on purpose — promotion to the store stays a
 deliberate, manual action:
 
-1. Update `fastlane/metadata/fr-FR/release_notes.txt` for this version (a
-   PR, like any change: CI checks the listing).
+1. Update `fastlane/metadata/fr-FR/release_notes.txt` and its English twin
+   `en-US/release_notes.txt` for this version (a PR, like any change: CI
+   checks the listing).
 2. **Actions → Store listing → Run workflow**, with the version string
    (e.g. `1.55`). It creates the version in App Store Connect when there is
    none to edit yet, and writes the listing (§ 10.1) to it.
@@ -515,6 +532,10 @@ the next time the workflow runs.
 | `description.txt` | Description | 4000 characters |
 | `release_notes.txt` | What's New | 4000 characters |
 | `support_url.txt`, `privacy_url.txt`, `marketing_url.txt` | URLs (getfoulee.app) | https |
+
+`en-US/` holds the same files in English (issue #592), written for the US
+store. Its URLs point at the French pages until the site has English ones
+(getfoulee/web#36).
 
 The name and the subtitle are indexed for search as well as the keywords, so
 `keywords.txt` does not repeat their words. Search already covers « marche »

@@ -75,11 +75,12 @@ nonisolated extension ScreenshotSeed {
         )
     }
 
-    static let weather = WeatherSnapshot(
-        temperatureCelsius: 21,
-        condition: "Ensoleillé",
-        advice: "idéal"
-    )
+    /// A clear 21 °C, worded by `WeatherSummary` like a real forecast: in the
+    /// run's language, not « Ensoleillé » on the English boards (issue #592).
+    static var weather: WeatherSnapshot {
+        let summary = WeatherSummary.describe(condition: .clear, temperatureCelsius: 21)
+        return WeatherSnapshot(temperatureCelsius: 21, condition: summary.label, advice: summary.advice)
+    }
 
     // MARK: - Garmin
 

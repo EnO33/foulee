@@ -1,0 +1,1 @@
+pedometer,apple,watch,garmin,goal,reminder,jogging,hiking,health,activity,hydration,water,steps

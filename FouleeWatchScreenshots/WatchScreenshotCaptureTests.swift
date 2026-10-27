@@ -27,7 +27,7 @@ final class WatchScreenshotCaptureTests: XCTestCase {
 
     func testCaptureWatchScreens() {
         let app = launchWatchInCaptureMode()
-        waitForWatchScreen(app.staticTexts["série"], "Watch home")
+        waitForWatchScreen(app.staticTexts[WatchScreenshotCapture.label.streak], "Watch home")
 
         captureToday(app)
         captureHydration(app)
@@ -55,7 +55,7 @@ final class WatchScreenshotCaptureTests: XCTestCase {
         // bottom of the screen, outside the scroll view, and a swipe that
         // starts on it moves nothing. The crown scrolls whatever is under it.
         for _ in 0..<Self.crownTurns { XCUIDevice.shared.rotateDigitalCrown(delta: 1) }
-        let drank = app.buttons["J'ai bu"]
+        let drank = app.buttons[WatchScreenshotCapture.label.drank]
         waitForWatchScreen(drank, "Hydration card")
         settleWatchScrolling()
         // Existence is not enough: the card is in the hierarchy before any
@@ -92,7 +92,7 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     /// guards against — photographing the wrong page and shipping it to the App
     /// Store — is only ever noticed on release day.
     private func captureSession(_ app: XCUIApplication) {
-        tapWatchElement(app.buttons["Démarrer"], "Démarrer")
+        tapWatchElement(app.buttons[WatchScreenshotCapture.label.start], "Démarrer")
         let sentinel = app.staticTexts["bpm"]
         waitForWatchScreen(sentinel, "Session in progress")
         XCTAssertTrue(sentinel.isHittable, "Session page is not the page on screen")
@@ -124,19 +124,19 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     private func captureLegs(_ app: XCUIApplication) {
         app.swipeLeft()
         let music = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label == %@", "Musique"))
+            .matching(NSPredicate(format: "label == %@", WatchScreenshotCapture.label.music))
             .firstMatch
         waitForWatchScreen(music, "Music page")
         app.swipeLeft()
         let plan = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label == %@", "Plan du parcours"))
+            .matching(NSPredicate(format: "label == %@", WatchScreenshotCapture.label.routeMap))
             .firstMatch
         waitForWatchScreen(plan, "Plan page")
         app.swipeLeft()
         // The row is one combined accessibility element, so it is matched by
         // the label `WatchSessionLegsPage` builds rather than by a bare word.
         let sentinel = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label BEGINSWITH %@", "Marche :"))
+            .matching(NSPredicate(format: "label BEGINSWITH %@", WatchScreenshotCapture.label.walkLeg))
             .firstMatch
         waitForWatchScreen(sentinel, "Legs page")
         XCTAssertTrue(sentinel.isHittable, "Legs page is not the page on screen")
