@@ -89,8 +89,8 @@ nonisolated public struct SessionHighlight: Equatable, Sendable {
               let longest = records.longestKm, benchmark.outing.distanceKm - longest >= 0.1 else { return nil }
         return SessionHighlight(
             angle: .record,
-            title: "Ta plus longue \(activity.noun) depuis 6 mois",
-            body: "\(km(benchmark.outing.distanceKm)) aujourd'hui. La précédente faisait \(km(longest))."
+            title: kitText("Ta plus longue \(activity.noun) depuis 6 mois"),
+            body: kitText("\(km(benchmark.outing.distanceKm)) aujourd'hui. La précédente faisait \(km(longest)).")
         )
     }
 
@@ -102,9 +102,9 @@ nonisolated public struct SessionHighlight: Equatable, Sendable {
         return SessionHighlight(
             angle: .record,
             title: activity == .hiking
-                ? "Ton plus gros dénivelé depuis 6 mois"
-                : "Ta \(activity.noun) la plus vallonnée depuis 6 mois",
-            body: "\(meters(climb)) de dénivelé aujourd'hui. Le précédent record : \(meters(highest))."
+                ? kitText("Ton plus gros dénivelé depuis 6 mois")
+                : kitText("Ta \(activity.noun) la plus vallonnée depuis 6 mois"),
+            body: kitText("\(meters(climb)) de dénivelé aujourd'hui. Le précédent record : \(meters(highest)).")
         )
     }
 
@@ -114,8 +114,8 @@ nonisolated public struct SessionHighlight: Equatable, Sendable {
               seconds(pace.current) < seconds(best) else { return nil }
         return SessionHighlight(
             angle: .record,
-            title: "Ta \(activity.noun) la plus rapide depuis 6 mois",
-            body: "\(paceFigure(pace.current)) de moyenne, \(seconds(average) - seconds(pace.current)) s de mieux que d'habitude."
+            title: kitText("Ta \(activity.noun) la plus rapide depuis 6 mois"),
+            body: kitText("\(paceFigure(pace.current)) de moyenne, \(seconds(average) - seconds(pace.current)) s de mieux que d'habitude.")
         )
     }
 
@@ -124,8 +124,8 @@ nonisolated public struct SessionHighlight: Equatable, Sendable {
               let average = pace.average, isBetter(pace.current, than: average) else { return nil }
         return SessionHighlight(
             angle: .pace,
-            title: "Plus rapide que d'habitude",
-            body: "\(paceFigure(pace.current)), contre \(paceFigure(average)) en moyenne ces 6 derniers mois."
+            title: kitText("Plus rapide que d'habitude"),
+            body: kitText("\(paceFigure(pace.current)), contre \(paceFigure(average)) en moyenne ces 6 derniers mois.")
         )
     }
 
@@ -136,8 +136,8 @@ nonisolated public struct SessionHighlight: Equatable, Sendable {
               climb >= average * (1 + minimumClimbGain), climb - average >= 20 else { return nil }
         return SessionHighlight(
             angle: .climb,
-            title: "Plus de dénivelé que d'habitude",
-            body: "\(meters(climb)) de dénivelé, contre \(meters(average)) en moyenne ces 6 derniers mois."
+            title: kitText("Plus de dénivelé que d'habitude"),
+            body: kitText("\(meters(climb)) de dénivelé, contre \(meters(average)) en moyenne ces 6 derniers mois.")
         )
     }
 
@@ -148,18 +148,19 @@ nonisolated public struct SessionHighlight: Equatable, Sendable {
               isBetter(recent, than: earlier) else { return nil }
         return SessionHighlight(
             angle: .trend,
-            title: "Ça progresse",
-            body: "Depuis un mois, \(activity.verb) \(seconds(earlier) - seconds(recent)) s/km plus vite qu'avant."
+            title: kitText("Ça progresse"),
+            body: kitText("Depuis un mois, \(activity.verb) \(seconds(earlier) - seconds(recent)) s/km plus vite qu'avant.")
         )
     }
 
     private static func month(_ benchmark: SessionBenchmark) -> SessionHighlight? {
         let volume = benchmark.volume
         guard volume.kmLastMonth > 0, volume.kmThisMonth > volume.kmLastMonth else { return nil }
+        let (now, before, month) = (wholeKm(volume.kmThisMonth), wholeKm(volume.kmLastMonth), monthName(volume.lastMonth))
         return SessionHighlight(
             angle: .regularity,
-            title: "Ton mois dépasse déjà le précédent",
-            body: "\(wholeKm(volume.kmThisMonth)) depuis le 1er, contre \(wholeKm(volume.kmLastMonth)) en \(monthName(volume.lastMonth))."
+            title: kitText("Ton mois dépasse déjà le précédent"),
+            body: kitText("\(now) depuis le 1er, contre \(before) en \(month).")
         )
     }
 
@@ -167,11 +168,11 @@ nonisolated public struct SessionHighlight: Equatable, Sendable {
         let volume = benchmark.volume
         guard volume.climbLastMonth > 0, volume.climbThisMonth >= 100,
               volume.climbThisMonth > volume.climbLastMonth else { return nil }
+        let (now, before, month) = (meters(volume.climbThisMonth), meters(volume.climbLastMonth), monthName(volume.lastMonth))
         return SessionHighlight(
             angle: .climb,
-            title: "Ton mois grimpe plus que le précédent",
-            body: "\(meters(volume.climbThisMonth)) de dénivelé depuis le 1er, "
-                + "contre \(meters(volume.climbLastMonth)) en \(monthName(volume.lastMonth))."
+            title: kitText("Ton mois grimpe plus que le précédent"),
+            body: kitText("\(now) de dénivelé depuis le 1er, contre \(before) en \(month).")
         )
     }
 
@@ -181,27 +182,28 @@ nonisolated public struct SessionHighlight: Equatable, Sendable {
         let total = durationText(minutes: volume.minutesThisWeek)
         let lastWeek = volume.minutesLastWeek
         let body = if lastWeek > 0, lastWeek < volume.minutesThisWeek {
-            "Déjà \(total) cette semaine, plus que toute la semaine dernière."
+            kitText("Déjà \(total) cette semaine, plus que toute la semaine dernière.")
         } else if lastWeek > 0, lastWeek == volume.minutesThisWeek {
-            "Déjà \(total) cette semaine, autant que toute la semaine dernière."
+            kitText("Déjà \(total) cette semaine, autant que toute la semaine dernière.")
         } else {
-            "Déjà \(total) cette semaine."
+            kitText("Déjà \(total) cette semaine.")
         }
-        return SessionHighlight(angle: .regularity, title: "\(volume.outingsThisWeek)ᵉ sortie de la semaine", body: body)
+        let rank = ordinal(volume.outingsThisWeek)
+        return SessionHighlight(angle: .regularity, title: kitText("\(rank) sortie de la semaine"), body: body)
     }
 
     /// The outing itself: it arrived, and here is what it was.
     private static func arrival(_ benchmark: SessionBenchmark) -> SessionHighlight {
         let outing = benchmark.outing
         let minutes = durationText(minutes: Int((outing.durationSeconds / 60).rounded()))
-        var figures = outing.distanceKm >= 0.05 ? "\(km(outing.distanceKm)) en \(minutes)" : minutes
+        var figures = outing.distanceKm >= 0.05 ? kitText("\(km(outing.distanceKm)) en \(minutes)") : minutes
         if outing.elevationMeters >= 10 {
-            figures += ", \(meters(outing.elevationMeters)) de dénivelé"
+            figures += kitText(", \(meters(outing.elevationMeters)) de dénivelé")
         }
         return SessionHighlight(
             angle: .arrival,
-            title: benchmark.activity?.recordedLabel ?? "Sortie enregistrée",
-            body: "\(figures). Le détail t'attend."
+            title: benchmark.activity?.recordedLabel ?? kitText("Sortie enregistrée"),
+            body: kitText("\(figures). Le détail t'attend.")
         )
     }
 
@@ -234,6 +236,15 @@ nonisolated public struct SessionHighlight: Equatable, Sendable {
         "\(Int(value.rounded()).groupedText()) m"
     }
 
+    /// « 3ᵉ » in French, as the app always wrote it; « 3rd » elsewhere.
+    private static func ordinal(_ value: Int) -> String {
+        guard Locale.app.language.languageCode != .french else { return "\(value)ᵉ" }
+        let formatter = NumberFormatter()
+        formatter.locale = .app
+        formatter.numberStyle = .ordinal
+        return formatter.string(from: value as NSNumber) ?? "\(value)"
+    }
+
     private static func monthName(_ date: Date) -> String {
         monthFormatter.string(from: date)
     }
@@ -245,22 +256,22 @@ nonisolated private extension RecordedActivity {
     /// « Ta plus longue marche » — every sport Foulée names is feminine.
     var noun: String {
         switch self {
-        case .walking: "marche"
-        case .running: "course"
-        case .hiking: "randonnée"
-        case .other: "sortie"
+        case .walking: kitText("marche")
+        case .running: kitText("course")
+        case .hiking: kitText("randonnée")
+        case .other: kitText("sortie")
         }
     }
 
     /// « tu marches 15 s/km plus vite ». Only paced sports reach it.
     var verb: String {
         switch self {
-        case .running: "tu cours"
-        default: "tu marches"
+        case .running: kitText("tu cours")
+        default: kitText("tu marches")
         }
     }
 
     var recordedLabel: String {
-        "\(label) enregistrée"
+        kitText("\(label) enregistrée")
     }
 }

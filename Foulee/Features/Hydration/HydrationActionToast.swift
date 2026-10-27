@@ -75,11 +75,11 @@ struct HydrationActionToast: View {
         switch kind {
         case "drank":
             onLogged()
-            show("Verre enregistré (+\(amount) mL)", undo: HydrationNotification.Undo(stamp: stamp))
+            show(String(localized: "Verre enregistré (+\(amount) mL)"), undo: HydrationNotification.Undo(stamp: stamp))
         case "failed":
-            show("Verre non enregistré — vérifie Santé", asError: true)
+            show(String(localized: "Verre non enregistré — vérifie Santé"), asError: true)
         default:
-            show("Rappel dans \(amount) min")
+            show(String(localized: "Rappel dans \(amount) min"))
         }
     }
 
@@ -93,9 +93,9 @@ struct HydrationActionToast: View {
         hideTask?.cancel()
         Task {
             if await onUndo(glass) {
-                show("Verre annulé (−\(glass.milliliters) mL)")
+                show(String(localized: "Verre annulé (−\(glass.milliliters) mL)"))
             } else {
-                show("Impossible d'annuler ce verre — vérifie Santé", asError: true)
+                show(String(localized: "Impossible d'annuler ce verre — vérifie Santé"), asError: true)
             }
         }
     }

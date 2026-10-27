@@ -14,17 +14,17 @@ nonisolated public enum WalkMetric: String, CaseIterable, Identifiable, Sendable
     /// Title of the card and the stats screen.
     public var title: String {
         switch self {
-        case .steps: "Pas"
-        case .minutes: "Minutes"
-        case .distance: "Distance"
-        case .calories: "Calories"
+        case .steps: kitText("Pas")
+        case .minutes: kitText("Minutes")
+        case .distance: kitText("Distance")
+        case .calories: kitText("Calories")
         }
     }
 
     /// Short unit shown after a value (`5 391 pas`, `4,2 km`, …).
     public var unit: String {
         switch self {
-        case .steps: "pas"
+        case .steps: kitText("pas")
         case .minutes: "min"
         case .distance: "km"
         case .calories: "kcal"

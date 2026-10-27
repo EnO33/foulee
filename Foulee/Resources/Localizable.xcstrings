@@ -2,23 +2,27 @@
   "sourceLanguage" : "fr",
   "strings" : {
     "" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
     },
-    "—" : {
-
+    " " : {
+      "localizations" : {},
+      "shouldTranslate" : false
     },
-    "·" : {
-
+    "%@" : {
+      "localizations" : {},
+      "shouldTranslate" : false
     },
-    "%@ · %@" : {
+    "%@ %@" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@ · %2$@"
+            "value" : "%1$@ %2$@"
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
     "%@ / %@ L" : {
       "localizations" : {
@@ -28,16 +32,391 @@
             "value" : "%1$@ / %2$@ L"
           }
         }
+      },
+      "shouldTranslate" : false
+    },
+    "%@ : %@, contre %@ avant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@, against %3$@ before"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ : %2$@, contre %3$@ avant"
+          }
+        }
+      }
+    },
+    "%@ : %@, contre %@ avant. Encore %@ pour égaler" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@, against %3$@ before. %4$@ more to match it"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ : %2$@, contre %3$@ avant. Encore %4$@ pour égaler"
+          }
+        }
+      }
+    },
+    "%@ : %lld millilitres, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$lld milliliters, %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ : %2$lld millilitres, %3$@"
+          }
+        }
+      }
+    },
+    "%@ : %lld minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %#@minutes@"
+          },
+          "substitutions" : {
+            "minutes" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg minute"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg minutes"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ : %2$lld minutes"
+          }
+        }
+      }
+    },
+    "%@ : %lld minutes, objectif tenu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %#@minutes@, goal met"
+          },
+          "substitutions" : {
+            "minutes" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg minute"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg minutes"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ : %2$lld minutes, objectif tenu"
+          }
+        }
+      }
+    },
+    "%@ : jour de repos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: rest day"
+          }
+        }
+      }
+    },
+    "%@ : à venir" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: to come"
+          }
+        }
       }
     },
     "%@ L" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%@ d'activité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ of activity"
+          }
+        }
+      }
+    },
+    "%@ en cours depuis %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ under way for %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ en cours depuis %2$@"
+          }
+        }
+      }
+    },
+    "%@ litre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ liters"
+          }
+        }
+      }
+    },
+    "%@ litre par jour en moyenne, objectif tenu %lld jours sur %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ liters a day on average, goal met on %2$lld of %#@days@"
+          },
+          "substitutions" : {
+            "days" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg day"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg days"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ litre par jour en moyenne, objectif tenu %2$lld jours sur %3$lld"
+          }
+        }
+      }
+    },
+    "%@ litre sur %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of %2$@ liters"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ litre sur %2$@"
+          }
+        }
+      }
+    },
+    "%@ par heure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ per hour"
+          }
+        }
+      }
+    },
+    "%@ par jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ per day"
+          }
+        }
+      }
     },
     "%@ pas" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ steps"
+          }
+        }
+      }
+    },
+    "%@ pas, %@, %lld kilocalories, %lld mètres de montée, %lld mètres de descente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ steps, %2$@, %3$lld kilocalories, %4$lld meters up, %5$lld meters down"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ pas, %2$@, %3$lld kilocalories, %4$lld mètres de montée, %5$lld mètres de descente"
+          }
+        }
+      }
+    },
+    "%@ · %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "%@ · %@ · %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@ · %3$@"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "%@ · %@ · %@ pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@ · %3$@ steps"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@ · %3$@ pas"
+          }
+        }
+      }
+    },
+    "%@ · %lld mL" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$lld mL"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "%@ · rappel toutes les %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · reminder every %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · rappel toutes les %2$@"
+          }
+        }
+      }
+    },
+    "%@ → %@ · %@ au total. Santé n'est pas modifié : tu pourras les séparer à nouveau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ → %2$@ · %3$@ in all. Health is not changed: you can split them again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ → %2$@ · %3$@ au total. Santé n'est pas modifié : tu pourras les séparer à nouveau."
+          }
+        }
+      }
     },
     "%lld" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%lld %%" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%lld %% de réussite" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% success"
+          }
+        }
+      }
     },
     "%lld / %lld" : {
       "localizations" : {
@@ -47,374 +426,3649 @@
             "value" : "%1$lld / %2$lld"
           }
         }
-      }
-    },
-    "%lld %% de réussite" : {
-
+      },
+      "shouldTranslate" : false
     },
     "%lld battements par minute" : {
-
-    },
-    "%lld bpm" : {
-
-    },
-    "%lld jours réussis" : {
-
-    },
-    "%lld min" : {
-
-    },
-    "%lld mL" : {
-
-    },
-    "%lld verre%@" : {
       "localizations" : {
-        "fr" : {
+        "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld verre%2$@"
+            "state" : "translated",
+            "value" : "%lld beats per minute"
           }
         }
       }
     },
-    "%lld°" : {
-
+    "%lld bpm" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%lld degrés, %@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld degrees, %2$@, %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld degrés, %2$@, %3$@"
+          }
+        }
+      }
+    },
+    "%lld jours" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld days"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld jour"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld jours"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld jours, record %lld jours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@streak@, record %#@best@"
+          },
+          "substitutions" : {
+            "best" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg day"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg days"
+                    }
+                  }
+                }
+              }
+            },
+            "streak" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg day"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg days"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@streak@, record %#@best@"
+          },
+          "substitutions" : {
+            "best" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg jour"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg jours"
+                    }
+                  }
+                }
+              }
+            },
+            "streak" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg jour"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg jours"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld mL" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%lld minutes" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minute"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minutes"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minute"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld minutes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld rappels actifs" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld active reminder"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld active reminders"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld rappel actif"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld rappels actifs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld sorties" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld workout"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld workouts"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sortie"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sorties"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld verres de retard" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "One glass behind"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld glasses behind"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Un verre de retard"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld verres de retard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld/%lld" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "%lld° · %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld° · %2$@"
+          }
+        }
+      },
+      "shouldTranslate" : false
     },
     "%lld°C" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "/ %@ L" : {
+      "localizations" : {},
+      "shouldTranslate" : false
     },
     "1 342" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
     },
     "1 712" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
     },
     "10 min" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
     },
     "10 minutes avant ta fenêtre, sur les jours actifs." : {
-
-    },
-    "12 derniers mois" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 minutes before your window, on active days."
+          }
+        }
+      }
     },
     "60 min" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "=" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Activer la synchro vers Santé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on syncing to Health"
+          }
+        }
+      }
     },
     "Activer les rappels" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on reminders"
+          }
+        }
+      }
+    },
+    "Activité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activity"
+          }
+        }
+      }
+    },
+    "Affiche les sorties de ce jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows this day’s workouts"
+          }
+        }
+      }
+    },
+    "Allure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pace"
+          }
+        }
+      }
+    },
+    "Allure moyenne %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average pace %@"
+          }
+        }
+      }
+    },
+    "Annuler" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "Annuler ce verre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo this glass"
+          }
+        }
+      }
+    },
+    "Année" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Year"
+          }
+        }
+      }
+    },
+    "Aperçu de l'image partagée : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview of the shared image: %@"
+          }
+        }
+      }
+    },
+    "Apparence" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appearance"
+          }
+        }
+      }
+    },
+    "Apple Watch ou Garmin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Watch or Garmin"
+          }
+        }
+      }
     },
     "Apple Weather, sources des données" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Weather, data sources"
+          }
+        }
+      }
     },
-    "Aucune donnée sur cette période" : {
-
+    "Appui long pour choisir une autre quantité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Long press to pick another amount"
+          }
+        }
+      }
     },
-    "Aucune marche enregistrée" : {
-
+    "Appui long sur la version pour la copier." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Long press the version to copy it."
+          }
+        }
+      }
+    },
+    "Après une séance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After a session"
+          }
+        }
+      }
+    },
+    "Arrivée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish"
+          }
+        }
+      }
+    },
+    "Arrêter" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop"
+          }
+        }
+      }
+    },
+    "Arrêter la séance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop the session"
+          }
+        }
+      }
+    },
+    "Assistance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support"
+          }
+        }
+      }
+    },
+    "Aucun jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No days"
+          }
+        }
+      }
+    },
+    "Aucun rappel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No reminders"
+          }
+        }
+      }
+    },
+    "Aucune séance enregistrée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No session recorded"
+          }
+        }
+      }
+    },
+    "Auj." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
+          }
+        }
+      }
     },
     "Aujourd'hui" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
+          }
+        }
+      }
+    },
+    "Auteur" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Author"
+          }
+        }
+      }
     },
     "Autorise l'eau dans Santé pour compter tes verres" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow water in Health to count your glasses"
+          }
+        }
+      }
     },
-    "Autorise la localisation pour voir la météo de midi à ton endroit." : {
-
+    "Autorise la localisation pour voir la météo à ton endroit." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow location to see the weather where you are."
+          }
+        }
+      }
+    },
+    "Autoriser" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow"
+          }
+        }
+      }
     },
     "Autoriser dans Réglages" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow in Settings"
+          }
+        }
+      }
     },
-    "Body — bouge un peu, chaque midi." : {
-
-    },
-    "Bouge un peu,\nchaque midi." : {
-
+    "Avant : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Before: %@"
+          }
+        }
+      }
     },
     "BPM" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
     },
-    "Bravo, %@ de marche" : {
-
+    "Belle régularité, continue comme ça." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nice and steady, keep it up."
+          }
+        }
+      }
     },
-    "C" : {
-
+    "Body — bouge un peu, chaque jour." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body — move a little, every day."
+          }
+        }
+      }
+    },
+    "Bouge un peu,\nchaque jour." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move a little,\nevery day."
+          }
+        }
+      }
+    },
+    "Bouteille" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bottle"
+          }
+        }
+      }
+    },
+    "Bravo, %@ d'activité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Well done, %@ of activity"
+          }
+        }
+      }
+    },
+    "Brouillard" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fog"
+          }
+        }
+      }
+    },
+    "C'est l'heure de bouger" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time to move"
+          }
+        }
+      }
     },
     "C'est noté : +%lld ml d'eau." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noted: +%lld ml of water."
+          }
+        }
+      }
     },
-    "Calendrier de %@" : {
-
+    "Calories" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Carte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map"
+          }
+        }
+      }
     },
     "Cette semaine" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This week"
+          }
+        }
+      }
+    },
+    "Changer de montre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change watch"
+          }
+        }
+      }
+    },
+    "Chaque sortie compte : vise un jour de plus la prochaine fois." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every workout counts: aim for one more day next time."
+          }
+        }
+      }
     },
     "Chaque « J'ai bu » ajoute un verre." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each “Had a glass” adds one glass."
+          }
+        }
+      }
     },
-    "Compté toute la journée, ta marche du midi incluse." : {
-
+    "Chaud" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hot"
+          }
+        }
+      }
     },
-    "Connecte Santé et fais quelques pas — ta marche du midi s'affichera ici." : {
-
+    "Choisir ma montre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose my watch"
+          }
+        }
+      }
+    },
+    "Clair" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light"
+          }
+        }
+      }
+    },
+    "Code source" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Source code"
+          }
+        }
+      }
+    },
+    "Commencer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get started"
+          }
+        }
+      }
+    },
+    "Compté toute la journée, ta sortie incluse." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Counted all day, your workout included."
+          }
+        }
+      }
     },
     "Connecte ta Watch pour le rythme cardiaque" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect your Watch for heart rate"
+          }
+        }
+      }
     },
-    "Connectons\nSanté & Apple Watch" : {
-
+    "Connectons\nSanté & ta montre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let’s connect\nHealth & your watch"
+          }
+        }
+      }
     },
     "Connexion à Santé…" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecting to Health…"
+          }
+        }
+      }
     },
     "Conseil : %@" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip: %@"
+          }
+        }
+      }
+    },
+    "Continuer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        }
+      }
+    },
+    "Copier la version" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy the version"
+          }
+        }
+      }
+    },
+    "Coupées dans iOS" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off in iOS"
+          }
+        }
+      }
     },
     "Courbe de fréquence cardiaque" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate curve"
+          }
+        }
+      }
     },
-    "Dans 1 heure" : {
-
+    "Course" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run"
+          }
+        }
+      }
     },
-    "Dans 30 minutes" : {
-
+    "D+" : {
+      "localizations" : {},
+      "shouldTranslate" : false
     },
-    "Des notifications « Pense à boire » avec « J'ai bu » et « Rappelle-moi »." : {
-
-    },
-    "Désactiver les rappels" : {
-
-    },
-    "Détail" : {
-
-    },
-    "Détail indisponible" : {
-
-    },
-    "Données partiellement indisponibles" : {
-
+    "D+ / D−" : {
+      "localizations" : {},
+      "shouldTranslate" : false
     },
     "DURÉE" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DURATION"
+          }
+        }
+      }
+    },
+    "Dans 1 heure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In 1 hour"
+          }
+        }
+      }
+    },
+    "Dans 30 minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In 30 minutes"
+          }
+        }
+      }
+    },
+    "Des notifications « Pense à boire » avec « J'ai bu » et « Rappelle-moi »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Time to drink” notifications with “Had a glass” and “Remind me”."
+          }
+        }
+      }
+    },
+    "Des sorties plus intenses" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More intense workouts"
+          }
+        }
+      }
+    },
+    "Deux semaines d'historique" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Two weeks of history"
+          }
+        }
+      }
+    },
+    "Distance" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Données partiellement indisponibles" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some data unavailable"
+          }
+        }
+      }
+    },
+    "Début" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
+    },
+    "Démarrer sur ma Watch" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start on my Watch"
+          }
+        }
+      }
+    },
+    "Démarrer ta sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start your workout"
+          }
+        }
+      }
+    },
+    "Dénivelé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elevation"
+          }
+        }
+      }
+    },
+    "Départ" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
+    },
+    "Départ dans %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts in %@"
+          }
+        }
+      }
+    },
+    "Départ dans 18 min" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starts in 18 min"
+          }
+        }
+      }
+    },
+    "Désactiver les rappels" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn off reminders"
+          }
+        }
+      }
+    },
+    "Désactivée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
+          }
+        }
+      }
+    },
+    "Détail" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        }
+      }
+    },
+    "Détail indisponible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details unavailable"
+          }
+        }
+      }
+    },
+    "Détection auto via ta montre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic detection with your watch"
+          }
+        }
+      }
+    },
+    "D−" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "EN COURS" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IN PROGRESS"
+          }
+        }
+      }
+    },
+    "EN PAUSE" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PAUSED"
+          }
+        }
+      }
+    },
+    "En attente des chiffres de %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for figures from %@"
+          }
+        }
+      }
+    },
+    "En avance sur ton rythme" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahead of your pace"
+          }
+        }
+      }
+    },
+    "En baisse de %lld %%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Down %lld %%"
+          }
+        }
+      }
+    },
+    "En hausse de %lld %%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Up %lld %%"
+          }
+        }
+      }
+    },
+    "En pause" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
+          }
+        }
+      }
+    },
+    "En progrès par rapport à la période d'avant." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Better than the period before."
+          }
+        }
+      }
+    },
+    "En semaine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekdays"
+          }
+        }
+      }
+    },
+    "Encore %@ d'activité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ of activity to go"
+          }
+        }
+      }
+    },
+    "Encore %@ pour ton objectif" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ more for your goal"
+          }
+        }
+      }
+    },
+    "Encore %@ pour égaler" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ more to match"
+          }
+        }
+      }
     },
     "Enregistre un verre d'eau dans Santé." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logs a glass of water in Health."
+          }
+        }
+      }
+    },
+    "Ensoleillé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sunny"
+          }
+        }
+      }
+    },
+    "FAQ Garmin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin FAQ"
+          }
+        }
+      }
+    },
+    "FUSION" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MERGE"
+          }
+        }
+      }
     },
     "Fait" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "Fenêtre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Window"
+          }
+        }
+      }
+    },
+    "Fenêtre horaire" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time window"
+          }
+        }
+      }
+    },
+    "Fenêtre à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Window at %@"
+          }
+        }
+      }
     },
     "Fermer" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
     },
     "Fermer la carte" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close the map"
+          }
+        }
+      }
+    },
+    "Fin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End"
+          }
+        }
+      }
     },
     "Footnote" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Format" : {
+      "localizations" : {},
+      "shouldTranslate" : false
     },
     "Foulée" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
     },
-    "Foulée lit uniquement tes pas et marches.\nAucune donnée n'est partagée." : {
-
+    "Foulée lit tes pas, tes sorties et quelques mesures de ta journée.\nAucune donnée n'est partagée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée reads your steps, your workouts and a few measures of your day.\nNo data is shared."
+          }
+        }
+      }
+    },
+    "Foulée n'a pas encore la permission de t'envoyer des rappels." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée isn’t allowed to send you reminders yet."
+          }
+        }
+      }
     },
     "Foulée n'a pas l'autorisation d'écrire dans Santé. Active l'eau dans Santé > Profil > Apps > Foulée." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée isn’t allowed to write to Health. Turn on water in Health > Profile > Apps > Foulée."
+          }
+        }
+      }
+    },
+    "Frise de la sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout timeline"
+          }
+        }
+      }
     },
     "Fréquence" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Frequency"
+          }
+        }
+      }
     },
     "Fréquence cardiaque" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate"
+          }
+        }
+      }
     },
-    "Glisse ton doigt sur les jours pour le détail" : {
-
+    "Fréquence des rappels" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminder frequency"
+          }
+        }
+      }
+    },
+    "Fusionner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merge"
+          }
+        }
+      }
+    },
+    "Fusionner avec la sortie de %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merge with the %@ workout"
+          }
+        }
+      }
+    },
+    "Fusionner les deux sorties ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merge the two workouts?"
+          }
+        }
+      }
+    },
+    "Garmin Connect doit être ouverte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin Connect must be open"
+          }
+        }
+      }
+    },
+    "Garmin Connect l'ajoutera à Santé à sa prochaine synchronisation." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin Connect will add it to Health at its next sync."
+          }
+        }
+      }
+    },
+    "Garmin Connect n'apparaît dans cette liste qu'une fois la connexion établie : une app y entre quand elle a demandé l'accès, jamais avant. Donc pas dans la liste = la connexion n'a jamais été faite, commence par Garmin Connect ci-dessus. Dans la liste = tout se règle là, même si tu avais répondu « Ne pas autoriser »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin Connect only appears in this list once the connection is made: an app gets there when it has asked for access, never before. So not in the list = the connection was never made, start with Garmin Connect above. In the list = everything is set there, even if you answered “Don’t Allow”."
+          }
+        }
+      }
+    },
+    "Glacial" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Freezing"
+          }
+        }
+      }
+    },
+    "Glisse le doigt sur la frise pour le détail d'une portion" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slide along the timeline for the details of a part"
+          }
+        }
+      }
+    },
+    "Grand verre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Large glass"
+          }
+        }
+      }
     },
     "Headline" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Hier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yesterday"
+          }
+        }
+      }
     },
     "Hydratation" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hydration"
+          }
+        }
+      }
     },
-    "indisponible" : {
-
+    "Impossible d'annuler ce verre — vérifie Santé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t undo this glass — check Health"
+          }
+        }
+      }
+    },
+    "Impossible de lire tes données Santé pour le moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can’t read your Health data right now."
+          }
+        }
+      }
+    },
+    "Impossible de lire ton historique d'eau pour le moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can’t read your water history right now."
+          }
+        }
+      }
     },
     "J'ai bu" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Had a glass"
+          }
+        }
+      }
+    },
+    "J'ai bu : %@, %lld millilitres" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Had a glass: %1$@, %2$lld milliliters"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "J'ai bu : %1$@, %2$lld millilitres"
+          }
+        }
+      }
     },
     "J'ai bu un verre" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I had a glass"
+          }
+        }
+      }
     },
-    "jour de repos" : {
-
+    "J'ai une montre Garmin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I have a Garmin watch"
+          }
+        }
+      }
     },
-    "jours" : {
-
+    "Jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day"
+          }
+        }
+      }
+    },
+    "Jour de repos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest day"
+          }
+        }
+      }
+    },
+    "Jour de repos : rien de prévu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest day: nothing planned"
+          }
+        }
+      }
+    },
+    "Jour par jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day by day"
+          }
+        }
+      }
+    },
+    "Jours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days"
+          }
+        }
+      }
+    },
+    "Jours actifs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active days"
+          }
+        }
+      }
+    },
+    "Kilomètre %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kilometer %lld"
+          }
+        }
+      }
+    },
+    "Lance ta première série 🔥" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start your first streak 🔥"
+          }
+        }
+      }
     },
     "Large title" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
     },
-    "Marche du midi" : {
-
+    "Le %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@s"
+          }
+        }
+      }
     },
-    "Marche en cours" : {
-
+    "Le contenu de la section." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The section’s content."
+          }
+        }
+      }
     },
-    "Marche terminée" : {
-
+    "Le dimanche à 19 h, et le 1er du mois à 9 h." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sundays at 7 PM, and on the 1st of the month at 9 AM."
+          }
+        }
+      }
     },
-    "Météo du midi à ton emplacement" : {
-
+    "Le mois en un coup d'œil" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The month at a glance"
+          }
+        }
+      }
+    },
+    "Le rappel de sortie arrive 10 minutes avant son début." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The workout reminder comes 10 minutes before it starts."
+          }
+        }
+      }
+    },
+    "Le transfert vers Santé n'a lieu que quand l'app est au premier plan. Fermée, il se met en pause et ne reprend qu'à la synchro suivante. Compte quelques minutes (environ 5) avant de voir tes données dans Foulée — ce n'est pas instantané. Journée en retard ? Ouvre Garmin Connect et laisse-la ouverte un moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The transfer to Health only happens while the app is in the foreground. Closed, it pauses and only resumes at the next sync. Allow a few minutes (about 5) before your data shows in Foulée — it isn’t instant. Day lagging behind? Open Garmin Connect and leave it open for a while."
+          }
+        }
+      }
+    },
+    "Le week-end" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekends"
+          }
+        }
+      }
+    },
+    "Les deux" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Both"
+          }
+        }
+      }
+    },
+    "Les libellés de Garmin Connect changent d'une version à l'autre — « Applications connectées » s'est déjà appelé « Applications tierces ». Le chemin, lui, ne bouge pas : les paramètres, puis les applications connectées." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin Connect’s labels change from one version to the next — “Connected Apps” used to be called “Third-Party Apps”. The path stays the same: settings, then connected apps."
+          }
+        }
+      }
+    },
+    "Les notifications de Foulée sont coupées dans iOS : aucun rappel ne peut arriver." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée’s notifications are off in iOS: no reminder can come through."
+          }
+        }
+      }
+    },
+    "Licence" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "License"
+          }
+        }
+      }
+    },
+    "Légende : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legend: %@"
+          }
+        }
+      }
+    },
+    "Marche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walk"
+          }
+        }
+      }
+    },
+    "Max" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Meilleur jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best day"
+          }
+        }
+      }
+    },
+    "Meilleure heure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best hour"
+          }
+        }
+      }
+    },
+    "Mesurée par ta Apple Watch" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Measured by your Apple Watch"
+          }
+        }
+      }
+    },
+    "Mesurée par ta montre Garmin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Measured by your Garmin watch"
+          }
+        }
+      }
+    },
+    "Min" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Minimum %@, moyenne %@, maximum %@ battements par minute" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimum %1$@, average %2$@, maximum %3$@ beats per minute"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Minimum %1$@, moyenne %2$@, maximum %3$@ battements par minute"
+          }
+        }
+      }
+    },
+    "Minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes"
+          }
+        }
+      }
+    },
+    "Mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Month"
+          }
+        }
+      }
+    },
+    "Mois parfait : objectif tenu chaque jour prévu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfect month: goal met every planned day."
+          }
+        }
+      }
+    },
+    "Montre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watch"
+          }
+        }
+      }
+    },
+    "Montre Garmin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garmin watch"
+          }
+        }
+      }
+    },
+    "Moyenne" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average"
+          }
+        }
+      }
+    },
+    "Moyenne / jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average / day"
+          }
+        }
+      }
     },
     "Météo indisponible" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weather unavailable"
+          }
+        }
+      }
     },
-    "MIDI" : {
-
+    "Météo à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weather at %@"
+          }
+        }
+      }
     },
-    "minutes" : {
-
+    "Neige" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snow"
+          }
+        }
+      }
     },
-    "Minutes de marche par jour cette semaine" : {
-
+    "Notifications" : {
+      "localizations" : {},
+      "shouldTranslate" : false
     },
-    "Mis à jour : maintenant" : {
-
+    "Nuageux" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloudy"
+          }
+        }
+      }
     },
     "Objectif" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goal"
+          }
+        }
+      }
     },
-    "Objectif atteint 🎉" : {
-
+    "Objectif atteint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goal reached"
+          }
+        }
+      }
+    },
+    "Objectif d'activité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activity goal"
+          }
+        }
+      }
+    },
+    "Objectif de %@ L tenu %lld jours sur %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ L goal met on %2$lld of %#@days@"
+          },
+          "substitutions" : {
+            "days" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg day"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg days"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectif de %1$@ L tenu %#@met@ sur %3$lld"
+          },
+          "substitutions" : {
+            "met" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg jour"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg jours"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Objectif de %lld min tenu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld min goal met"
+          }
+        }
+      }
+    },
+    "Objectif de pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Step goal"
+          }
+        }
+      }
     },
     "Objectif quotidien" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily goal"
+          }
+        }
+      }
+    },
+    "Objectif tenu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goal met"
+          }
+        }
+      }
+    },
+    "Objectif tenu %lld jours sur %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goal met on %1$lld of %#@days@"
+          },
+          "substitutions" : {
+            "days" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg day"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg days"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectif tenu %#@met@ sur %2$lld"
+          },
+          "substitutions" : {
+            "met" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg jour"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg jours"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Objectif tenu %lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goal met %1$lld/%2$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Objectif tenu %1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "Objectifs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goals"
+          }
+        }
+      }
+    },
+    "On adaptera Foulée à ta pratique." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée will adapt to how you move."
+          }
+        }
+      }
     },
     "On t'enverra un petit rappel juste avant." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You’ll get a little reminder just before."
+          }
+        }
+      }
+    },
+    "Optionnel · pour la météo locale" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optional · for local weather"
+          }
+        }
+      }
+    },
+    "Orage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thunderstorm"
+          }
+        }
+      }
+    },
+    "Ouvre Garmin Connect pour synchroniser" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Garmin Connect to sync"
+          }
+        }
+      }
+    },
+    "Ouvre Garmin Connect, onglet « Plus »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Garmin Connect, “More” tab."
+          }
+        }
+      }
     },
     "Ouvre d'abord Foulée pour autoriser l'accès à Santé." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Foulée first to allow access to Health."
+          }
+        }
+      }
     },
-    "Ouvrir dans Santé" : {
-
+    "Ouvre la carte en plein écran" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the map full screen"
+          }
+        }
+      }
+    },
+    "Ouvre le bilan de la semaine et ses sorties" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the week’s recap and its workouts"
+          }
+        }
+      }
+    },
+    "Ouvre le bilan du mois et ta série" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the month’s recap and your streak"
+          }
+        }
+      }
     },
     "Ouvrir Santé" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Health"
+          }
+        }
+      }
     },
-    "pas" : {
-
+    "Ouvrir dans Santé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in Health"
+          }
+        }
+      }
+    },
+    "Ouvrir les réglages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Settings"
+          }
+        }
+      }
     },
     "PAS" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "STEPS"
+          }
+        }
+      }
     },
-    "Pas de marche prévue aujourd'hui — profite de ta pause." : {
-
+    "PORTIONS" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PARTS"
+          }
+        }
+      }
+    },
+    "Par rapport au mois d'avant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compared with the month before"
+          }
+        }
+      }
+    },
+    "Par rapport aux mêmes jours de la semaine d'avant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compared with the same days the week before"
+          }
+        }
+      }
+    },
+    "Par rapport aux mêmes jours du mois d'avant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compared with the same days the month before"
+          }
+        }
+      }
+    },
+    "Par rapport à la semaine d'avant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compared with the week before"
+          }
+        }
+      }
+    },
+    "Parcours de la sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout route"
+          }
+        }
+      }
+    },
+    "Partager" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share"
+          }
+        }
+      }
+    },
+    "Partager le bilan" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share the recap"
+          }
+        }
+      }
+    },
+    "Partiellement nuageux" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partly cloudy"
+          }
+        }
+      }
+    },
+    "Pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steps"
+          }
+        }
+      }
+    },
+    "Pas %@ sur %@, activité %lld sur %lld minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steps %1$@ of %2$@, activity %3$lld of %4$lld minutes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pas %1$@ sur %2$@, activité %3$lld sur %4$lld minutes"
+          }
+        }
+      }
+    },
+    "Pas d'activité ce mois-là" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No activity that month"
+          }
+        }
+      }
+    },
+    "Pas d'activité cette semaine-là" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No activity that week"
+          }
+        }
+      }
+    },
+    "Pas de sortie prévue aujourd'hui — profite de ta pause." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No workout planned today — enjoy your break."
+          }
+        }
+      }
     },
     "Pas encore assez de données" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not enough data yet"
+          }
+        }
+      }
+    },
+    "Pas encore d'activité ce mois-ci" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No activity this month yet"
+          }
+        }
+      }
+    },
+    "Pas encore d'activité cette semaine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No activity this week yet"
+          }
+        }
+      }
     },
     "Pas encore de données" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No data yet"
+          }
+        }
+      }
     },
-    "Période" : {
-
+    "Pas encore de sortie aujourd'hui" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No workout today yet"
+          }
+        }
+      }
+    },
+    "Pas encore de verre aujourd'hui" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No glass today yet"
+          }
+        }
+      }
+    },
+    "Pas, distance, calories" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steps, distance, calories"
+          }
+        }
+      }
+    },
+    "Pause" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause"
+          }
+        }
+      }
+    },
+    "Petit verre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Small glass"
+          }
+        }
+      }
+    },
+    "Pile dans ton rythme" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Right on pace"
+          }
+        }
+      }
     },
     "Plage horaire" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time range"
+          }
+        }
+      }
+    },
+    "Planning" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schedule"
+          }
+        }
+      }
+    },
+    "Pluie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rain"
+          }
+        }
+      }
+    },
+    "Plus que %lld jours pour ton record" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld day to go for your record"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld days to go for your record"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Plus que %lld jour pour ton record"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Plus que %lld jours pour ton record"
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "Plus tard" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        }
+      }
     },
-    "Préférences" : {
-
+    "Politique de confidentialité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy policy"
+          }
+        }
+      }
     },
-    "Profil et réglages" : {
-
+    "Position" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location"
+          }
+        }
+      }
+    },
+    "Pour suivre une séance de la montre sur l'iPhone, noter « J'ai bu » depuis la montre et y voir ta série, choisis ta montre dans Garmin Connect." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To follow a watch session on the iPhone, log “Had a glass” from the watch and see your streak there, choose your watch in Garmin Connect."
+          }
+        }
+      }
     },
     "Progression du jour" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today’s progress"
+          }
+        }
+      }
     },
-    "Quand veux-tu\nmarcher ?" : {
-
+    "Prévision à %@ à ton emplacement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forecast at %@ where you are"
+          }
+        }
+      }
     },
-    "Rappel avant la marche" : {
-
+    "Période" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Period"
+          }
+        }
+      }
+    },
+    "Période précédente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous period"
+          }
+        }
+      }
+    },
+    "Période suivante" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next period"
+          }
+        }
+      }
+    },
+    "Quand une sortie arrive de ta montre : rythme, records, régularité." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When a workout arrives from your watch: pace, records, consistency."
+          }
+        }
+      }
+    },
+    "Quand veux-tu\nbouger ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When do you\nwant to move?"
+          }
+        }
+      }
+    },
+    "Rappel avant ta sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminder before your workout"
+          }
+        }
+      }
+    },
+    "Rappel dans %lld min" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminder in %lld min"
+          }
+        }
+      }
+    },
+    "Rappel juste avant ta fenêtre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminder just before your window"
+          }
+        }
+      }
     },
     "Rappels" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminders"
+          }
+        }
+      }
     },
-    "Rappels de marche" : {
-
+    "Rappels d'eau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Water reminders"
+          }
+        }
+      }
+    },
+    "Rappels de sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout reminders"
+          }
+        }
+      }
     },
     "Record : %lld jours" : {
-
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Record: %lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Record: %lld days"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Record : %lld jour"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Record : %lld jours"
+                }
+              }
+            }
+          }
+        }
+      }
     },
-    "RÉGLAGES" : {
-
+    "Relevé il y a %lld min" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read %lld min ago"
+          }
+        }
+      }
+    },
+    "Relevé à l'instant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read just now"
+          }
+        }
+      }
+    },
+    "Relier l'app Foulée de la montre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link the Foulée watch app"
+          }
+        }
+      }
+    },
+    "Relier la montre, synchro vers Santé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link the watch, sync to Health"
+          }
+        }
+      }
+    },
+    "Repartir" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go again"
+          }
+        }
+      }
     },
     "Reporter le rappel ou activer les rappels" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postpone the reminder or turn reminders on"
+          }
+        }
+      }
     },
-    "Résumé 7 jours" : {
-
+    "Reprendre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        }
+      }
     },
-    "Santé n'est pas disponible sur cet appareil." : {
-
+    "Rien n'a été enregistré dans Santé ce mois-là." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing was recorded in Health that month."
+          }
+        }
+      }
     },
-    "SÉRIE" : {
-
+    "Rien n'a été enregistré dans Santé cette semaine-là." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing was recorded in Health that week."
+          }
+        }
+      }
     },
-    "SÉRIE ACTUELLE" : {
-
+    "Rien n'est encore enregistré aujourd'hui. Choisis une autre période pour voir tes jours passés." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing recorded yet today. Pick another period to see your past days."
+          }
+        }
+      }
     },
-    "Sources des données" : {
-
+    "Rien n'est enregistré dans Santé sur cette période. Vérifie que Foulée peut lire tes données dans Santé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing is recorded in Health for this period. Check that Foulée can read your data in Health."
+          }
+        }
+      }
+    },
+    "Récap" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recap"
+          }
+        }
+      }
+    },
+    "Récap de la semaine et du mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly and monthly recap"
+          }
+        }
+      }
+    },
+    "Réglages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
+    },
+    "Régler la plage et la fréquence" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set the range and frequency"
+          }
+        }
+      }
+    },
+    "S'ouvre dans le navigateur" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens in the browser"
+          }
+        }
+      }
     },
     "STATISTIQUES" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "STATISTICS"
+          }
+        }
+      }
     },
     "STATS" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "STATS"
+          }
+        }
+      }
     },
-    "Streak prolongée à %lld jours" : {
-
+    "Santé (HealthKit)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health (HealthKit)"
+          }
+        }
+      }
+    },
+    "Santé affiche sa fenêtre d'autorisation : active les catégories — Pas, Distance, Entraînements, Fréquence cardiaque, Calories, et Eau si tu suis ton hydratation." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health shows its permission sheet: turn on the categories — Steps, Distance, Workouts, Heart Rate, Calories, and Water if you track your hydration."
+          }
+        }
+      }
+    },
+    "Santé n'est pas disponible sur cet appareil." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health isn’t available on this device."
+          }
+        }
+      }
+    },
+    "Santé → Résumé → ta photo en haut à droite → sous « Confidentialité », « Apps » → « Connect ». Attention : l'entrée porte ce nom-là, donc elle est classée à la lettre C, pas à G — c'est ce qui fait chercher en vain. Tu y retrouves les mêmes catégories, à cocher ou décocher quand tu veux." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health → Summary → your picture at the top right → under “Privacy”, “Apps” → “Connect”. Careful: that is the entry’s name, so it is filed under C, not G — which is why people look in vain. You’ll find the same categories there, to turn on or off whenever you like."
+          }
+        }
+      }
+    },
+    "Semaine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week"
+          }
+        }
+      }
+    },
+    "Semaine parfaite : objectif tenu chaque jour prévu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfect week: goal met every planned day."
+          }
+        }
+      }
+    },
+    "Signaler un problème" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report a problem"
+          }
+        }
+      }
+    },
+    "Sombre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark"
+          }
+        }
+      }
+    },
+    "Sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
+          }
+        }
+      }
+    },
+    "Sortie en cours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout in progress"
+          }
+        }
+      }
+    },
+    "Sortie terminée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout finished"
+          }
+        }
+      }
+    },
+    "Sorties" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workouts"
+          }
+        }
+      }
+    },
+    "Sources des données" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data sources"
+          }
+        }
+      }
+    },
+    "Stable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Steady"
+          }
+        }
+      }
     },
     "Suivi d'hydratation" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hydration tracking"
+          }
+        }
+      }
     },
-    "Ta fenêtre de marche s'ouvre à %@" : {
-
+    "Sur 12 mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Over 12 months"
+          }
+        }
+      }
     },
-    "Ta fenêtre est ouverte — départ depuis %@" : {
-
+    "Sur l'iPhone" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On iPhone"
+          }
+        }
+      }
+    },
+    "Système" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System"
+          }
+        }
+      }
+    },
+    "SÉRIE ACTUELLE" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CURRENT STREAK"
+          }
+        }
+      }
+    },
+    "Séance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
+          }
+        }
+      }
+    },
+    "Séance en cours sur %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session under way on %@"
+          }
+        }
+      }
+    },
+    "Séparer les sorties" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split the workouts"
+          }
+        }
+      }
+    },
+    "Série" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streak"
+          }
+        }
+      }
+    },
+    "T-shirt" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Ta fenêtre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your window"
+          }
+        }
+      }
+    },
+    "Ta journée d'hydratation commence à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your hydration day starts at %@"
+          }
+        }
+      }
+    },
+    "Ta montre envoie ses données à Santé par rafales, quand tu ouvres l'app Garmin Connect." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your watch sends its data to Health in bursts, when you open the Garmin Connect app."
+          }
+        }
+      }
+    },
+    "Ta semaine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your week"
+          }
+        }
+      }
+    },
+    "Ta semaine, du lundi à aujourd'hui, jour par jour." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your week, Monday to today, day by day."
+          }
+        }
+      }
+    },
+    "Ta sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your workout"
+          }
+        }
+      }
+    },
+    "Ta série compte toutes tes activités, quel que soit ce choix." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your streak counts all your activities, whatever you choose."
+          }
+        }
+      }
     },
     "Taille d'un verre" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glass size"
+          }
+        }
+      }
     },
     "Temps" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        }
+      }
+    },
+    "Terminer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish"
+          }
+        }
+      }
+    },
+    "Terminer l'installation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish setup"
+          }
+        }
+      }
+    },
+    "Terminée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finished"
+          }
+        }
+      }
     },
     "Tes jours les plus réguliers" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your most consistent days"
+          }
+        }
+      }
     },
     "Thème" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Theme"
+          }
+        }
+      }
     },
     "Title 2" : {
-
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Ton bilan" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your recap"
+          }
+        }
+      }
     },
     "Ton parcours apparaîtra ici dès les premiers points GPS." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your route will show here from the first GPS points."
+          }
+        }
+      }
     },
-    "toutes les %@" : {
-
+    "Total" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "Touche une portion pour son détail" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a part for its details"
+          }
+        }
+      }
+    },
+    "Touche « Apple Health » — l'entrée garde son nom anglais." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap “Apple Health”."
+          }
+        }
+      }
+    },
+    "Touche « Paramètres », puis « Applications connectées »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap “Settings”, then “Connected Apps”."
+          }
+        }
+      }
+    },
+    "Touche « Se connecter avec Apple Health »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap “Connect with Apple Health”."
+          }
+        }
+      }
+    },
+    "Tous les jours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every day"
+          }
+        }
+      }
+    },
+    "Toutes les %@, de %@ à %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every %1$@, from %2$@ to %3$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Toutes les %1$@, de %2$@ à %3$@."
+          }
+        }
+      }
     },
     "Tracé en attente" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route pending"
+          }
+        }
+      }
     },
     "Tu es le plus régulier le %@ (%lld %%)" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You’re most consistent on %1$@s (%2$lld %%)"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "new",
@@ -423,32 +4077,645 @@
         }
       }
     },
+    "Tu marches ou\ntu cours ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do you walk\nor run?"
+          }
+        }
+      }
+    },
     "Tu peux changer ces autorisations dans Réglages à tout moment." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can change these permissions in Settings at any time."
+          }
+        }
+      }
+    },
+    "Un jour non coché ne casse jamais ta série." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A day left unticked never breaks your streak."
+          }
+        }
+      }
+    },
+    "Un objectif simple, pas un score" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A simple goal, not a score"
+          }
+        }
+      }
     },
     "Une carte sur l'accueil et un bouton « J'ai bu ». L'eau est enregistrée dans Santé." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A card on the home screen and a “Had a glass” button. Water is saved in Health."
+          }
+        }
+      }
     },
-    "Vérifie l'accès à Santé dans Réglages, puis réessaie." : {
-
+    "Une note sous le contenu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A note under the content."
+          }
+        }
+      }
+    },
+    "Une période au calme. La prochaine sera la bonne !" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A quiet stretch. The next one will be it!"
+          }
+        }
+      }
+    },
+    "Une seule chose à obtenir : que Garmin Connect ait le droit d'écrire dans Santé. Foulée y lit ensuite tes données comme celles d'une Apple Watch — rien ne passe par un serveur. La connexion se lance depuis Garmin Connect." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Just one thing to get: Garmin Connect allowed to write to Health. Foulée then reads your data there like an Apple Watch’s — nothing goes through a server. The connection starts from Garmin Connect."
+          }
+        }
+      }
+    },
+    "Une sortie par jour ouvré" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One workout per working day"
+          }
+        }
+      }
+    },
+    "Une sortie tranquille, à ton rythme" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An easy workout, at your own pace"
+          }
+        }
+      }
+    },
+    "Une sortie, même courte, et ton bilan prend vie, jour après jour." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One workout, even a short one, and your recap comes to life, day after day."
+          }
+        }
+      }
+    },
+    "Venteux" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windy"
+          }
+        }
+      }
+    },
+    "Verre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glass"
+          }
+        }
+      }
+    },
+    "Verre annulé (−%lld mL)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glass undone (−%lld mL)"
+          }
+        }
+      }
+    },
+    "Verre enregistré (+%lld mL)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glass saved (+%lld mL)"
+          }
+        }
+      }
     },
     "Verre non enregistré — réessaie" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glass not saved — try again"
+          }
+        }
+      }
+    },
+    "Verre non enregistré — vérifie Santé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glass not saved — check Health"
+          }
+        }
+      }
+    },
+    "Verre par verre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glass by glass"
+          }
+        }
+      }
+    },
+    "Version" : {
+      "localizations" : {},
+      "shouldTranslate" : false
     },
     "Voir dans Santé" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See in Health"
+          }
+        }
+      }
     },
-    "Voir l'historique des marches" : {
-
+    "Voir le bilan" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See the recap"
+          }
+        }
+      }
+    },
+    "Voir le détail de l'hydratation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See hydration details"
+          }
+        }
+      }
     },
     "Voir le détail météo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See weather details"
+          }
+        }
+      }
+    },
+    "Voir le parcours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See the route"
+          }
+        }
+      }
+    },
+    "Voir le récap du mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See the month’s recap"
+          }
+        }
+      }
     },
     "Voir les statistiques" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See statistics"
+          }
+        }
+      }
     },
-    "Voir les statistiques de minutes" : {
-
+    "Vérifie l'accès à Santé dans Réglages, puis réessaie." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check access to Health in Settings, then try again."
+          }
+        }
+      }
+    },
+    "Vérifier ou réparer, côté Santé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check or fix it, in Health"
+          }
+        }
+      }
+    },
+    "activés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "on"
+          }
+        }
+      }
+    },
+    "bpm" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "chapeau + eau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hat + water"
+          }
+        }
+      }
+    },
+    "couvre-toi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wrap up"
+          }
+        }
+      }
+    },
+    "d'activité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "of activity"
+          }
+        }
+      }
+    },
+    "désactivés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "off"
+          }
+        }
+      }
+    },
+    "habille-toi en couches" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wear layers"
+          }
+        }
+      }
+    },
+    "idéal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ideal"
+          }
+        }
+      }
+    },
+    "indisponible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unavailable"
+          }
+        }
+      }
+    },
+    "jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "day"
+          }
+        }
+      }
+    },
+    "jour de repos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rest day"
+          }
+        }
+      }
+    },
+    "jours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "days"
+          }
+        }
+      }
+    },
+    "kcal" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "km" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "minutes"
+          }
+        }
+      }
+    },
+    "objectif tenu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "goal met"
+          }
+        }
+      }
+    },
+    "objectifs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "goals"
+          }
+        }
+      }
+    },
+    "objectifs tenus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "goals met"
+          }
+        }
+      }
+    },
+    "par jour en moyenne" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a day on average"
+          }
+        }
+      }
+    },
+    "pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "steps"
+          }
+        }
+      }
+    },
+    "prends ton parapluie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "take an umbrella"
+          }
+        }
+      }
+    },
+    "refusées dans Réglages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "denied in Settings"
+          }
+        }
+      }
+    },
+    "reste à l'abri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "stay indoors"
+          }
+        }
+      }
+    },
+    "réussite" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "success"
+          }
+        }
+      }
+    },
+    "ta Garmin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your Garmin"
+          }
+        }
+      }
+    },
+    "ta Watch" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your Watch"
+          }
+        }
+      }
+    },
+    "toutes les %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "every %@"
+          }
+        }
+      }
+    },
+    "veste légère" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "light jacket"
+          }
+        }
+      }
+    },
+    "visibilité réduite" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "low visibility"
+          }
+        }
+      }
+    },
+    "« Système » suit le réglage clair ou sombre de ton iPhone." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“System” follows your iPhone’s light or dark setting."
+          }
+        }
+      }
+    },
+    "· %@ L par jour en moyenne" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· %@ L a day on average"
+          }
+        }
+      }
+    },
+    "· objectif tenu %lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· goal met %1$lld/%2$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "· objectif tenu %1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "À l'activation, Santé importe tes données Garmin des deux semaines précédentes. Plus ancien que ça, ton historique ne remonte pas." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When you turn it on, Health imports the previous two weeks of your Garmin data. Anything older stays behind."
+          }
+        }
+      }
+    },
+    "À propos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About"
+          }
+        }
+      }
+    },
+    "Ça dépend des jours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depends on the day"
+          }
+        }
+      }
+    },
+    "Énergie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energy"
+          }
+        }
+      }
+    },
+    "–" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "—" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "🔥 Nouveau record !" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔥 New record!"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

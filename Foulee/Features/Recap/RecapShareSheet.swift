@@ -18,7 +18,7 @@ struct RecapShareSheet: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            SheetHeader(eyebrow: "Partager", title: card.heading)
+            SheetHeader(eyebrow: "Partager", title: .verbatim(card.heading))
             Picker("Format", selection: $format) {
                 ForEach(RecapShareFormat.allCases) { Text($0.label).tag($0) }
             }

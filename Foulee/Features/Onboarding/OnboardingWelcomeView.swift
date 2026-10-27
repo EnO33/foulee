@@ -6,7 +6,7 @@ import SwiftUI
 struct OnboardingWelcomeView: View {
     var onContinue: () -> Void
 
-    private let bullets: [(icon: String, text: String)] = [
+    private let bullets: [(icon: String, text: LocalizedStringResource)] = [
         // Neutral wording *and* a neutral glyph, because the very next screen
         // asks marche / course / les deux (#221, #222): promising "une marche
         // du midi" here and then offering the choice reads as if the answer

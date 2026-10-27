@@ -35,7 +35,7 @@ struct RecapHero: View {
             }
             .frame(width: 104, height: 104)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Objectif tenu \(recap.goalDaysMet) jours sur \(recap.goalDaysPlanned)")
+            .accessibilityLabel(Text("Objectif tenu \(recap.goalDaysMet) jours sur \(recap.goalDaysPlanned)"))
 
             // No period name here: the navigator right above says it (#444).
             // No change beside the minutes either: unlabelled, « -69 % » read
@@ -63,7 +63,7 @@ struct RecapHero: View {
 
     private var isWeek: Bool { recap.period.kind == .week }
 
-    private var verdictText: String {
+    private var verdictText: LocalizedStringResource {
         switch recap.verdict {
         case .quiet: "Une période au calme. La prochaine sera la bonne !"
         case .perfect: isWeek ? "Semaine parfaite : objectif tenu chaque jour prévu." : "Mois parfait : objectif tenu chaque jour prévu."
@@ -88,14 +88,14 @@ struct RecapComparison: View {
     var isRevealed = true
 
     private struct Row: Identifiable {
-        var label: String
+        var label: LocalizedStringResource
         var icon: String
         var tint: AnyShapeStyle
         var now: Double
         var before: Double
         var text: (Double) -> String
 
-        var id: String { label }
+        var id: String { icon }
     }
 
     private var rows: [Row] {
@@ -144,7 +144,7 @@ struct RecapComparison: View {
                     caption(for: row)
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(accessibilityText(for: row))
+                .accessibilityLabel(Text(accessibilityText(for: row)))
             }
         }
     }
@@ -169,10 +169,11 @@ struct RecapComparison: View {
         .font(FouleeFont.caption)
     }
 
-    private func accessibilityText(for row: Row) -> String {
-        let base = "\(row.label) : \(row.text(row.now)), contre \(row.text(row.before)) avant"
-        guard let left = remaining(in: row) else { return base }
-        return "\(base). Encore \(row.text(left)) pour égaler"
+    private func accessibilityText(for row: Row) -> LocalizedStringResource {
+        guard let left = remaining(in: row) else {
+            return "\(row.label) : \(row.text(row.now)), contre \(row.text(row.before)) avant"
+        }
+        return "\(row.label) : \(row.text(row.now)), contre \(row.text(row.before)) avant. Encore \(row.text(left)) pour égaler"
     }
 
     /// A bar on the row's shared scale: the larger of the two values fills it.
@@ -208,14 +209,14 @@ struct RecapHighlights: View {
                 tint: FouleeColor.danger,
                 title: "Énergie",
                 value: "\(recap.totals.calories.groupedText()) kcal",
-                detail: "\(recap.totals.outings) sortie\(recap.totals.outings > 1 ? "s" : "")"
+                detail: String(localized: "\(recap.totals.outings) sorties")
             )
         }
     }
 
-    private func tile(icon: String, tint: Color, title: String, value: String, detail: String) -> some View {
+    private func tile(icon: String, tint: Color, title: LocalizedStringResource, value: String, detail: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label(title, systemImage: icon)
+            Label { Text(title) } icon: { Image(systemName: icon) }
                 .font(FouleeFont.footnote.weight(.semibold))
                 .foregroundStyle(tint)
             Text(value)
@@ -239,9 +240,8 @@ struct RecapHydration: View {
     let water: RecapWater
     var isRevealed = true
 
-    private var goalText: String {
-        let days = "\(water.goalDaysMet) jour\(water.goalDaysMet > 1 ? "s" : "")"
-        return "Objectif de \(litres(water.goalML)) L tenu \(days) sur \(water.dayCount)"
+    private var goalText: LocalizedStringResource {
+        "Objectif de \(litres(water.goalML)) L tenu \(water.goalDaysMet) jours sur \(water.dayCount)"
     }
 
     private var goalRate: Double {
@@ -276,8 +276,8 @@ struct RecapHydration: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Hydratation")
-        .accessibilityValue(
+        .accessibilityValue(Text(
             "\(litres(water.averageML)) litre par jour en moyenne, objectif tenu \(water.goalDaysMet) jours sur \(water.dayCount)"
-        )
+        ))
     }
 }

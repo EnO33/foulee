@@ -35,11 +35,10 @@ struct WorkoutDetailHeartRate: View {
         }
     }
 
-    private var heartRateSummary: String {
-        func bpm(_ value: Int?) -> String { value.map { "\($0)" } ?? "indisponible" }
-        return "Minimum \(bpm(detail.minHeartRate)), "
-            + "moyenne \(bpm(detail.averageHeartRate)), "
-            + "maximum \(bpm(detail.maxHeartRate)) battements par minute"
+    private var heartRateSummary: LocalizedStringResource {
+        func bpm(_ value: Int?) -> String { value.map { "\($0)" } ?? String(localized: "indisponible") }
+        let (low, mean, high) = (bpm(detail.minHeartRate), bpm(detail.averageHeartRate), bpm(detail.maxHeartRate))
+        return "Minimum \(low), moyenne \(mean), maximum \(high) battements par minute"
     }
 
     var body: some View {
@@ -63,7 +62,7 @@ struct WorkoutDetailHeartRate: View {
                 .drawingGroup()
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Courbe de fréquence cardiaque")
-                .accessibilityValue(heartRateSummary)
+                .accessibilityValue(Text(heartRateSummary))
         }
         .padding(18)
         .fouleeGlass(cornerRadius: 22)
@@ -85,7 +84,7 @@ struct WorkoutDetailHeartRate: View {
         }
     }
 
-    private func hrCell(label: String, value: Int?) -> some View {
+    private func hrCell(label: LocalizedStringResource, value: Int?) -> some View {
         VStack(spacing: 2) {
             Text(value.map { "\($0)" } ?? "—")
                 .scaledNumericFont(size: 18, weight: .semibold)
@@ -95,8 +94,8 @@ struct WorkoutDetailHeartRate: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(label)
-        .accessibilityValue(value.map { "\($0) battements par minute" } ?? "indisponible")
+        .accessibilityLabel(Text(label))
+        .accessibilityValue(value.map { Text("\($0) battements par minute") } ?? Text("indisponible"))
     }
 
     private var divider: some View {

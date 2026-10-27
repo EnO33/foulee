@@ -84,13 +84,13 @@ struct WorkoutDetailRouteMap: View {
                 .annotationTitles(.hidden)
             }
             ForEach(Array(kilometres.enumerated()), id: \.offset) { index, mark in
-                Annotation("Kilomètre \(index + 1)", coordinate: mark.coordinate.locationCoordinate, anchor: .center) {
+                Annotation(String(localized: "Kilomètre \(index + 1)"), coordinate: mark.coordinate.locationCoordinate, anchor: .center) {
                     KilometrePastille(number: index + 1)
                 }
                 .annotationTitles(.hidden)
             }
             if let end = strokes.last?.coordinates.last {
-                Annotation("Arrivée", coordinate: end) {
+                Annotation(String(localized: "Arrivée"), coordinate: end) {
                     Image(systemName: "flag.checkered")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.white)
@@ -168,7 +168,7 @@ struct WorkoutDetailRouteMap: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Légende : " + activities.map(\.label).joined(separator: ", "))
+        .accessibilityLabel(Text("Légende : \(activities.map(\.label).formatted(.list(type: .and).locale(.app)))"))
     }
 
     private var expanded: some View {

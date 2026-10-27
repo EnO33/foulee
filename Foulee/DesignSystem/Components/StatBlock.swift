@@ -4,7 +4,7 @@ import SwiftUI
 /// "Aujourd'hui" stats grid (pas / minutes / distance / calories).
 struct StatBlock: View {
     var systemIcon: String
-    var label: String
+    var label: LocalizedStringResource
     var value: String
     var sub: String?
     var tint: Color
@@ -32,7 +32,7 @@ struct StatBlock: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(label)
+        .accessibilityLabel(Text(label))
         .accessibilityValue(sub.map { "\(value) \($0)" } ?? value)
     }
 }

@@ -61,13 +61,14 @@ public enum OutingBreakdown {
     /// has to be this sentence or nothing at all — the gap included.
     public static func timelineDescription(of legs: [WorkoutSummary]) -> String {
         legs.enumerated().flatMap { index, leg in
-            let label = index == 0 ? leg.activity.label : leg.activity.label.lowercased()
+            let label = index == 0 ? leg.activity.label : leg.activity.label.lowercased(with: .app)
             let part = "\(label), \(minutesText(leg.durationSeconds))"
             guard index > 0 else { return [part] }
             let stop = leg.startedAt.timeIntervalSince(legs[index - 1].endedAt)
-            return stop >= minimumStop ? ["arrêt de \(minutesText(stop))", part] : [part]
+            return stop >= minimumStop ? [kitText("arrêt de \(minutesText(stop))"), part] : [part]
         }
-        .joined(separator: " ; ")
+        // French sets the semicolon apart; English does not.
+        .joined(separator: Locale.app.language.languageCode == .french ? " ; " : "; ")
     }
 
     /// Where to count an outing's steps: each leg's own window, so the steps
@@ -83,6 +84,6 @@ public enum OutingBreakdown {
     /// still reads as a minute.
     private static func minutesText(_ duration: TimeInterval) -> String {
         let minutes = max(1, Int((duration / 60).rounded()))
-        return "\(minutes) minute\(minutes > 1 ? "s" : "")"
+        return kitText("\(minutes) minutes")
     }
 }

@@ -93,7 +93,7 @@ struct SettingsScreen: View {
                 icon: FouleeIcon.watch,
                 tint: FouleeColor.accentEnd,
                 title: "Montre Garmin",
-                summary: "Relier la montre, synchro vers Santé"
+                summary: String(localized: "Relier la montre, synchro vers Santé")
             )
         }
         .buttonStyle(.pressable)

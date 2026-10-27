@@ -44,7 +44,7 @@ struct RecapStreakHeader: View {
                         Text("\(streak.current) / \(streak.best)")
                             .scaledNumericFont(size: 15, weight: .semibold)
                             .foregroundStyle(.secondary)
-                            .accessibilityLabel("Record : \(streak.best) jours")
+                            .accessibilityLabel(Text("Record : \(streak.best) jours"))
                     }
                 }
                 RecordBar(progress: streak.recordProgress)
@@ -55,10 +55,10 @@ struct RecapStreakHeader: View {
         .fouleeGlass(cornerRadius: 22)
     }
 
-    private var recordTitle: String {
+    private var recordTitle: LocalizedStringResource {
         if streak.best == 0 { return "Lance ta première série 🔥" }
         guard let remaining = streak.daysToRecord else { return "🔥 Nouveau record !" }
-        return "Plus que \(remaining) \(remaining == 1 ? "jour" : "jours") pour ton record"
+        return "Plus que \(remaining) jours pour ton record"
     }
 }
 
@@ -82,7 +82,7 @@ struct RecapYear: View {
         }
     }
 
-    private func total(value: String, label: String) -> some View {
+    private func total(value: String, label: LocalizedStringResource) -> some View {
         VStack(spacing: 4) {
             Text(value)
                 .scaledNumericFont(size: 20, weight: .semibold)

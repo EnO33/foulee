@@ -79,9 +79,28 @@ struct LocaleFormattingTests {
 
     @Test("A language the screens do not speak falls back to French")
     func fallback() {
-        let locale = Locale.app(device: american, preferences: ["en-US", "de"])
+        let locale = Locale.app(device: american, preferences: ["en-US", "de"], screenLanguages: ["fr"])
         #expect(locale.language.languageCode == .french)
         #expect(locale.region == .unitedStates)
-        #expect(Locale.app(device: french, preferences: ["fr-FR"]) == french)
+        #expect(Locale.app(device: french, preferences: ["fr-FR"], screenLanguages: ["fr", "en"]) == french)
+        #expect(Locale.app(device: american, preferences: ["en-US"], screenLanguages: []).language.languageCode == .french)
+    }
+
+    /// The iPhone speaks English before the watch does (issue #587): each app
+    /// reads its figures in the language its own catalog offers.
+    @Test("English once the screens speak it, in the device's order of preference")
+    func english() {
+        let locale = Locale.app(device: american, preferences: ["en-US", "fr"], screenLanguages: ["fr", "en"])
+        #expect(locale.language.languageCode == .english)
+        #expect(locale == american)
+        let secondChoice = Locale.app(device: american, preferences: ["de", "en"], screenLanguages: ["fr", "en"])
+        #expect(secondChoice.language.languageCode == .english)
+    }
+
+    @Test("A bundle without a Localizable table has no screen language")
+    func screenLanguages() {
+        #expect(Bundle(for: LocaleToken.self).screenLanguages.isEmpty)
     }
 }
+
+private final class LocaleToken {}

@@ -6,7 +6,7 @@ import SwiftUI
 struct SettingsRow: View {
     var icon: String
     var tint: Color
-    var title: String
+    var title: LocalizedStringResource
     var summary: String
 
     var body: some View {

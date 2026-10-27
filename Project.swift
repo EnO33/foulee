@@ -98,6 +98,9 @@ let project = Project(
             bundleId: "\(bundleIdBase).kit",
             deploymentTargets: .multiplatform(iOS: "26.0", macOS: "15.0", watchOS: "26.0"),
             sources: ["FouleeKit/Sources/**"],
+            // The text the kit writes itself — activity names, highlights —
+            // read through `kitText` (issue #587).
+            resources: ["FouleeKit/Resources/**"],
             settings: .settings(base: kitMacSigning.merging([
                 // Linked by the widgets and the Live Activity.
                 "APPLICATION_EXTENSION_API_ONLY": "YES",

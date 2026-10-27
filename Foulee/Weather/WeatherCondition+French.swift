@@ -1,8 +1,9 @@
 import Foundation
 import WeatherKit
 
-/// French labels + walk-friendly advice for the handful of `WeatherCondition`
-/// cases the user will realistically see at midday in metropolitan France.
+/// Labels + walk-friendly advice, in the screens' language (issue #587), for
+/// the handful of `WeatherCondition` cases the user will realistically see at
+/// midday in metropolitan France.
 /// Falls back to a long-dash for exotic ones (volcanic ash, hot, …).
 nonisolated enum WeatherSummary {
     static func describe(
@@ -11,25 +12,25 @@ nonisolated enum WeatherSummary {
     ) -> (label: String, advice: String) {
         switch condition {
         case .clear, .mostlyClear:
-            return ("Ensoleillé", temperatureAdvice(temperatureCelsius))
+            return (String(localized: "Ensoleillé"), temperatureAdvice(temperatureCelsius))
         case .partlyCloudy, .mostlyCloudy:
-            return ("Partiellement nuageux", temperatureAdvice(temperatureCelsius))
+            return (String(localized: "Partiellement nuageux"), temperatureAdvice(temperatureCelsius))
         case .cloudy:
-            return ("Nuageux", temperatureAdvice(temperatureCelsius))
+            return (String(localized: "Nuageux"), temperatureAdvice(temperatureCelsius))
         case .rain, .heavyRain, .drizzle, .freezingRain, .sunShowers:
-            return ("Pluie", "prends ton parapluie")
+            return (String(localized: "Pluie"), String(localized: "prends ton parapluie"))
         case .snow, .heavySnow, .blowingSnow, .flurries, .wintryMix, .sunFlurries:
-            return ("Neige", "couvre-toi")
+            return (String(localized: "Neige"), String(localized: "couvre-toi"))
         case .thunderstorms, .strongStorms, .isolatedThunderstorms, .scatteredThunderstorms:
-            return ("Orage", "reste à l'abri")
+            return (String(localized: "Orage"), String(localized: "reste à l'abri"))
         case .windy, .breezy, .blowingDust:
-            return ("Venteux", "habille-toi en couches")
+            return (String(localized: "Venteux"), String(localized: "habille-toi en couches"))
         case .foggy, .haze, .smoky:
-            return ("Brouillard", "visibilité réduite")
+            return (String(localized: "Brouillard"), String(localized: "visibilité réduite"))
         case .hot:
-            return ("Chaud", "chapeau + eau")
+            return (String(localized: "Chaud"), String(localized: "chapeau + eau"))
         case .frigid:
-            return ("Glacial", "couvre-toi")
+            return (String(localized: "Glacial"), String(localized: "couvre-toi"))
         default:
             return ("—", "")
         }
@@ -37,11 +38,11 @@ nonisolated enum WeatherSummary {
 
     private static func temperatureAdvice(_ celsius: Double) -> String {
         switch celsius {
-        case ..<5: "couvre-toi"
-        case 5..<15: "veste légère"
-        case 15..<25: "idéal"
-        case 25..<30: "T-shirt"
-        default: "chapeau + eau"
+        case ..<5: String(localized: "couvre-toi")
+        case 5..<15: String(localized: "veste légère")
+        case 15..<25: String(localized: "idéal")
+        case 25..<30: String(localized: "T-shirt")
+        default: String(localized: "chapeau + eau")
         }
     }
 }

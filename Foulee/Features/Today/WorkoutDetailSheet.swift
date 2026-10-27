@@ -149,7 +149,7 @@ struct WorkoutDetailSheet: View {
         }
     }
 
-    private func metricCard(icon: String, tint: Color, label: String, value: String) -> some View {
+    private func metricCard(icon: String, tint: Color, label: LocalizedStringResource, value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: icon)

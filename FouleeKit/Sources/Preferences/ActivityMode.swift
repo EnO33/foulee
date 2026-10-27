@@ -21,9 +21,9 @@ nonisolated public enum ActivityMode: String, CaseIterable, Codable, Sendable, I
     /// three of them share one segmented control's width.
     public var label: String {
         switch self {
-        case .walking: "Marche"
-        case .running: "Course"
-        case .both: "Les deux"
+        case .walking: kitText("Marche")
+        case .running: kitText("Course")
+        case .both: kitText("Les deux")
         }
     }
 }

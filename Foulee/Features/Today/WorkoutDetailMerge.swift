@@ -31,7 +31,7 @@ struct WorkoutDetailMerge: View {
                 .foregroundStyle(.secondary)
                 .tracking(1)
             ForEach([options.previous, options.next].compactMap { $0 }) { other in
-                action(Self.mergeTitle(with: other), icon: FouleeIcon.merge) { proposed = other }
+                action(.verbatim(Self.mergeTitle(with: other)), icon: FouleeIcon.merge) { proposed = other }
             }
             if options.isMerged {
                 action("Séparer les sorties", icon: FouleeIcon.separate, perform: options.separate)
@@ -53,9 +53,9 @@ struct WorkoutDetailMerge: View {
         }
     }
 
-    private func action(_ title: String, icon: String, perform: @escaping () -> Void) -> some View {
+    private func action(_ title: LocalizedStringResource, icon: String, perform: @escaping () -> Void) -> some View {
         Button(action: perform) {
-            Label(title, systemImage: icon)
+            Label { Text(title) } icon: { Image(systemName: icon) }
                 .font(FouleeFont.callout.weight(.semibold))
                 .foregroundStyle(FouleeColor.accentMid)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -66,7 +66,7 @@ struct WorkoutDetailMerge: View {
     /// « Fusionner avec la sortie de 10:42 »: the hour the wearer remembers it
     /// by, whether it came before or after.
     static func mergeTitle(with other: WorkoutSummary) -> String {
-        "Fusionner avec la sortie de \(other.startedAt.clockText)"
+        String(localized: "Fusionner avec la sortie de \(other.startedAt.clockText)")
     }
 
     /// What the merge will give, then that it can be undone: « 08:00 → 09:12 ·
@@ -76,7 +76,7 @@ struct WorkoutDetailMerge: View {
         let start = min(outing.startedAt, other.startedAt)
         let end = max(outing.endedAt, other.endedAt)
         let distance = (outing.distanceKm + other.distanceKm).kmText(fractionDigits: 1)
-        return "\(start.clockText) → \(end.clockText) · \(distance) au total. "
-            + "Santé n'est pas modifié : tu pourras les séparer à nouveau."
+        let (from, to) = (start.clockText, end.clockText)
+        return String(localized: "\(from) → \(to) · \(distance) au total. Santé n'est pas modifié : tu pourras les séparer à nouveau.")
     }
 }

@@ -244,7 +244,7 @@ private struct RecapPeriodNavigator: View {
         }
     }
 
-    private func chevron(_ icon: String, label: String, action: (() -> Void)?) -> some View {
+    private func chevron(_ icon: String, label: LocalizedStringResource, action: (() -> Void)?) -> some View {
         Button { action?() } label: {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .bold))
@@ -255,7 +255,7 @@ private struct RecapPeriodNavigator: View {
         .buttonStyle(.pressable)
         .disabled(action == nil)
         .opacity(action == nil ? 0.3 : 1)
-        .accessibilityLabel(label)
+        .accessibilityLabel(Text(label))
     }
 }
 
@@ -284,7 +284,7 @@ private struct RecapContent: View {
                 // period is waiting for instead.
                 emptyState
             } else {
-                GlassSection(isWeek ? "Jour par jour" : "Le mois en un coup d'œil") {
+                GlassSection(daysTitle) {
                     RecapDaysView(recap: recap, selection: $selectedDay, isRevealed: isRevealed)
                     legend
                 }
@@ -313,20 +313,26 @@ private struct RecapContent: View {
 
     private var emptyState: some View {
         ContentUnavailableView {
-            Label(emptyTitle, systemImage: "figure.walk")
+            Label { Text(emptyTitle) } icon: { Image(systemName: "figure.walk") }
         } description: {
             Text(isInProgress
                 ? "Une sortie, même courte, et ton bilan prend vie, jour après jour."
-                : "Rien n'a été enregistré dans Santé sur \(isWeek ? "cette semaine" : "ce mois").")
+                : isWeek
+                    ? "Rien n'a été enregistré dans Santé cette semaine-là."
+                    : "Rien n'a été enregistré dans Santé ce mois-là.")
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
         .fouleeGlass(cornerRadius: 22)
     }
 
+    private var daysTitle: LocalizedStringResource {
+        isWeek ? LocalizedStringResource("Jour par jour") : LocalizedStringResource("Le mois en un coup d'œil")
+    }
+
     /// Says what the comparison is with (#454): the same days of the period
     /// before while this one is open, the whole of it once it is over.
-    private var comparisonTitle: String {
+    private var comparisonTitle: LocalizedStringResource {
         switch (isWeek, isInProgress) {
         case (true, true): "Par rapport aux mêmes jours de la semaine d'avant"
         case (true, false): "Par rapport à la semaine d'avant"
@@ -337,7 +343,7 @@ private struct RecapContent: View {
 
     /// « Pas encore » while the period is open (issue #444), « pas » once it
     /// is over and nothing can change.
-    private var emptyTitle: String {
+    private var emptyTitle: LocalizedStringResource {
         switch (isWeek, isInProgress) {
         case (true, true): "Pas encore d'activité cette semaine"
         case (true, false): "Pas d'activité cette semaine-là"

@@ -136,7 +136,7 @@ struct ActivityChoiceRow: View {
             }
     }
 
-    private var title: String {
+    private var title: LocalizedStringResource {
         switch mode {
         case .walking: "Marche"
         case .running: "Course"
@@ -144,7 +144,7 @@ struct ActivityChoiceRow: View {
         }
     }
 
-    private var subtitle: String {
+    private var subtitle: LocalizedStringResource {
         switch mode {
         case .walking: "Une sortie tranquille, à ton rythme"
         case .running: "Des sorties plus intenses"

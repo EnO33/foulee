@@ -8,16 +8,18 @@ nonisolated public extension Locale {
     /// Not `Locale.current` alone: on a device set to a language Foulée does
     /// not speak, the screens fall back to French, and « Wednesday » or
     /// « 4,218 pas » beside them would read as two apps.
-    static let app = app(device: .current, preferences: Locale.preferredLanguages)
-
-    /// The languages Foulée's screens are written in, source first. One more
-    /// here when a catalog gains one.
-    internal static let screenLanguages = ["fr"]
+    static let app = app(
+        device: .current,
+        preferences: Locale.preferredLanguages,
+        screenLanguages: Bundle.main.screenLanguages
+    )
 
     /// `device` speaking the screen language the user prefers among
     /// `screenLanguages` — French when none of theirs is one.
-    internal static func app(device: Locale, preferences: [String]) -> Locale {
-        let language = Bundle.preferredLocalizations(from: screenLanguages, forPreferences: preferences).first
+    internal static func app(device: Locale, preferences: [String], screenLanguages: [String]) -> Locale {
+        // Asked among no language at all, Foundation answers one anyway.
+        let language = Bundle.preferredLocalizations(from: screenLanguages, forPreferences: preferences)
+            .first { screenLanguages.contains($0) }
         return device.speaking(language ?? "fr")
     }
 
@@ -27,6 +29,22 @@ nonisolated public extension Locale {
         components.languageComponents.languageCode = Locale.Language(identifier: language).languageCode
         components.languageComponents.script = nil
         return Locale(components: components)
+    }
+}
+
+nonisolated extension Bundle {
+    /// The languages this bundle's screens are written in (issue #587): those
+    /// with a compiled `Localizable` table. Each target gains one when its own
+    /// catalog is translated — the iPhone app may speak English while the watch
+    /// app it carries still speaks French only.
+    ///
+    /// Empty for a bundle without screens, such as a test runner.
+    var screenLanguages: [String] {
+        localizations.filter { language in
+            ["strings", "stringsdict"].contains { kind in
+                path(forResource: "Localizable", ofType: kind, inDirectory: nil, forLocalization: language) != nil
+            }
+        }
     }
 }
 

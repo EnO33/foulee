@@ -152,8 +152,8 @@ struct OnboardingPermissionsView: View {
 private struct PermissionRow: View {
     var systemIcon: String
     var color: Color
-    var title: String
-    var subtitle: String
+    var title: LocalizedStringResource
+    var subtitle: LocalizedStringResource
     @Binding var isOn: Bool
     var request: () async -> Bool
 

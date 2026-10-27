@@ -55,17 +55,18 @@ nonisolated enum HydrationPace: Equatable, Sendable {
     /// What the card says.
     var text: String {
         switch self {
-        case .notStarted(let start): "Ta journée d'hydratation commence à \(Self.clock(start))"
-        case .onTrack: "Pile dans ton rythme"
-        case .ahead: "En avance sur ton rythme"
-        case .behind(let glasses): glasses == 1 ? "Un verre de retard" : "\(glasses) verres de retard"
-        case .reached: "Objectif atteint"
+        case .notStarted(let start): String(localized: "Ta journée d'hydratation commence à \(Self.clock(start))")
+        case .onTrack: String(localized: "Pile dans ton rythme")
+        case .ahead: String(localized: "En avance sur ton rythme")
+        case .behind(let glasses): String(localized: "\(glasses) verres de retard")
+        case .reached: String(localized: "Objectif atteint")
         }
     }
 
-    /// « 9 h », « 9 h 30 ».
+    /// « 9 h », « 9 h 30 » in French; the device's clock elsewhere — « 9:00 AM ».
     private static func clock(_ time: TimeOfDay) -> String {
-        time.minute == 0 ? "\(time.hour) h" : String(format: "%d h %02d", time.hour, time.minute)
+        guard Locale.app.language.languageCode == .french else { return time.clockText }
+        return time.minute == 0 ? "\(time.hour) h" : String(format: "%d h %02d", time.hour, time.minute)
     }
 
     var systemImage: String {

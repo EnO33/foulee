@@ -98,10 +98,13 @@ struct TodayHeroCard: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Progression du jour")
-        .accessibilityValue(
-            "Pas \(snapshot.steps.groupedText()) sur \(snapshot.stepsGoal.groupedText()), "
-                + "activité \(snapshot.minutes) sur \(snapshot.minutesGoal) minutes"
-        )
+        .accessibilityValue(ringAccessibilityValue)
+    }
+
+    private var ringAccessibilityValue: Text {
+        let steps = snapshot.steps.groupedText()
+        let stepsGoal = snapshot.stepsGoal.groupedText()
+        return Text("Pas \(steps) sur \(stepsGoal), activité \(snapshot.minutes) sur \(snapshot.minutesGoal) minutes")
     }
 
     @ViewBuilder
@@ -187,7 +190,7 @@ struct TodayHeroCard: View {
     /// "Départ dans …" rather than the old "Marche dans …" / "Marche du midi":
     /// the chip counts down to the window, and the window is the same one
     /// whatever the user does inside it (#222).
-    private var countdownLabel: String {
+    private var countdownLabel: LocalizedStringResource {
         guard let minutes = minutesUntilWindow else { return "Ta fenêtre" }
         if minutes <= 0 { return "C'est l'heure de bouger" }
         return "Départ dans \(durationText(minutes: minutes))"
@@ -229,8 +232,7 @@ struct TodayHeroCard: View {
         .buttonStyle(.pressable)
         .accessibilityLabel("Météo à \(snapshot.walkWindowStart.clockText)")
         .accessibilityValue(
-            "\(snapshot.weather.temperatureCelsius) degrés, "
-                + "\(snapshot.weather.condition), \(snapshot.weather.advice)"
+            "\(snapshot.weather.temperatureCelsius) degrés, \(snapshot.weather.condition), \(snapshot.weather.advice)"
         )
         .accessibilityHint("Voir le détail météo")
         // Same handle the old weather card carried: the App Store capture
@@ -320,7 +322,7 @@ struct TodayHeroCard: View {
         }
         .menuOrder(.fixed)
         .accessibilityLabel("Rappels de sortie")
-        .accessibilityValue(bellAccessibilityValue)
+        .accessibilityValue(Text(bellAccessibilityValue))
         .accessibilityHint("Reporter le rappel ou activer les rappels")
     }
 
@@ -329,7 +331,7 @@ struct TodayHeroCard: View {
         return notificationsEnabled ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary)
     }
 
-    private var bellAccessibilityValue: String {
+    private var bellAccessibilityValue: LocalizedStringResource {
         if remindersBlocked { return "refusées dans Réglages" }
         return notificationsEnabled ? "activés" : "désactivés"
     }

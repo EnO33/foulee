@@ -105,9 +105,9 @@ struct ActiveWalkScreen: View {
             // naming a sport here and saving another one at the end would be
             // the drift #225 was about, only worse — the screen would have been
             // wrong for the whole outing.
-            session.isActivityUndecided ? "Ta sortie" : session.activity.sessionTitle
+            session.isActivityUndecided ? String(localized: "Ta sortie") : session.activity.sessionTitle
         case .idle:
-            "Ta sortie"
+            String(localized: "Ta sortie")
         }
     }
 
@@ -208,13 +208,13 @@ struct ActiveWalkScreen: View {
         .padding(.top, 22)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Sortie en cours")
-        .accessibilityValue(
-            "\(session.steps.groupedText()) pas, "
-            + "\(session.distanceKm.kmText(fractionDigits: 1)), "
-            + "\(session.estimatedCalories) kilocalories, "
-            + "\(Int(session.elevationGainMeters)) mètres de montée, "
-            + "\(Int(session.elevationLossMeters)) mètres de descente"
-        )
+        .accessibilityValue(figuresAccessibilityValue(session))
+    }
+
+    private func figuresAccessibilityValue(_ session: WalkSession) -> Text {
+        let (steps, distance) = (session.steps.groupedText(), session.distanceKm.kmText(fractionDigits: 1))
+        let (kcal, up, down) = (session.estimatedCalories, Int(session.elevationGainMeters), Int(session.elevationLossMeters))
+        return Text("\(steps) pas, \(distance), \(kcal) kilocalories, \(up) mètres de montée, \(down) mètres de descente")
     }
 
     private var ringDivider: some View {
@@ -223,7 +223,7 @@ struct ActiveWalkScreen: View {
             .frame(width: 1, height: 28)
     }
 
-    private func metric(value: String, label: String) -> some View {
+    private func metric(value: String, label: LocalizedStringResource) -> some View {
         VStack(spacing: 2) {
             Text(value)
                 .scaledNumericFont(size: 17, weight: .semibold)
@@ -280,7 +280,7 @@ struct ActiveWalkScreen: View {
     private func controlButton(
         icon: String,
         color: Color,
-        label: String,
+        label: LocalizedStringResource,
         big: Bool = false,
         action: @escaping () -> Void
     ) -> some View {

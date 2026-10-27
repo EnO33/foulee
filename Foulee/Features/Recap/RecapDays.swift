@@ -80,7 +80,9 @@ struct RecapChangeChip: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background((isUp ? FouleeColor.success : Color.gray).opacity(0.14), in: Capsule())
-            .accessibilityLabel(percent == 0 ? "Stable" : "\(isUp ? "En hausse" : "En baisse") de \(abs(percent)) %")
+            .accessibilityLabel(
+                percent == 0 ? Text("Stable") : isUp ? Text("En hausse de \(abs(percent)) %") : Text("En baisse de \(abs(percent)) %")
+            )
         }
     }
 }
@@ -188,16 +190,16 @@ struct RecapDaysView: View {
             label().contentShape(Rectangle())
         }
         .buttonStyle(.pressable)
-        .accessibilityLabel(accessibilityText(for: day))
+        .accessibilityLabel(Text(accessibilityText(for: day)))
         .accessibilityHint("Affiche les sorties de ce jour")
         .accessibilityAddTraits(day.date == selection ? .isSelected : [])
     }
 
-    private func accessibilityText(for day: Recap.Day) -> String {
+    private func accessibilityText(for day: Recap.Day) -> LocalizedStringResource {
         let date = day.date.dayText
         guard day.isPlanned || day.minutes > 0 else { return "\(date) : jour de repos" }
-        let held = day.minutes >= recap.goalMinutes && day.minutes > 0 ? ", objectif tenu" : ""
-        return "\(date) : \(day.minutes) minutes\(held)"
+        guard day.minutes >= recap.goalMinutes, day.minutes > 0 else { return "\(date) : \(day.minutes) minutes" }
+        return "\(date) : \(day.minutes) minutes, objectif tenu"
     }
 
     /// Columns before the 1st in a Monday-first grid.

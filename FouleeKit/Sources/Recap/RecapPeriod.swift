@@ -16,8 +16,8 @@ nonisolated public struct RecapPeriod: Hashable, Sendable {
 
         public var label: String {
             switch self {
-            case .week: "Semaine"
-            case .month: "Mois"
+            case .week: kitText("Semaine")
+            case .month: kitText("Mois")
             }
         }
 
@@ -191,8 +191,8 @@ nonisolated public struct RecapPeriod: Hashable, Sendable {
     public var span: String {
         let last = end.addingTimeInterval(-1)
         let first = Self.dayFormatter.string(from: start)
-        guard !Calendar.iso8601Monday.isDate(start, inSameDayAs: last) else { return "Le \(first)" }
-        return "Du \(first) au \(Self.dayFormatter.string(from: last))"
+        guard !Calendar.iso8601Monday.isDate(start, inSameDayAs: last) else { return kitText("Le \(first)") }
+        return kitText("Du \(first) au \(Self.dayFormatter.string(from: last))")
     }
 
     private static func period(_ kind: Kind, containing date: Date, calendar: Calendar) -> RecapPeriod {

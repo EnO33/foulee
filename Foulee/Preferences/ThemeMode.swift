@@ -9,9 +9,9 @@ nonisolated enum ThemeMode: String, CaseIterable, Codable, Sendable, Identifiabl
 
     var label: String {
         switch self {
-        case .light: "Clair"
-        case .dark: "Sombre"
-        case .system: "Système"
+        case .light: String(localized: "Clair")
+        case .dark: String(localized: "Sombre")
+        case .system: String(localized: "Système")
         }
     }
 

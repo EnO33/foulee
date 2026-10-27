@@ -115,8 +115,9 @@ struct OnboardingGoalView: View {
         }
     }
 
-    private func sectionLabel(_ title: String) -> some View {
-        Text(title.uppercased())
+    private func sectionLabel(_ title: LocalizedStringResource) -> some View {
+        Text(title)
+            .textCase(.uppercase)
             .font(FouleeFont.footnote.weight(.semibold))
             .foregroundStyle(.secondary)
             .tracking(1)

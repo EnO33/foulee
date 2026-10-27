@@ -23,7 +23,7 @@ import Foundation
 nonisolated public enum GarminPendingOutings {
     /// Where the résumé says the row comes from. The watch, not Santé: the
     /// detail has nothing more to read than the summary itself.
-    static let sourceName = "Montre Garmin"
+    static var sourceName: String { kitText("Montre Garmin") }
 
     /// Beyond the streak's own history window a pending outing can change
     /// nothing any more, and Garmin Connect has had more than enough time.

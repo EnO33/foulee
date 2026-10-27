@@ -19,7 +19,7 @@ struct GarminSetupSheet: View {
     /// Garmin Connect FR, confirmed on device: the entry keeps its English name
     /// "Apple Health" inside the French app. Step 5 is iOS's own permission
     /// sheet, which Garmin triggers — the categories are Apple's wording.
-    private let steps = [
+    private let steps: [LocalizedStringResource] = [
         "Ouvre Garmin Connect, onglet « Plus ».",
         "Touche « Paramètres », puis « Applications connectées ».",
         "Touche « Apple Health » — l'entrée garde son nom anglais.",
@@ -149,7 +149,7 @@ struct GarminSetupSheet: View {
         .fouleeGlass(cornerRadius: 22)
     }
 
-    private func caveat(icon: String, title: String, detail: String) -> some View {
+    private func caveat(icon: String, title: LocalizedStringResource, detail: LocalizedStringResource) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .scaledSystemFont(size: 18, weight: .semibold)

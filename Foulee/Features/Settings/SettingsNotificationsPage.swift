@@ -64,11 +64,11 @@ struct SettingsNotificationsPage: View {
         VStack(alignment: .leading, spacing: 10) {
             reminderToggle(
                 "Rappels d'eau",
-                detail: SettingsSummary.hydrationReminders(
+                detail: .verbatim(SettingsSummary.hydrationReminders(
                     start: preferences.hydrationWindowStart,
                     end: preferences.hydrationWindowEnd,
                     intervalMinutes: preferences.hydrationIntervalMinutes
-                ),
+                )),
                 isOn: $preferences.hydrationRemindersEnabled
             )
             NavigationLink(value: SettingsPage.hydration) {
@@ -80,7 +80,7 @@ struct SettingsNotificationsPage: View {
         }
     }
 
-    private func banner(_ message: String, action: String, perform: @escaping () -> Void) -> some View {
+    private func banner(_ message: LocalizedStringResource, action: LocalizedStringResource, perform: @escaping () -> Void) -> some View {
         GlassSection {
             Label {
                 Text(message).font(FouleeFont.callout)
@@ -99,7 +99,7 @@ struct SettingsNotificationsPage: View {
         }
     }
 
-    private func reminderToggle(_ title: String, detail: String, isOn: Binding<Bool>) -> some View {
+    private func reminderToggle(_ title: LocalizedStringResource, detail: LocalizedStringResource, isOn: Binding<Bool>) -> some View {
         Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

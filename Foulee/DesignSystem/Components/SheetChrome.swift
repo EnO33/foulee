@@ -6,7 +6,7 @@ import SwiftUI
 /// over a map as well as over the sheet gradient.
 struct SheetRoundButton: View {
     var systemImage: String
-    var accessibilityLabel: String
+    var accessibilityLabel: LocalizedStringResource
     var action: () -> Void
 
     var body: some View {
@@ -19,13 +19,13 @@ struct SheetRoundButton: View {
                 .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
         }
         .buttonStyle(.pressable)
-        .accessibilityLabel(accessibilityLabel)
+        .accessibilityLabel(Text(accessibilityLabel))
     }
 }
 
 /// The round « × », inset from the sheet's corner.
 struct SheetCloseButton: View {
-    var accessibilityLabel = "Fermer"
+    var accessibilityLabel: LocalizedStringResource = "Fermer"
     var action: () -> Void
 
     var body: some View {
@@ -37,12 +37,13 @@ struct SheetCloseButton: View {
 /// Small caps eyebrow over a large title — the opening line of a sheet
 /// (« RÉCAP / Ton bilan », « HYDRATATION / Aujourd'hui »…).
 struct SheetHeader: View {
-    var eyebrow: String
-    var title: String
+    var eyebrow: LocalizedStringResource
+    var title: LocalizedStringResource
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(eyebrow.uppercased())
+            Text(eyebrow)
+                .textCase(.uppercase)
                 .font(FouleeFont.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .tracking(1.2)
@@ -57,11 +58,11 @@ struct SheetHeader: View {
 /// A titled glass card: the one way a sheet groups related content. The title
 /// sits inside the card, an optional footnote under its content.
 struct GlassSection<Content: View>: View {
-    var title: String?
-    var footer: String?
+    var title: LocalizedStringResource?
+    var footer: LocalizedStringResource?
     let content: Content
 
-    init(_ title: String? = nil, footer: String? = nil, @ViewBuilder content: () -> Content) {
+    init(_ title: LocalizedStringResource? = nil, footer: LocalizedStringResource? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
         self.footer = footer
         self.content = content()

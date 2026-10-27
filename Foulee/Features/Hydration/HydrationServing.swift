@@ -19,11 +19,11 @@ nonisolated struct HydrationServing: Identifiable, Equatable, Sendable {
         let glass = max(glassML, 10)
         let large = rounded(Double(glass) * 1.6)
         return [
-            HydrationServing(label: "Petit verre", systemImage: "drop", milliliters: rounded(Double(glass) * 0.6)),
-            HydrationServing(label: "Verre", systemImage: "drop.fill", milliliters: glass),
-            HydrationServing(label: "Grand verre", systemImage: "drop.halffull", milliliters: large),
+            HydrationServing(label: String(localized: "Petit verre"), systemImage: "drop", milliliters: rounded(Double(glass) * 0.6)),
+            HydrationServing(label: String(localized: "Verre"), systemImage: "drop.fill", milliliters: glass),
+            HydrationServing(label: String(localized: "Grand verre"), systemImage: "drop.halffull", milliliters: large),
             HydrationServing(
-                label: "Bouteille",
+                label: String(localized: "Bouteille"),
                 systemImage: "waterbottle.fill",
                 milliliters: large < bottleML ? bottleML : rounded(Double(large) * 1.5)
             )
