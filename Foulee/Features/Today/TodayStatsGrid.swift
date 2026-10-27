@@ -56,19 +56,19 @@ struct TodayStatsGrid: View {
     private var tiles: some View {
         switch period {
         case .day:
-            tile(.steps, snapshot.steps.formattedFR, sub: "/ \(snapshot.stepsGoal.formattedFR)")
+            tile(.steps, snapshot.steps.groupedText(), sub: "/ \(snapshot.stepsGoal.groupedText())")
             tile(.minutes, "\(snapshot.minutes)", sub: "/ \(snapshot.minutesGoal)")
             tile(.distance, snapshot.distanceKm.kmText(fractionDigits: 1))
-            tile(.calories, snapshot.calories.formattedFR, sub: "kcal")
+            tile(.calories, snapshot.calories.groupedText(), sub: "kcal")
         case .week:
             // Minutes are known at once — the snapshot already holds the
             // week's — and read as a duration, « 6 h » rather than
             // « 360 min » (#366). The three others wait for HealthKit, and say
             // « — » rather than a zero that would read as a real total.
-            tile(.steps, weekTotals.map { $0.steps.formattedFR } ?? "—")
+            tile(.steps, weekTotals.map { $0.steps.groupedText() } ?? "—")
             tile(.minutes, durationText(minutes: snapshot.weekMinutes.reduce(0, +)))
             tile(.distance, weekTotals.map { $0.distanceKm.kmText(fractionDigits: 1) } ?? "—")
-            tile(.calories, weekTotals.map { $0.calories.formattedFR } ?? "—", sub: "kcal")
+            tile(.calories, weekTotals.map { $0.calories.groupedText() } ?? "—", sub: "kcal")
         }
     }
 

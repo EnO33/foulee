@@ -108,7 +108,7 @@ struct RecapDaysView: View {
                     VStack(spacing: 6) {
                         RecapDayRing(day: day, goalMinutes: recap.goalMinutes, lineWidth: 4.5, isRevealed: isRevealed)
                             .animation(.easeOut(duration: 0.6).delay(Double(index) * 0.05), value: isRevealed)
-                        Text(Self.letterFormatter.string(from: day.date).uppercased())
+                        Text(day.date.weekdayInitial.uppercased())
                             .font(FouleeFont.caption.weight(.semibold))
                             .foregroundStyle(isSelected ? FouleeColor.accentMid : .secondary)
                         Text(day.minutes > 0 ? "\(day.minutes)" : "–")
@@ -126,7 +126,7 @@ struct RecapDaysView: View {
             ForEach(recap.period.daysToCome(), id: \.self) { date in
                 VStack(spacing: 6) {
                     UpcomingDayRing(lineWidth: 4.5)
-                    Text(Self.letterFormatter.string(from: date).uppercased())
+                    Text(date.weekdayInitial.uppercased())
                         .font(FouleeFont.caption.weight(.semibold))
                         .foregroundStyle(.tertiary)
                     Text(" ")
@@ -135,7 +135,7 @@ struct RecapDaysView: View {
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(Self.dayFormatter.string(from: date)) : à venir")
+                .accessibilityLabel("\(date.dayText) : à venir")
             }
         }
     }
@@ -176,7 +176,7 @@ struct RecapDaysView: View {
                             .foregroundStyle(.tertiary)
                     }
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(Self.dayFormatter.string(from: date)) : à venir")
+                    .accessibilityLabel("\(date.dayText) : à venir")
             }
         }
     }
@@ -194,7 +194,7 @@ struct RecapDaysView: View {
     }
 
     private func accessibilityText(for day: Recap.Day) -> String {
-        let date = Self.dayFormatter.string(from: day.date)
+        let date = day.date.dayText
         guard day.isPlanned || day.minutes > 0 else { return "\(date) : jour de repos" }
         let held = day.minutes >= recap.goalMinutes && day.minutes > 0 ? ", objectif tenu" : ""
         return "\(date) : \(day.minutes) minutes\(held)"
@@ -205,19 +205,4 @@ struct RecapDaysView: View {
         (Calendar.iso8601Monday.component(.weekday, from: date) + 5) % 7
     }
 
-    private static let french = Locale(identifier: "fr_FR")
-
-    private static let letterFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = french
-        formatter.dateFormat = "EEEEE"
-        return formatter
-    }()
-
-    private static let dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = french
-        formatter.dateFormat = "EEEE d MMMM"
-        return formatter
-    }()
 }

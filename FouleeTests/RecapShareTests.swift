@@ -41,7 +41,7 @@ struct RecapShareTests {
         #expect(card.minutes == "8 h 30")
         #expect(card.goalLine == "Objectif tenu 4 jours sur 5")
         #expect(card.stats.map(\.label) == ["Distance", "Pas", "Sorties"])
-        #expect(card.stats.map(\.value) == ["70,9 km", 82_594.formattedFR, "12"])
+        #expect(card.stats.map(\.value) == ["70,9 km", 82_594.groupedText(), "12"])
         #expect(card.bestDay == "Lundi 5 Oct. · 2 h 06")
         #expect(card.message == "Ma semaine sur Foulée : 8 h 30 d'activité, objectif tenu 4 jours sur 5.")
     }
@@ -54,7 +54,7 @@ struct RecapShareTests {
         recap.totals.climbMeters = 1_249.6
         let card = RecapShareCard(recap: recap)
         #expect(card.stats.map(\.label) == ["Distance", "Dénivelé", "Pas", "Sorties"])
-        #expect(card.stats[1].value == "\(1_250.formattedFR) m")
+        #expect(card.stats[1].value == "\(1_250.groupedText()) m")
     }
 
     @Test("A month is « Mon mois »")

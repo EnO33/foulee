@@ -155,7 +155,7 @@ struct HydrationWeekView: View {
                 ForEach(history.days) { day in
                     VStack(spacing: 6) {
                         ring(day)
-                        Text(Self.letterFormatter.string(from: day.date).uppercased())
+                        Text(day.date.weekdayInitial.uppercased())
                             .font(FouleeFont.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                         Text(day.milliliters > 0 ? litres(day.milliliters) : "–")
@@ -164,13 +164,13 @@ struct HydrationWeekView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(Self.dayFormatter.string(from: day.date))
+                    .accessibilityLabel(day.date.dayText)
                     .accessibilityValue("\(litres(day.milliliters)) litre")
                 }
                 ForEach(history.daysToCome, id: \.self) { date in
                     VStack(spacing: 6) {
                         UpcomingDayRing(lineWidth: 4.5)
-                        Text(Self.letterFormatter.string(from: date).uppercased())
+                        Text(date.weekdayInitial.uppercased())
                             .font(FouleeFont.caption.weight(.semibold))
                             .foregroundStyle(.tertiary)
                         Text(" ")
@@ -178,7 +178,7 @@ struct HydrationWeekView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(Self.dayFormatter.string(from: date)) : à venir")
+                    .accessibilityLabel("\(date.dayText) : à venir")
                 }
             }
             HStack(spacing: 6) {
@@ -210,17 +210,4 @@ struct HydrationWeekView: View {
         .aspectRatio(1, contentMode: .fit)
     }
 
-    private static let letterFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "EEEEE"
-        return formatter
-    }()
-
-    private static let dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "EEEE d MMMM"
-        return formatter
-    }()
 }

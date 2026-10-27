@@ -169,7 +169,7 @@ struct TodayProgressView: View {
         HStack(spacing: 8) {
             rings(lineWidth: 4, inset: 5).frame(width: 34, height: 34)
             VStack(alignment: .leading, spacing: 1) {
-                Label("\(entry.steps.formatted()) / \(entry.stepsGoal.formatted())", systemImage: Self.stepsIcon)
+                Label("\(entry.steps.groupedText()) / \(entry.stepsGoal.groupedText())", systemImage: Self.stepsIcon)
                 Label("\(entry.minutes) / \(entry.minutesGoal) min", systemImage: "timer")
                 FreshnessStamp(fetchedAt: entry.fetchedAt).foregroundStyle(.secondary)
             }
@@ -178,7 +178,7 @@ struct TodayProgressView: View {
     }
 
     private var inlineView: some View {
-        Label("\(entry.steps.formatted()) pas · \(entry.minutes) min", systemImage: Self.stepsIcon)
+        Label("\(entry.steps.groupedText()) pas · \(entry.minutes) min", systemImage: Self.stepsIcon)
     }
 
     private var smallView: some View {
@@ -186,7 +186,7 @@ struct TodayProgressView: View {
             rings(lineWidth: 9, inset: 11).frame(width: 60, height: 60)
             VStack(alignment: .leading, spacing: 4) {
                 legendRow(color: Color(red: 0xBF / 255, green: 0x5A / 255, blue: 0xF2 / 255),
-                          value: "\(entry.steps.formatted())", unit: "pas")
+                          value: "\(entry.steps.groupedText())", unit: "pas")
                 legendRow(color: Color(red: 0x30 / 255, green: 0xD1 / 255, blue: 0x58 / 255),
                           value: "\(entry.minutes)", unit: "min")
                 FreshnessStamp(fetchedAt: entry.fetchedAt).foregroundStyle(.white.opacity(0.5))

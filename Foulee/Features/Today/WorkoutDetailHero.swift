@@ -36,18 +36,11 @@ struct WorkoutDetailHero: View {
         .fouleeGlass(cornerRadius: 26)
     }
 
-    private static let dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "EEEE d MMMM"
-        return formatter
-    }()
-
     private var dateLabel: String {
         let calendar = Calendar.current
         let date = detail.summary.startedAt
         if calendar.isDateInToday(date) { return "Aujourd'hui" }
         if calendar.isDateInYesterday(date) { return "Hier" }
-        return Self.dayFormatter.string(from: date).uppercased()
+        return date.dayText.uppercased()
     }
 }

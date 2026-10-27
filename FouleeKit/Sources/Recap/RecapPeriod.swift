@@ -181,7 +181,7 @@ nonisolated public struct RecapPeriod: Hashable, Sendable {
     public var title: String {
         switch kind {
         case .week: span
-        case .month: Self.monthFormatter.string(from: start).capitalized(with: Self.french)
+        case .month: Self.monthFormatter.string(from: start).capitalized(with: .app)
         }
     }
 
@@ -201,21 +201,9 @@ nonisolated public struct RecapPeriod: Hashable, Sendable {
         return RecapPeriod(kind: kind, start: interval.start, end: interval.end)
     }
 
-    private static let french = Locale(identifier: "fr_FR")
+    private static let dayFormatter = DateFormatter(template: "dMMM")
 
-    private static let dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = french
-        formatter.dateFormat = "d MMM"
-        return formatter
-    }()
-
-    private static let monthFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = french
-        formatter.dateFormat = "LLLL yyyy"
-        return formatter
-    }()
+    private static let monthFormatter = DateFormatter(template: "LLLLyyyy")
 
     public init(
         kind: Kind,

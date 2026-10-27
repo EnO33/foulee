@@ -38,7 +38,7 @@ struct WatchSessionMetricsPage: View {
                 }
 
                 HStack(spacing: 10) {
-                    metric(value: metrics.steps.formatted(), label: "pas", icon: "shoe", tint: MetricPalette.steps)
+                    metric(value: metrics.steps.groupedText(), label: "pas", icon: "shoe", tint: MetricPalette.steps)
                     metric(value: metrics.distanceKm.kmValue(), label: "km", icon: "location.fill", tint: MetricPalette.distance)
                 }
                 HStack(spacing: 10) {

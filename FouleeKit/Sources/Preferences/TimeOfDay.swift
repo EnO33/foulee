@@ -38,8 +38,9 @@ nonisolated public struct TimeOfDay: Equatable, Hashable, Sendable, Codable {
 }
 
 nonisolated public extension TimeOfDay {
-    /// « 11:30 » — the same 24-hour wall clock as `Date.clockText`.
-    var clockText: String { String(format: "%02d:%02d", hour, minute) }
+    /// « 11:30 » — the same wall clock as `Date.clockText`, in the hours the
+    /// device reads (issue #586).
+    var clockText: String { DateComponents(hour: hour, minute: minute).clockText }
 }
 
 nonisolated public extension TimeOfDay {

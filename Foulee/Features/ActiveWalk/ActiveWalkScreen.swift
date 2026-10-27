@@ -184,7 +184,7 @@ struct ActiveWalkScreen: View {
         let progress = goalSeconds > 0 ? session.elapsed / goalSeconds : 0
         return ProgressRing(progress: progress, lineWidth: 16) {
             VStack(spacing: 4) {
-                Text(session.steps.formattedFR)
+                Text(session.steps.groupedText())
                     .scaledNumericFont(size: 56)
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
@@ -209,7 +209,7 @@ struct ActiveWalkScreen: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Sortie en cours")
         .accessibilityValue(
-            "\(session.steps.formattedFR) pas, "
+            "\(session.steps.groupedText()) pas, "
             + "\(session.distanceKm.kmText(fractionDigits: 1)), "
             + "\(session.estimatedCalories) kilocalories, "
             + "\(Int(session.elevationGainMeters)) mètres de montée, "
@@ -368,7 +368,7 @@ private extension ActiveWalkScreen {
     }
 
     func finishedSummary(session: WalkSession) -> String {
-        var parts = ["\(session.steps.formattedFR) pas", session.distanceKm.kmText()]
+        var parts = ["\(session.steps.groupedText()) pas", session.distanceKm.kmText()]
         if session.elevationGainMeters >= 1 {
             parts.append("↑ \(Int(session.elevationGainMeters)) m")
         }

@@ -105,13 +105,13 @@ struct RecapComparison: View {
         // that writes none would otherwise show two empty bars.
         let climb = now.climbMeters > 0 || before.climbMeters > 0
             ? [Row(label: "Dénivelé", icon: FouleeIcon.climb, tint: AnyShapeStyle(FouleeColor.success),
-                   now: now.climbMeters, before: before.climbMeters) { "\(Int($0.rounded()).formattedFR) m" }]
+                   now: now.climbMeters, before: before.climbMeters) { "\(Int($0.rounded()).groupedText()) m" }]
             : []
         return [
             Row(label: "Minutes", icon: FouleeIcon.timer, tint: AnyShapeStyle(FouleeColor.activityGradient),
                 now: Double(now.minutes), before: Double(before.minutes)) { durationText(minutes: Int($0)) },
             Row(label: "Pas", icon: FouleeIcon.footsteps, tint: AnyShapeStyle(FouleeColor.accentGradient),
-                now: Double(now.steps), before: Double(before.steps)) { Int($0).formattedFR },
+                now: Double(now.steps), before: Double(before.steps)) { Int($0).groupedText() },
             Row(label: "Distance", icon: FouleeIcon.distance, tint: AnyShapeStyle(WalkMetric.distance.tint),
                 now: now.distanceKm, before: before.distanceKm) { $0.kmText(fractionDigits: 1) }
         ] + climb + [
@@ -200,14 +200,14 @@ struct RecapHighlights: View {
                     tint: FouleeColor.warning,
                     title: "Meilleur jour",
                     value: durationText(minutes: best.minutes),
-                    detail: Self.dayFormatter.string(from: best.date).capitalized(with: Locale(identifier: "fr_FR"))
+                    detail: best.date.shortDayText.capitalized(with: .app)
                 )
             }
             tile(
                 icon: FouleeIcon.flame,
                 tint: FouleeColor.danger,
                 title: "Énergie",
-                value: "\(recap.totals.calories.formattedFR) kcal",
+                value: "\(recap.totals.calories.groupedText()) kcal",
                 detail: "\(recap.totals.outings) sortie\(recap.totals.outings > 1 ? "s" : "")"
             )
         }
@@ -231,13 +231,6 @@ struct RecapHighlights: View {
         .fouleeGlass(cornerRadius: 20)
         .accessibilityElement(children: .combine)
     }
-
-    private static let dayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "EEEE d MMM"
-        return formatter
-    }()
 }
 
 /// The period's water (issue #356): the daily mean against the period before,

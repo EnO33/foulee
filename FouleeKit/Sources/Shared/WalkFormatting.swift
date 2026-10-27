@@ -86,15 +86,15 @@ nonisolated public func cadenceText(stepsPerSecond: Double) -> String? {
 }
 
 nonisolated public extension Double {
-    /// A km distance with a French decimal comma and no unit, e.g. `1,23`.
-    func kmValue(fractionDigits: Int = 2) -> String {
-        decimalComma(fractionDigits: fractionDigits)
+    /// A km distance in `locale`'s numerals and no unit, e.g. `1,23`.
+    func kmValue(fractionDigits: Int = 2, locale: Locale = .app) -> String {
+        decimalText(fractionDigits: fractionDigits, locale: locale)
     }
 
-    /// A km distance with a French decimal comma and the `km` unit, e.g.
-    /// `1,23 km`. `fractionDigits` defaults to 2; live screens that update
-    /// every second pass `1` to keep the trailing digit calm.
-    func kmText(fractionDigits: Int = 2) -> String {
-        "\(kmValue(fractionDigits: fractionDigits)) km"
+    /// A km distance in `locale`'s numerals and the `km` unit, e.g. `1,23 km`.
+    /// `fractionDigits` defaults to 2; live screens that update every second
+    /// pass `1` to keep the trailing digit calm.
+    func kmText(fractionDigits: Int = 2, locale: Locale = .app) -> String {
+        "\(kmValue(fractionDigits: fractionDigits, locale: locale)) km"
     }
 }

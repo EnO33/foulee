@@ -118,7 +118,7 @@ struct MirroredWalkScreen: View {
         if let figures = store.figures {
             VStack(spacing: 12) {
                 HStack(spacing: 12) {
-                    tile("\(figures.steps.formatted())", "pas")
+                    tile("\(figures.steps.groupedText())", "pas")
                     tile(figures.distanceKm.kmValue(), "km")
                 }
                 HStack(spacing: 12) {

@@ -95,7 +95,7 @@ nonisolated public extension WorkoutSummary {
     /// « ↑ 120 m », or `nil` when the source wrote no climb (issue #534):
     /// absent, not « ↑ 0 m », which would read as a flat outing.
     var climbText: String? {
-        elevationMeters >= 1 ? "↑ \(Int(elevationMeters.rounded()).formattedFR) m" : nil
+        elevationMeters >= 1 ? "↑ \(Int(elevationMeters.rounded()).groupedText()) m" : nil
     }
 
     /// The same climb as VoiceOver says it: « 120 mètres de montée », not
@@ -106,7 +106,7 @@ nonisolated public extension WorkoutSummary {
 
     /// « ↓ 115 m », or `nil` when the source wrote no descent (issue #565).
     var descentText: String? {
-        descentMeters >= 1 ? "↓ \(Int(descentMeters.rounded()).formattedFR) m" : nil
+        descentMeters >= 1 ? "↓ \(Int(descentMeters.rounded()).groupedText()) m" : nil
     }
 
     /// « 115 mètres de descente », for VoiceOver.

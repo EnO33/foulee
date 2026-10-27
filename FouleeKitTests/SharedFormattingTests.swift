@@ -14,7 +14,7 @@ struct WalkFormattingTests {
             )
         }
         #expect(outing(climb: 120).climbText == "↑ 120 m")
-        #expect(outing(climb: 1_249.6).climbText == "↑ \(1_250.formattedFR) m")
+        #expect(outing(climb: 1_249.6).climbText == "↑ \(1_250.groupedText()) m")
         #expect(outing(climb: 0.4).climbText == nil)
         #expect(outing(climb: 120).climbSpokenText == "120 mètres de montée")
         #expect(outing(climb: 0.4).climbSpokenText == nil)

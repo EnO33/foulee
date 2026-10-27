@@ -165,13 +165,6 @@ struct RecapDayTimeline: View {
         if calendar.isDate(outings.day, inSameDayAs: today) { return "Aujourd'hui" }
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
            calendar.isDate(outings.day, inSameDayAs: yesterday) { return "Hier" }
-        return Self.titleFormatter.string(from: outings.day).capitalized(with: Locale(identifier: "fr_FR"))
+        return outings.day.dayText.capitalized(with: .app)
     }
-
-    private static let titleFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "EEEE d MMMM"
-        return formatter
-    }()
 }
