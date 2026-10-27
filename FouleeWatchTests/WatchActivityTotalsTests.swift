@@ -179,7 +179,7 @@ struct WatchActivityTotalsTests {
         // One decimal, not two: this line refreshes with the session, and the
         // second decimal would flicker without adding anything readable at a
         // glance.
-        #expect(metrics.activityTotals.countersText == "1480 pas  1,8 km  136 kcal")
+        #expect(metrics.activityTotals.countersText == "\(1_480.groupedText()) pas  1,8 km  136 kcal")
     }
 }
 
