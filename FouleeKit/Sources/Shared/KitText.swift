@@ -8,7 +8,7 @@ import Foundation
 /// the lookup follows `Locale.app`, the language of the app showing the text,
 /// rather than the device's — an English iPhone with a French-only watch would
 /// otherwise get « Walk » among French words on the wrist.
-nonisolated public func kitText(_ resource: LocalizedStringResource, locale: Locale = .app) -> String {
+nonisolated func kitText(_ resource: LocalizedStringResource, locale: Locale = .app) -> String {
     // Rebuilt rather than edited: the bundle of a resource is fixed. Its value
     // carries the key the literal was extracted under, and the arguments.
     String(localized: LocalizedStringResource(resource.defaultValue, locale: locale, bundle: .atURL(Bundle.kit.bundleURL)))
