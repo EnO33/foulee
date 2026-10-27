@@ -29,7 +29,7 @@ final class ScreenshotCaptureTests: XCTestCase {
     /// the composer's `shots` table decides what the listing shows.
     func testCaptureOnboarding() {
         let app = launchInCaptureMode(onboarding: true)
-        waitForScreen(app.buttons["Commencer"], "Onboarding welcome step")
+        waitForScreen(app.buttons[ScreenshotCapture.label.start], "Onboarding welcome step")
         capture("13_onboarding")
     }
 
@@ -72,9 +72,9 @@ final class ScreenshotCaptureTests: XCTestCase {
     /// streak at its head, the month's rings below.
     private func captureStreak(_ app: XCUIApplication) {
         tapWhenReady(app.buttons[ScreenshotCapture.Card.streak], "Streak badge")
-        waitForScreen(app.staticTexts["SÉRIE ACTUELLE"], "Bilan streak")
+        waitForScreen(app.staticTexts[ScreenshotCapture.label.currentStreak], "Bilan streak")
         // The link only shows once the month has loaded.
-        waitForScreen(app.buttons["Voir dans Santé"], "Bilan month")
+        waitForScreen(app.buttons[ScreenshotCapture.label.seeInHealth], "Bilan month")
         capture("06_streak")
         close(app)
     }
@@ -84,13 +84,13 @@ final class ScreenshotCaptureTests: XCTestCase {
     private func captureWristOuting(_ wrist: ScreenshotCapture.Wrist, name: String) {
         let app = launchInCaptureMode(wrist: wrist)
         tapWhenReady(app.buttons[wrist.heroButton], "Hero outing button")
-        waitForScreen(app.buttons["Arrêter la séance"], "Mirrored outing")
+        waitForScreen(app.buttons[ScreenshotCapture.label.stopSession], "Mirrored outing")
         capture(name)
     }
 
     private func captureMetric(_ app: XCUIApplication, metric: String, name: String) {
         tapWhenReady(app.buttons[ScreenshotCapture.Card.metric(metric)], "\(metric) card")
-        waitForScreen(app.staticTexts["STATISTIQUES"], "\(metric) stats screen")
+        waitForScreen(app.staticTexts[ScreenshotCapture.label.statistics], "\(metric) stats screen")
         capture(name)
         close(app)
     }
@@ -104,10 +104,10 @@ final class ScreenshotCaptureTests: XCTestCase {
     /// afterwards, because the next captures start from there.
     private func captureHydration(_ app: XCUIApplication) {
         for _ in 0..<Self.scrollSwipes { app.swipeUp(velocity: .fast) }
-        waitForScreen(app.buttons["J'ai bu un verre"], "Hydration card")
+        waitForScreen(app.buttons[ScreenshotCapture.label.drankGlass], "Hydration card")
         settleAfterScrolling()
-        tapWhenReady(app.staticTexts["Hydratation"].firstMatch, "Hydration card title")
-        waitForScreen(app.staticTexts["Verre par verre"], "Hydration screen")
+        tapWhenReady(app.staticTexts[ScreenshotCapture.label.hydration].firstMatch, "Hydration card title")
+        waitForScreen(app.staticTexts[ScreenshotCapture.label.glassByGlass], "Hydration screen")
         capture("08_hydration")
         close(app)
         for _ in 0..<Self.scrollSwipes { app.swipeDown(velocity: .fast) }
@@ -116,12 +116,12 @@ final class ScreenshotCaptureTests: XCTestCase {
     /// The Bilan on the current week, then today's outing in it: a walk that
     /// became a run, whose detail shows the two portions (issue #318).
     private func captureSummary(_ app: XCUIApplication) {
-        tapWhenReady(app.buttons["Voir le bilan"], "Voir le bilan")
+        tapWhenReady(app.buttons[ScreenshotCapture.label.seeSummary], "Voir le bilan")
         // The link only shows once the Bilan has loaded (issues #348, #350).
-        waitForScreen(app.buttons["Voir dans Santé"], "Bilan")
+        waitForScreen(app.buttons[ScreenshotCapture.label.seeInHealth], "Bilan")
         capture("04_summary")
-        tapWhenReady(app.staticTexts["Marche et course"].firstMatch, "Today's outing")
-        waitForScreen(app.staticTexts["PORTIONS"], "Outing detail")
+        tapWhenReady(app.staticTexts[ScreenshotCapture.label.walkAndRun].firstMatch, "Today's outing")
+        waitForScreen(app.staticTexts[ScreenshotCapture.label.portions], "Outing detail")
         capture("03_outing")
         // The detail is pushed over the Bilan, whose close button it hides.
         tapWhenReady(app.navigationBars.buttons.firstMatch, "Back to the Bilan")
@@ -129,8 +129,8 @@ final class ScreenshotCaptureTests: XCTestCase {
     }
 
     private func captureSettings(_ app: XCUIApplication) {
-        tapWhenReady(app.buttons["Réglages"], "Settings button")
-        waitForScreen(app.staticTexts["Réglages"], "Settings")
+        tapWhenReady(app.buttons[ScreenshotCapture.label.settings], "Settings button")
+        waitForScreen(app.staticTexts[ScreenshotCapture.label.settings], "Settings")
         capture("12_settings")
         close(app)
     }
@@ -139,7 +139,10 @@ final class ScreenshotCaptureTests: XCTestCase {
         tapWhenReady(app.buttons[ScreenshotCapture.Card.weather], "Weather card")
         // The seeded walk window opens at 12:00, written the way the whole app
         // writes a time since #395 (`TimeOfDay.clockText`).
-        waitForScreen(app.staticTexts["Prévision à 12:00 à ton emplacement"], "Weather sheet")
+        let forecast = app.staticTexts
+            .matching(NSPredicate(format: "label BEGINSWITH %@", ScreenshotCapture.label.forecastAtNoon))
+            .firstMatch
+        waitForScreen(forecast, "Weather sheet")
         capture("10_weather")
         close(app)
     }
@@ -149,12 +152,12 @@ final class ScreenshotCaptureTests: XCTestCase {
     /// decides. Nothing is written to Santé: the capture doubles'
     /// `saveWorkout` is a no-op, and this run never stops the session anyway.
     private func captureSession(_ app: XCUIApplication) {
-        tapWhenReady(app.buttons["Repartir"], "Repartir")
-        waitForScreen(app.staticTexts["EN COURS"], "Session in progress")
+        tapWhenReady(app.buttons[ScreenshotCapture.label.goAgain], "Repartir")
+        waitForScreen(app.staticTexts[ScreenshotCapture.label.inProgress], "Session in progress")
         capture("07_session")
     }
 
     private func close(_ app: XCUIApplication) {
-        tapWhenReady(app.buttons["Fermer"].firstMatch, "Close button")
+        tapWhenReady(app.buttons[ScreenshotCapture.label.close].firstMatch, "Close button")
     }
 }

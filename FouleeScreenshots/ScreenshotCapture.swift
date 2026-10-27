@@ -31,17 +31,56 @@ enum ScreenshotCapture {
         /// The hero's button for that outing (`TodayHeroCard`).
         var heroButton: String {
             switch self {
-            case .watch: "Séance en cours sur ta Watch"
-            case .garmin: "Séance en cours sur ta Garmin"
+            case .watch: ScreenshotCapture.label.heroWatch
+            case .garmin: ScreenshotCapture.label.heroGarmin
             }
         }
     }
 
-    /// French, whatever the host runs (issue #408): the boards are French, and
-    /// a simulator left in English groups thousands as « 8,240 ». CI runners
-    /// are in English; a developer's Mac usually is not, which is why the
-    /// difference went unseen until the captures moved to CI.
-    static let localeArguments = ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"]
+    /// The language of the run: French unless `tools/capture_screenshots.sh
+    /// --language en` asked for the English boards (issue #592).
+    static let isEnglish = ProcessInfo.processInfo.environment["FOULEE_CAPTURE_LANGUAGE"] == "en"
+
+    /// Pinned whatever the host runs (issue #408): a simulator left in English
+    /// groups thousands as « 8,240 » on the French boards. CI runners are in
+    /// English; a developer's Mac usually is not, which is why the difference
+    /// went unseen until the captures moved to CI.
+    static let localeArguments = isEnglish
+        ? ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        : ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"]
+
+    /// The words the run finds its way by, in the run's language: the app's
+    /// own strings, as `Foulee/Resources/Localizable.xcstrings` translates them.
+    static let label = isEnglish ? Labels.english : Labels.french
+
+    struct Labels {
+        let start, heroWatch, heroGarmin, currentStreak, seeInHealth, stopSession: String
+        let statistics, drankGlass, hydration, glassByGlass, seeSummary: String
+        let walkAndRun, portions, settings, inProgress, goAgain, close: String
+        /// The weather sheet's heading up to the hour: the rest is « 12:00 »
+        /// in French and « 12:00 PM » in the US, with a narrow no-break space.
+        let forecastAtNoon: String
+
+        static let french = Labels(
+            start: "Commencer", heroWatch: "Séance en cours sur ta Watch",
+            heroGarmin: "Séance en cours sur ta Garmin", currentStreak: "SÉRIE ACTUELLE",
+            seeInHealth: "Voir dans Santé", stopSession: "Arrêter la séance",
+            statistics: "STATISTIQUES", drankGlass: "J'ai bu un verre", hydration: "Hydratation",
+            glassByGlass: "Verre par verre", seeSummary: "Voir le bilan", walkAndRun: "Marche et course",
+            portions: "PORTIONS", settings: "Réglages", inProgress: "EN COURS", goAgain: "Repartir",
+            close: "Fermer", forecastAtNoon: "Prévision à 12:00 "
+        )
+
+        static let english = Labels(
+            start: "Get started", heroWatch: "Session under way on your Watch",
+            heroGarmin: "Session under way on your Garmin", currentStreak: "CURRENT STREAK",
+            seeInHealth: "See in Health", stopSession: "Stop the session",
+            statistics: "STATISTICS", drankGlass: "I had a glass", hydration: "Hydration",
+            glassByGlass: "Glass by glass", seeSummary: "See the recap", walkAndRun: "Walk and run",
+            portions: "PARTS", settings: "Settings", inProgress: "IN PROGRESS", goAgain: "Go again",
+            close: "Close", forecastAtNoon: "Forecast at 12:00"
+        )
+    }
 
     /// Set by `tools/capture_screenshots.sh --dark`. xcodebuild hands the test
     /// runner every `TEST_RUNNER_`-prefixed variable without the prefix, which

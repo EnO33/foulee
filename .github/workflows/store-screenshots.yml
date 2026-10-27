@@ -36,7 +36,8 @@ jobs:
   screenshots:
     name: Capture, compose and publish
     runs-on: xcode-27
-    timeout-minutes: 60
+    # Two languages, so two passes on each simulator.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -99,9 +100,21 @@ jobs:
         if: inputs.boards_from_run == ''
         run: tools/capture_screenshots.sh --watch "$WATCH_UDID"
 
+      # The same simulators again, in English (issue #592): the script
+      # uninstalls the app first, and the language is a launch argument.
+      - name: Capture the English iPhone set
+        if: inputs.boards_from_run == ''
+        run: tools/capture_screenshots.sh --language en "$IPHONE_UDID"
+
+      - name: Capture the English Apple Watch set
+        if: inputs.boards_from_run == ''
+        run: tools/capture_screenshots.sh --watch --language en "$WATCH_UDID"
+
       - name: Compose the boards
         if: inputs.boards_from_run == ''
-        run: swift tools/compose_appstore_screenshots.swift
+        run: |
+          swift tools/compose_appstore_screenshots.swift
+          swift tools/compose_appstore_screenshots.swift --locale en-US
 
       - name: Upload the boards
         if: inputs.boards_from_run == ''
@@ -112,6 +125,9 @@ jobs:
             appstore-screenshots/iphone-6.9
             appstore-screenshots/ipad-13
             appstore-screenshots/watch
+            appstore-screenshots/en-US/iphone-6.9
+            appstore-screenshots/en-US/ipad-13
+            appstore-screenshots/en-US/watch
 
       - name: Materialise the App Store Connect key
         if: inputs.publish

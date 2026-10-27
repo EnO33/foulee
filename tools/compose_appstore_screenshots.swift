@@ -4,9 +4,15 @@
 //
 //   swift tools/compose_appstore_screenshots.swift
 //   swift tools/compose_appstore_screenshots.swift --input /tmp/raw --output /tmp/out
+//   swift tools/compose_appstore_screenshots.swift --locale en-US
 //
 // Input:  <input>/<family>/<name>.png   — untouched `simctl io screenshot` grabs
 // Output: <output>/<family>/<name>.png  — the boards uploaded to App Store Connect
+//
+// `--locale` picks the captions: fr-FR (the default) reads
+// appstore-screenshots/raw/ and writes appstore-screenshots/; en-US reads
+// appstore-screenshots/en-US/raw/ — what `capture_screenshots.sh --language en`
+// writes — and writes appstore-screenshots/en-US/ (issue #592).
 //
 // A board is the brand gradient, a two-line white caption at the top, and the
 // capture below with rounded corners and a soft shadow. Sizes are fixed by App
@@ -81,7 +87,10 @@ struct Shot {
     /// impossible to regenerate at all (issue #240).
     var sourceFamily: Family?
     let file: String
+    /// The caption on the French boards.
     let lines: [String]
+    /// The same caption on the English boards (issue #592).
+    let english: [String]
     var scrolls: Bool = false
     var trimTop: Int = 0
     var trimBottom: Int = 0
@@ -110,30 +119,30 @@ let iphoneShots: [Shot] = [
     // product page shows without scrolling. App Store Connect takes ten per
     // family at most; the review-only captures (11_minutes, 12_settings,
     // 13_onboarding) are never boarded.
-    Shot(family: .iphone, file: "01_home", lines: ["Ta série,", "chaque jour"], scrolls: true),
-    Shot(family: .iphone, file: "02_watch", lines: ["Ta sortie Watch,", "sur ton iPhone"]),
+    Shot(family: .iphone, file: "01_home", lines: ["Ta série,", "chaque jour"], english: ["Your streak,", "every day"], scrolls: true),
+    Shot(family: .iphone, file: "02_watch", lines: ["Ta sortie Watch,", "sur ton iPhone"], english: ["Your Watch outing,", "on your iPhone"]),
     // Pushed inside the Bilan's sheet, so it carries the same dimmed band.
-    Shot(family: .iphone, file: "03_outing", lines: ["Marche et course,", "chacune comptée"], scrolls: true, trimTop: sheetDimBand),
-    Shot(family: .iphone, file: "04_summary", lines: ["Ta semaine,", "en un bilan"], scrolls: true, trimTop: sheetDimBand),
-    Shot(family: .iphone, file: "05_garmin", lines: ["Ta Garmin aussi,", "en direct"]),
-    Shot(family: .iphone, file: "06_streak", lines: ["Ta série,", "mois après mois"], scrolls: true, trimTop: sheetDimBand),
-    Shot(family: .iphone, file: "07_session", lines: ["Sans montre,", "l'iPhone suffit"]),
-    Shot(family: .iphone, file: "08_hydration", lines: ["Ton eau,", "verre après verre"], scrolls: true, trimTop: sheetDimBand),
-    Shot(family: .iphone, file: "09_stats", lines: ["Tes progrès,", "jour après jour"], scrolls: true),
-    Shot(family: .iphone, file: "10_weather", lines: ["La météo,", "avant de sortir"], trimTop: sheetDimBand)
+    Shot(family: .iphone, file: "03_outing", lines: ["Marche et course,", "chacune comptée"], english: ["Walk and run,", "each one counted"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "04_summary", lines: ["Ta semaine,", "en un bilan"], english: ["Your week,", "in one recap"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "05_garmin", lines: ["Ta Garmin aussi,", "en direct"], english: ["Your Garmin too,", "live"]),
+    Shot(family: .iphone, file: "06_streak", lines: ["Ta série,", "mois après mois"], english: ["Your streak,", "month after month"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "07_session", lines: ["Sans montre,", "l'iPhone suffit"], english: ["No watch?", "Your iPhone will do"]),
+    Shot(family: .iphone, file: "08_hydration", lines: ["Ton eau,", "verre après verre"], english: ["Your water,", "glass by glass"], scrolls: true, trimTop: sheetDimBand),
+    Shot(family: .iphone, file: "09_stats", lines: ["Tes progrès,", "jour après jour"], english: ["Your progress,", "day after day"], scrolls: true),
+    Shot(family: .iphone, file: "10_weather", lines: ["La météo,", "avant de sortir"], english: ["The weather,", "before you head out"], trimTop: sheetDimBand)
 ]
 
 let watchShots: [Shot] = [
     // Apple Watch — the same order as the phone: the streak, the outing, the
     // walk/run split, then hydration.
-    Shot(family: .watch, file: "watch-01-today", lines: ["Ta série", "au poignet"], scrolls: true),
+    Shot(family: .watch, file: "watch-01-today", lines: ["Ta série", "au poignet"], english: ["Your streak", "on your wrist"], scrolls: true),
     // The one watch board that does **not** scroll, since issue #274. It used
     // to: « Arrêter » and the per-sport counters shared the screen with the
     // clock and the tiles, so the capture cut below the tiles and the fade said
     // so. Those two moved to their own pages, and the « Séance » page now fits
     // whole — a fade drawn under a complete screen would claim content that
     // isn't there.
-    Shot(family: .watch, file: "watch-02-session", lines: ["Ta sortie", "en direct"]),
+    Shot(family: .watch, file: "watch-02-session", lines: ["Ta sortie", "en direct"], english: ["Your outing", "live"]),
     // The board that shows what issue #265 actually does: one outing, two
     // records in Santé.
     //
@@ -141,8 +150,8 @@ let watchShots: [Shot] = [
     // scroll: the seeded outing has two legs and they both fit, so a fade here
     // would promise a third that does not exist. Re-check this flag if the seed
     // ever gains a leg.
-    Shot(family: .watch, file: "watch-03-jambes", lines: ["Marche et course,", "chacune comptée"]),
-    Shot(family: .watch, file: "watch-04-hydration", lines: ["Bois,", "d'un tap"], scrolls: true)
+    Shot(family: .watch, file: "watch-03-jambes", lines: ["Marche et course,", "chacune comptée"], english: ["Walk and run,", "each one counted"]),
+    Shot(family: .watch, file: "watch-04-hydration", lines: ["Bois,", "d'un tap"], english: ["Drink,", "in one tap"], scrolls: true)
 ]
 
 /// iPad 13" — the first six iPhone boards, in the same order and with the same
@@ -150,7 +159,7 @@ let watchShots: [Shot] = [
 /// captured on an iPad.
 let ipadShots = iphoneShots.prefix(6).map { shot in
     Shot(
-        family: .ipad, sourceFamily: .iphone, file: shot.file, lines: shot.lines,
+        family: .ipad, sourceFamily: .iphone, file: shot.file, lines: shot.lines, english: shot.english,
         scrolls: shot.scrolls, trimTop: shot.trimTop, trimBottom: shot.trimBottom
     )
 }
@@ -420,13 +429,13 @@ func trimmed(_ cgImage: CGImage, shot: Shot) -> CGImage {
     return cropped
 }
 
-func compose(_ shot: Shot, capture: CGImage, geometry: Geometry) -> Data {
+func compose(_ shot: Shot, lines: [String], capture: CGImage, geometry: Geometry) -> Data {
     let context = makeContext(geometry.canvas)
     drawBackground(in: context, size: geometry.canvas)
     let source = CGSize(width: capture.width, height: capture.height)
-    let rect = screenRect(for: source, lineCount: shot.lines.count, geometry: geometry)
+    let rect = screenRect(for: source, lineCount: lines.count, geometry: geometry)
     drawScreen(capture, in: context, rect: rect, shot: shot, geometry: geometry)
-    drawCaption(shot.lines, in: context, geometry: geometry)
+    drawCaption(lines, in: context, geometry: geometry)
 
     guard let image = context.makeImage() else {
         fatalError("\(shot.file): CGImage creation failed")
@@ -480,9 +489,16 @@ for family in Family.allCases {
     }
 }
 
-let options = parseArguments(known: ["--input", "--output"])
-let inputRoot = URL(fileURLWithPath: options["--input"] ?? "appstore-screenshots/raw")
-let outputRoot = URL(fileURLWithPath: options["--output"] ?? "appstore-screenshots")
+let options = parseArguments(known: ["--input", "--output", "--locale"])
+let locale = options["--locale"] ?? "fr-FR"
+let localeRoot: String
+switch locale {
+case "fr-FR": localeRoot = "appstore-screenshots"
+case "en-US": localeRoot = "appstore-screenshots/en-US"
+default: fail("'--locale' takes fr-FR or en-US, not '\(locale)'")
+}
+let inputRoot = URL(fileURLWithPath: options["--input"] ?? "\(localeRoot)/raw")
+let outputRoot = URL(fileURLWithPath: options["--output"] ?? localeRoot)
 
 var missing: [String] = []
 var wrongSize: [String] = []
@@ -503,7 +519,8 @@ for shot in shots {
             + "\(sourceFamily.rawValue) wants \(native.width)×\(native.height)")
         continue
     }
-    let data = compose(shot, capture: trimmed(raw, shot: shot), geometry: geometry)
+    let lines = locale == "en-US" ? shot.english : shot.lines
+    let data = compose(shot, lines: lines, capture: trimmed(raw, shot: shot), geometry: geometry)
     let destination = outputRoot
         .appendingPathComponent(shot.family.rawValue)
         .appendingPathComponent("\(shot.file).png")

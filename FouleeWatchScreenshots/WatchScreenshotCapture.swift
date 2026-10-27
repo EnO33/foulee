@@ -23,6 +23,30 @@ enum WatchScreenshotCapture {
     /// because a capture run is unattended and a cold watch simulator launch is
     /// genuinely slow — not because anything here is racy.
     static let timeout: TimeInterval = 60
+
+    /// French unless `tools/capture_screenshots.sh --watch --language en`
+    /// asked for the English boards (issue #592).
+    static let isEnglish = ProcessInfo.processInfo.environment["FOULEE_CAPTURE_LANGUAGE"] == "en"
+
+    /// The words the run finds its way by, as
+    /// `FouleeWatch/Resources/Localizable.xcstrings` translates them.
+    static let label = isEnglish ? Labels.english : Labels.french
+
+    struct Labels {
+        let streak, drank, start, music, routeMap: String
+        /// The start of the « Jambes » row's combined label, « Marche : … ».
+        let walkLeg: String
+
+        static let french = Labels(
+            streak: "série", drank: "J'ai bu", start: "Démarrer",
+            music: "Musique", routeMap: "Plan du parcours", walkLeg: "Marche :"
+        )
+
+        static let english = Labels(
+            streak: "streak", drank: "Had a glass", start: "Start",
+            music: "Music", routeMap: "Route map", walkLeg: "Walk:"
+        )
+    }
 }
 
 extension XCTestCase {
@@ -30,12 +54,12 @@ extension XCTestCase {
     @discardableResult
     func launchWatchInCaptureMode() -> XCUIApplication {
         let app = XCUIApplication()
-        // French, whatever the host runs — see `ScreenshotCapture.localeArguments`
-        // on the phone side (issue #408).
-        app.launchArguments = [
-            WatchScreenshotCapture.launchArgument,
-            "-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"
-        ]
+        // The run's language, whatever the host runs — see
+        // `ScreenshotCapture.localeArguments` on the phone side (issue #408).
+        let locale = WatchScreenshotCapture.isEnglish
+            ? ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+            : ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"]
+        app.launchArguments = [WatchScreenshotCapture.launchArgument] + locale
         app.launch()
         return app
     }

@@ -102,18 +102,23 @@ platform :ios do
   # 13" and Apple Watch boards apart by their size and orders each set by file
   # name, so the family prefix keeps the iPhone and iPad boards — same capture
   # names — from overwriting each other, and the number keeps the store order.
+  # One folder per language: the French boards, and the English ones the
+  # composer writes under en-US/ (issue #592).
   desc "Upload the composed App Store boards to the version being prepared"
   lane :screenshots do
-    boards = File.expand_path("../appstore-screenshots", __dir__)
-    staging = File.expand_path("screenshots/fr-FR", __dir__)
-    FileUtils.rm_rf(staging)
-    FileUtils.mkdir_p(staging)
-    { "iphone-6.9" => "iphone", "ipad-13" => "ipad", "watch" => nil }.each do |family, prefix|
-      files = Dir[File.join(boards, family, "*.png")].sort
-      UI.user_error!("No boards in #{File.join(boards, family)}: capture and compose first") if files.empty?
-      files.each do |file|
-        name = prefix ? "#{prefix}-#{File.basename(file)}" : File.basename(file)
-        FileUtils.cp(file, File.join(staging, name))
+    root = File.expand_path("../appstore-screenshots", __dir__)
+    screenshots = File.expand_path("screenshots", __dir__)
+    FileUtils.rm_rf(screenshots)
+    { "fr-FR" => root, "en-US" => File.join(root, "en-US") }.each do |locale, boards|
+      staging = File.join(screenshots, locale)
+      FileUtils.mkdir_p(staging)
+      { "iphone-6.9" => "iphone", "ipad-13" => "ipad", "watch" => nil }.each do |family, prefix|
+        files = Dir[File.join(boards, family, "*.png")].sort
+        UI.user_error!("No boards in #{File.join(boards, family)}: capture and compose first") if files.empty?
+        files.each do |file|
+          name = prefix ? "#{prefix}-#{File.basename(file)}" : File.basename(file)
+          FileUtils.cp(file, File.join(staging, name))
+        end
       end
     end
 
@@ -122,7 +127,7 @@ platform :ios do
     deliver(
       api_key: api_key,
       app_version: ENV.fetch("FOULEE_MARKETING_VERSION"),
-      screenshots_path: File.expand_path("screenshots", __dir__),
+      screenshots_path: screenshots,
       overwrite_screenshots: true,
       skip_binary_upload: true,
       skip_metadata: true,

@@ -14,6 +14,8 @@
 #   tools/capture_screenshots.sh --watch "Apple Watch SE 3 (40mm)" probe-40mm
 #   tools/capture_screenshots.sh --dark "" review-dark   # visual review only
 #   tools/capture_screenshots.sh --text-size accessibility-large "" review-a11y
+#   tools/capture_screenshots.sh --language en          # the English set
+#   tools/capture_screenshots.sh --watch --language en
 #
 # The first argument is a simulator NAME or a UDID. A name shared by two
 # available simulators is refused rather than resolved: the runtime a same-named
@@ -42,6 +44,12 @@
 # other than the default one. An empty device argument ("") keeps the default
 # device.
 #
+# `--language en` runs the app in US English (issue #592) and writes under
+# appstore-screenshots/en-US/raw/<set>/ instead, where
+# `compose_appstore_screenshots.swift --locale en-US` reads it: the same set
+# names, the same size guard, a tree of its own so neither language can
+# overwrite the other. French is the default and keeps raw/<set>/.
+#
 # Output is NOT tracked by git: appstore-screenshots/ is ignored on purpose
 # (#72), and generated PNGs must stay that way.
 set -euo pipefail
@@ -49,11 +57,13 @@ set -euo pipefail
 PLATFORM="iOS"
 DARK=""
 TEXT_SIZE=""
+LANGUAGE="fr"
 while [ $# -gt 0 ]; do
   case "$1" in
     --watch) PLATFORM="watchOS"; shift ;;
     --dark) DARK="1"; shift ;;
     --text-size) TEXT_SIZE="${2:?--text-size needs a simctl content size}"; shift 2 ;;
+    --language) LANGUAGE="${2:?--language needs fr or en}"; shift 2 ;;
     *) break ;;
   esac
 done
@@ -98,8 +108,14 @@ if [ -n "$TEXT_SIZE" ] && [ "$PLATFORM" = "watchOS" ]; then
   exit 1
 fi
 
+case "$LANGUAGE" in
+  fr) RAW_ROOT="appstore-screenshots/raw" ;;
+  en) RAW_ROOT="appstore-screenshots/en-US/raw" ;;
+  *) echo "--language takes fr or en, not « $LANGUAGE »." >&2; exit 1 ;;
+esac
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUTPUT_DIR="$REPO_ROOT/appstore-screenshots/raw/$SET_NAME"
+OUTPUT_DIR="$REPO_ROOT/$RAW_ROOT/$SET_NAME"
 WORK_DIR="$(mktemp -d)"
 RESULT_BUNDLE="$WORK_DIR/screenshots.xcresult"
 trap 'rm -rf "$WORK_DIR"' EXIT
@@ -164,7 +180,7 @@ if [ "$SET_NAME" = "$DEFAULT_SET" ]; then
   if [ "$PROBE_SIZE" != "$DEFAULT_SET_SIZE" ]; then
     if [ "$PLATFORM" = "watchOS" ]; then WATCH_FLAG="--watch "; else WATCH_FLAG=""; fi
     cat >&2 <<EOF
-Refusing to write appstore-screenshots/raw/$DEFAULT_SET/.
+Refusing to write $RAW_ROOT/$DEFAULT_SET/.
 
   "$DEVICE" grabs $PROBE_SIZE, and that set is $DEFAULT_SET_SIZE — the only size
   compose_appstore_screenshots.swift accepts for it. Running it here would
@@ -221,7 +237,8 @@ xcrun simctl uninstall "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
 # never answers xcodebuild's request, which then waits out a 600 s timeout
 # after a two-minute capture. The PNGs are attachments, not diagnostics.
 echo "==> Running the capture"
-TEST_RUNNER_FOULEE_CAPTURE_DARK="$DARK" xcodebuild test \
+TEST_RUNNER_FOULEE_CAPTURE_DARK="$DARK" \
+TEST_RUNNER_FOULEE_CAPTURE_LANGUAGE="$LANGUAGE" xcodebuild test \
   -workspace Foulee.xcworkspace \
   -scheme "$SCHEME" \
   -destination "platform=$SIMULATOR_PLATFORM,id=$UDID" \
