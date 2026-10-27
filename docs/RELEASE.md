@@ -81,7 +81,11 @@ Location data.
 
 The policy is [`docs/privacy.md`](privacy.md), published on the site at
 <https://getfoulee.app/confidentialite> (the site's repository, getfoulee/web,
-keeps a copy: update it with this file). The app links to that page from
+keeps a copy: update it with this file). Its English version,
+[`docs/privacy.en.md`](privacy.en.md), is published at
+<https://getfoulee.app/en/privacy>: change both files in the same pull request,
+and the Garmin FAQ with [`docs/faq-garmin.en.md`](faq-garmin.en.md) the same
+way. The app links to the page in its own language from
 **Réglages › À propos** (`AppLinks.privacyPolicy`). The listing in
 `fastlane/metadata/fr-FR/` (§ 10.1) gives App Store Connect the same URL, and
 <https://getfoulee.app/assistance> as the support URL, so the app and the store

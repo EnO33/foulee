@@ -1,3 +1,4 @@
+import FouleeKit
 import Foundation
 
 /// Every web page the app links to (issue #396), in one place: fixed https
@@ -8,11 +9,34 @@ nonisolated enum AppLinks {
     private static let website = "https://getfoulee.app"
     private static let repository = "https://github.com/getfoulee/foulee"
 
-    static let privacyPolicy = link("\(website)/confidentialite")
-    static let support = link("\(website)/assistance")
-    static let garminFAQ = link("\(website)/assistance/garmin")
+    static let privacyPolicy = page(.privacyPolicy)
+    static let support = page(.support)
+    static let garminFAQ = page(.garminFAQ)
     static let reportIssue = link("\(repository)/issues/new")
     static let sourceCode = link(repository)
+
+    /// A page of the site that exists in each language the app speaks.
+    enum Page {
+        case privacyPolicy, support, garminFAQ
+    }
+
+    /// `page` in the language the screens are shown in (issue #593): French at
+    /// the root of the site, every other language on its English pages, under
+    /// `/en`.
+    static func page(_ page: Page, locale: Locale = .app) -> URL {
+        guard locale.language.languageCode != .french else {
+            switch page {
+            case .privacyPolicy: return link("\(website)/confidentialite")
+            case .support: return link("\(website)/assistance")
+            case .garminFAQ: return link("\(website)/assistance/garmin")
+            }
+        }
+        switch page {
+        case .privacyPolicy: return link("\(website)/en/privacy")
+        case .support: return link("\(website)/en/support")
+        case .garminFAQ: return link("\(website)/en/support/garmin")
+        }
+    }
 
     /// The literals above are constants: a malformed one is a programming
     /// error, caught by `AppLinksTests` long before a user taps it.
