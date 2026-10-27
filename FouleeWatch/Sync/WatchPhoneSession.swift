@@ -61,13 +61,13 @@ final class WatchPhoneSession {
         defer { isSending = false }
         do {
             if try await sender.send(command) == false {
-                errorMessage = "La séance de l'iPhone est déjà terminée."
+                errorMessage = String(localized: "La séance de l'iPhone est déjà terminée.")
             }
         } catch {
             FouleeLog.session.error(
                 "commande iPhone impossible : \(error.localizedDescription, privacy: .public)"
             )
-            errorMessage = "iPhone injoignable. Rapproche-le de ta montre."
+            errorMessage = String(localized: "iPhone injoignable. Rapproche-le de ta montre.")
         }
     }
 }

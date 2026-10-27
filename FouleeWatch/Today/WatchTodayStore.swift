@@ -43,7 +43,7 @@ final class WatchTodayStore {
     private static let waterType = HKQuantityType(.dietaryWater)
     /// Raw HKError descriptions are technical noise on a watch card — a fixed
     /// message tells the user what matters: it didn't count.
-    private static let saveFailedMessage = "Verre non enregistré — réessaie"
+    private static let saveFailedMessage = String(localized: "Verre non enregistré — réessaie")
 
     private static let readTypes: Set<HKObjectType> = [
         HKQuantityType(.stepCount),

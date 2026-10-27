@@ -62,16 +62,17 @@ enum WatchStatMetric: String, AppEnum {
         }
     }
 
+    /// « pas », « km »… — the kit's own units, in the complication's language.
     var unitLabel: String {
         switch self {
-        case .steps: "pas"
-        case .minutes: "min"
-        case .distance: "km"
-        case .calories: "kcal"
+        case .steps: WalkMetric.steps.unit
+        case .minutes: WalkMetric.minutes.unit
+        case .distance: WalkMetric.distance.unit
+        case .calories: WalkMetric.calories.unit
         }
     }
 
-    var name: String {
+    var name: LocalizedStringResource {
         switch self {
         case .steps: "Pas"
         case .minutes: "Activité"

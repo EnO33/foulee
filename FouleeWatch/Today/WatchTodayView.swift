@@ -77,11 +77,11 @@ struct WatchTodayView: View {
             // Steps + minutes show progress toward the phone-synced goals,
             // like the hydration card does; distance/calories have no goal.
             stat(icon: "shoeprints.fill", tint: MetricPalette.steps,
-                 value: store.steps.groupedText(), goal: store.stepsGoal.groupedText(), label: "pas")
+                 value: store.steps.groupedText(), goal: store.stepsGoal.groupedText(), label: WalkMetric.steps.unit)
             stat(icon: "timer", tint: MetricPalette.minutes,
-                 value: "\(store.minutes)", goal: "\(store.minutesGoal)", label: "min")
-            stat(icon: "ruler.fill", tint: MetricPalette.distance, value: kmText, label: "km")
-            stat(icon: "flame.fill", tint: MetricPalette.calories, value: store.calories.groupedText(), label: "kcal")
+                 value: "\(store.minutes)", goal: "\(store.minutesGoal)", label: WalkMetric.minutes.unit)
+            stat(icon: "ruler.fill", tint: MetricPalette.distance, value: kmText, label: WalkMetric.distance.unit)
+            stat(icon: "flame.fill", tint: MetricPalette.calories, value: store.calories.groupedText(), label: WalkMetric.calories.unit)
         }
     }
 

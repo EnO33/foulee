@@ -158,7 +158,7 @@ struct WatchActivityTotalsTests {
         // Without the leading word, VoiceOver reads six numbers belonging to
         // nothing in particular — and « quel sport la montre a compris ? » is
         // the question this block answers.
-        #expect(metrics.activitySummaryText == "Course : 12:04, 1480 pas, 1,8 km, 136 kcal")
+        #expect(metrics.activitySummaryText == "Course : 12:04, \(1_480.groupedText()) pas, 1,8 km, 136 kcal")
     }
 
     @Test("The two displayed lines name the sport and its three counters")

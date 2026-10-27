@@ -93,7 +93,7 @@ struct WatchFinishedView: View {
     /// descent when the barometer measured them (issues #535, #565).
     var figuresText: String {
         let elevation = Elevation(ascent: metrics.climbMeters, descent: metrics.descentMeters).text.map { " · \($0)" } ?? ""
-        return "\(metrics.steps.groupedText()) pas · \(metrics.distanceKm.kmText())\(elevation)"
+        return String(localized: "\(metrics.steps.groupedText()) pas · \(metrics.distanceKm.kmText())") + elevation
     }
 
     /// One line per sport, when the outing changed sport (issue #265).
@@ -173,7 +173,7 @@ struct WatchFinishedView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             metrics.splits
-                .map { "Kilomètre \($0.kilometre) en \($0.duration.walkClockText)" }
+                .map { String(localized: "Kilomètre \($0.kilometre) en \($0.duration.walkClockText)") }
                 .joined(separator: ", ")
         )
     }

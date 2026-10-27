@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// The page a session opens on: how long, which sport, and the four counters
@@ -38,13 +39,18 @@ struct WatchSessionMetricsPage: View {
                 }
 
                 HStack(spacing: 10) {
-                    metric(value: metrics.steps.groupedText(), label: "pas", icon: "shoe", tint: MetricPalette.steps)
-                    metric(value: metrics.distanceKm.kmValue(), label: "km", icon: "location.fill", tint: MetricPalette.distance)
+                    metric(value: metrics.steps.groupedText(), label: WalkMetric.steps.unit, icon: "shoe", tint: MetricPalette.steps)
+                    metric(
+                        value: metrics.distanceKm.kmValue(),
+                        label: WalkMetric.distance.unit,
+                        icon: "location.fill",
+                        tint: MetricPalette.distance
+                    )
                 }
                 HStack(spacing: 10) {
                     metric(
                         value: "\(metrics.activeCalories)",
-                        label: "kcal",
+                        label: WalkMetric.calories.unit,
                         icon: "flame.fill",
                         tint: MetricPalette.calories
                     )
@@ -125,7 +131,7 @@ struct WatchSessionMetricsPage: View {
             .multilineTextAlignment(.center)
     }
 
-    /// Two columns at most, and labels of four characters at most. The « pa/s »
+    /// Two columns at most, and labels kept short. The « pa/s »
     /// of issue #261 came from a row of three sharing the width equally.
     ///
     /// **Two lines, not three.** The icon used to sit on its own line above the
@@ -146,9 +152,13 @@ struct WatchSessionMetricsPage: View {
             Text(value)
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .monospacedDigit()
+            // Shrinks rather than wraps: « steps » is longer than « pas », and
+            // at the largest sizes it split mid-word like « pa/s » once did (#588).
             Label(label, systemImage: icon)
                 .font(.caption2)
                 .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity)
     }

@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// What this outing is doing to the day, while it is still happening
@@ -31,14 +32,14 @@ struct WatchSessionDayPage: View {
             VStack(spacing: 10) {
                 streak
                 goal(
-                    label: "pas",
+                    label: WalkMetric.steps.unit,
                     icon: "shoeprints.fill",
                     tint: MetricPalette.steps,
                     value: today.steps,
                     goal: today.stepsGoal
                 )
                 goal(
-                    label: "min",
+                    label: WalkMetric.minutes.unit,
                     icon: "timer",
                     tint: MetricPalette.minutes,
                     value: today.minutes,

@@ -38,12 +38,12 @@ final class WatchHydrationNotificationCenter: NSObject, UNUserNotificationCenter
         // the app. Titles mirror the phone's.
         let drank = UNNotificationAction(
             identifier: HydrationNotification.drankAction,
-            title: "J'ai bu",
+            title: String(localized: "J'ai bu"),
             options: [.foreground]
         )
         let snooze = UNNotificationAction(
             identifier: HydrationNotification.snoozeAction,
-            title: "Rappelle-moi",
+            title: String(localized: "Rappelle-moi"),
             options: [.foreground]
         )
         let category = UNNotificationCategory(

@@ -135,7 +135,7 @@ final class WatchWorkoutStore: NSObject {
         }
         #endif
         guard healthKit.isAvailable() else {
-            lastError = "HealthKit n'est pas disponible sur ce device."
+            lastError = String(localized: "Santé n'est pas disponible sur cet appareil.")
             return
         }
         var writeTypes = Self.writeTypes

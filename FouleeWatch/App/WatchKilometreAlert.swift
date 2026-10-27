@@ -92,14 +92,14 @@ struct WatchKilometreAlert: View {
 
     /// « 812 pas · 160 pas/min ».
     private var rhythmText: String {
-        ["\(split.steps.groupedText()) pas", split.cadenceText].compactMap { $0 }.joined(separator: " · ")
+        [String(localized: "\(split.steps.groupedText()) pas"), split.cadenceText].compactMap { $0 }.joined(separator: " · ")
     }
 
     private var accessibilityText: String {
         [
-            "Kilomètre \(split.kilometre) en \(split.duration.walkClockText)",
+            String(localized: "Kilomètre \(split.kilometre) en \(split.duration.walkClockText)"),
             split.activityText,
-            "\(split.steps.groupedText()) pas",
+            String(localized: "\(split.steps.groupedText()) pas"),
             split.cadenceText,
         ]
         .compactMap { $0 }

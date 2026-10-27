@@ -250,7 +250,7 @@ struct WatchWorkoutStoreTests {
         let store = stub.makeStore()
         await store.start(activity: .walking)
         #expect(store.state == .idle)
-        #expect(store.lastError == "HealthKit n'est pas disponible sur ce device.")
+        #expect(store.lastError == "Santé n'est pas disponible sur cet appareil.")
         #expect(stub.startCalls == 0)
     }
 
