@@ -36,33 +36,49 @@ struct RecapShareCard: Equatable, Sendable {
 
     init(recap: Recap) {
         let isWeek = recap.period.kind == .week
-        heading = isWeek ? "Ma semaine" : "Mon mois"
+        heading = isWeek ? String(localized: "Ma semaine") : String(localized: "Mon mois")
         periodTitle = recap.period.title
         minutes = durationText(minutes: recap.totals.minutes)
         goalLine = Self.goalText(met: recap.goalDaysMet, planned: recap.goalDaysPlanned)
         let outings = recap.totals.outings
         let climb = recap.totals.climbMeters >= 1
-            ? [Stat(label: "Dénivelé", value: "\(Int(recap.totals.climbMeters.rounded()).groupedText()) m", icon: FouleeIcon.climb)]
+            ? [Stat(
+                label: String(localized: "Dénivelé"),
+                value: "\(Int(recap.totals.climbMeters.rounded()).groupedText()) m",
+                icon: FouleeIcon.climb
+            )]
             : []
-        stats = [Stat(label: "Distance", value: recap.totals.distanceKm.kmText(fractionDigits: 1), icon: FouleeIcon.distance)]
+        let distance = Stat(
+            label: String(localized: "Distance"),
+            value: recap.totals.distanceKm.kmText(fractionDigits: 1),
+            icon: FouleeIcon.distance
+        )
+        stats = [distance]
             + climb
             + [
-                Stat(label: "Pas", value: recap.totals.steps.groupedText(), icon: FouleeIcon.footsteps),
-                Stat(label: outings > 1 ? "Sorties" : "Sortie", value: "\(outings)", icon: "figure.walk")
+                Stat(label: String(localized: "Pas"), value: recap.totals.steps.groupedText(), icon: FouleeIcon.footsteps),
+                Stat(
+                    label: outings > 1 ? String(localized: "Sorties") : String(localized: "Sortie"),
+                    value: "\(outings)",
+                    icon: "figure.walk"
+                )
             ]
         bestDay = recap.bestDay.map {
             "\($0.date.shortDayText.capitalized(with: .app)) · \(durationText(minutes: $0.minutes))"
         }
-        var message = "\(heading) sur Foulée : \(minutes) d'activité"
-        if let goalLine { message += ", \(goalLine.prefix(1).lowercased())\(goalLine.dropFirst())" }
-        self.message = message + "."
+        let (met, planned) = (recap.goalDaysMet, recap.goalDaysPlanned)
+        if planned > 0 {
+            message = String(localized: "\(heading) sur Foulée : \(minutes) d'activité, objectif tenu \(met) jours sur \(planned).")
+        } else {
+            message = String(localized: "\(heading) sur Foulée : \(minutes) d'activité.")
+        }
     }
 
     /// « Objectif tenu 6 jours sur 7 » — « jour » stays singular below two,
-    /// as French has it.
+    /// as French has it; English counts the planned days instead.
     static func goalText(met: Int, planned: Int) -> String? {
         guard planned > 0 else { return nil }
-        return "Objectif tenu \(met) jour\(met > 1 ? "s" : "") sur \(planned)"
+        return String(localized: "Objectif tenu \(met) jours sur \(planned)")
     }
 }
 

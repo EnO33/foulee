@@ -379,6 +379,16 @@
         }
       }
     },
+    "Hydratation 💧" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hydration 💧"
+          }
+        }
+      }
+    },
     "Le %@" : {
       "localizations" : {
         "en" : {
@@ -445,6 +455,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Steps"
+          }
+        }
+      }
+    },
+    "Pense à boire un verre." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time for a glass of water."
+          }
+        }
+      }
+    },
+    "Petit rappel : pense à boire 💧" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick reminder: time to drink 💧"
           }
         }
       }

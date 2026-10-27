@@ -24,6 +24,76 @@
       },
       "shouldTranslate" : false
     },
+    "%@ sur Foulée : %@ d'activité, objectif tenu %lld jours sur %lld." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ on Foulée: %2$@ of activity, goal met on %3$lld of %#@days@."
+          },
+          "substitutions" : {
+            "days" : {
+              "argNum" : 4,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg day"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg days"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sur Foulée : %2$@ d'activité, objectif tenu %#@met@ sur %4$lld."
+          },
+          "substitutions" : {
+            "met" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg jour"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg jours"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%@ sur Foulée : %@ d'activité." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ on Foulée: %2$@ of activity."
+          }
+        }
+      }
+    },
     "%@ · En pause" : {
       "localizations" : {
         "en" : {
@@ -1217,6 +1287,16 @@
         }
       }
     },
+    "C'est l'heure de bouger — ta sortie t'attend." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time to move — your workout is waiting."
+          }
+        }
+      }
+    },
     "C'est noté : +%lld ml d'eau." : {
       "localizations" : {
         "en" : {
@@ -1230,6 +1310,16 @@
     "Calories" : {
       "localizations" : {},
       "shouldTranslate" : false
+    },
+    "Carré" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Square"
+          }
+        }
+      }
     },
     "Carte" : {
       "localizations" : {
@@ -2343,6 +2433,16 @@
         }
       }
     },
+    "Ma semaine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My week"
+          }
+        }
+      }
+    },
     "Marche" : {
       "localizations" : {
         "en" : {
@@ -2443,6 +2543,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Perfect month: goal met every planned day."
+          }
+        }
+      }
+    },
+    "Mon mois" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My month"
           }
         }
       }
@@ -3343,6 +3453,16 @@
         }
       }
     },
+    "Rappelle-moi dans %lld min" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remind me in %lld min"
+          }
+        }
+      }
+    },
     "Rappels" : {
       "localizations" : {
         "en" : {
@@ -3733,6 +3853,16 @@
         }
       }
     },
+    "Story" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Story"
+          }
+        }
+      }
+    },
     "Suivi d'hydratation" : {
       "localizations" : {
         "en" : {
@@ -3867,6 +3997,16 @@
         }
       }
     },
+    "Ta semaine en Foulée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your week in Foulée"
+          }
+        }
+      }
+    },
     "Ta semaine, du lundi à aujourd'hui, jour par jour." : {
       "localizations" : {
         "en" : {
@@ -3981,12 +4121,42 @@
         }
       }
     },
+    "Ton mois en Foulée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your month in Foulée"
+          }
+        }
+      }
+    },
     "Ton parcours apparaîtra ici dès les premiers points GPS." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your route will show here from the first GPS points."
+          }
+        }
+      }
+    },
+    "Ton récap de la semaine est prêt : minutes, pas et objectifs tenus." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your weekly recap is ready: minutes, steps and goals met."
+          }
+        }
+      }
+    },
+    "Ton récap du mois est prêt : minutes, pas et objectifs tenus." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your monthly recap is ready: minutes, steps and goals met."
           }
         }
       }

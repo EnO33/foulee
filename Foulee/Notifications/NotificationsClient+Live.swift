@@ -24,8 +24,8 @@ nonisolated extension NotificationsClient {
 
                 for reminder in reminders {
                     let content = UNMutableNotificationContent()
-                    content.title = reminder.title
-                    content.body = reminder.body
+                    content.title = "Foulée"
+                    content.body = WalkReminder.body
                     content.sound = .default
 
                     var components = DateComponents()
@@ -48,7 +48,7 @@ nonisolated extension NotificationsClient {
             scheduleSnooze: { interval in
                 let content = UNMutableNotificationContent()
                 content.title = "Foulée"
-                content.body = "C'est l'heure de bouger — ta sortie t'attend."
+                content.body = WalkReminder.body
                 content.sound = .default
 
                 let trigger = UNTimeIntervalNotificationTrigger(
@@ -69,12 +69,12 @@ nonisolated extension NotificationsClient {
                 // state restoration → SIGABRT. Foreground sidesteps that entirely.
                 let drank = UNNotificationAction(
                     identifier: HydrationNotification.drankAction,
-                    title: "J'ai bu",
+                    title: String(localized: "J'ai bu"),
                     options: [.foreground]
                 )
                 let snooze = UNNotificationAction(
                     identifier: HydrationNotification.snoozeAction,
-                    title: "Rappelle-moi dans \(snoozeMinutes) min",
+                    title: String(localized: "Rappelle-moi dans \(snoozeMinutes) min"),
                     options: [.foreground]
                 )
                 let category = UNNotificationCategory(

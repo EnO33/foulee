@@ -29,15 +29,7 @@ struct WalkReminderScheduler {
         return preferences.activeDays
             .sorted(by: { $0.rawValue < $1.rawValue })
             .map { day in
-                WalkReminder(
-                    weekday: day,
-                    time: time,
-                    title: "Foulée",
-                    // No activity and no time of day (#222): one body has to
-                    // serve marche, course and les deux, and it lands 10 min
-                    // before a window the user chose themselves.
-                    body: "C'est l'heure de bouger — ta sortie t'attend."
-                )
+                WalkReminder(weekday: day, time: time)
             }
     }
 

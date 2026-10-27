@@ -13,9 +13,12 @@ nonisolated public enum HydrationNotification {
     /// Prefix for one-off "remind me later" snooze requests.
     public static let snoozePrefix = "foulee.hydration.snooze."
 
-    public static let title = "Hydratation 💧"
-    public static let body = "Pense à boire un verre."
-    public static let snoozeBody = "Petit rappel : pense à boire 💧"
+    // Read when the reminder is scheduled, in the language of the app
+    // scheduling it: a phone or watch switched to another language speaks it
+    // from the next reschedule on.
+    public static var title: String { kitText("Hydratation 💧") }
+    public static var body: String { kitText("Pense à boire un verre.") }
+    public static var snoozeBody: String { kitText("Petit rappel : pense à boire 💧") }
 
     /// UserDefaults stamp written when an action was handled, so the home can
     /// confirm it to the user (toast) — without it, nothing tells them the tap
