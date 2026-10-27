@@ -19,5 +19,7 @@ struct OnboardingStepIndicator: View {
                     .animation(.easeOut(duration: 0.2), value: step)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Étape \(step.rawValue + 1) sur \(OnboardingStep.allCases.count)")
     }
 }

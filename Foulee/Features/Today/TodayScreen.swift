@@ -256,6 +256,9 @@ struct TodayScreen: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
+            // The screen's title, read once with its date.
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
             Spacer()
             // The streak lives in the Bilan, on the month in progress (#445).
             TodayStreakBadge(streak: snapshot.streak, bestStreak: snapshot.bestStreak) {
@@ -327,6 +330,7 @@ private struct TodayErrorBanner: View {
         }
         .padding(12)
         .fouleeGlass(cornerRadius: 16)
+        .accessibilityElement(children: .combine)
     }
 }
 

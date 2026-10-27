@@ -24,6 +24,26 @@
       },
       "shouldTranslate" : false
     },
+    "%@ litre sur %@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of %2$@ liters, %3$@"
+          }
+        }
+      }
+    },
+    "%@ sur %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of %2$@"
+          }
+        }
+      }
+    },
     "%@ sur Foulée : %@ d'activité, objectif tenu %lld jours sur %lld." : {
       "localizations" : {
         "en" : {
@@ -679,6 +699,16 @@
         }
       }
     },
+    "%lld minutes sur %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld minutes"
+          }
+        }
+      }
+    },
     "%lld mL" : {
       "localizations" : {},
       "shouldTranslate" : false
@@ -1213,6 +1243,16 @@
         }
       }
     },
+    "battements par minute" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "beats per minute"
+          }
+        }
+      }
+    },
     "BPM" : {
       "localizations" : {},
       "shouldTranslate" : false
@@ -1599,6 +1639,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Some data unavailable"
+          }
+        }
+      }
+    },
+    "Durée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duration"
           }
         }
       }
@@ -4875,6 +4925,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Energy"
+          }
+        }
+      }
+    },
+    "Étape %lld sur %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Step %1$lld of %2$lld"
           }
         }
       }

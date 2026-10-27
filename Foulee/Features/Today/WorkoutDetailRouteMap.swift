@@ -139,7 +139,8 @@ struct WorkoutDetailRouteMap: View {
             }
             .padding(14)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .accessibilityElement(children: .combine)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel([leg.activity.label, OutingBreakdown.legSpokenText(leg)].joined(separator: ", "))
         } else if legs.count > 1 {
             Text("Touche une portion pour son détail")
                 .font(FouleeFont.footnote.weight(.semibold))

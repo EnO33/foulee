@@ -34,6 +34,21 @@ struct WorkoutDetailHero: View {
         .padding(.vertical, 22)
         .padding(.horizontal, 18)
         .fouleeGlass(cornerRadius: 26)
+        // One element: the clock alone, « 24:10 », is read as a time of day.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+    }
+
+    private var accessibilityText: String {
+        let summary = detail.summary
+        return [
+            summary.activityLabel,
+            dateLabel,
+            spokenDurationText(seconds: summary.durationSeconds),
+            summary.timeRangeSpokenText,
+            summary.sourceName
+        ]
+        .joined(separator: ", ")
     }
 
     private var dateLabel: String {

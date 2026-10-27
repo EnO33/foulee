@@ -5,6 +5,10 @@ import SwiftUI
 /// toward the goal, where the day stands against its rhythm, and the one-tap
 /// « J'ai bu » — one tap = one glass, a long press for another amount. A tap
 /// anywhere else opens the Hydratation screen.
+///
+/// For VoiceOver (issue #596): the glasses are the card's one figure, read
+/// with the rhythm and opening the screen; « J'ai bu » offers the other
+/// amounts as actions, since a long press is not a gesture VoiceOver makes.
 struct HydrationCard: View {
     let intakeML: Int
     let goalML: Int
@@ -33,6 +37,8 @@ struct HydrationCard: View {
                     .foregroundStyle(reached ? FouleeColor.water : .secondary)
                     .contentTransition(.numericText())
             }
+            // Said by the glasses below, with the rhythm.
+            .accessibilityHidden(true)
 
             HStack(spacing: 6) {
                 ForEach(Array(fills.enumerated()), id: \.offset) { _, fill in
@@ -44,7 +50,10 @@ struct HydrationCard: View {
             .frame(height: 34)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Hydratation")
-            .accessibilityValue("\(litres(intakeML)) litre sur \(litres(goalML))")
+            .accessibilityValue("\(litres(intakeML)) litre sur \(litres(goalML)), \(pace.text)")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint("Voir le détail de l'hydratation")
+            .accessibilityAction(.default, onOpen)
 
             HStack {
                 Label(pace.text, systemImage: pace.systemImage)
@@ -52,6 +61,7 @@ struct HydrationCard: View {
                     .foregroundStyle(reached ? FouleeColor.water : .secondary)
                     .labelStyle(.titleAndIcon)
                     .contentTransition(.opacity)
+                    .accessibilityHidden(true)
                 Spacer(minLength: 8)
                 Button { onDrink(glassML) } label: {
                     Label("J'ai bu", systemImage: "drop.fill")
@@ -70,14 +80,19 @@ struct HydrationCard: View {
                     }
                 }
                 .accessibilityLabel("J'ai bu un verre")
-                .accessibilityHint("Appui long pour choisir une autre quantité")
+                .accessibilityActions {
+                    ForEach(HydrationServing.presets(glassML: glassML)) { serving in
+                        Button("J'ai bu : \(serving.label), \(serving.milliliters) millilitres") {
+                            onDrink(serving.milliliters)
+                        }
+                    }
+                }
             }
         }
         .padding(16)
         .fouleeGlass(cornerRadius: 24)
         .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .onTapGesture(perform: onOpen)
-        .accessibilityAction(named: "Voir le détail de l'hydratation", onOpen)
         .animation(.spring(duration: 0.6, bounce: 0.25), value: intakeML)
         .sensoryFeedback(.increase, trigger: intakeML)
     }

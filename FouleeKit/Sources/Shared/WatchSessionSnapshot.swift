@@ -141,6 +141,11 @@ nonisolated public struct WatchSessionSnapshot: Codable, Equatable, Sendable {
         elapsed(at: sentAt).paceText(overKm: distanceKm)
     }
 
+    /// The same, for VoiceOver.
+    public var averagePaceSpokenText: String? {
+        elapsed(at: sentAt).spokenPaceText(overKm: distanceKm)
+    }
+
     /// How old these figures are. What the screen has to say out loud rather
     /// than pretend away.
     public func age(at date: Date) -> TimeInterval {

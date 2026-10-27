@@ -81,8 +81,19 @@ struct RecapHomeCard: View {
             }
         }
         .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Ta semaine")
+        .accessibilityValue(weekAccessibilityValue)
         .accessibilityHint("Ouvre le bilan de la semaine et ses sorties")
+    }
+
+    /// « 1 heure et 5 minutes, objectif tenu 3 jours sur 4 » — written
+    /// « 1 h 05 · objectif tenu 3/4 », which VoiceOver reads as a fraction.
+    private var weekAccessibilityValue: String {
+        guard let recap = store.recaps[.week] else { return "" }
+        let minutes = spokenDurationText(minutes: recap.totals.minutes)
+        guard recap.goalDaysPlanned > 0 else { return minutes }
+        return "\(minutes), \(String(localized: "Objectif tenu \(recap.goalDaysMet) jours sur \(recap.goalDaysPlanned)"))"
     }
 }
 

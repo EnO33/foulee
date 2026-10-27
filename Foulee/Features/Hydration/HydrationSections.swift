@@ -58,7 +58,11 @@ struct HydrationTodayHero: View {
                 .opacity(0.1)
         }
         .fouleeGlass(cornerRadius: 24, strong: true)
-        .accessibilityElement(children: .combine)
+        // Read as the home card says it: « 0,9 / 2 L » combined came out as
+        // « 0,9 barre oblique 2 L ».
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Hydratation")
+        .accessibilityValue("\(litres(intakeML)) litre sur \(litres(goalML)), \(pace.text)")
     }
 }
 
@@ -188,7 +192,16 @@ struct HydrationWeekView: View {
                     .foregroundStyle(.secondary)
             }
             .font(FouleeFont.footnote.weight(.semibold))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(weekAccessibilityText)
         }
+    }
+
+    /// « 1,2 litre par jour en moyenne, objectif tenu 3 jours sur 7 » —
+    /// written « Objectif tenu 3/7 », which VoiceOver reads as a fraction.
+    private var weekAccessibilityText: Text {
+        let (average, met, days) = (litres(history.averageML), history.goalDaysMet, history.days.count)
+        return Text("\(average) litre par jour en moyenne, objectif tenu \(met) jours sur \(days)")
     }
 
     private func ring(_ day: HydrationHistory.Day) -> some View {

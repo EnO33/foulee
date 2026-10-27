@@ -46,6 +46,7 @@ struct RecapHero: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .contentTransition(.numericText())
+                    .accessibilityLabel(spokenDurationText(minutes: recap.totals.minutes))
                 Text(verdictText)
                     .font(FouleeFont.callout.weight(.semibold))
                     .fixedSize(horizontal: false, vertical: true)

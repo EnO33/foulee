@@ -116,6 +116,9 @@ nonisolated public extension WorkoutSummary {
     /// « 08:00 → 08:41 » — the row, the detail and the bubbles all say it so.
     var timeRangeText: String { "\(startedAt.clockText) → \(endedAt.clockText)" }
 
+    /// « de 08:00 à 08:41 », for VoiceOver, which reads the arrow as one.
+    var timeRangeSpokenText: String { kitText("de \(startedAt.clockText) à \(endedAt.clockText)") }
+
     /// « 142 kcal », the row and the detail alike. A Garmin outing Santé
     /// doesn't have yet (#479) says « — kcal »: the watch doesn't send its
     /// energy, and 0 would read as a figure.

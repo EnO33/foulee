@@ -29,5 +29,8 @@ struct DayChip: View {
                 .shadow(color: FouleeColor.accentMid.opacity(active ? 0.35 : 0), radius: 10, x: 0, y: 4)
         }
         .buttonStyle(.pressable)
+        // « L » alone says nothing, nor does the fill whether the day is on.
+        .accessibilityLabel(day.fullName)
+        .accessibilityAddTraits(active ? .isSelected : [])
     }
 }

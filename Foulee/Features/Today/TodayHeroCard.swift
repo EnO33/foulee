@@ -136,6 +136,7 @@ struct TodayHeroCard: View {
                 )
                 Text("Bravo, \(Text(durationText(minutes: snapshot.minutes)).foregroundStyle(WalkMetric.minutes.tint)) d'activité")
                     .font(FouleeFont.title3)
+                    .accessibilityLabel("Bravo, \(spokenDurationText(minutes: snapshot.minutes)) d'activité")
                 // The weather stays once the outing is done, in one line —
                 // where « Streak prolongée à N jours » used to be, which the
                 // flame in the header now says.
@@ -169,6 +170,7 @@ struct TodayHeroCard: View {
                 // the weather on one line.
                 Text("Encore \(Text(durationText(minutes: minutesToGo)).foregroundStyle(WalkMetric.minutes.tint)) d'activité")
                     .font(FouleeFont.title3)
+                    .accessibilityLabel("Encore \(spokenDurationText(minutes: minutesToGo)) d'activité")
                 windowDetail
             }
         }

@@ -95,7 +95,7 @@ struct MirroredWalkScreen: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(Text(
-                "\(activityLabel) en cours depuis \(elapsed(at: now).walkClockText)"
+                "\(activityLabel) en cours depuis \(spokenDurationText(seconds: elapsed(at: now)))"
             ))
         }
     }
@@ -124,7 +124,7 @@ struct MirroredWalkScreen: View {
                     // The Garmin watch states no calories: a dash, not a
                     // measured zero.
                     tile(device == .garmin ? "—" : "\(figures.activeCalories)", "kcal")
-                    tile(figures.heartRate.map { "\($0)" } ?? "—", "bpm")
+                    tile(figures.heartRate.map { "\($0)" } ?? "—", "bpm", spokenUnit: "battements par minute")
                 }
                 // The outing's average, the only pace honest enough to state:
                 // over a whole sortie the relative error of a wrist-estimated
@@ -133,7 +133,7 @@ struct MirroredWalkScreen: View {
                     Label(pace, systemImage: "speedometer")
                         .font(.subheadline)
                         .monospacedDigit()
-                        .accessibilityLabel("Allure moyenne \(pace)")
+                        .accessibilityLabel("Allure moyenne \(figures.averagePaceSpokenText ?? pace)")
                 }
                 // The wrist's climb and descent, when its barometer measured
                 // any (issue #535).
@@ -178,7 +178,9 @@ struct MirroredWalkScreen: View {
         return String(localized: "Relevé il y a \(Int(age / 60)) min")
     }
 
-    private func tile(_ value: String, _ label: LocalizedStringResource) -> some View {
+    /// `spokenUnit` when the written one is an abbreviation VoiceOver spells
+    /// out letter by letter — « bpm ».
+    private func tile(_ value: String, _ label: LocalizedStringResource, spokenUnit: LocalizedStringResource? = nil) -> some View {
         VStack(spacing: 2) {
             Text(value)
                 .font(.system(size: 28, weight: .semibold, design: .rounded))
@@ -193,7 +195,7 @@ struct MirroredWalkScreen: View {
         .padding(.vertical, 14)
         .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text("\(value) \(label)"))
+        .accessibilityLabel(Text("\(value) \(spokenUnit ?? label)"))
     }
 
     /// Ends the outing — on the wrist (issue #282).

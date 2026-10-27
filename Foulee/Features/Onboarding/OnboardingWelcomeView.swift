@@ -60,6 +60,7 @@ struct OnboardingWelcomeView: View {
                 .font(.system(size: 56, weight: .bold))
                 .foregroundStyle(.white)
         }
+        .accessibilityHidden(true)
     }
 
     private var heading: some View {
@@ -67,6 +68,7 @@ struct OnboardingWelcomeView: View {
             Text("Foulée")
                 .kerning(-1)
                 .scaledSystemFont(size: 40, weight: .heavy)
+                .accessibilityAddTraits(.isHeader)
             Text("Bouge un peu,\nchaque jour.")
                 .font(.title3.weight(.medium))
                 .foregroundStyle(.secondary)
@@ -87,6 +89,7 @@ struct OnboardingWelcomeView: View {
                                 .font(.system(size: 20))
                                 .foregroundStyle(FouleeColor.accentMid)
                         }
+                        .accessibilityHidden(true)
                     // Wraps rather than truncates: on an iPhone SE « Un
                     // objectif simple, pas un score » is wider than the row,
                     // and without this the row kept it on one line, cut.

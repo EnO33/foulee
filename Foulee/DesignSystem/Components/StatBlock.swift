@@ -7,6 +7,9 @@ struct StatBlock: View {
     var label: LocalizedStringResource
     var value: String
     var sub: String?
+    /// The value as VoiceOver says it, when the written one reads wrong —
+    /// « 8 432 sur 10 000 » rather than « 8 432 barre oblique 10 000 ».
+    var spokenValue: String?
     var tint: Color
 
     var body: some View {
@@ -33,6 +36,6 @@ struct StatBlock: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(label))
-        .accessibilityValue(sub.map { "\(value) \($0)" } ?? value)
+        .accessibilityValue(spokenValue ?? sub.map { "\(value) \($0)" } ?? value)
     }
 }

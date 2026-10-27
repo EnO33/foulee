@@ -11,6 +11,9 @@ public struct SportShare: Equatable, Identifiable, Sendable {
     /// « 6'10"/km », or `nil` when the distance is too short to divide —
     /// the same rule, and the same wording, as the watch's legs.
     public var paceText: String? { duration.paceText(overKm: distanceKm) }
+
+    /// The same pace, as VoiceOver says it.
+    public var spokenPaceText: String? { duration.spokenPaceText(overKm: distanceKm) }
 }
 
 /// An outing seen sport by sport — the phone's counterpart of the watch
@@ -47,6 +50,20 @@ public enum OutingBreakdown {
         [leg.timeRangeText, leg.distanceKm.kmText(), leg.durationSeconds.paceText(overKm: leg.distanceKm)]
             .compactMap(\.self)
             .joined(separator: " · ")
+    }
+
+    /// One leg as VoiceOver says it, its duration included: « de 08:10 à
+    /// 08:18, 8 minutes, 1,50 km, 5 minutes et 20 secondes par kilomètre »
+    /// (issue #596).
+    public static func legSpokenText(_ leg: WorkoutSummary) -> String {
+        [
+            leg.timeRangeSpokenText,
+            spokenDurationText(seconds: leg.durationSeconds),
+            leg.distanceKm.kmText(),
+            leg.durationSeconds.spokenPaceText(overKm: leg.distanceKm)
+        ]
+        .compactMap(\.self)
+        .joined(separator: ", ")
     }
 
     /// The shortest stop between two legs the timeline reads aloud: the

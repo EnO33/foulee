@@ -176,6 +176,10 @@ struct ActiveWalkScreen: View {
                 .foregroundStyle(.secondary)
                 .tracking(1.2)
         }
+        // « 12:34 » alone is read as a time of day.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Durée")
+        .accessibilityValue(spokenDurationText(seconds: session.elapsed))
         .padding(.top, 30)
     }
 
@@ -326,6 +330,7 @@ private extension ActiveWalkScreen {
                     .foregroundStyle(FouleeColor.accentGradient)
                     .symbolEffect(.bounce, value: isFinishedState)
             }
+            .accessibilityHidden(true)
             Text("Sortie terminée")
                 .font(FouleeFont.title2)
             VStack(spacing: 4) {
@@ -335,6 +340,8 @@ private extension ActiveWalkScreen {
                     .font(FouleeFont.callout)
                     .foregroundStyle(.secondary)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(finishedSummary(session: session, spoken: true))
             if let highlight = store.highlight {
                 highlightCard(highlight)
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
@@ -367,15 +374,17 @@ private extension ActiveWalkScreen {
         .padding(.horizontal, 32)
     }
 
-    func finishedSummary(session: WalkSession) -> String {
-        var parts = ["\(session.steps.groupedText()) pas", session.distanceKm.kmText()]
-        if session.elevationGainMeters >= 1 {
-            parts.append("↑ \(Int(session.elevationGainMeters)) m")
-        }
-        if session.elevationLossMeters >= 1 {
-            parts.append("↓ \(Int(session.elevationLossMeters)) m")
-        }
-        return parts.joined(separator: " · ")
+    /// « 4 321 pas · 3,20 km · ↑ 42 m » — or, `spoken`, the duration first
+    /// and the climb in words, since the arrows are read as arrows.
+    func finishedSummary(session: WalkSession, spoken: Bool = false) -> String {
+        let elevation = Elevation(ascent: session.elevationGainMeters, descent: session.elevationLossMeters)
+        let parts = [
+            spoken ? spokenDurationText(seconds: session.elapsed) : nil,
+            "\(session.steps.groupedText()) pas",
+            session.distanceKm.kmText(),
+            spoken ? elevation.spokenText : elevation.text
+        ]
+        return parts.compactMap(\.self).joined(separator: spoken ? ", " : " · ")
     }
 }
 

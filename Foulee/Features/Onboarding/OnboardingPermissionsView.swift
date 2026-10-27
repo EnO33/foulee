@@ -73,6 +73,7 @@ struct OnboardingPermissionsView: View {
             Text("Connectons\nSanté & ta montre")
                 .scaledSystemFont(size: 30, weight: .bold)
                 .lineSpacing(2)
+                .accessibilityAddTraits(.isHeader)
             // No "uniquement": the very next tap shows a Santé sheet listing
             // seven types (HealthKitClient+Live), so the narrowing was false.
             // The half that carries the reassurance is the second sentence.
@@ -124,6 +125,7 @@ struct OnboardingPermissionsView: View {
             Image(systemName: FouleeIcon.sparkle)
                 .scaledSystemFont(size: 14)
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
             Text("Tu peux changer ces autorisations dans Réglages à tout moment.")
                 .font(FouleeFont.caption)
                 .foregroundStyle(.secondary)
@@ -167,13 +169,19 @@ private struct PermissionRow: View {
                         .font(.system(size: 22))
                         .foregroundStyle(color)
                 }
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(FouleeFont.headline)
                 Text(subtitle).font(FouleeFont.footnote).foregroundStyle(.secondary)
             }
+            // Read once, as the switch's name and hint: an unlabelled switch
+            // was announced as « interrupteur » and nothing else.
+            .accessibilityHidden(true)
             Spacer()
             Toggle("", isOn: $isOn)
                 .labelsHidden()
+                .accessibilityLabel(Text(title))
+                .accessibilityHint(Text(subtitle))
                 .tint(FouleeColor.success)
                 .onChange(of: isOn) { _, new in
                     guard new else { return }
