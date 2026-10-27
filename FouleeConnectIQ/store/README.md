@@ -75,8 +75,9 @@ changement d'une option, et cette note existe pour qu'on sache quoi essayer.
 Les **icônes** et l'**image d'en-tête** sont dans le dépôt, sous
 [`assets/`](assets/), rendues depuis l'icône de l'app iPhone : le marcheur blanc
 sur dégradé violet, une seule identité Foulée sur l'iPhone, l'Apple Watch et
-Garmin (#468). Les **captures d'écran** n'y sont pas encore : elles viennent du
-simulateur graphique (voir § 3).
+Garmin (#468). Les **captures d'écran** sont sous
+[`screenshots/`](screenshots/) : elles viennent du simulateur graphique (voir
+§ 3).
 
 ### Tailles exigées
 
@@ -125,6 +126,18 @@ Une capture par format suffit pour la fiche : rond AMOLED 454 × 454, rond MIP
 ce qu'un relecteur regarde. La résolution de chaque montre est dans la famille
 d'écran de [`devices.json`](../devices.json).
 
+| Fichier | Format | Poids |
+|---|---|---|
+| `screenshots/venu3-view.png` | rond AMOLED, 454 × 454 | 12 ko |
+| `screenshots/fenix7-view.png` | rond MIP, 260 × 260 | 3 ko |
+| `screenshots/venusq2-view.png` | rectangle, 320 × 360 | 4 ko |
+
+Ce sont les vues principales, en anglais (la langue du simulateur), avec
+8 400 pas, 62 minutes actives, 6,3 km et 1 850 kcal. Le bandeau « Open Foulée on
+your iPhone » y figure parce que le simulateur n'est jamais relié à un
+téléphone. Les *glances* n'y sont pas : le simulateur les dessine dans le haut
+d'une capture plein écran, le reste est noir, et la fiche n'y gagne rien.
+
 Ne pas confondre avec les **icônes de lancement** embarquées dans l'app, d'une
 taille propre à chaque montre, que `./build.sh validate` vérifie déjà à chaque
 PR.
@@ -147,22 +160,34 @@ Pour chaque appareil :
 
 Puis, dans le simulateur :
 
-1. **Simulation → Activity Monitoring** — injecter des valeurs crédibles
-   (~8 400 pas, ~47 minutes actives, ~6,3 km). Une capture à zéro donne une
-   fiche store qui ne montre rien.
-2. Laisser la vue plein écran s'afficher, puis **File → Screen Shot** : le
-   simulateur écrit un PNG **à la taille exacte de l'écran de l'appareil**,
-   sans décor de montre ni fond d'écran de bureau.
-3. Recommencer pour le *glance* (**Simulation → Glance View**), que toutes les
-   montres de la matrice supportent.
+1. Fermer la boîte « There is no data connection » qui s'ouvre à chaque
+   lancement : l'app cherche le téléphone, le simulateur n'en a pas.
+2. **Simulation → Activity Monitoring → Set Activity Monitor Info** — injecter
+   des valeurs crédibles (~8 400 pas, ~6,3 km), puis **Apply**, puis
+   **File → Kill App** et relancer `monkeydo` : l'app ne relit pas les valeurs
+   en cours de route. Une capture à zéro donne une fiche store qui ne montre
+   rien. Les valeurs survivent au changement d'appareil.
+   - **Distance : saisir des mètres, pas des centimètres.** La colonne s'appelle
+     « Distance (cm) », mais le simulateur multiplie la valeur saisie par 100 :
+     630 000 s'affiche 630 km, 6 300 s'affiche 6,3 km (SDK 9.3.0). L'app, elle,
+     lit bien des centimètres, comme le documente `ActivityMonitor.Info`.
+   - Les minutes actives affichées valent modérées + 2 × intenses : 32 et 15
+     donnent 62.
+   - Une cellule s'édite en ajoutant au contenu existant : effacer avant de
+     saisir, sinon 5 000 suivi de 10 000 donne 500 010 000, ramené à 40 000.
+3. **Settings → Glance Launch Mode → Launch in Normal Mode** pour que l'app
+   s'ouvre directement sur la vue principale. Sinon elle démarre en *glance*, et
+   sur les montres à boutons (fēnix 7) le clic sur START ne l'ouvre pas.
+4. **File → Save Screen Capture** : le simulateur écrit un PNG **à la taille
+   exacte de l'écran de l'appareil**, sans décor de montre ni fond d'écran de
+   bureau. Il ajoute `.png` au nom saisi : taper le nom sans extension.
 
 > Ne **jamais** utiliser `screencapture` sur l'écran entier pour ça : la capture
 > embarquerait le bureau du développeur, et sa taille n'aurait aucun rapport
 > avec celle de l'appareil.
 
-Ranger les fichiers sous `store/screenshots/<appareil>-{view,glance}.png`. Ce
-dossier n'est pas suivi par git tant qu'il n'existe pas ; s'il est committé un
-jour, vérifier d'abord qu'aucune donnée personnelle n'apparaît à l'écran.
+Ranger les fichiers sous `store/screenshots/<appareil>-view.png`, et vérifier
+avant de committer qu'aucune donnée personnelle n'apparaît à l'écran.
 
 ## 4. Téléverser
 
