@@ -30,7 +30,7 @@ struct WalkSplit: Equatable, Sendable, Identifiable {
         switch activities.count {
         case 0: ""
         case 1: activities.first?.label ?? ""
-        default: "Marche et course"
+        default: String(localized: "Marche et course")
         }
     }
 

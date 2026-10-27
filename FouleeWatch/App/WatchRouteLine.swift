@@ -44,7 +44,7 @@ struct WatchRouteLine: MapContent {
                 )
         }
         if let start = portions.first?.coordinates.first {
-            Annotation("Départ", coordinate: start) {
+            Annotation(String(localized: "Départ"), coordinate: start) {
                 Circle()
                     .fill(.green)
                     .frame(width: 10, height: 10)

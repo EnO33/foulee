@@ -181,9 +181,10 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// and so the wording is asserted rather than eyeballed.
     var activitySummaryText: String {
         guard showsActivityBreakdown else { return activity.label }
-        return "\(activity.label) : \(activityTotals.elapsed.walkClockText), "
-            + "\(activityTotals.steps) pas, \(activityTotals.distanceKm.kmText(fractionDigits: 1)), "
-            + "\(activityTotals.activeCalories) kcal"
+        let totals = activityTotals
+        let clock = totals.elapsed.walkClockText
+        let km = totals.distanceKm.kmText(fractionDigits: 1)
+        return String(localized: "\(activity.label) : \(clock), \(totals.steps.groupedText()) pas, \(km), \(totals.activeCalories) kcal")
     }
 }
 

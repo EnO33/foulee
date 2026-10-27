@@ -55,7 +55,7 @@ struct WatchSessionControlsPage: View {
 /// The button is named for VoiceOver and the caption hidden from it, so the
 /// control reads once, as « Arrêter », and a UI test finds it by that name.
 struct WatchControlButton: View {
-    var title: String
+    var title: LocalizedStringResource
     var systemImage: String
     var tint: Color
     var role: ButtonRole?
@@ -70,7 +70,7 @@ struct WatchControlButton: View {
             }
             .buttonBorderShape(.circle)
             .tint(tint)
-            .accessibilityLabel(title)
+            .accessibilityLabel(Text(title))
             Text(title)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
