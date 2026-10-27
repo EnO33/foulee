@@ -247,6 +247,7 @@ xcrun simctl uninstall "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
 echo "==> Running the capture"
 TEST_RUNNER_FOULEE_CAPTURE_DARK="$DARK" \
 TEST_RUNNER_FOULEE_CAPTURE_PSEUDO="$PSEUDO" \
+TEST_RUNNER_FOULEE_CAPTURE_TEXT_SIZE="$TEXT_SIZE" \
 TEST_RUNNER_FOULEE_CAPTURE_LANGUAGE="$LANGUAGE" xcodebuild test \
   -workspace Foulee.xcworkspace \
   -scheme "$SCHEME" \

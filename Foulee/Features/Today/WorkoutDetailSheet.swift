@@ -109,10 +109,7 @@ struct WorkoutDetailSheet: View {
                 .font(FouleeFont.footnote.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .tracking(1)
-            LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
-                spacing: 12
-            ) {
+            AdaptiveGrid(columns: 2, accessibilityColumns: 1, spacing: 12) {
                 metricCard(
                     icon: WalkMetric.distance.icon,
                     tint: WalkMetric.distance.tint,

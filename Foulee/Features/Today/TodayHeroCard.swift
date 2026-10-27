@@ -41,7 +41,6 @@ struct TodayHeroCard: View {
     var onToggleNotifications: () -> Void
     var onOpenNotificationSettings: () -> Void
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Bumped each time a ring closes while the card is on screen (#368): it
     /// replays the burst and the haptic, both keyed on it.
     @State private var celebrations = 0
@@ -66,7 +65,10 @@ struct TodayHeroCard: View {
         // screen only made it busier. The ring's VoiceOver value still reads
         // both, so nothing is lost to anyone who cannot see the grid.
         VStack(spacing: 20) {
-            HStack(spacing: 18) {
+            // The ring above the text at the accessibility sizes: beside it,
+            // the text column was so narrow that « Sortie terminée » broke
+            // into syllables.
+            AdaptiveStack(stacked: VStackLayout(alignment: .leading, spacing: 18), regular: HStackLayout(spacing: 18)) {
                 ring
                 content
             }
@@ -255,10 +257,7 @@ struct TodayHeroCard: View {
     private var actionRow: some View {
         // Two side-by-side pills can't fit their labels once text reaches
         // the accessibility sizes — stack them instead.
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(spacing: 10))
-            : AnyLayout(HStackLayout(spacing: 10))
-        return layout {
+        AdaptiveStack(stacked: VStackLayout(spacing: 10), regular: HStackLayout(spacing: 10)) {
             if let mirroring {
                 PrimaryButton(title: "Séance en cours sur \(mirroring.name)", systemIcon: mirroring.icon, action: onStart)
             } else if canStartOnWatch {

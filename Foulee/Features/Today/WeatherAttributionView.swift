@@ -10,20 +10,38 @@ struct WeatherAttributionView: View {
 
     var body: some View {
         Link(destination: Self.legalURL) {
-            HStack(spacing: 5) {
-                // U+F8FF renders as the Apple logo in the system font, giving
-                // the required " Weather" trademark.
-                Text(verbatim: "\u{F8FF} Weather")
-                    .font(FouleeFont.caption.weight(.semibold))
-                Text(verbatim: "·")
-                Text("Sources des données")
-                    .font(FouleeFont.caption)
-                Image(systemName: "arrow.up.right")
-                    .scaledSystemFont(size: 9, weight: .bold)
+            // On two lines when one is too narrow (#597): the attribution is
+            // required, so it is never cut to « Weat… ».
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 5) {
+                    trademark
+                    Text(verbatim: "·")
+                    sources
+                }
+                VStack(spacing: 2) {
+                    trademark
+                    sources
+                }
             }
             .foregroundStyle(.secondary)
         }
         .accessibilityLabel("Apple Weather, sources des données")
+    }
+
+    /// U+F8FF renders as the Apple logo in the system font, giving the
+    /// required " Weather" trademark.
+    private var trademark: some View {
+        Text(verbatim: "\u{F8FF} Weather")
+            .font(FouleeFont.caption.weight(.semibold))
+    }
+
+    private var sources: some View {
+        HStack(spacing: 5) {
+            Text("Sources des données")
+                .font(FouleeFont.caption)
+            Image(systemName: "arrow.up.right")
+                .scaledSystemFont(size: 9, weight: .bold)
+        }
     }
 }
 

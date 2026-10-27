@@ -7,18 +7,12 @@ struct RecapHero: View {
     let recap: Recap
     var isRevealed = true
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
-    /// The ring above the text at the accessibility sizes (#371), beside it
-    /// otherwise.
-    private var layout: AnyLayout {
-        dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 18))
-            : AnyLayout(HStackLayout(alignment: .center, spacing: 18))
-    }
-
     var body: some View {
-        layout {
+        // The ring above the text at the accessibility sizes (#371).
+        AdaptiveStack(
+            stacked: VStackLayout(alignment: .leading, spacing: 18),
+            regular: HStackLayout(alignment: .center, spacing: 18)
+        ) {
             ProgressRing(
                 progress: isRevealed ? recap.goalRate : 0,
                 lineWidth: 14,

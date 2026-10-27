@@ -16,6 +16,7 @@ struct WorkoutDetailOuting: View {
 
     /// Where the finger is on the timeline (#319).
     @State private var selectedDate: Date?
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     init(summary: WorkoutSummary) {
         self.summary = summary
@@ -62,6 +63,8 @@ struct WorkoutDetailOuting: View {
             }
         }
         .frame(height: 44)
+        // The times ran into « 12:… »; each portion's row below has them.
+        .cappedTextSize()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Frise de la sortie")
         .accessibilityValue(OutingBreakdown.timelineDescription(of: summary.legs))
@@ -72,8 +75,9 @@ struct WorkoutDetailOuting: View {
     }
 
     /// The leg under the finger, in words — or, until a finger lands, the
-    /// hint that there is something to find. One line either way, so the
-    /// block never jumps in height while scrubbing.
+    /// hint that there is something to find. The same number of lines either
+    /// way, so the block never jumps in height while scrubbing: one, or three
+    /// at the accessibility sizes, where one cut the hint mid-sentence.
     private var selectionLine: some View {
         Group {
             if let leg = selectedLeg {
@@ -90,7 +94,7 @@ struct WorkoutDetailOuting: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .lineLimit(1)
+        .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1, reservesSpace: true)
         .minimumScaleFactor(0.8)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -103,17 +107,21 @@ struct WorkoutDetailOuting: View {
                 .scaledSystemFont(size: 16, weight: .semibold)
                 .foregroundStyle(share.activity.tint)
                 .frame(width: 28)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(share.activity.label)
-                    .font(FouleeFont.headline)
-                Text(detailText(share))
-                    .font(FouleeFont.footnote)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
+            // The time under the sport at the accessibility sizes: beside
+            // it, « Marche » was cut.
+            AdaptiveStack(stacked: VStackLayout(alignment: .leading, spacing: 4), regular: HStackLayout(spacing: 12)) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(share.activity.label)
+                        .font(FouleeFont.headline)
+                    Text(detailText(share))
+                        .font(FouleeFont.footnote)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(share.duration.walkClockText)
+                    .scaledNumericFont(size: 18, weight: .semibold)
             }
-            Spacer(minLength: 0)
-            Text(share.duration.walkClockText)
-                .scaledNumericFont(size: 18, weight: .semibold)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(

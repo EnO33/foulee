@@ -44,11 +44,9 @@ struct WorkoutDetailHeartRate: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
-            HStack(spacing: 0) {
+            FigureRow {
                 hrCell(label: "Min", value: detail.minHeartRate)
-                divider
                 hrCell(label: "Moyenne", value: detail.averageHeartRate)
-                divider
                 hrCell(label: "Max", value: detail.maxHeartRate)
             }
             chart
@@ -101,12 +99,6 @@ struct WorkoutDetailHeartRate: View {
         .accessibilityValue(value.map { Text("\($0) battements par minute") } ?? Text("indisponible"))
     }
 
-    private var divider: some View {
-        Rectangle()
-            .fill(Color.gray.opacity(0.25))
-            .frame(width: 1, height: 36)
-    }
-
     private var chart: some View {
         Chart {
             // The outing's legs behind the curve, in the timeline's colours
@@ -138,6 +130,9 @@ struct WorkoutDetailHeartRate: View {
                 AxisValueLabel()
             }
         }
+        // The axis figures took the curve's width; min, average and max above
+        // are stated at full size.
+        .cappedTextSize()
     }
 
     /// The cursor under the finger: a rule at the reading, a dot on the curve,

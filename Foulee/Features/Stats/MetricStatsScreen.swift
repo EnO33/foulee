@@ -14,7 +14,6 @@ struct MetricStatsScreen: View {
 
     @State private var store: MetricStatsStore
     @State private var selectedDate: Date?
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     init(metric: WalkMetric, dailyGoal: Double?, onClose: @escaping () -> Void) {
         self.metric = metric
@@ -44,8 +43,10 @@ struct MetricStatsScreen: View {
         .task(id: store.range) { await store.load() }
     }
 
+    /// The icon above the titles at the accessibility sizes: beside it,
+    /// « STATISTIQUES » broke into syllables.
     private var header: some View {
-        HStack(spacing: 12) {
+        AdaptiveStack(stacked: VStackLayout(alignment: .leading, spacing: 8), regular: HStackLayout(spacing: 12)) {
             Image(systemName: metric.icon)
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundStyle(metric.tint)
@@ -56,10 +57,11 @@ struct MetricStatsScreen: View {
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .tracking(1.1)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Text(metric.title)
                     .font(FouleeFont.largeTitle)
             }
-            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.trailing, 48) // clear of the close button
@@ -166,6 +168,9 @@ struct MetricStatsScreen: View {
         }
         // Light tick each time the scrub lands on a different bar.
         .sensoryFeedback(.selection, trigger: selectedPoint?.id)
+        // Past it, the Y figures and « Objectif » took the plot's width; the
+        // summary below states the figures at full size.
+        .cappedTextSize()
     }
 
     /// The daily goal to mark on the Y axis (steps/minutes, daily ranges only).
@@ -234,12 +239,9 @@ struct MetricStatsScreen: View {
     /// Side by side, or stacked once text reaches the accessibility sizes:
     /// three figures in a row ran into each other there (issue #408).
     private var summaryCard: some View {
-        let stacked = dynamicTypeSize.isAccessibilitySize
-        let layout = stacked ? AnyLayout(VStackLayout(spacing: 14)) : AnyLayout(HStackLayout(spacing: 0))
-        return layout {
-            ForEach(Array(summaryItems.enumerated()), id: \.offset) { index, item in
-                if index > 0 && !stacked { divider }
-                summaryCell(label: item.label, value: item.value)
+        FigureRow {
+            ForEach(summaryItems.indices, id: \.self) { index in
+                summaryCell(label: summaryItems[index].label, value: summaryItems[index].value)
             }
         }
         .padding(18)
@@ -278,12 +280,6 @@ struct MetricStatsScreen: View {
 /// The screen's small pieces, apart from its body so the type stays within
 /// its length budget.
 private extension MetricStatsScreen {
-    var divider: some View {
-        Rectangle()
-            .fill(Color.gray.opacity(0.25))
-            .frame(width: 1, height: 34)
-    }
-
     /// Says why the chart is empty and what to try (#369), rather than a bare
     /// « Aucune donnée ».
     var emptyChart: some View {

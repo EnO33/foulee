@@ -242,7 +242,12 @@ struct TodayScreen: View {
     }
 
     private func header(snapshot: TodaySnapshot) -> some View {
-        HStack(alignment: .center, spacing: 12) {
+        // The streak and the gear under the title at the accessibility sizes:
+        // beside it, « Aujourd'hui » was cut to « Aujou… ».
+        AdaptiveStack(
+            stacked: VStackLayout(alignment: .leading, spacing: 8),
+            regular: HStackLayout(alignment: .center, spacing: 12)
+        ) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(formatted(date: snapshot.date))
                     .font(FouleeFont.footnote.weight(.semibold))
@@ -256,22 +261,24 @@ struct TodayScreen: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             // The screen's title, read once with its date.
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isHeader)
-            Spacer()
-            // The streak lives in the Bilan, on the month in progress (#445).
-            TodayStreakBadge(streak: snapshot.streak, bestStreak: snapshot.bestStreak) {
-                RecapRouter.shared.open(.month)
+            HStack(spacing: 12) {
+                // The streak lives in the Bilan, on the month in progress (#445).
+                TodayStreakBadge(streak: snapshot.streak, bestStreak: snapshot.bestStreak) {
+                    RecapRouter.shared.open(.month)
+                }
+                Button { isShowingSettings = true } label: {
+                    Image(systemName: "gearshape.fill")
+                        .scaledSystemFont(size: 32)
+                        .foregroundStyle(FouleeColor.accentMid)
+                        .symbolRenderingMode(.hierarchical)
+                }
+                .buttonStyle(.pressable)
+                .accessibilityLabel("Réglages")
             }
-            Button { isShowingSettings = true } label: {
-                Image(systemName: "gearshape.fill")
-                    .scaledSystemFont(size: 32)
-                    .foregroundStyle(FouleeColor.accentMid)
-                    .symbolRenderingMode(.hierarchical)
-            }
-            .buttonStyle(.pressable)
-            .accessibilityLabel("Réglages")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

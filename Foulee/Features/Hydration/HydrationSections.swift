@@ -8,19 +8,11 @@ struct HydrationTodayHero: View {
     let goalML: Int
     let pace: HydrationPace
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
-    /// The drop above the text at the accessibility sizes (#371).
-    private var layout: AnyLayout {
-        dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 16))
-            : AnyLayout(HStackLayout(spacing: 20))
-    }
-
     private var progress: Double { HydrationMath.progress(intakeML: intakeML, goalML: goalML) }
 
     var body: some View {
-        layout {
+        // The drop above the text at the accessibility sizes (#371).
+        AdaptiveStack(stacked: VStackLayout(alignment: .leading, spacing: 16), regular: HStackLayout(spacing: 20)) {
             ZStack(alignment: .bottom) {
                 DropShape()
                     .fill(FouleeColor.water.opacity(0.12))

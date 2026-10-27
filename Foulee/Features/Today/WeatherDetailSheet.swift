@@ -21,33 +21,42 @@ struct WeatherDetailSheet: View {
     @ViewBuilder
     private var content: some View {
         if isAvailable {
-            VStack(spacing: 16) {
-                Spacer()
-                Image(systemName: FouleeIcon.sun)
-                    .font(.system(size: 64, weight: .semibold))
-                    .foregroundStyle(FouleeColor.streakGradient)
-                    .symbolRenderingMode(.hierarchical)
-                Text("\(weather.temperatureCelsius)°C")
-                    .scaledNumericFont(size: 64)
-                    .minimumScaleFactor(0.6)
-                    .lineLimit(1)
-                Text(weather.condition)
-                    .font(FouleeFont.title2)
-                adviceRow
-                Spacer()
-                // "à 18:30", not "de 18:30": the latter reads as a span as
-                // easily as an hour.
-                Text("Prévision à \(windowStart.clockText) à ton emplacement")
-                    .font(FouleeFont.footnote)
-                    .foregroundStyle(.secondary)
-                WeatherAttributionView()
-                    .padding(.bottom, 8)
+            // Scrolls only when the text is too large to fit (#597): squeezed
+            // into the screen, the advice was cut to « Conseil : i… ».
+            ViewThatFits(in: .vertical) {
+                forecast
+                ScrollView { forecast }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, 28)
         } else {
             unavailable
         }
+    }
+
+    private var forecast: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: FouleeIcon.sun)
+                .font(.system(size: 64, weight: .semibold))
+                .foregroundStyle(FouleeColor.streakGradient)
+                .symbolRenderingMode(.hierarchical)
+            Text("\(weather.temperatureCelsius)°C")
+                .scaledNumericFont(size: 64)
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
+            Text(weather.condition)
+                .font(FouleeFont.title2)
+            adviceRow
+            Spacer()
+            // "à 18:30", not "de 18:30": the latter reads as a span as
+            // easily as an hour.
+            Text("Prévision à \(windowStart.clockText) à ton emplacement")
+                .font(FouleeFont.footnote)
+                .foregroundStyle(.secondary)
+            WeatherAttributionView()
+                .padding(.bottom, 8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 28)
     }
 
     private var adviceRow: some View {
