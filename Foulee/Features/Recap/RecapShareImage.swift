@@ -12,8 +12,8 @@ enum RecapShareFormat: String, CaseIterable, Identifiable, Sendable {
 
     var label: String {
         switch self {
-        case .square: "Carré"
-        case .story: "Story"
+        case .square: String(localized: "Carré")
+        case .story: String(localized: "Story")
         }
     }
 
@@ -39,8 +39,14 @@ enum RecapShareFormat: String, CaseIterable, Identifiable, Sendable {
 struct RecapShareImage: View {
     let recap: Recap
     let format: RecapShareFormat
+    /// Worded once: the body reads it a few times, each a catalog lookup.
+    private let card: RecapShareCard
 
-    private var card: RecapShareCard { RecapShareCard(recap: recap) }
+    init(recap: Recap, format: RecapShareFormat) {
+        self.recap = recap
+        self.format = format
+        card = RecapShareCard(recap: recap)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -150,8 +156,6 @@ private struct RecapShareDays: View {
     let recap: Recap
     let format: RecapShareFormat
 
-    private static let letters = ["L", "M", "M", "J", "V", "S", "D"]
-
     var body: some View {
         switch recap.period.kind {
         case .week: week
@@ -181,7 +185,7 @@ private struct RecapShareDays: View {
     private func column<Ring: View>(letter index: Int, @ViewBuilder ring: () -> Ring) -> some View {
         VStack(spacing: 5) {
             ring()
-            Text(Self.letters[index % 7])
+            Text(Weekday.allCases[index % 7].shortLabel)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.secondary)
         }
@@ -192,8 +196,8 @@ private struct RecapShareDays: View {
         let ring: CGFloat = format.isStory ? 30 : 18
         return Grid(horizontalSpacing: 6, verticalSpacing: format.isStory ? 6 : 3) {
             GridRow {
-                ForEach(Array(Self.letters.enumerated()), id: \.offset) { _, letter in
-                    Text(letter)
+                ForEach(Weekday.allCases, id: \.self) { weekday in
+                    Text(weekday.shortLabel)
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.secondary)
                 }

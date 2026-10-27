@@ -22,6 +22,14 @@ struct KitTextTests {
         #expect(kitText("\(120) mètres de montée", locale: american) == "120 meters up")
     }
 
+    /// Shared by the iPhone and the watch reminders (issue #590).
+    @Test("The hydration reminder reads in each language")
+    func hydrationReminder() {
+        #expect(kitText("Pense à boire un verre.", locale: french) == "Pense à boire un verre.")
+        #expect(kitText("Pense à boire un verre.", locale: american) == "Time for a glass of water.")
+        #expect(kitText("Petit rappel : pense à boire 💧", locale: american) == "Quick reminder: time to drink 💧")
+    }
+
     @Test("Arguments keep their place when the sentence reorders them")
     func arguments() {
         #expect(kitText("Ta plus longue \("walk") depuis 6 mois", locale: american) == "Your longest walk in 6 months")

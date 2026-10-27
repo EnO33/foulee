@@ -9,12 +9,15 @@ import UserNotifications
 nonisolated struct WalkReminder: Equatable, Sendable {
     var weekday: Weekday
     var time: TimeOfDay
-    var title: String
-    var body: String
 
     var identifier: String {
         "foulee.walk.reminder.\(weekday.rawValue)"
     }
+
+    /// No activity and no time of day (#222): one body has to serve marche,
+    /// course and les deux, and it lands 10 min before a window the user chose
+    /// themselves. Also the body of a snoozed reminder.
+    static var body: String { String(localized: "C'est l'heure de bouger — ta sortie t'attend.") }
 }
 
 /// Wrapper over `UNUserNotificationCenter` with the operations the app

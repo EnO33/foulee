@@ -42,8 +42,8 @@ nonisolated enum RecapNotification {
 
     static func title(for kind: RecapPeriod.Kind) -> String {
         switch kind {
-        case .week: "Ta semaine en Foulée"
-        case .month: "Ton mois en Foulée"
+        case .week: String(localized: "Ta semaine en Foulée")
+        case .month: String(localized: "Ton mois en Foulée")
         }
     }
 
@@ -56,8 +56,8 @@ nonisolated enum RecapNotification {
 
     static func body(for kind: RecapPeriod.Kind) -> String {
         switch kind {
-        case .week: "Ton récap de la semaine est prêt : minutes, pas et objectifs tenus."
-        case .month: "Ton récap du mois est prêt : minutes, pas et objectifs tenus."
+        case .week: String(localized: "Ton récap de la semaine est prêt : minutes, pas et objectifs tenus.")
+        case .month: String(localized: "Ton récap du mois est prêt : minutes, pas et objectifs tenus.")
         }
     }
 }
