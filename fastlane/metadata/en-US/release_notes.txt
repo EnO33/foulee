@@ -1,5 +1,3 @@
-After each outing, a notification tells you what stood out: your longest walk in 6 months, a faster pace than usual, more climb than usual, or how steady your week has been. Tap it to open the outing in your recap.
+Foulée now speaks English: if your iPhone is set to English, so are the app, the watch, the widgets, the Live Activity, the notifications and Siri.
 
-Elevation now shows up everywhere: in the weekly and monthly recap, on each outing, on the image you share, and the Apple Watch now measures it during your sessions.
-
-Turn the notification on or off in Settings › Notifications › “After a session”.
+Distances, durations, times and dates now follow your device's settings.
