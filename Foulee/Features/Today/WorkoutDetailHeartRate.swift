@@ -75,11 +75,14 @@ struct WorkoutDetailHeartRate: View {
                 .foregroundStyle(FouleeColor.danger)
             Text("Fréquence cardiaque")
                 .font(FouleeFont.headline)
+                .accessibilityAddTraits(.isHeader)
             Spacer()
             if let avg = detail.averageHeartRate {
                 Text("\(avg) bpm")
                     .scaledNumericFont(size: 22, weight: .semibold)
                     .foregroundStyle(FouleeColor.danger)
+                    // The « Moyenne » cell below says it in words.
+                    .accessibilityHidden(true)
             }
         }
     }

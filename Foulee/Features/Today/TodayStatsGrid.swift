@@ -56,8 +56,18 @@ struct TodayStatsGrid: View {
     private var tiles: some View {
         switch period {
         case .day:
-            tile(.steps, snapshot.steps.groupedText(), sub: "/ \(snapshot.stepsGoal.groupedText())")
-            tile(.minutes, "\(snapshot.minutes)", sub: "/ \(snapshot.minutesGoal)")
+            tile(
+                .steps,
+                snapshot.steps.groupedText(),
+                sub: "/ \(snapshot.stepsGoal.groupedText())",
+                spoken: String(localized: "\(snapshot.steps.groupedText()) sur \(snapshot.stepsGoal.groupedText())")
+            )
+            tile(
+                .minutes,
+                "\(snapshot.minutes)",
+                sub: "/ \(snapshot.minutesGoal)",
+                spoken: String(localized: "\(snapshot.minutes) minutes sur \(snapshot.minutesGoal)")
+            )
             tile(.distance, snapshot.distanceKm.kmText(fractionDigits: 1))
             tile(.calories, snapshot.calories.groupedText(), sub: "kcal")
         case .week:
@@ -66,16 +76,24 @@ struct TodayStatsGrid: View {
             // « 360 min » (#366). The three others wait for HealthKit, and say
             // « — » rather than a zero that would read as a real total.
             tile(.steps, weekTotals.map { $0.steps.groupedText() } ?? "—")
-            tile(.minutes, durationText(minutes: snapshot.weekMinutes.reduce(0, +)))
+            let weekMinutes = snapshot.weekMinutes.reduce(0, +)
+            tile(.minutes, durationText(minutes: weekMinutes), spoken: spokenDurationText(minutes: weekMinutes))
             tile(.distance, weekTotals.map { $0.distanceKm.kmText(fractionDigits: 1) } ?? "—")
             tile(.calories, weekTotals.map { $0.calories.groupedText() } ?? "—", sub: "kcal")
         }
     }
 
     /// A metric's tile, in its ring's colour (#366).
-    private func tile(_ metric: WalkMetric, _ value: String, sub: String? = nil) -> some View {
+    private func tile(_ metric: WalkMetric, _ value: String, sub: String? = nil, spoken: String? = nil) -> some View {
         metricButton(metric) {
-            StatBlock(systemIcon: metric.icon, label: .verbatim(metric.title), value: value, sub: sub, tint: metric.tint)
+            StatBlock(
+                systemIcon: metric.icon,
+                label: .verbatim(metric.title),
+                value: value,
+                sub: sub,
+                spokenValue: spoken,
+                tint: metric.tint
+            )
         }
     }
 

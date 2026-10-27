@@ -46,6 +46,19 @@ struct LocaleFormattingTests {
         #expect(durationText(minutes: 360, locale: american) == "6 hr")
     }
 
+    @Test("VoiceOver hears durations and paces in words, in the locale's")
+    func spoken() {
+        // The system puts a no-break space where it likes; VoiceOver reads it
+        // as a space.
+        func plain(_ text: String) -> String { text.replacingOccurrences(of: "\u{00A0}", with: " ") }
+        #expect(plain(spokenDurationText(seconds: 754, locale: french)) == "12 minutes et 34 secondes")
+        #expect(plain(spokenDurationText(seconds: 3_900, locale: french)) == "1 heure et 5 minutes")
+        #expect(plain(spokenDurationText(minutes: 45, locale: american)) == "45 minutes")
+        #expect(plain(spokenDurationText(seconds: -3, locale: french)) == "0 seconde")
+        #expect(plain(spokenPaceText(secondsPerKm: 330, locale: french)) == "5 minutes et 30 secondes par kilomètre")
+        #expect(plain(spokenPaceText(secondsPerKm: 330, locale: american)) == "5 minutes, 30 seconds per kilometer")
+    }
+
     @Test("A setting's time reads in the locale's hours")
     func settingClock() {
         let window = DateComponents(hour: 18, minute: 30)

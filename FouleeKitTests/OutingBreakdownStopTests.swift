@@ -31,6 +31,13 @@ struct OutingBreakdownStopTests {
         #expect(text == "Marche, 30 minutes ; arrêt de 12 minutes ; marche, 20 minutes")
     }
 
+    @Test("A leg is read in words: its hours, duration, distance and pace")
+    func legIsSpoken() {
+        let text = OutingBreakdown.legSpokenText(leg(.walking, from: 0, lasting: 15))
+        #expect(text.hasPrefix("de "))
+        #expect(text.hasSuffix(", 15 minutes, 1,50 km, 10 minutes par kilomètre"))
+    }
+
     @Test("Legs that touch, or nearly, have no stop between them")
     func touchingLegsHaveNoStop() {
         let text = OutingBreakdown.timelineDescription(of: [

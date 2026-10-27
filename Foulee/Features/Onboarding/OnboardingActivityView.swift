@@ -43,6 +43,7 @@ struct OnboardingActivityView: View {
             Text("Tu marches ou\ntu cours ?")
                 .scaledSystemFont(size: 30, weight: .bold)
                 .lineSpacing(2)
+                .accessibilityAddTraits(.isHeader)
             Text("On adaptera Foulée à ta pratique.")
                 .font(FouleeFont.body)
                 .foregroundStyle(.secondary)
@@ -109,6 +110,8 @@ struct ActivityChoiceRow: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(FouleeColor.accentMid)
                     .opacity(isSelected ? 1 : 0)
+                    // The selected trait says it.
+                    .accessibilityHidden(true)
             }
             .padding(14)
             .fouleeGlass(cornerRadius: 18)
@@ -134,6 +137,7 @@ struct ActivityChoiceRow: View {
                     .font(.system(size: 20))
                     .foregroundStyle(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(FouleeColor.accentMid))
             }
+            .accessibilityHidden(true)
     }
 
     private var title: LocalizedStringResource {

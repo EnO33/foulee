@@ -123,6 +123,16 @@
         }
       }
     },
+    "%@ par kilomètre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ per kilometer"
+          }
+        }
+      }
+    },
     "%@ sortie de la semaine" : {
       "localizations" : {
         "en" : {
@@ -309,6 +319,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Run"
+          }
+        }
+      }
+    },
+    "de %@ à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "from %1$@ to %2$@"
           }
         }
       }

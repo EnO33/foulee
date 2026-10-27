@@ -135,21 +135,49 @@ struct WorkoutDetailSheet: View {
                     icon: FouleeIcon.timer,
                     tint: FouleeColor.accentSecondary,
                     label: "Allure",
-                    value: paceText(detail)
+                    value: paceText(detail),
+                    spokenValue: detail.paceMinPerKm.map { spokenPaceText(secondsPerKm: $0 * 60) }
                 )
-                // Climb and descent apart (#565), each only when the source
-                // wrote one.
-                if let climb = detail.summary.climbText {
-                    metricCard(icon: FouleeIcon.climb, tint: FouleeColor.success, label: "D+", value: climb)
-                }
-                if let descent = detail.summary.descentText {
-                    metricCard(icon: FouleeIcon.descent, tint: FouleeColor.success, label: "D−", value: descent)
-                }
+                elevationCards(detail: detail)
             }
         }
     }
 
-    private func metricCard(icon: String, tint: Color, label: LocalizedStringResource, value: String) -> some View {
+    /// Climb and descent apart (#565), each only when the source wrote one.
+    @ViewBuilder
+    private func elevationCards(detail: WorkoutDetail) -> some View {
+        if let climb = detail.summary.climbText {
+            metricCard(
+                icon: FouleeIcon.climb,
+                tint: FouleeColor.success,
+                label: "D+",
+                value: climb,
+                spokenLabel: "Dénivelé",
+                spokenValue: detail.summary.climbSpokenText
+            )
+        }
+        if let descent = detail.summary.descentText {
+            metricCard(
+                icon: FouleeIcon.descent,
+                tint: FouleeColor.success,
+                label: "D−",
+                value: descent,
+                spokenLabel: "Dénivelé",
+                spokenValue: detail.summary.descentSpokenText
+            )
+        }
+    }
+
+    /// `spokenLabel` and `spokenValue` stand in for VoiceOver where the
+    /// written ones read wrong: « D plus », « 5 prime 30 seconde ».
+    private func metricCard(
+        icon: String,
+        tint: Color,
+        label: LocalizedStringResource,
+        value: String,
+        spokenLabel: LocalizedStringResource? = nil,
+        spokenValue: String? = nil
+    ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
@@ -167,6 +195,9 @@ struct WorkoutDetailSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .fouleeGlass(cornerRadius: 18)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(spokenLabel ?? label))
+        .accessibilityValue(spokenValue ?? value)
     }
 
     /// Santé has the workout, except a Garmin outing Garmin Connect hasn't

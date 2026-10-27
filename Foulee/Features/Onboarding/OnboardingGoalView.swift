@@ -41,6 +41,7 @@ struct OnboardingGoalView: View {
             Text("Quand veux-tu\nbouger ?")
                 .scaledSystemFont(size: 30, weight: .bold)
                 .lineSpacing(2)
+                .accessibilityAddTraits(.isHeader)
             Text("On t'enverra un petit rappel juste avant.")
                 .font(FouleeFont.body)
                 .foregroundStyle(.secondary)
@@ -92,6 +93,8 @@ struct OnboardingGoalView: View {
                         .font(.title3.weight(.medium))
                         .foregroundStyle(.secondary)
                 }
+                // The slider below says it, as its value.
+                .accessibilityHidden(true)
                 Slider(
                     value: Binding(
                         get: { Double(preferences.minutesGoal) },
@@ -109,6 +112,7 @@ struct OnboardingGoalView: View {
                     Spacer()
                     Text("60 min").font(FouleeFont.caption).foregroundStyle(.secondary)
                 }
+                .accessibilityHidden(true)
             }
             .padding(18)
             .fouleeGlass(cornerRadius: 18)

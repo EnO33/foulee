@@ -133,6 +133,7 @@ struct RecapDayTimeline: View {
             Spacer(minLength: 4)
             Text(durationText(minutes: Int(workout.durationSeconds / 60)))
                 .scaledNumericFont(size: 18, weight: .semibold)
+                .accessibilityLabel(spokenDurationText(seconds: workout.durationSeconds))
                 .foregroundStyle(.primary)
             Image(systemName: "chevron.right")
                 .font(FouleeFont.caption.weight(.semibold))

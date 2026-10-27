@@ -115,7 +115,12 @@ struct WorkoutDetailOuting: View {
             Text(share.duration.walkClockText)
                 .scaledNumericFont(size: 18, weight: .semibold)
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            [share.activity.label, spokenDurationText(seconds: share.duration), share.distanceKm.kmText(), share.spokenPaceText]
+                .compactMap(\.self)
+                .joined(separator: ", ")
+        )
     }
 
     private func detailText(_ share: SportShare) -> String {

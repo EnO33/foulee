@@ -38,6 +38,12 @@ nonisolated public extension TimeInterval {
         let seconds = Int(secondsPerKm) % 60
         return String(format: "%d'%02d\"/km", minutes, seconds)
     }
+
+    /// The same pace as VoiceOver says it, `nil` where `paceText(overKm:)` is.
+    func spokenPaceText(overKm km: Double) -> String? {
+        guard paceText(overKm: km) != nil else { return nil }
+        return FouleeKit.spokenPaceText(secondsPerKm: self / km)
+    }
 }
 
 /// « 5'25"/km » from a pace already in seconds per kilometre, rounded to
@@ -53,6 +59,12 @@ nonisolated public extension TimeInterval {
 nonisolated public func paceText(secondsPerKm: TimeInterval, roundedTo step: TimeInterval) -> String {
     let rounded = Int((secondsPerKm / step).rounded() * step)
     return String(format: "%d'%02d\"/km", rounded / 60, rounded % 60)
+}
+
+/// A pace as VoiceOver says it: « 5 minutes et 30 secondes par kilomètre ».
+/// « 5'30"/km » is read out symbol by symbol (issue #596).
+nonisolated public func spokenPaceText(secondsPerKm: TimeInterval, locale: Locale = .app) -> String {
+    kitText("\(spokenDurationText(seconds: secondsPerKm, locale: locale)) par kilomètre", locale: locale)
 }
 
 /// « 95 pas/min » — steps per minute over `elapsed`, or `nil` when the stretch
