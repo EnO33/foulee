@@ -1,0 +1,74 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "NSHealthShareUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée reads your steps, distance, exercise minutes, active calories, the water you drank, and your workouts with their heart rate, to show your day on your wrist. Foulée never sends them anywhere."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, ainsi que tes séances et leur fréquence cardiaque, pour afficher ta journée au poignet. Foulée ne les envoie nulle part."
+          }
+        }
+      }
+    },
+    "NSHealthUpdateUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée saves your outings as workouts in Health, with the steps, distance, calories and heart rate measured on your wrist, along with the water you drink."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée enregistre tes sorties comme séances dans Santé, avec les pas, la distance, les calories et la fréquence cardiaque mesurés au poignet, ainsi que l'eau que tu bois."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée uses your location during your outing to draw your route on the map."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée utilise ta position pendant ta sortie pour tracer ton parcours sur le plan."
+          }
+        }
+      }
+    },
+    "NSMotionUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée reads the motion detected on your wrist to recognize your activity during your outing."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée lit les mouvements détectés au poignet pour reconnaître ton activité pendant ta sortie."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

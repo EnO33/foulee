@@ -1,0 +1,108 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "NSBluetoothAlwaysUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée connects to your Garmin watch over Bluetooth to fetch your day's activity."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée se connecte en Bluetooth à ta montre Garmin pour récupérer ta journée d'activité."
+          }
+        }
+      }
+    },
+    "NSBluetoothPeripheralUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée connects to your Garmin watch over Bluetooth to fetch your day's activity."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée se connecte en Bluetooth à ta montre Garmin pour récupérer ta journée d'activité."
+          }
+        }
+      }
+    },
+    "NSHealthShareUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée reads your steps, distance, exercise minutes, active calories, the water you drank, and your workouts with their heart rate and route, to show your day. Foulée never sends them anywhere."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, ainsi que tes séances, leur fréquence cardiaque et leur parcours, pour afficher ta journée. Foulée ne les envoie nulle part."
+          }
+        }
+      }
+    },
+    "NSHealthUpdateUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée saves your outings as workouts in Health, along with the water you drink."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée enregistre tes sorties comme séances dans Santé, ainsi que l'eau que tu bois."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée uses your location to show the weather where you are."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée utilise ta position pour afficher la météo à ton endroit."
+          }
+        }
+      }
+    },
+    "NSMotionUsageDescription" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée counts your steps live during your outing, and recognizes whether you walked or ran."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Foulée compte tes pas en direct pendant ta sortie, et reconnaît si tu as marché ou couru."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
