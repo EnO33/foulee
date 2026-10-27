@@ -104,7 +104,8 @@ jobs:
           else
             prerelease=()
             [ "$CHANNEL" = beta ] && prerelease=(--prerelease)
-            gh release create "$GITHUB_REF_NAME" "$package" "${prerelease[@]}" \
+            # « Latest » stays on the app's release, which the site reads first.
+            gh release create "$GITHUB_REF_NAME" "$package" "${prerelease[@]}" --latest=false \
               --title "Garmin $VERSION ($CHANNEL)" \
               --notes "Paquet Connect IQ $VERSION, entrée store « $CHANNEL ». À téléverser sur https://apps.garmin.com/developer/upload (FouleeConnectIQ/store/README.md)."
           fi

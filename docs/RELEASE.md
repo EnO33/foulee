@@ -152,6 +152,14 @@ this material is ever committed (see `.gitignore`).
 
 ## 8. Cut a release
 
+First write the release notes in `docs/releases/X.Y.Z.md` and merge them to
+`main` (issue #638): they become the GitHub release that the website's
+« Nouveautés » page reads. They are for users, in French, addressing them as
+« tu », 2 to 5 highlights, with no issue numbers
+([`docs/releases/README.md`](releases/README.md)). The release workflow stops in
+its first seconds when the tagged commit has no notes for its version; add
+them, then move the tag to the new commit.
+
 ```sh
 # bump the tag; the workflow reads the version from it
 git tag v0.1.0
@@ -160,7 +168,9 @@ git push origin v0.1.0
 
 Watch **Actions → Release**. After it's green, the build shows up in
 **App Store Connect → TestFlight** within a few minutes (processing time).
-Add it to an internal testing group to install via the TestFlight app.
+Add it to an internal testing group to install via the TestFlight app. The
+last job publishes the GitHub release « Foulée 0.1.0 » with the notes; it
+runs only once TestFlight has the build, and re-running it rewrites the notes.
 
 The release runs on GitHub's `xcode-27` image with the **latest stable Xcode**
 it ships (`setup-xcode` with `latest-stable`: no beta; a Release Candidate
@@ -539,7 +549,9 @@ git tag garmin-v1.0.0       && git push origin garmin-v1.0.0         # productio
 ```
 
 It validates the project, builds the signed `.iq` for every device of the
-manifest and attaches it to a GitHub release (a pre-release for a beta). Garmin
+manifest and attaches it to a GitHub release (a pre-release for a beta),
+titled « Garmin X.Y.Z » so the website can leave it out, and never marked
+« Latest », which stays on the app's release. Garmin
 offers no upload API, so uploading that `.iq` on
 <https://apps.garmin.com/developer/upload> stays a browser step; the job summary
 lists it. Listing copy, images, the beta channel and the ERA crash-report loop:
