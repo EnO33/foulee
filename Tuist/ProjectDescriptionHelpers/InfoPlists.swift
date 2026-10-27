@@ -15,6 +15,10 @@ public let garminReturnURLScheme = "foulee-ciq"
 private let garminBluetoothUsage =
     "Foulée se connecte en Bluetooth à ta montre Garmin pour récupérer ta journée d'activité."
 
+// The usage strings below are the French source. Their English lives in each
+// target's `InfoPlist.xcstrings` (issue #591), whose "fr" value has to match
+// the string here word for word.
+
 // Extracted from the target literal: inline, the dictionary got large enough
 // that the manifest stopped type-checking in reasonable time.
 public let fouleeAppInfoPlist: [String: Plist.Value] = [
@@ -58,7 +62,8 @@ public let fouleeAppInfoPlist: [String: Plist.Value] = [
     // HKWorkout record.
     "NSHealthShareUsageDescription": .string(
         "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, "
-            + "ainsi que tes séances, leur fréquence cardiaque et leur parcours, pour afficher ta journée."
+            + "ainsi que tes séances, leur fréquence cardiaque et leur parcours, pour afficher ta journée. "
+            + "Foulée ne les envoie nulle part."
     ),
     "NSHealthUpdateUsageDescription":
         "Foulée enregistre tes sorties comme séances dans Santé, ainsi que l'eau que tu bois.",
@@ -102,7 +107,7 @@ public let fouleeWatchInfoPlist: [String: Plist.Value] = [
     "NSHealthShareUsageDescription": .string(
         "Foulée lit tes pas, ta distance, tes minutes d'exercice, tes calories actives, l'eau que tu as bue, "
             + "ainsi que tes séances et leur fréquence cardiaque, "
-            + "pour afficher ta journée au poignet."
+            + "pour afficher ta journée au poignet. Foulée ne les envoie nulle part."
     ),
     "NSHealthUpdateUsageDescription": .string(
         "Foulée enregistre tes sorties comme séances dans Santé, avec les pas, la distance, les calories et "
