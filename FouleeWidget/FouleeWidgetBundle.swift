@@ -8,5 +8,7 @@ struct FouleeWidgetBundle: WidgetBundle {
         TodayProgressWidget()
         StatWidget()
         HydrationWidget()
+        StartOutingControl()
+        LogWaterControl()
     }
 }

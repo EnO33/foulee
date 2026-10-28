@@ -2,9 +2,12 @@ import AppIntents
 import FouleeKit
 import Observation
 
-/// « Commencer une sortie » for Siri, Raccourcis and Spotlight (issue #604).
-/// Opens Foulée and starts the outing the way the home button does: the
-/// intent only hands the request to the home, which owns the session.
+/// « Commencer une sortie » for Siri, Raccourcis and Spotlight (issue #604),
+/// and the Control Center and Action button control (#606). Opens Foulée and
+/// starts the outing the way the home button does: the intent only hands the
+/// request to the home, which owns the session. Compiled into the widget
+/// extension too, so the control can name it; being a foreground intent, the
+/// system still runs it in the app.
 struct StartOutingIntent: AppIntent {
     static var title: LocalizedStringResource { "Commencer une sortie" }
     // periphery:ignore - read by the AppIntents runtime, never from code.
@@ -15,6 +18,12 @@ struct StartOutingIntent: AppIntent {
     /// Left empty, the user's own mode decides, as on the home button.
     @Parameter(title: "Sport")
     var activity: OutingActivity?
+
+    init() {}
+
+    init(activity: OutingActivity?) {
+        self.activity = activity
+    }
 
     @MainActor
     func perform() async throws -> some IntentResult {
@@ -60,6 +69,9 @@ nonisolated struct SessionStartRequest: Equatable {
     let mode: ActivityMode?
 }
 
+/// Main-actor spelled out: the widget extension compiles this file without the
+/// app's default isolation.
+@MainActor
 @Observable
 final class SessionStartRouter {
     static let shared = SessionStartRouter()

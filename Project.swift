@@ -182,9 +182,10 @@ let project = Project(
             ]),
             sources: [
                 "FouleeWidget/**",
-                // The intent the app registers too: an App Intent is declared
+                // The intents the app registers too: an App Intent is declared
                 // in each process that runs it, not linked.
                 "Foulee/Shared/LogWaterIntent.swift",
+                "Foulee/Shared/StartOutingIntent.swift",
                 "FouleeWatchWidget/StreakEntry.swift"
             ],
             resources: [

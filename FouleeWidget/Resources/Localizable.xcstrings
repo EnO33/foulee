@@ -211,6 +211,16 @@
         }
       }
     },
+    "Automatique" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        }
+      }
+    },
     "Belle constance — garde le cap." : {
       "localizations" : {
         "en" : {
@@ -275,12 +285,52 @@
         }
       }
     },
+    "Commencer une course" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a run"
+          }
+        }
+      }
+    },
+    "Commencer une marche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a walk"
+          }
+        }
+      }
+    },
+    "Commencer une sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start an outing"
+          }
+        }
+      }
+    },
     "Continue, le rythme se prend." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keep going, the habit is forming."
+          }
+        }
+      }
+    },
+    "Course" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run"
           }
         }
       }
@@ -319,6 +369,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Foulée isn’t allowed to write to Health. Turn on water in Health > Profile > Apps > Foulée."
+          }
+        }
+      }
+    },
+    "Foulée reconnaît la marche ou la course" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée tells a walk from a run"
           }
         }
       }
@@ -417,6 +477,16 @@
         }
       }
     },
+    "Marche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walk"
+          }
+        }
+      }
+    },
     "min" : {
       "localizations" : {},
       "shouldTranslate" : false
@@ -437,6 +507,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Open Foulée first to allow access to Health."
+          }
+        }
+      }
+    },
+    "Ouvre Foulée et démarre une sortie." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens Foulée and starts an outing."
           }
         }
       }
@@ -477,6 +557,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Health isn’t available on this device."
+          }
+        }
+      }
+    },
+    "Sport" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sport"
           }
         }
       }
