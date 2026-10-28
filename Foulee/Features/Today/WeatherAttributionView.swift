@@ -8,20 +8,21 @@ struct WeatherAttributionView: View {
     /// Apple's required legal attribution / data-sources page.
     static let legalURL = URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         Link(destination: Self.legalURL) {
-            // On two lines when one is too narrow (#597): the attribution is
-            // required, so it is never cut to « Weat… ».
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 5) {
-                    trademark
+            // On two lines at the accessibility sizes (#597): the attribution
+            // is required, so it is never cut to « Weat… ». One tree whose
+            // layout changes, not a `ViewThatFits` between two, which the
+            // accessibility audit read as « Dynamic Type partially
+            // unsupported » (issue #658).
+            AdaptiveStack(stacked: VStackLayout(spacing: 2), regular: HStackLayout(spacing: 5)) {
+                trademark
+                if !dynamicTypeSize.isAccessibilitySize {
                     Text(verbatim: "·")
-                    sources
                 }
-                VStack(spacing: 2) {
-                    trademark
-                    sources
-                }
+                sources
             }
             .foregroundStyle(.secondary)
         }
