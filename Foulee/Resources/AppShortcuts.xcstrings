@@ -50,6 +50,36 @@
           }
         }
       }
+    },
+    "Ma série ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My ${applicationName} streak"
+          }
+        }
+      }
+    },
+    "Où j'en suis aujourd'hui avec ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How am I doing today in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Où j'en suis dans ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where am I at in ${applicationName}"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

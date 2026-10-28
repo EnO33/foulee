@@ -2,12 +2,13 @@ import FouleeKit
 import Foundation
 @preconcurrency import HealthKit
 
-/// Live HealthKit reads from the widget process, overlaid on the app-written
-/// snapshot. While the phone is unlocked the rings move on the system's own
+/// Live HealthKit reads from the widget process — and from « Où j'en suis
+/// aujourd'hui » (#605), so Siri says the widgets' figures — overlaid on the
+/// app-written snapshot. While the phone is unlocked the rings move on the system's own
 /// refresh cadence — no need to open the app. While locked, the Health store
 /// is encrypted: reads fail, callers keep the snapshot values (the existing
 /// Lock Screen behavior).
-enum WidgetLiveMetrics {
+nonisolated enum WidgetLiveMetrics {
     /// The shared snapshot with every metric HealthKit can currently provide
     /// refreshed live. Read-only: the app (foreground refresh, background
     /// delivery, BGAppRefresh) owns persistence — having every widget instance

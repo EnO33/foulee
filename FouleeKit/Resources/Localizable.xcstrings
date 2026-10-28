@@ -189,6 +189,16 @@
         }
       }
     },
+    "%@. Aujourd'hui, %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@. Today, %2$@."
+          }
+        }
+      }
+    },
     "%@. Le détail t'attend." : {
       "localizations" : {
         "en" : {
@@ -545,6 +555,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Steps"
+          }
+        }
+      }
+    },
+    "Pas encore de série" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No streak yet"
           }
         }
       }

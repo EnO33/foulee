@@ -91,6 +91,25 @@ struct LocaleFormattingTests {
         #expect(spokenGoalText(minutes: 30, locale: american) == "Goal: 30 minutes")
     }
 
+    @Test("Siri answers where the day stands: streak, steps and minutes against their goals")
+    func todayStatus() {
+        let day = WidgetSnapshot(
+            steps: 8_240, stepsGoal: 10_000, minutes: 32, minutesGoal: 30,
+            distanceKm: 0, calories: 0, streak: 12
+        )
+        #expect(
+            plain(spokenTodayStatusText(day, locale: french))
+                == "Série de 12 jours. Aujourd'hui, 8 240 pas sur 10 000 pas, 32 minutes sur 30 minutes."
+        )
+        #expect(
+            plain(spokenTodayStatusText(day, locale: american))
+                == "12-day streak. Today, 8,240 steps of 10,000 steps, 32 minutes of 30 minutes."
+        )
+        var fresh = day
+        fresh.streak = 0
+        #expect(plain(spokenTodayStatusText(fresh, locale: french))?.hasPrefix("Pas encore de série. ") == true)
+    }
+
     @Test("A setting's time reads in the locale's hours")
     func settingClock() {
         let window = DateComponents(hour: 18, minute: 30)

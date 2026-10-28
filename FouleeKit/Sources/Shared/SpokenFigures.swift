@@ -50,3 +50,19 @@ nonisolated public func spokenDayText(
 nonisolated public func spokenGoalText(minutes: Int, locale: Locale = .app) -> String {
     kitText("Objectif de \(spokenDurationText(minutes: minutes, locale: locale))", locale: locale)
 }
+
+/// « Série de 12 jours. Aujourd'hui, 8 240 pas sur 10 000 pas, 32 minutes sur
+/// 30 minutes. » — what Siri answers to « Où j'en suis aujourd'hui »
+/// (issue #605), from the snapshot the widgets read.
+nonisolated public func spokenTodayStatusText(_ snapshot: WidgetSnapshot, locale: Locale = .app) -> String {
+    let streak = snapshot.streak > 0
+        ? spokenStreakText(days: snapshot.streak, locale: locale)
+        : kitText("Pas encore de série", locale: locale)
+    let day = spokenDayText(
+        steps: snapshot.steps,
+        minutes: snapshot.minutes,
+        goals: (snapshot.stepsGoal, snapshot.minutesGoal),
+        locale: locale
+    )
+    return kitText("\(streak). Aujourd'hui, \(day).", locale: locale)
+}
