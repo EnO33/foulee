@@ -22,7 +22,13 @@ nonisolated enum WaterGlass {
 nonisolated struct LogWaterIntent: AppIntent {
     static var title: LocalizedStringResource { "J'ai bu un verre" }
     // periphery:ignore - read by the AppIntents runtime, never from code.
-    static var description: IntentDescription { "Enregistre un verre d'eau dans Santé." }
+    static var description: IntentDescription {
+        IntentDescription(
+            "Enregistre un verre d'eau dans Santé.",
+            categoryName: "Hydratation",
+            searchKeywords: ["Eau", "Boire", "Hydratation"]
+        )
+    }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         guard HKHealthStore.isHealthDataAvailable() else {

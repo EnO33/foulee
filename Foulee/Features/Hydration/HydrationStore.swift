@@ -1,3 +1,4 @@
+import AppIntents
 import Dependencies
 import FouleeKit
 import Observation
@@ -80,6 +81,9 @@ final class HydrationStore {
             lastError = error.localizedDescription
             return
         }
+        // Same reason as the home button's outing (issue #608): the glass
+        // logged here is the habit Siri should suggest.
+        _ = try? await LogWaterIntent().donate()
         await refresh()
         WidgetCenter.shared.reloadAllTimelines()
         let previous = await HydrationReminderScheduler().recordDrinkAndReschedule()

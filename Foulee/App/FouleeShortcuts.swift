@@ -5,6 +5,10 @@ import AppIntents
 /// aujourd'hui » to Raccourcis, Spotlight, Siri and the Action button — the
 /// system registers these phrases automatically at install.
 struct FouleeShortcuts: AppShortcutsProvider {
+    // periphery:ignore - read by the AppIntents runtime, never from code.
+    /// The brand violet, so the tiles in Raccourcis read as Foulée's.
+    static var shortcutTileColor: ShortcutTileColor { .purple }
+
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: LogWaterIntent(),

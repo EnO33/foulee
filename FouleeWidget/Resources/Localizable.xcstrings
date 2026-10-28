@@ -221,12 +221,32 @@
         }
       }
     },
+    "Balade" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stroll"
+          }
+        }
+      }
+    },
     "Belle constance — garde le cap." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nice and steady — keep it up."
+          }
+        }
+      }
+    },
+    "Boire" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drink"
           }
         }
       }
@@ -349,12 +369,32 @@
         }
       }
     },
+    "Eau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Water"
+          }
+        }
+      }
+    },
     "Enregistre un verre d'eau dans Santé." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Logs a glass of water in Health."
+          }
+        }
+      }
+    },
+    "Footing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jog"
           }
         }
       }
@@ -557,6 +597,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Health isn’t available on this device."
+          }
+        }
+      }
+    },
+    "Sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
           }
         }
       }
