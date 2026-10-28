@@ -11,7 +11,13 @@ import Observation
 struct StartOutingIntent: AppIntent {
     static var title: LocalizedStringResource { "Commencer une sortie" }
     // periphery:ignore - read by the AppIntents runtime, never from code.
-    static var description: IntentDescription { "Ouvre Foulée et démarre une sortie." }
+    static var description: IntentDescription {
+        IntentDescription(
+            "Ouvre Foulée et démarre une sortie.",
+            categoryName: "Sortie",
+            searchKeywords: ["Marche", "Course", "Footing", "Balade"]
+        )
+    }
     // periphery:ignore - read by the AppIntents runtime, never from code.
     static var supportedModes: IntentModes { .foreground }
 

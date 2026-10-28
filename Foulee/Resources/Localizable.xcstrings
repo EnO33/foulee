@@ -1253,12 +1253,32 @@
         }
       }
     },
+    "Balade" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stroll"
+          }
+        }
+      }
+    },
     "battements par minute" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "beats per minute"
+          }
+        }
+      }
+    },
+    "Boire" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drink"
           }
         }
       }
@@ -1797,6 +1817,16 @@
       "localizations" : {},
       "shouldTranslate" : false
     },
+    "Eau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Water"
+          }
+        }
+      }
+    },
     "EN COURS" : {
       "localizations" : {
         "en" : {
@@ -1943,6 +1973,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Garmin FAQ"
+          }
+        }
+      }
+    },
+    "Footing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jog"
           }
         }
       }

@@ -1,3 +1,4 @@
+import AppIntents
 import Dependencies
 import FouleeKit
 import SwiftUI
@@ -315,6 +316,12 @@ struct TodayScreen: View {
             return
         }
         shortcutIntent = intent
+        // Teach Siri the habit, so « Commencer une sortie » shows up in its
+        // suggestions and Spotlight (issue #608). A shortcut run is donated
+        // by the system already.
+        if intent == nil {
+            StartOutingIntent().donate()
+        }
         // Capture today's totals now so the post-walk overlay lands on the
         // right baseline (see TodayStore.registerFinishedWalk).
         store.walkWillStart()

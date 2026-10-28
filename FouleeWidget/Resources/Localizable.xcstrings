@@ -231,6 +231,16 @@
         }
       }
     },
+    "Boire" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drink"
+          }
+        }
+      }
+    },
     "Bouge un peu, chaque jour." : {
       "localizations" : {
         "en" : {
@@ -345,6 +355,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Metric"
+          }
+        }
+      }
+    },
+    "Eau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Water"
           }
         }
       }
