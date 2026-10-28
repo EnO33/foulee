@@ -44,7 +44,7 @@ struct TimeWindowPicker: View {
     }
 
     private func picker(
-        _ label: String,
+        _ label: LocalizedStringKey,
         alignment: HorizontalAlignment = .leading,
         selection: Binding<Date>,
         in range: ClosedRange<Date>

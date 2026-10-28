@@ -54,8 +54,8 @@ struct WorkoutDetailHero: View {
     private var dateLabel: String {
         let calendar = Calendar.current
         let date = detail.summary.startedAt
-        if calendar.isDateInToday(date) { return "Aujourd'hui" }
-        if calendar.isDateInYesterday(date) { return "Hier" }
+        if calendar.isDateInToday(date) { return String(localized: "Aujourd'hui") }
+        if calendar.isDateInYesterday(date) { return String(localized: "Hier") }
         return date.dayText.uppercased()
     }
 }
