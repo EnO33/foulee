@@ -1,0 +1,74 @@
+name: CodeQL
+
+# Advanced setup, replacing the default one: its Swift autobuild finds no
+# Xcode project (Tuist generates it, nothing is committed), and its Ruby
+# analysis finds no `.rb` file (fastlane/Fastfile has no extension). Swift is
+# built here the way CI builds it; Ruby is left out.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * 1"
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            build-mode: none
+            runner: ubuntu-24.04
+          # The Connect IQ tools (FouleeConnectIQ/tools/).
+          - language: python
+            build-mode: none
+            runner: ubuntu-24.04
+          # Same image as the platform jobs of ci.yml.
+          - language: swift
+            build-mode: manual
+            runner: xcode-27
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare-project
+        if: matrix.language == 'swift'
+
+      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      # The iPhone scheme embeds the watch app, so this one build covers the
+      # app, the watch app, their extensions and FouleeKit. Unsigned: CodeQL
+      # needs the compilation, not a product.
+      - name: Build (Foulee, iOS Simulator)
+        if: matrix.language == 'swift'
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace Foulee.xcworkspace \
+            -scheme Foulee \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            -derivedDataPath build/dd \
+            CODE_SIGNING_ALLOWED=NO \
+            build | xcbeautify
+
+      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          category: /language:${{ matrix.language }}
