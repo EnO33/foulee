@@ -68,6 +68,16 @@ struct WatchWorkoutSegment: Equatable, Sendable, Identifiable {
             .joined(separator: " · ")
     }
 
+    /// `lineText(at:)` as VoiceOver says it (issue #600): « 12 minutes et
+    /// 4 secondes, 1 kilomètre, 7 minutes et 37 secondes par kilomètre,
+    /// 165 pas par minute ». The written line is read symbol by symbol.
+    func spokenLineText(at now: Date) -> String {
+        let duration = elapsed(at: now)
+        let cadence = liveCadence.flatMap { spokenCadenceText(stepsPerSecond: $0) }
+            ?? spokenCadenceText(steps: steps, over: duration)
+        return spokenStretchText(duration: duration, distanceKm: distanceKm, cadence: cadence)
+    }
+
     /// « 12:04 · 1,0 km » — what the leg cost.
     ///
     /// Split from the rhythm because the two together outgrow a 40 mm and wrap
@@ -175,4 +185,18 @@ struct WatchActivityTotals: Equatable, Sendable {
             totals.activeCalories += segment.activeCalories
         }
     }
+}
+
+/// A stretch of an outing — a leg, a sport's share — as VoiceOver says it
+/// (issue #600): duration, distance, pace and cadence in words, the pace left
+/// out where `paceText(overKm:)` would be.
+func spokenStretchText(duration: TimeInterval, distanceKm: Double, cadence: String?) -> String {
+    [
+        spokenDurationText(seconds: duration),
+        WalkMetric.distance.spokenText(distanceKm),
+        duration.spokenPaceText(overKm: distanceKm),
+        cadence
+    ]
+    .compactMap { $0 }
+    .joined(separator: ", ")
 }

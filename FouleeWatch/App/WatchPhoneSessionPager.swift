@@ -88,7 +88,7 @@ private struct WatchPhoneSessionControlsPage: View {
             .padding(.horizontal, 6)
             .padding(.top, 8)
         }
-        .accessibilityLabel("Contrôles")
+        .sessionPage("Contrôles")
     }
 }
 
@@ -124,6 +124,6 @@ private struct WatchPhoneSessionRoutePage: View {
                 }
             }
         }
-        .accessibilityLabel("Plan du parcours")
+        .sessionPage("Plan du parcours")
     }
 }

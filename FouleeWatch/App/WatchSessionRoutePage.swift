@@ -32,7 +32,7 @@ struct WatchSessionRoutePage: View {
                 emptyState
             }
         }
-        .accessibilityLabel("Plan du parcours")
+        .sessionPage("Plan du parcours")
     }
 
     private func map(_ portions: [WatchRoutePortion]) -> some View {

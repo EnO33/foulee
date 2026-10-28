@@ -27,19 +27,21 @@ import SwiftUI
 struct WatchSessionDayPage: View {
     let today: WatchTodayStore
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         ScrollView {
             VStack(spacing: 10) {
                 streak
                 goal(
-                    label: WalkMetric.steps.unit,
+                    .steps,
                     icon: "shoeprints.fill",
                     tint: MetricPalette.steps,
                     value: today.steps,
                     goal: today.stepsGoal
                 )
                 goal(
-                    label: WalkMetric.minutes.unit,
+                    .minutes,
                     icon: "timer",
                     tint: MetricPalette.minutes,
                     value: today.minutes,
@@ -52,7 +54,7 @@ struct WatchSessionDayPage: View {
             .padding(.horizontal, 8)
             .padding(.top, 4)
         }
-        .accessibilityLabel("Ta journée")
+        .sessionPage("Ta journée")
     }
 
     /// The same flame and the same figure the home draws, smaller. Repeated
@@ -62,18 +64,17 @@ struct WatchSessionDayPage: View {
     private var streak: some View {
         HStack(spacing: 5) {
             Image(systemName: "flame.fill")
-                .font(.system(size: 15, weight: .bold))
+                .scaledSystemFont(size: 15, weight: .bold)
                 .foregroundStyle(.orange)
             Text("\(today.streak)")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .monospacedDigit()
+                .scaledNumericFont(size: 24, weight: .bold)
             Text("j de série")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Série de \(today.streak) jours")
+        .accessibilityLabel(spokenStreakText(days: today.streak))
     }
 
     /// « 8 240 / 10 000 pas » over a bar.
@@ -82,23 +83,27 @@ struct WatchSessionDayPage: View {
     /// this page is read to answer « est-ce que ça suffit ? », which is a
     /// proportion. `ProgressView` also clamps past 100 % on its own, so a day
     /// already validated draws a full bar instead of overflowing.
-    private func goal(label: String, icon: String, tint: Color, value: Int, goal: Int) -> some View {
+    ///
+    /// VoiceOver hears « 8 240 pas sur 10 000 pas » (issue #600).
+    private func goal(_ metric: WalkMetric, icon: String, tint: Color, value: Int, goal: Int) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .bold))
+                    .scaledSystemFont(size: 11, weight: .bold)
                     .foregroundStyle(tint)
-                Text("\(value.groupedText()) / \(goal.groupedText()) \(label)")
+                Text("\(value.groupedText()) / \(goal.groupedText()) \(metric.unit)")
                     .font(.caption2)
                     .monospacedDigit()
                     .minimumScaleFactor(0.7)
-                    .lineLimit(1)
+                    // Wraps at the accessibility sizes rather than shrinking past
+                    // reading (issue #600).
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
             }
             ProgressView(value: Self.fraction(value, of: goal))
                 .tint(tint)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(value) \(label) sur \(goal)")
+        .accessibilityLabel(metric.spokenText(Double(value), goal: Double(goal)))
     }
 
     /// Guarded against a goal of zero, which a payload written by an older

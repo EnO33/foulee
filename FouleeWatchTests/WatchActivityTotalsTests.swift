@@ -3,6 +3,11 @@ import Foundation
 import Testing
 @testable import FouleeWatch
 
+/// What VoiceOver reads: the system's no-break spaces read as spaces.
+func plain(_ text: String) -> String {
+    text.replacingOccurrences(of: "\u{00A0}", with: " ").replacingOccurrences(of: "\u{202F}", with: " ")
+}
+
 /// Per-sport totals, the arithmetic half of issue #250.
 ///
 /// HealthKit measures each segment; this adds up the segments of one sport and
@@ -158,7 +163,10 @@ struct WatchActivityTotalsTests {
         // Without the leading word, VoiceOver reads six numbers belonging to
         // nothing in particular — and « quel sport la montre a compris ? » is
         // the question this block answers.
-        #expect(metrics.activitySummaryText == "Course : 12:04, \(1_480.groupedText()) pas, 1,8 km, 136 kcal")
+        #expect(
+            plain(metrics.activitySummaryText)
+                == "Course : 12 minutes et 4 secondes, 1 480 pas, 1,8 kilomètre, 136 kilocalories"
+        )
     }
 
     @Test("The two displayed lines name the sport and its three counters")
@@ -174,7 +182,7 @@ struct WatchActivityTotalsTests {
             distanceMeters: 1_830,
             activeCalories: 136
         )
-        metrics.recentPace = "7'35\"/km"
+        metrics.recentPaceSecondsPerKm = 455
         #expect(metrics.activityHeadlineText == "Course · 7'35\"/km")
         // One decimal, not two: this line refreshes with the session, and the
         // second decimal would flicker without adding anything readable at a
@@ -339,9 +347,12 @@ struct WatchActivityBreakdownTests {
         ])
 
         #expect(outing.showsActivityBreakdown)
-        outing.recentPace = "7'35\"/km"
+        outing.recentPaceSecondsPerKm = 455
         #expect(outing.activityHeadlineText == "Course · 7'35\"/km")
-        #expect(outing.activitySummaryText.hasPrefix("Course : 06:20"))
+        #expect(
+            plain(outing.activitySummaryText)
+                .hasPrefix("Course : 7 minutes et 35 secondes par kilomètre, 6 minutes et 20 secondes")
+        )
     }
 
     /// A leg with nothing measured in it yet says nothing either — the guard is

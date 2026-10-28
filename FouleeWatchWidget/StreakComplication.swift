@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 import WidgetKit
 
@@ -33,12 +34,17 @@ struct StreakComplicationView: View {
     let entry: StreakEntry
 
     var body: some View {
-        switch family {
-        case .accessoryCircular: circularView
-        case .accessoryRectangular: rectangularView
-        case .accessoryInline: inlineView
-        default: inlineView
+        Group {
+            switch family {
+            case .accessoryCircular: circularView
+            case .accessoryRectangular: rectangularView
+            case .accessoryInline: inlineView
+            default: inlineView
+            }
         }
+        // « 12 j » is read « 12 j » (issue #600).
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spokenStreakText(days: entry.streak))
     }
 
     private var circularView: some View {

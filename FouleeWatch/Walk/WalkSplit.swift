@@ -24,6 +24,21 @@ struct WalkSplit: Equatable, Sendable, Identifiable {
     /// « 160 pas/min », or `nil` when no step was counted.
     var cadenceText: String? { FouleeKit.cadenceText(steps: steps, over: duration) }
 
+    /// The kilometre as VoiceOver says it (issue #600): « Kilomètre 2 en
+    /// 9 minutes et 12 secondes, Marche, 1 180 pas, 125 pas par minute ».
+    /// « 09:12 » alone is read as a time of day.
+    var spokenText: String {
+        [
+            String(localized: "Kilomètre \(kilometre) en \(spokenDurationText(seconds: duration))"),
+            activityText,
+            WalkMetric.steps.spokenText(Double(steps)),
+            spokenCadenceText(steps: steps, over: duration)
+        ]
+        .compactMap { $0 }
+        .filter { !$0.isEmpty }
+        .joined(separator: ", ")
+    }
+
     /// « Course », « Marche », or « Marche et course » for a kilometre that
     /// changed sport on the way.
     var activityText: String {

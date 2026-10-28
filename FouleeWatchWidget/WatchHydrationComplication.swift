@@ -105,12 +105,18 @@ struct WatchHydrationView: View {
     }
 
     var body: some View {
-        switch family {
-        case .accessoryCircular: circular
-        case .accessoryRectangular: rectangular
-        case .accessoryInline: inline
-        default: inline
+        Group {
+            switch family {
+            case .accessoryCircular: circular
+            case .accessoryRectangular: rectangular
+            case .accessoryInline: inline
+            default: inline
+            }
         }
+        // « 0,9 / 2 L » is read « 0,9 barre oblique 2 L » (issue #600).
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Hydratation")
+        .accessibilityValue(spokenHydrationText(intakeML: entry.waterML, goalML: entry.goalML))
     }
 
     private var circular: some View {

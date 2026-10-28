@@ -74,6 +74,16 @@ struct WatchLegLineTests {
         )
     }
 
+    @Test("VoiceOver hears the same line in words (issue #600)")
+    func closedLegIsSpokenInWords() {
+        var leg = segment(from: 0, to: 724, metres: 1_000)
+        leg.steps = 1_435
+        #expect(
+            plain(leg.spokenLineText(at: base.addingTimeInterval(9_999)))
+                == "12 minutes et 4 secondes, 1 kilomètre, 12 minutes et 4 secondes par kilomètre, 120 pas par minute"
+        )
+    }
+
     /// The whole reason `lineText` is a function. A stored property would have
     /// frozen the running leg at whatever second it was first drawn — the
     /// defect issue #266 fixed on the session clock.

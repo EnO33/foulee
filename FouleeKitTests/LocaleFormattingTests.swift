@@ -2,6 +2,12 @@ import Foundation
 import Testing
 @testable import FouleeKit
 
+/// What VoiceOver reads: the system puts a no-break space, narrow or not,
+/// where it likes, and VoiceOver reads it as a space.
+func plain(_ text: String?) -> String? {
+    text?.replacingOccurrences(of: "\u{00A0}", with: " ").replacingOccurrences(of: "\u{202F}", with: " ")
+}
+
 /// Figures and dates follow the device's locale (issue #586). Every case names
 /// its locale and its date, so none depends on the machine running it.
 @Suite("Locale formatting")
@@ -48,15 +54,32 @@ struct LocaleFormattingTests {
 
     @Test("VoiceOver hears durations and paces in words, in the locale's")
     func spoken() {
-        // The system puts a no-break space where it likes; VoiceOver reads it
-        // as a space.
-        func plain(_ text: String) -> String { text.replacingOccurrences(of: "\u{00A0}", with: " ") }
         #expect(plain(spokenDurationText(seconds: 754, locale: french)) == "12 minutes et 34 secondes")
         #expect(plain(spokenDurationText(seconds: 3_900, locale: french)) == "1 heure et 5 minutes")
         #expect(plain(spokenDurationText(minutes: 45, locale: american)) == "45 minutes")
         #expect(plain(spokenDurationText(seconds: -3, locale: french)) == "0 seconde")
         #expect(plain(spokenPaceText(secondsPerKm: 330, locale: french)) == "5 minutes et 30 secondes par kilomètre")
         #expect(plain(spokenPaceText(secondsPerKm: 330, locale: american)) == "5 minutes, 30 seconds per kilometer")
+    }
+
+    @Test("VoiceOver hears a cadence and a day's figures with their units in words")
+    func spokenUnits() {
+        #expect(spokenCadenceText(steps: 330, over: 120, locale: french) == "165 pas par minute")
+        #expect(spokenCadenceText(stepsPerSecond: 2.75, locale: american) == "165 steps per minute")
+        #expect(spokenCadenceText(steps: 30, over: 5, locale: french) == nil)
+        #expect(spokenCadenceText(stepsPerSecond: .nan, locale: french) == nil)
+        #expect(plain(WalkMetric.steps.spokenText(8_240, locale: french)) == "8 240 pas")
+        #expect(plain(WalkMetric.minutes.spokenText(65, locale: french)) == "1 heure et 5 minutes")
+        #expect(plain(WalkMetric.distance.spokenText(4.2, locale: french)) == "4,2 kilomètres")
+        #expect(plain(WalkMetric.distance.spokenText(4.2, locale: american)) == "4.2 kilometers")
+        #expect(plain(WalkMetric.calories.spokenText(320.4, locale: french)) == "320 kilocalories")
+        #expect(plain(WalkMetric.steps.spokenText(8_240, goal: 10_000, locale: french)) == "8 240 pas sur 10 000 pas")
+        #expect(spokenHydrationText(intakeML: 900, goalML: 2_000, locale: french) == "0,9 litre sur 2,0")
+        #expect(spokenStreakText(days: 1, locale: french) == "Série de 1 jour")
+        #expect(spokenStreakText(days: 12, locale: french) == "Série de 12 jours")
+        #expect(spokenStreakText(days: 1, locale: american) == "1-day streak")
+        #expect(spokenHeartRateText(128, locale: american) == "128 beats per minute")
+        #expect(spokenHeartRateText(nil, locale: french) == "Fréquence cardiaque indisponible")
     }
 
     @Test("A setting's time reads in the locale's hours")

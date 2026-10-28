@@ -42,7 +42,7 @@ extension WatchWorkoutStore {
         refreshActivityTotals(at: now)
     }
 
-    /// « 5'25"/km », or nothing (issue #300).
+    /// The live pace in seconds a kilometre, or nothing (issue #300).
     ///
     /// Rounded to five seconds a kilometre for a run, ten for a walk. The step
     /// does not make the measurement better — it stops the screen claiming a
@@ -51,9 +51,13 @@ extension WatchWorkoutStore {
     /// 5'00"/km even a tenth of that is half a minute per kilometre. A display
     /// flicking between 5'07", 5'12" and 5'04" would be showing noise in the
     /// typography of certainty.
-    func recentPaceText(at now: Date) -> String? {
-        guard let pace = paceEstimator.pace(at: now) else { return nil }
-        let step: TimeInterval = currentActivity == .running ? 5 : 10
-        return paceText(secondsPerKm: pace, roundedTo: step)
+    func recentPace(at now: Date) -> TimeInterval? {
+        paceEstimator.pace(at: now).map { Self.quantised(pace: $0, for: currentActivity) }
+    }
+
+    /// The live pace rounded to the step its sport can honestly claim.
+    nonisolated static func quantised(pace secondsPerKm: TimeInterval, for activity: SessionActivity) -> TimeInterval {
+        let step: TimeInterval = activity == .running ? 5 : 10
+        return (secondsPerKm / step).rounded() * step
     }
 }

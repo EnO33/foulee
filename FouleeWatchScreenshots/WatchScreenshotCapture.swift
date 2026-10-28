@@ -36,19 +36,38 @@ enum WatchScreenshotCapture {
     /// see `ScreenshotCapture.isPseudo` on the phone side, and `labeled(_:)`.
     static let isPseudo = ProcessInfo.processInfo.environment["FOULEE_CAPTURE_PSEUDO"] == "1"
 
+    /// Set by `tools/capture_screenshots.sh --watch --text-size` (issue #600).
+    /// simctl cannot set the watch's text size, so the app gets it as a launch
+    /// argument: the simctl name, « accessibility-extra-extra-extra-large »,
+    /// becomes the system's « UICTContentSizeCategoryAccessibilityXXXL ».
+    static let textSizeArguments: [String] = {
+        guard let size = ProcessInfo.processInfo.environment["FOULEE_CAPTURE_TEXT_SIZE"], !size.isEmpty else {
+            return []
+        }
+        let isAccessibility = size.hasPrefix("accessibility-")
+        let base = isAccessibility ? String(size.dropFirst("accessibility-".count)) : size
+        let letters = base.split(separator: "-").map { $0 == "extra" ? "X" : $0.prefix(1).uppercased() }.joined()
+        return ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategory\(isAccessibility ? "Accessibility" : "")\(letters)"]
+    }()
+
     struct Labels {
-        let streak, drank, start, music, routeMap: String
+        let drank, start, music, routeMap: String
         /// The start of the « Jambes » row's combined label, « Marche : … ».
         let walkLeg: String
+        /// The pages' VoiceOver names, which cover the whole page: on screen
+        /// at every text size, where a tile can sit below the fold (#600).
+        let session, legs: String
 
         static let french = Labels(
-            streak: "série", drank: "J'ai bu", start: "Démarrer",
-            music: "Musique", routeMap: "Plan du parcours", walkLeg: "Marche :"
+            drank: "J'ai bu", start: "Démarrer",
+            music: "Musique", routeMap: "Plan du parcours", walkLeg: "Marche :",
+            session: "Séance", legs: "Portions de la sortie"
         )
 
         static let english = Labels(
-            streak: "streak", drank: "Had a glass", start: "Start",
-            music: "Music", routeMap: "Route map", walkLeg: "Walk:"
+            drank: "Had a glass", start: "Start",
+            music: "Music", routeMap: "Route map", walkLeg: "Walk:",
+            session: "Session", legs: "Workout segments"
         )
     }
 }
@@ -74,6 +93,7 @@ extension XCTestCase {
             : ["-AppleLanguages", "(fr)", "-AppleLocale", "fr_FR"]
         let pseudo = WatchScreenshotCapture.isPseudo ? ["-NSDoubleLocalizedStrings", "YES"] : []
         app.launchArguments = [WatchScreenshotCapture.launchArgument] + locale + pseudo
+            + WatchScreenshotCapture.textSizeArguments
         app.launch()
         return app
     }

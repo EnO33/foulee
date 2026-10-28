@@ -14,6 +14,7 @@
 #   tools/capture_screenshots.sh --watch "Apple Watch SE 3 (40mm)" probe-40mm
 #   tools/capture_screenshots.sh --dark "" review-dark   # visual review only
 #   tools/capture_screenshots.sh --text-size accessibility-large "" review-a11y
+#   tools/capture_screenshots.sh --watch --text-size accessibility-extra-extra-extra-large "" review-a11y
 #   tools/capture_screenshots.sh --language en          # the English set
 #   tools/capture_screenshots.sh --watch --language en
 #   tools/capture_screenshots.sh --language en --pseudo "" review-pseudo
@@ -108,11 +109,6 @@ if { [ -n "$DARK" ] || [ -n "$TEXT_SIZE" ] || [ -n "$PSEUDO" ]; } && [ "$SET_NAM
 fi
 if [ -n "$DARK" ] && [ "$PLATFORM" = "watchOS" ]; then
   echo "--dark has no effect on the watch, which is always dark." >&2
-  exit 1
-fi
-if [ -n "$TEXT_SIZE" ] && [ "$PLATFORM" = "watchOS" ]; then
-  # Verified on watchOS 27: "Runtime does not support dynamic text".
-  echo "--text-size is iPhone only: simctl cannot set the watch's text size." >&2
   exit 1
 fi
 
@@ -230,7 +226,12 @@ fi
 # `WatchSyncStore` finds no payload and « Démarrer » starts a session outright
 # instead of asking which activity — the one screen of the watch capture that
 # would otherwise depend on what the developer's own phone had synced.
-if [ -n "$TEXT_SIZE" ]; then
+if [ -n "$TEXT_SIZE" ] && [ "$PLATFORM" = "watchOS" ]; then
+  # simctl cannot set the watch's text size — verified on watchOS 27:
+  # "Runtime does not support dynamic text". The UI test hands it to the app
+  # as a launch argument instead (issue #600).
+  echo "==> Text size: $TEXT_SIZE (launch argument)"
+elif [ -n "$TEXT_SIZE" ]; then
   echo "==> Text size: $TEXT_SIZE"
   xcrun simctl ui "$UDID" content_size "$TEXT_SIZE"
   # Back to the default afterwards: the simulator outlives the run, and the

@@ -41,12 +41,13 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// Everything measured while doing `activity`, since the session started —
     /// not since the last switch. See `WatchActivityTotals`.
     var activityTotals: WatchActivityTotals = .zero
-    /// « 5'25"/km », or `nil` when there is nothing honest to say (issue #300).
+    /// The live pace in seconds a kilometre, already quantised, or `nil` when
+    /// there is nothing honest to say (issue #300).
     ///
     /// Carried on the snapshot rather than pulled from the store by the view,
     /// so the screen stays a function of one value — and so the withholding
     /// rules can be asserted without a session.
-    var recentPace: String?
+    var recentPaceSecondsPerKm: TimeInterval?
     /// Each kilometre of the outing and what it cost (issue #301). Empty until
     /// the first is crossed.
     var splits: [WalkSplit] = []
@@ -148,6 +149,11 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     /// session, so there is genuinely nothing to total. « Course · 00:00 » next
     /// to three zeros reads as a broken counter; « Course » alone reads as what
     /// it is — the sport, named, with no figures claimed.
+    /// « 5'25"/km ».
+    var recentPace: String? {
+        recentPaceSecondsPerKm.map { paceText(secondsPerKm: $0, roundedTo: 1) }
+    }
+
     var activityHeadlineText: String {
         guard let recentPace else { return activity.label }
         return "\(activity.label) · \(recentPace)"
@@ -179,12 +185,24 @@ struct WatchWorkoutMetrics: Equatable, Sendable {
     ///
     /// Here rather than in the view so it is a pure function of the metrics,
     /// and so the wording is asserted rather than eyeballed.
+    ///
+    /// In words (issue #600): the live pace the line shows, and durations,
+    /// distances and energy as VoiceOver should say them — « 12:04 » alone
+    /// is read as a time of day, « kcal » letter by letter.
     var activitySummaryText: String {
-        guard showsActivityBreakdown else { return activity.label }
-        let totals = activityTotals
-        let clock = totals.elapsed.walkClockText
-        let km = totals.distanceKm.kmText(fractionDigits: 1)
-        return String(localized: "\(activity.label) : \(clock), \(totals.steps.groupedText()) pas, \(km), \(totals.activeCalories) kcal")
+        var figures: [String] = []
+        if let recentPaceSecondsPerKm { figures.append(spokenPaceText(secondsPerKm: recentPaceSecondsPerKm)) }
+        if showsActivityBreakdown {
+            let totals = activityTotals
+            figures += [
+                spokenDurationText(seconds: totals.elapsed),
+                WalkMetric.steps.spokenText(Double(totals.steps)),
+                WalkMetric.distance.spokenText(totals.distanceKm),
+                WalkMetric.calories.spokenText(Double(totals.activeCalories))
+            ]
+        }
+        guard !figures.isEmpty else { return activity.label }
+        return String(localized: "\(activity.label) : \(figures.joined(separator: ", "))")
     }
 }
 
@@ -251,5 +269,15 @@ struct WatchSportSummary: Equatable, Sendable, Identifiable {
             parts.append(cadence)
         }
         return parts.joined(separator: " · ")
+    }
+
+    /// `text` as VoiceOver says it (issue #600).
+    var spokenText: String {
+        let line = spokenStretchText(
+            duration: totals.elapsed,
+            distanceKm: totals.distanceKm,
+            cadence: spokenCadenceText(steps: totals.steps, over: totals.elapsed)
+        )
+        return "\(activity.label), \(line)"
     }
 }

@@ -39,7 +39,7 @@ struct WatchSessionLegsPage: View {
             // the page: on a 40 mm the last line ended under them (#408).
             .padding(.bottom, 20)
         }
-        .accessibilityLabel("Portions de la sortie")
+        .sessionPage("Portions de la sortie")
     }
 
     /// One leg: the sport on its own line, the figures under it.
@@ -73,7 +73,7 @@ struct WatchSessionLegsPage: View {
                 }
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(leg.activity.label) : \(leg.lineText(at: context.date))")
+            .accessibilityLabel("\(leg.activity.label) : \(leg.spokenLineText(at: context.date))")
         }
     }
 }

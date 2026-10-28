@@ -45,7 +45,7 @@ struct WatchSessionControlsPage: View {
             .padding(.horizontal, 6)
             .padding(.top, 8)
         }
-        .accessibilityLabel("Contrôles")
+        .sessionPage("Contrôles")
     }
 }
 

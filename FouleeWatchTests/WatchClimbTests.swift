@@ -57,4 +57,15 @@ struct WatchClimbTests {
         let loop = WatchFinishedView(metrics: metrics, saveFailed: false, errorMessage: nil, onRetry: {}, onDone: {})
         #expect(loop.figuresText.hasSuffix(" · ↑ 120 m · ↓ 115 m"))
     }
+
+    @Test("VoiceOver hears the summary in words, the climb included")
+    func spokenSummary() {
+        var metrics = WatchWorkoutMetrics.zero
+        metrics.elapsed = 1_512
+        metrics.steps = 3_100
+        metrics.distanceMeters = 2_400
+        metrics.climbMeters = 119.6
+        let view = WatchFinishedView(metrics: metrics, saveFailed: false, errorMessage: nil, onRetry: {}, onDone: {})
+        #expect(plain(view.summarySpokenText) == "25 minutes et 12 secondes, 3 100 pas, 2,4 kilomètres, 120 mètres de montée")
+    }
 }

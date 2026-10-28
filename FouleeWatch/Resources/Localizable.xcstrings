@@ -50,22 +50,6 @@
         }
       }
     },
-    "%@ : %@, %@ pas, %@, %lld kcal" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ : %2$@, %3$@ pas, %4$@, %5$lld kcal"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@: %2$@, %3$@ steps, %4$@, %5$lld kcal"
-          }
-        }
-      }
-    },
     "%@ pas" : {
       "localizations" : {
         "en" : {
@@ -111,22 +95,6 @@
     "%lld" : {
       "localizations" : {},
       "shouldTranslate" : false
-    },
-    "%lld %@ sur %lld" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld %2$@ sur %3$lld"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld %2$@ of %3$lld"
-          }
-        }
-      }
     },
     "Annuler" : {
       "localizations" : {
@@ -188,6 +156,16 @@
         }
       }
     },
+    "Durée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duration"
+          }
+        }
+      }
+    },
     "Démarrer" : {
       "localizations" : {
         "en" : {
@@ -224,6 +202,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Saving…"
+          }
+        }
+      }
+    },
+    "Hydratation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hydration"
           }
         }
       }
@@ -496,46 +484,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "streak"
-          }
-        }
-      }
-    },
-    "Série de %lld jours" : {
-      "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Série de %lld jour"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Série de %lld jours"
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld-day streak"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld-day streak"
-                }
-              }
-            }
           }
         }
       }
