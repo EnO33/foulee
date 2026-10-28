@@ -22,7 +22,6 @@
     "textClipped · objectifs"
   ],
   "Bilan, week": [
-    "contrast ·  ",
     "contrast · 33",
     "contrast · 36",
     "contrast · 38",
@@ -66,7 +65,6 @@
     "dynamicType · Minutes",
     "dynamicType · Pas",
     "dynamicType · kcal",
-    "hitRegion · today.card.weather",
     "textClipped · / 10 000",
     "textClipped · 8 240",
     "textClipped · Bravo, 42 minutes d'activité"
@@ -96,8 +94,6 @@
     "dynamicType · Petit verre",
     "dynamicType · Verre",
     "hitRegion · 08:10 : 250 millilitres, Foulée",
-    "textClipped · Apple Watch",
-    "textClipped · Foulée",
     "textClipped · Grand verre"
   ],
   "Mirrored outing": [
@@ -189,7 +185,6 @@
     "dynamicType · Sources des données",
     "dynamicType · ·",
     "dynamicType ·  Weather",
-    "textClipped · Conseil : idéal",
     "textClipped · Prévision à 12:00 à ton emplacement"
   ],
   "_recordedOn": [
