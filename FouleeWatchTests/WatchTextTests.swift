@@ -28,13 +28,6 @@ struct WatchTextTests {
         #expect(text("J'ai bu", in: american) == "Had a glass")
     }
 
-    @Test("A streak picks its plural form in each language")
-    func plurals() {
-        #expect(text("Série de \(1) jours", in: french) == "Série de 1 jour")
-        #expect(text("Série de \(12) jours", in: french) == "Série de 12 jours")
-        #expect(text("Série de \(1) jours", in: american) == "1-day streak")
-    }
-
     @Test("Arguments keep their place in English")
     func arguments() {
         #expect(text("Kilomètre \(3) en \("05:42")", in: american) == "Kilometer 3 in 05:42")

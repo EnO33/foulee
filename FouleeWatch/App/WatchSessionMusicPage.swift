@@ -13,7 +13,6 @@ struct WatchSessionMusicPage: View {
         NowPlayingView()
             // A named container, so VoiceOver and the capture run both find
             // the page without depending on the system view's own labels.
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel("Musique")
+            .sessionPage("Musique")
     }
 }

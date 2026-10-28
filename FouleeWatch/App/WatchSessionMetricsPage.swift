@@ -39,10 +39,17 @@ struct WatchSessionMetricsPage: View {
                 }
 
                 HStack(spacing: 10) {
-                    metric(value: metrics.steps.groupedText(), label: WalkMetric.steps.unit, icon: "shoe", tint: MetricPalette.steps)
+                    metric(
+                        value: metrics.steps.groupedText(),
+                        label: WalkMetric.steps.unit,
+                        spoken: WalkMetric.steps.spokenText(Double(metrics.steps)),
+                        icon: "shoe",
+                        tint: MetricPalette.steps
+                    )
                     metric(
                         value: metrics.distanceKm.kmValue(),
                         label: WalkMetric.distance.unit,
+                        spoken: WalkMetric.distance.spokenText(metrics.distanceKm),
                         icon: "location.fill",
                         tint: MetricPalette.distance
                     )
@@ -51,12 +58,14 @@ struct WatchSessionMetricsPage: View {
                     metric(
                         value: "\(metrics.activeCalories)",
                         label: WalkMetric.calories.unit,
+                        spoken: WalkMetric.calories.spokenText(Double(metrics.activeCalories)),
                         icon: "flame.fill",
                         tint: MetricPalette.calories
                     )
                     metric(
                         value: metrics.heartRate.map { "\($0)" } ?? "—",
                         label: "bpm",
+                        spoken: spokenHeartRateText(metrics.heartRate),
                         icon: "heart.fill",
                         tint: MetricPalette.heartRate
                     )
@@ -66,7 +75,7 @@ struct WatchSessionMetricsPage: View {
         }
         // Named for VoiceOver rather than drawn on screen — see the pager's own
         // documentation for why no page here carries a visible header.
-        .accessibilityLabel("Séance")
+        .sessionPage("Séance")
     }
 
     /// What the watch is recording right now, and how much of it there has been
@@ -147,11 +156,12 @@ struct WatchSessionMetricsPage: View {
     /// **In its metric's colour** (issue #381), like the tiles on the phone and
     /// the watch's own home: the label carries the tint, the figure stays white
     /// so it reads first.
-    private func metric(value: String, label: String, icon: String, tint: Color) -> some View {
+    ///
+    /// One VoiceOver element each, the figure with its unit in words.
+    private func metric(value: String, label: String, spoken: String, icon: String, tint: Color) -> some View {
         VStack(spacing: 1) {
             Text(value)
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
-                .monospacedDigit()
+                .scaledNumericFont(size: 17, weight: .semibold)
             // Shrinks rather than wraps: « steps » is longer than « pas », and
             // at the largest sizes it split mid-word like « pa/s » once did (#588).
             Label(label, systemImage: icon)
@@ -161,5 +171,7 @@ struct WatchSessionMetricsPage: View {
                 .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spoken)
     }
 }

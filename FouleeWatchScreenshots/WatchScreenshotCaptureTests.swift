@@ -27,7 +27,7 @@ final class WatchScreenshotCaptureTests: XCTestCase {
 
     func testCaptureWatchScreens() {
         let app = launchWatchInCaptureMode()
-        waitForWatchScreen(app.staticTexts.labeled(WatchScreenshotCapture.label.streak), "Watch home")
+        waitForWatchScreen(app.buttons.labeled(WatchScreenshotCapture.label.start), "Watch home")
 
         captureToday(app)
         captureHydration(app)
@@ -76,8 +76,11 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     /// fails loudly on the missing sentinel instead of photographing the wrong
     /// screen.
     ///
-    /// The sentinel is a tile of the « Séance » page — it used to be
-    /// « Arrêter », which issue #274 moved to its own page.
+    /// The sentinel is the « Séance » page itself — it used to be « Arrêter »,
+    /// which issue #274 moved to its own page, then the « bpm » tile, which
+    /// sits below the fold at the accessibility text sizes and became part of
+    /// one VoiceOver element per tile (issue #600). The page's container is on
+    /// screen at every size.
     ///
     /// **Verified by inverting it**, because a sentinel nobody has watched fail
     /// is a sentinel nobody should trust: with the pager's initial page set to
@@ -93,7 +96,7 @@ final class WatchScreenshotCaptureTests: XCTestCase {
     /// Store — is only ever noticed on release day.
     private func captureSession(_ app: XCUIApplication) {
         tapWatchElement(app.buttons.labeled(WatchScreenshotCapture.label.start), "Démarrer")
-        let sentinel = app.staticTexts["bpm"]
+        let sentinel = app.descendants(matching: .any).labeled(WatchScreenshotCapture.label.session).firstMatch
         waitForWatchScreen(sentinel, "Session in progress")
         XCTAssertTrue(sentinel.isHittable, "Session page is not the page on screen")
         captureWatch("watch-02-session")
@@ -137,7 +140,10 @@ final class WatchScreenshotCaptureTests: XCTestCase {
             .matching(NSPredicate(format: match, WatchScreenshotCapture.label.walkLeg))
             .firstMatch
         waitForWatchScreen(sentinel, "Legs page")
-        XCTAssertTrue(sentinel.isHittable, "Legs page is not the page on screen")
+        // The page, not the row: the row can sit below the fold at the
+        // accessibility text sizes (issue #600).
+        let page = app.descendants(matching: .any).labeled(WatchScreenshotCapture.label.legs).firstMatch
+        XCTAssertTrue(page.isHittable, "Legs page is not the page on screen")
         settleWatchScrolling()
         captureWatch("watch-03-jambes")
     }

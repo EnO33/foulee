@@ -62,13 +62,13 @@ enum WatchStatMetric: String, AppEnum {
         }
     }
 
-    /// « pas », « km »… — the kit's own units, in the complication's language.
-    var unitLabel: String {
+    /// The kit's metric: its unit on screen, its figure in words for VoiceOver.
+    var walkMetric: WalkMetric {
         switch self {
-        case .steps: WalkMetric.steps.unit
-        case .minutes: WalkMetric.minutes.unit
-        case .distance: WalkMetric.distance.unit
-        case .calories: WalkMetric.calories.unit
+        case .steps: .steps
+        case .minutes: .minutes
+        case .distance: .distance
+        case .calories: .calories
         }
     }
 
@@ -239,12 +239,18 @@ struct WatchStatComplicationView: View {
     let entry: WatchStatEntry
 
     var body: some View {
-        switch family {
-        case .accessoryCircular: circular
-        case .accessoryRectangular: rectangular
-        case .accessoryInline: inline
-        default: inline
+        Group {
+            switch family {
+            case .accessoryCircular: circular
+            case .accessoryRectangular: rectangular
+            case .accessoryInline: inline
+            default: inline
+            }
         }
+        // « 8,2k » and « kcal » are read letter by letter (issue #600).
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(entry.metric.name))
+        .accessibilityValue(entry.metric.walkMetric.spokenText(entry.value))
     }
 
     private var circular: some View {
@@ -272,13 +278,13 @@ struct WatchStatComplicationView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(valueText)
                     .font(.system(size: 18, weight: .bold, design: .rounded)).monospacedDigit()
-                Text(entry.metric.unitLabel).font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(entry.metric.walkMetric.unit).font(.system(size: 11)).foregroundStyle(.secondary)
             }
         }
     }
 
     private var inline: some View {
-        Label("\(valueText) \(entry.metric.unitLabel)", systemImage: entry.metric.icon)
+        Label("\(valueText) \(entry.metric.walkMetric.unit)", systemImage: entry.metric.icon)
     }
 
     private var valueText: String {

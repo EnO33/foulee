@@ -55,4 +55,34 @@ nonisolated public enum WalkMetric: String, CaseIterable, Identifiable, Sendable
         guard self != .minutes else { return durationText(minutes: Int(value.rounded())) }
         return "\(formatted(value)) \(unit)"
     }
+
+    /// The figure as VoiceOver says it (issue #600): « 4,2 kilomètres »,
+    /// « 320 kilocalories », « 32 minutes ». The written units are spelled
+    /// out letter by letter — « k m », « k cal ».
+    public func spokenText(_ value: Double, locale: Locale = .app) -> String {
+        switch self {
+        case .steps:
+            kitText("\(formatted(value, locale: locale)) pas", locale: locale)
+        case .minutes:
+            spokenDurationText(minutes: Int(value.rounded()), locale: locale)
+        case .distance:
+            Measurement(value: value, unit: UnitLength.kilometers).formatted(spoken(fractionDigits: 0...1, locale))
+        case .calories:
+            Measurement(value: value.rounded(), unit: UnitEnergy.kilocalories).formatted(spoken(fractionDigits: 0...0, locale))
+        }
+    }
+
+    /// « 8 240 pas sur 10 000 pas », « 32 minutes sur 30 minutes »: the
+    /// written « 8 240 / 10 000 pas » reads its slash aloud (issue #600).
+    public func spokenText(_ value: Double, goal: Double, locale: Locale = .app) -> String {
+        kitText("\(spokenText(value, locale: locale)) sur \(spokenText(goal, locale: locale))", locale: locale)
+    }
+
+    private func spoken<U: Dimension>(
+        fractionDigits: ClosedRange<Int>,
+        _ locale: Locale
+    ) -> Measurement<U>.FormatStyle {
+        .measurement(width: .wide, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(fractionDigits)))
+            .locale(locale)
+    }
 }

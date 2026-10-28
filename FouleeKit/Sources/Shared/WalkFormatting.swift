@@ -79,23 +79,46 @@ nonisolated public func spokenPaceText(secondsPerKm: TimeInterval, locale: Local
 /// is `cyclingCadence`. Dividing the step count is not a fallback — it is the
 /// only road.
 nonisolated public func cadenceText(steps: Int, over elapsed: TimeInterval) -> String? {
-    guard elapsed >= 10, steps > 0 else { return nil }
-    return cadenceText(stepsPerSecond: Double(steps) / elapsed)
+    stepsPerSecond(steps: steps, over: elapsed).flatMap(cadenceText(stepsPerSecond:))
 }
 
 /// « 165 pas/min » from a cadence already measured — the pedometer's live one
 /// (issue #331) — or `nil` for no rhythm at all. Rounded to five like the
 /// average: the pedometer is a better source, not a finer one.
 nonisolated public func cadenceText(stepsPerSecond: Double) -> String? {
-    // Finite first: the figure comes straight from the system, and `Int(_:)`
-    // on an infinity or a NaN is a crash, not a rounding (issue #338).
-    guard stepsPerSecond.isFinite, stepsPerSecond > 0 else { return nil }
     // A **non-breaking** space: « 165 » stranded at the end of a line with
     // « pas/min » on the next reads as badly as the « pa/s » of issue #261. The
     // line still wraps on a 40 mm — it just wraps before the number rather than
     // between the number and what it counts.
-    let cadence = Int((stepsPerSecond * 60 / 5).rounded()) * 5
+    guard let cadence = roundedCadence(stepsPerSecond: stepsPerSecond) else { return nil }
     return kitText("\(cadence)\u{00A0}pas/min")
+}
+
+/// The cadence as VoiceOver says it: « 165 pas par minute », `nil` where
+/// `cadenceText(steps:over:)` is. « pas/min » is read out symbol by symbol
+/// (issue #600).
+nonisolated public func spokenCadenceText(steps: Int, over elapsed: TimeInterval, locale: Locale = .app) -> String? {
+    stepsPerSecond(steps: steps, over: elapsed).flatMap { spokenCadenceText(stepsPerSecond: $0, locale: locale) }
+}
+
+/// `spokenCadenceText(steps:over:)` from a cadence already measured.
+nonisolated public func spokenCadenceText(stepsPerSecond: Double, locale: Locale = .app) -> String? {
+    guard let cadence = roundedCadence(stepsPerSecond: stepsPerSecond) else { return nil }
+    return kitText("\(cadence) pas par minute", locale: locale)
+}
+
+/// `nil` for a stretch too short to divide: nothing under ten seconds.
+nonisolated private func stepsPerSecond(steps: Int, over elapsed: TimeInterval) -> Double? {
+    guard elapsed >= 10, steps > 0 else { return nil }
+    return Double(steps) / elapsed
+}
+
+/// Rounded to five, or `nil` for no rhythm at all. Finite first: the figure
+/// comes straight from the system, and `Int(_:)` on an infinity or a NaN is a
+/// crash, not a rounding (issue #338).
+nonisolated private func roundedCadence(stepsPerSecond: Double) -> Int? {
+    guard stepsPerSecond.isFinite, stepsPerSecond > 0 else { return nil }
+    return Int((stepsPerSecond * 60 / 5).rounded()) * 5
 }
 
 nonisolated public extension Double {

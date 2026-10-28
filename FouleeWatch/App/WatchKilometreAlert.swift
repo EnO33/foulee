@@ -60,8 +60,9 @@ struct WatchKilometreAlert: View {
                 .font(.headline)
                 .foregroundStyle(MetricPalette.distance)
             Text(split.duration.walkClockText)
-                .font(.system(size: 40, weight: .semibold, design: .rounded))
-                .monospacedDigit()
+                .scaledNumericFont(size: 40, weight: .semibold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
             if let pace = split.paceText {
                 Text(pace)
                     .font(.footnote.weight(.semibold))
@@ -85,7 +86,7 @@ struct WatchKilometreAlert: View {
         .background(.black)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText)
+        .accessibilityLabel(split.spokenText)
         .accessibilityAddTraits(.isButton)
         .accessibilityHint("Touche pour revenir à la séance")
     }
@@ -93,17 +94,5 @@ struct WatchKilometreAlert: View {
     /// « 812 pas · 160 pas/min ».
     private var rhythmText: String {
         [String(localized: "\(split.steps.groupedText()) pas"), split.cadenceText].compactMap { $0 }.joined(separator: " · ")
-    }
-
-    private var accessibilityText: String {
-        [
-            String(localized: "Kilomètre \(split.kilometre) en \(split.duration.walkClockText)"),
-            split.activityText,
-            String(localized: "\(split.steps.groupedText()) pas"),
-            split.cadenceText,
-        ]
-        .compactMap { $0 }
-        .filter { !$0.isEmpty }
-        .joined(separator: ", ")
     }
 }

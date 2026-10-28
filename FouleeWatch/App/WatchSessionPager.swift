@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// The pages of a live session, left to right (issues #274, #276, ADR 0008).
@@ -156,14 +157,21 @@ struct WatchSessionPager: View {
 ///
 /// Still a function of the basis and never of `metrics.elapsed` while it runs:
 /// that was the whole of issue #266.
+///
+/// `size` is the default text size's; the clock grows with the wearer's text
+/// size and shrinks back to one line rather than wrap (issue #600). VoiceOver
+/// hears it in words: « 12:34 » alone is read as a time of day.
 struct WatchSessionClock: View {
     let metrics: WatchWorkoutMetrics
     var size: CGFloat
 
     var body: some View {
         reading
-            .font(.system(size: size, weight: .semibold, design: .rounded))
-            .monospacedDigit()
+            .scaledNumericFont(size: size, weight: .semibold)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .accessibilityLabel("Durée")
+            .accessibilityValue(spokenDurationText(seconds: metrics.elapsed(at: .now)))
     }
 
     @ViewBuilder private var reading: some View {
@@ -173,5 +181,15 @@ struct WatchSessionClock: View {
         case .stopped(let elapsed):
             Text(elapsed.walkClockText)
         }
+    }
+}
+
+extension View {
+    /// A page of the session pagers, named for VoiceOver rather than drawn on
+    /// screen (see `WatchSessionPager`). A container, so the name is the
+    /// page's own and not handed to every element on it (issue #600).
+    func sessionPage(_ name: LocalizedStringKey) -> some View {
+        accessibilityElement(children: .contain)
+            .accessibilityLabel(name)
     }
 }

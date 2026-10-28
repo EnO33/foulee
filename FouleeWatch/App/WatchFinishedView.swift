@@ -41,6 +41,7 @@ struct WatchFinishedView: View {
                 Image(systemName: saveFailed ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
                     .font(.system(size: saveFailed ? 32 : 40, weight: .bold))
                     .foregroundStyle(saveFailed ? AnyShapeStyle(.orange) : AnyShapeStyle(Color("AccentColor")))
+                    .accessibilityHidden(true)
                 // "Sortie", the app's single user-facing noun (issue #222), and
                 // exactly as many characters as the "Marche" it replaces — this
                 // line already wraps to two on the smallest watch.
@@ -49,12 +50,15 @@ struct WatchFinishedView: View {
                     .multilineTextAlignment(.center)
                 VStack(spacing: 2) {
                     Text(metrics.elapsed.walkClockText)
-                        .font(.system(size: 22, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
+                        .scaledNumericFont(size: 22, weight: .semibold)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                     Text(figuresText)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(summarySpokenText)
                 if !metrics.perSport.isEmpty {
                     breakdown
                 }
@@ -96,6 +100,20 @@ struct WatchFinishedView: View {
         return String(localized: "\(metrics.steps.groupedText()) pas · \(metrics.distanceKm.kmText())") + elevation
     }
 
+    /// The clock and the figures as VoiceOver says them (issue #600): « 25
+    /// minutes et 12 secondes, 3 100 pas, 2,4 kilomètres, 120 mètres de
+    /// montée ». « 25:12 » alone is read as a time of day, « ↑ » as an arrow.
+    var summarySpokenText: String {
+        [
+            spokenDurationText(seconds: metrics.elapsed),
+            WalkMetric.steps.spokenText(Double(metrics.steps)),
+            WalkMetric.distance.spokenText(metrics.distanceKm),
+            Elevation(ascent: metrics.climbMeters, descent: metrics.descentMeters).spokenText
+        ]
+        .compactMap { $0 }
+        .joined(separator: ", ")
+    }
+
     /// One line per sport, when the outing changed sport (issue #265).
     ///
     /// A change ends one `HKWorkout` and opens another, so Santé shows a walk
@@ -114,6 +132,7 @@ struct WatchFinishedView: View {
                     .font(.caption2)
                     .monospacedDigit()
                     .multilineTextAlignment(.center)
+                    .accessibilityLabel(sport.spokenText)
             }
         }
         .foregroundStyle(.secondary)
@@ -173,7 +192,7 @@ struct WatchFinishedView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             metrics.splits
-                .map { String(localized: "Kilomètre \($0.kilometre) en \($0.duration.walkClockText)") }
+                .map { String(localized: "Kilomètre \($0.kilometre) en \(spokenDurationText(seconds: $0.duration))") }
                 .joined(separator: ", ")
         )
     }

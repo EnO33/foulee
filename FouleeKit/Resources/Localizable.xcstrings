@@ -123,6 +123,16 @@
         }
       }
     },
+    "%@ litre sur %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of %2$@ liters"
+          }
+        }
+      }
+    },
     "%@ par kilomètre" : {
       "localizations" : {
         "en" : {
@@ -133,12 +143,32 @@
         }
       }
     },
+    "%@ pas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ steps"
+          }
+        }
+      }
+    },
     "%@ sortie de la semaine" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ workout this week"
+          }
+        }
+      }
+    },
+    "%@ sur %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of %2$@"
           }
         }
       }
@@ -165,6 +195,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@. The details are waiting."
+          }
+        }
+      }
+    },
+    "%lld battements par minute" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld beats per minute"
           }
         }
       }
@@ -289,6 +329,16 @@
         }
       }
     },
+    "%lld pas par minute" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld steps per minute"
+          }
+        }
+      }
+    },
     "%lld pas/min" : {
       "localizations" : {
         "en" : {
@@ -395,6 +445,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Already %@ this week."
+          }
+        }
+      }
+    },
+    "Fréquence cardiaque indisponible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heart rate unavailable"
           }
         }
       }
@@ -555,6 +615,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Session"
+          }
+        }
+      }
+    },
+    "Série de %lld jours" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Série de %lld jour"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Série de %lld jours"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld-day streak"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld-day streak"
+                }
+              }
+            }
           }
         }
       }

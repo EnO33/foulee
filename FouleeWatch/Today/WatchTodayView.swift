@@ -18,6 +18,8 @@ struct WatchTodayView: View {
     var errorMessage: String?
     var onStart: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         ScrollView {
             VStack(spacing: 10) {
@@ -53,51 +55,62 @@ struct WatchTodayView: View {
         VStack(spacing: 2) {
             HStack(spacing: 6) {
                 Image(systemName: "flame.fill")
-                    .font(.system(size: 20, weight: .bold))
+                    .scaledSystemFont(size: 20, weight: .bold)
                     .foregroundStyle(.orange)
                 Text("\(store.streak)")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .monospacedDigit()
+                    .scaledNumericFont(size: 34, weight: .bold)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                 Text("j")
-                    .font(.system(size: 16, weight: .semibold))
+                    .scaledSystemFont(size: 16, weight: .semibold)
                     .foregroundStyle(.secondary)
             }
             Text("série")
-                .font(.system(size: 12))
+                .scaledSystemFont(size: 12)
                 .foregroundStyle(.secondary)
         }
+        // « 12 j série » read as written says neither « jours » nor what the
+        // figure counts (issue #600).
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spokenStreakText(days: store.streak))
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)
         .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var statsGrid: some View {
-        let columns = [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)]
+        // One column at the accessibility sizes: two cut « / 10 000 pas » to
+        // « / 10 000… » on a 40 mm (issue #600).
+        let count = dynamicTypeSize.isAccessibilitySize ? 1 : 2
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: count)
         return LazyVGrid(columns: columns, spacing: 8) {
             // Steps + minutes show progress toward the phone-synced goals,
             // like the hydration card does; distance/calories have no goal.
-            stat(icon: "shoeprints.fill", tint: MetricPalette.steps,
-                 value: store.steps.groupedText(), goal: store.stepsGoal.groupedText(), label: WalkMetric.steps.unit)
-            stat(icon: "timer", tint: MetricPalette.minutes,
-                 value: "\(store.minutes)", goal: "\(store.minutesGoal)", label: WalkMetric.minutes.unit)
-            stat(icon: "ruler.fill", tint: MetricPalette.distance, value: kmText, label: WalkMetric.distance.unit)
-            stat(icon: "flame.fill", tint: MetricPalette.calories, value: store.calories.groupedText(), label: WalkMetric.calories.unit)
+            stat(.steps, icon: "shoeprints.fill", tint: MetricPalette.steps,
+                 value: Double(store.steps), goal: Double(store.stepsGoal))
+            stat(.minutes, icon: "timer", tint: MetricPalette.minutes,
+                 value: Double(store.minutes), goal: Double(store.minutesGoal))
+            stat(.distance, icon: "ruler.fill", tint: MetricPalette.distance, value: store.distanceKm)
+            stat(.calories, icon: "flame.fill", tint: MetricPalette.calories, value: Double(store.calories))
         }
     }
 
-    private func stat(icon: String, tint: Color, value: String, goal: String? = nil, label: String) -> some View {
+    /// One VoiceOver element per tile, its figures in words: « 8 240 pas sur
+    /// 10 000 pas », « 4,2 kilomètres » (issue #600).
+    private func stat(_ metric: WalkMetric, icon: String, tint: Color, value: Double, goal: Double? = nil) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Image(systemName: icon).font(.system(size: 13, weight: .bold)).foregroundStyle(tint)
-            Text(value)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .monospacedDigit().minimumScaleFactor(0.6).lineLimit(1)
-            Text(goal.map { "/ \($0) \(label)" } ?? label)
-                .font(.system(size: 11)).foregroundStyle(.secondary)
+            Image(systemName: icon).scaledSystemFont(size: 13, weight: .bold).foregroundStyle(tint)
+            Text(metric.formatted(value))
+                .scaledNumericFont(size: 18, weight: .bold).minimumScaleFactor(0.6).lineLimit(1)
+            Text(goal.map { "/ \(metric.formatted($0)) \(metric.unit)" } ?? metric.unit)
+                .scaledSystemFont(size: 11).foregroundStyle(.secondary)
                 .minimumScaleFactor(0.7).lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(8)
         .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(goal.map { metric.spokenText(value, goal: $0) } ?? metric.spokenText(value))
     }
 
     /// No payload ever received from the phone — explain why the streak and
@@ -107,10 +120,6 @@ struct WatchTodayView: View {
             .font(.caption2)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
-    }
-
-    private var kmText: String {
-        store.distanceKm.decimalText()
     }
 }
 

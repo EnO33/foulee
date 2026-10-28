@@ -13,16 +13,23 @@ struct WatchHydrationCard: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: "drop.fill")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.teal)
-                Text("\(litres(store.waterML)) / \(litres(store.hydrationGoalML)) L")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                Spacer()
+            VStack(spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "drop.fill")
+                        .scaledSystemFont(size: 13, weight: .bold)
+                        .foregroundStyle(.teal)
+                    Text("\(litres(store.waterML)) / \(litres(store.hydrationGoalML)) L")
+                        .scaledNumericFont(size: 15, weight: .semibold)
+                    Spacer()
+                }
+                ProgressView(value: progress).tint(.teal)
             }
-            ProgressView(value: progress).tint(.teal)
+            // One element, read as the iPhone's card says it: « 0,9 / 2 L »
+            // came out as « 0,9 barre oblique 2 L », then a bare percentage
+            // (issue #600).
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Hydratation")
+            .accessibilityValue(spokenHydrationText(intakeML: store.waterML, goalML: store.hydrationGoalML))
             if store.waterDenied {
                 // Writing water was denied — a dead "J'ai bu" button would be
                 // indistinguishable from a sync bug.
