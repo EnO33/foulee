@@ -133,7 +133,7 @@ struct TodayHeroCard: View {
                 Chip(
                     label: "Sortie terminée",
                     systemIcon: FouleeIcon.check,
-                    tint: FouleeColor.success,
+                    tint: ReadablePalette.greenText,
                     fill: FouleeColor.success.opacity(0.16)
                 )
                 Text("Bravo, \(Text(durationText(minutes: snapshot.minutes)).foregroundStyle(WalkMetric.minutes.tint)) d'activité")
@@ -151,7 +151,7 @@ struct TodayHeroCard: View {
                 Chip(
                     label: "Jour de repos",
                     systemIcon: "moon.stars.fill",
-                    tint: FouleeColor.accentSecondary,
+                    tint: ReadablePalette.indigoText,
                     fill: FouleeColor.accentSecondary.opacity(0.16)
                 )
                 Text("Pas de sortie prévue aujourd'hui — profite de ta pause.")
@@ -165,7 +165,7 @@ struct TodayHeroCard: View {
                 Chip(
                     label: countdownLabel,
                     systemIcon: FouleeIcon.timer,
-                    tint: FouleeColor.accentMid,
+                    tint: ReadablePalette.purpleText,
                     fill: FouleeColor.accentMid.opacity(0.16)
                 )
                 // Same shape as « Bravo » once done: what the day is at, then

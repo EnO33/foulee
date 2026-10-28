@@ -24,4 +24,15 @@ extension WalkMetric {
         case .calories: MetricPalette.calories
         }
     }
+
+    /// The same colour on small text — a tile's label (issue #658): deeper
+    /// in light mode, where `tint` falls under the 4.5:1 text needs.
+    var labelTint: Color {
+        switch self {
+        case .steps: ReadablePalette.purpleText
+        case .minutes: ReadablePalette.greenText
+        case .distance: ReadablePalette.blueText
+        case .calories: ReadablePalette.orangeText
+        }
+    }
 }

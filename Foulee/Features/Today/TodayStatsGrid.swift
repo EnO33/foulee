@@ -85,7 +85,7 @@ struct TodayStatsGrid: View {
                 value: value,
                 sub: sub,
                 spokenValue: spoken,
-                tint: metric.tint
+                tint: metric.labelTint
             )
         }
     }

@@ -17,7 +17,7 @@ import UIKit
 nonisolated enum ReadablePalette {
     /// Minutes, success, hiking.
     static let green = Color.readable(
-        dark: Color(.sRGB, red: 48 / 255, green: 209 / 255, blue: 88 / 255),
+        dark: brightGreen,
         light: 0x239F42,
         increasedContrast: 0x1C7F35
     )
@@ -25,9 +25,47 @@ nonisolated enum ReadablePalette {
     static let cyan = Color.readable(dark: .cyan, light: 0x0097B7, increasedContrast: 0x007891)
     /// Calories, warnings, running, the streak.
     static let orange = Color.readable(
-        dark: Color(.sRGB, red: 255 / 255, green: 159 / 255, blue: 10 / 255),
+        dark: brightOrange,
         light: 0xD96C00,
         increasedContrast: 0xA84E00
+    )
+
+    private static let brightGreen = Color(.sRGB, red: 48 / 255, green: 209 / 255, blue: 88 / 255)
+    private static let brightOrange = Color(.sRGB, red: 255 / 255, green: 159 / 255, blue: 10 / 255)
+
+    // MARK: Small text (issue #658)
+
+    // A brand colour on small text — a tile's label, a chip, a selected day.
+    // Text needs 4.5:1, on a card's glass and on a chip's own tint, where the
+    // shades above reach 3:1: light mode takes a deeper one still, the same
+    // with « Augmenter le contraste ». Dark mode keeps the bright shade.
+
+    static let greenText = Color.readable(
+        dark: brightGreen,
+        light: 0x15632A,
+        increasedContrast: 0x15632A
+    )
+    static let orangeText = Color.readable(
+        dark: brightOrange,
+        light: 0x894000,
+        increasedContrast: 0x894000
+    )
+    /// Steps, and the accent on text.
+    static let purpleText = Color.readable(
+        dark: Color(.sRGB, red: 191 / 255, green: 90 / 255, blue: 242 / 255),
+        light: 0x751BC9,
+        increasedContrast: 0x751BC9
+    )
+    static let blueText = Color.readable(
+        dark: Color(.sRGB, red: 10 / 255, green: 132 / 255, blue: 255 / 255),
+        light: 0x0050A5,
+        increasedContrast: 0x0050A5
+    )
+    /// The rest day's indigo.
+    static let indigoText = Color.readable(
+        dark: Color(.sRGB, red: 94 / 255, green: 92 / 255, blue: 230 / 255),
+        light: 0x3230DF,
+        increasedContrast: 0x3230DF
     )
 }
 

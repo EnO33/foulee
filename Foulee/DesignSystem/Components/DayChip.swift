@@ -20,7 +20,7 @@ struct DayChip: View {
                 .frame(width: 40, height: 40)
                 .background(
                     Circle()
-                        .fill(active ? AnyShapeStyle(FouleeColor.accentGradient) : AnyShapeStyle(Color.clear))
+                        .fill(active ? AnyShapeStyle(FouleeColor.buttonGradient) : AnyShapeStyle(Color.clear))
                 )
                 .overlay(
                     Circle()

@@ -11,6 +11,8 @@ enum FouleeColor {
     static let accentMid = Color(hex: 0xBF5AF2)
     static let accentEnd = Color(hex: 0x7C3AED)
     static let accentSecondary = Color(hex: 0x5E5CE6)
+    /// Where `buttonGradient` starts, deeper than `accentStart`.
+    static let buttonStart = Color(hex: 0x9D4EDD)
 
     static let success = ReadablePalette.green
     static let warning = ReadablePalette.orange
@@ -24,6 +26,15 @@ enum FouleeColor {
 
     static let accentGradient = LinearGradient(
         colors: [accentStart, accentMid, accentEnd],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    /// Behind white text — the main buttons, the selected days (issue #658).
+    /// It leaves out the light end of `accentGradient`, where white falls to
+    /// 2.6:1: from here, it keeps 4.5:1 all the way.
+    static let buttonGradient = LinearGradient(
+        colors: [buttonStart, accentEnd],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )

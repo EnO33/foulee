@@ -161,7 +161,7 @@ struct MetricStatsScreen: View {
                     AxisValueLabel {
                         Text("Objectif")
                             .font(FouleeFont.caption)
-                            .foregroundStyle(metric.tint)
+                            .foregroundStyle(metric.labelTint)
                     }
                 }
             }

@@ -77,6 +77,8 @@ struct MirroredWalkScreen: View {
                     .padding(.vertical, 6)
             }
             .buttonStyle(.bordered)
+            // The accent is too light for its text (issue #658).
+            .tint(ReadablePalette.purpleText)
         }
     }
 
