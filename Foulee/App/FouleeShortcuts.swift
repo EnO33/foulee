@@ -1,8 +1,9 @@
 import AppIntents
 
 // periphery:ignore - discovered by the AppIntents runtime at install, never referenced from code.
-/// Exposes "J'ai bu un verre" to Raccourcis, Spotlight, Siri and the Action
-/// button — the system registers these phrases automatically at install.
+/// Exposes "J'ai bu un verre" and « Commencer une sortie » to Raccourcis,
+/// Spotlight, Siri and the Action button — the system registers these phrases
+/// automatically at install.
 struct FouleeShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
@@ -13,6 +14,16 @@ struct FouleeShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "J'ai bu un verre",
             systemImageName: "drop.fill"
+        )
+        AppShortcut(
+            intent: StartOutingIntent(),
+            phrases: [
+                "Commence une sortie avec \(.applicationName)",
+                "Commence une \(\.$activity) avec \(.applicationName)",
+                "Démarre une \(\.$activity) avec \(.applicationName)"
+            ],
+            shortTitle: "Commencer une sortie",
+            systemImageName: "figure.walk"
         )
     }
 }
