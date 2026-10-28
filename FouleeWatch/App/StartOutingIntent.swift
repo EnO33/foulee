@@ -44,7 +44,7 @@ struct StartWorkoutOutingIntent: StartWorkoutIntent {
     /// Hidden from Raccourcis, which already lists `StartOutingIntent`.
     static var isDiscoverable: Bool { false }
 
-    // periphery:ignore - read by the AppIntents runtime, never from code.
+    /// What the Action button's settings list.
     static var suggestedWorkouts: [StartWorkoutOutingIntent] {
         WatchOutingActivity.allCases.map { StartWorkoutOutingIntent(style: $0) }
     }
