@@ -79,15 +79,27 @@ struct StreakWidgetView: View {
     let entry: StreakEntry
 
     var body: some View {
+        // The medium size summarises only its figure: the tagline and the
+        // encouragement beside it read as written.
+        if family == .systemMedium {
+            systemMediumView
+        } else {
+            compactView.widgetSummary(spokenStreak)
+        }
+    }
+
+    @ViewBuilder private var compactView: some View {
         switch family {
         case .accessoryCircular: accessoryCircularView
         case .accessoryRectangular: accessoryRectangularView
-        case .accessoryInline: accessoryInlineView
         case .systemSmall: systemSmallView
-        case .systemMedium: systemMediumView
         default: accessoryInlineView
         }
     }
+
+    /// « Série de 12 jours » (issue #601): the flame, the bare « 12 » and « j »
+    /// were three elements, and « j » is read as a letter.
+    private var spokenStreak: Text { Text(spokenStreakText(days: entry.streak)) }
 
     // MARK: - Lock Screen (accessory families)
 
@@ -96,6 +108,7 @@ struct StreakWidgetView: View {
             Image(systemName: "flame.fill")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(.orange)
+                .widgetAccentable()
             Text("\(entry.streak)")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .monospacedDigit()
@@ -110,6 +123,7 @@ struct StreakWidgetView: View {
             Image(systemName: "flame.fill")
                 .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(.orange)
+                .widgetAccentable()
             VStack(alignment: .leading, spacing: 0) {
                 Text("\(entry.streak) j")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -137,6 +151,7 @@ struct StreakWidgetView: View {
                 Image(systemName: "flame.fill")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.orange)
+                    .widgetAccentable()
             }
             Spacer(minLength: 4)
             VStack(alignment: .leading, spacing: 0) {
@@ -159,6 +174,7 @@ struct StreakWidgetView: View {
                 Image(systemName: "flame.fill")
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(.orange)
+                    .widgetAccentable()
                 Spacer(minLength: 0)
                 Text("\(entry.streak)")
                     .font(.system(size: 56, weight: .heavy, design: .rounded))
@@ -168,6 +184,7 @@ struct StreakWidgetView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.7))
             }
+            .widgetSummary(spokenStreak)
             Rectangle()
                 .fill(.white.opacity(0.15))
                 .frame(width: 1)

@@ -24,6 +24,16 @@ enum StatMetric: String, AppEnum {
             .calories: DisplayRepresentation(title: "Calories")
         ]
     }
+
+    /// The kit's twin of this case, which spells its figures for VoiceOver.
+    var walkMetric: WalkMetric {
+        switch self {
+        case .steps: .steps
+        case .minutes: .minutes
+        case .distance: .distance
+        case .calories: .calories
+        }
+    }
 }
 
 struct StatWidgetIntent: WidgetConfigurationIntent {
@@ -139,6 +149,10 @@ struct StatWidgetView: View {
     let entry: StatEntry
 
     var body: some View {
+        content.widgetSummary(summaryLabel, value: spokenValue, fetchedAt: showsStamp ? entry.fetchedAt : nil)
+    }
+
+    @ViewBuilder private var content: some View {
         switch family {
         case .accessoryCircular: circular
         case .accessoryRectangular: rectangular
@@ -146,6 +160,18 @@ struct StatWidgetView: View {
         case .systemSmall: small
         default: inline
         }
+    }
+
+    /// The families that draw a `FreshnessStamp`, which VoiceOver then reads.
+    private var showsStamp: Bool { family == .accessoryRectangular || family == .systemSmall }
+
+    private var summaryLabel: Text { Text(entry.metric.walkMetric.title) }
+
+    /// « 8 240 pas sur 10 000 pas », « 4,2 kilomètres »: « 4,2k » and
+    /// « 8 240 / 10 000 » are read as written (issue #601).
+    private var spokenValue: String {
+        let metric = entry.metric.walkMetric
+        return hasGoal ? metric.spokenText(entry.value, goal: entry.goal) : metric.spokenText(entry.value)
     }
 
     private var circular: some View {
@@ -191,6 +217,7 @@ struct StatWidgetView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Image(systemName: icon).font(.system(size: 18, weight: .bold)).foregroundStyle(tint)
+                    .widgetAccentable()
                 Spacer()
                 if hasGoal {
                     Text("/ \(goalText)").font(.system(size: 12, weight: .semibold))

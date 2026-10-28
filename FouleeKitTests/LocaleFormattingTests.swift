@@ -80,6 +80,15 @@ struct LocaleFormattingTests {
         #expect(spokenStreakText(days: 1, locale: american) == "1-day streak")
         #expect(spokenHeartRateText(128, locale: american) == "128 beats per minute")
         #expect(spokenHeartRateText(nil, locale: french) == "Fréquence cardiaque indisponible")
+        #expect(spokenMillilitresText(250, locale: french) == "250 millilitres")
+        #expect(spokenMillilitresText(250, locale: american) == "250 milliliters")
+        #expect(
+            plain(spokenDayText(steps: 8_240, minutes: 32, goals: (10_000, 30), locale: french))
+                == "8 240 pas sur 10 000 pas, 32 minutes sur 30 minutes"
+        )
+        #expect(plain(spokenDayText(steps: 8_240, minutes: 32, locale: french)) == "8 240 pas, 32 minutes")
+        #expect(spokenGoalText(minutes: 30, locale: french) == "Objectif de 30 minutes")
+        #expect(spokenGoalText(minutes: 30, locale: american) == "Goal: 30 minutes")
     }
 
     @Test("A setting's time reads in the locale's hours")

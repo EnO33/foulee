@@ -148,6 +148,13 @@ struct TodayProgressView: View {
     }
 
     var body: some View {
+        content.widgetSummary(
+            Text("Aujourd'hui"), value: spokenFigures,
+            fetchedAt: showsStamp ? entry.fetchedAt : nil
+        )
+    }
+
+    @ViewBuilder private var content: some View {
         switch family {
         case .accessoryCircular: circularView
         case .accessoryRectangular: rectangularView
@@ -155,6 +162,19 @@ struct TodayProgressView: View {
         case .systemSmall: smallView
         default: inlineView
         }
+    }
+
+    /// The families that draw a `FreshnessStamp`, which VoiceOver then reads.
+    private var showsStamp: Bool { family == .accessoryRectangular || family == .systemSmall }
+
+    /// The rings say nothing to VoiceOver, and « 8 240 / 10 000 » reads its
+    /// slash. The inline family shows no goal, so neither does its spoken form.
+    private var spokenFigures: String {
+        let showsGoals = [.accessoryCircular, .accessoryRectangular, .systemSmall].contains(family)
+        return spokenDayText(
+            steps: entry.steps, minutes: entry.minutes,
+            goals: showsGoals ? (entry.stepsGoal, entry.minutesGoal) : nil
+        )
     }
 
     private var circularView: some View {
@@ -186,7 +206,7 @@ struct TodayProgressView: View {
             rings(lineWidth: 9, inset: 11).frame(width: 60, height: 60)
             VStack(alignment: .leading, spacing: 4) {
                 legendRow(color: Color(red: 0xBF / 255, green: 0x5A / 255, blue: 0xF2 / 255),
-                          value: "\(entry.steps.groupedText())", unit: "pas")
+                          value: "\(entry.steps.groupedText())", unit: "pas", accentable: true)
                 legendRow(color: Color(red: 0x30 / 255, green: 0xD1 / 255, blue: 0x58 / 255),
                           value: "\(entry.minutes)", unit: "min")
                 FreshnessStamp(fetchedAt: entry.fetchedAt).foregroundStyle(.white.opacity(0.5))
@@ -196,30 +216,36 @@ struct TodayProgressView: View {
         .padding(14)
     }
 
-    private func legendRow(color: Color, value: String, unit: LocalizedStringResource) -> some View {
+    /// `accentable` matches the dot to its ring in the tinted and accented
+    /// modes, where every colour is flattened (see `rings`).
+    private func legendRow(color: Color, value: String, unit: LocalizedStringResource, accentable: Bool = false) -> some View {
         HStack(spacing: 6) {
-            Circle().fill(color).frame(width: 7, height: 7)
+            Circle().fill(color).frame(width: 7, height: 7).widgetAccentable(accentable)
             Text(value).font(.system(size: 15, weight: .bold, design: .rounded)).monospacedDigit()
                 .foregroundStyle(.white)
             Text(unit).font(.system(size: 11)).foregroundStyle(.white.opacity(0.7))
         }
     }
 
+    /// In the tinted and accented Home Screen modes (issue #601) the purple
+    /// and the green both turn to one shade: the steps ring takes the accent
+    /// colour and the minutes ring stays white, so the two still part.
     private func rings(lineWidth: CGFloat, inset: CGFloat) -> some View {
         ZStack {
-            arc(stepsProgress, lineWidth: lineWidth, gradient: TodayProgressWidget.stepsGradient)
+            arc(stepsProgress, lineWidth: lineWidth, gradient: TodayProgressWidget.stepsGradient, accentable: true)
             arc(minutesProgress, lineWidth: lineWidth, gradient: TodayProgressWidget.minutesGradient)
                 .padding(inset)
         }
     }
 
-    private func arc(_ progress: Double, lineWidth: CGFloat, gradient: LinearGradient) -> some View {
+    private func arc(_ progress: Double, lineWidth: CGFloat, gradient: LinearGradient, accentable: Bool = false) -> some View {
         ZStack {
             Circle().stroke(.gray.opacity(0.25), lineWidth: lineWidth)
             Circle()
                 .trim(from: 0, to: progress > 0 ? max(progress, 0.03) : 0)
                 .stroke(gradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
+                .widgetAccentable(accentable)
         }
     }
 }
