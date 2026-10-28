@@ -221,6 +221,16 @@
         }
       }
     },
+    "Balade" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stroll"
+          }
+        }
+      }
+    },
     "Belle constance — garde le cap." : {
       "localizations" : {
         "en" : {
@@ -375,6 +385,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Logs a glass of water in Health."
+          }
+        }
+      }
+    },
+    "Footing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jog"
           }
         }
       }
@@ -577,6 +597,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Health isn’t available on this device."
+          }
+        }
+      }
+    },
+    "Sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
           }
         }
       }

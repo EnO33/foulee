@@ -9,7 +9,13 @@ import SwiftUI
 struct TodayStatusIntent: AppIntent {
     static var title: LocalizedStringResource { "Où j'en suis aujourd'hui" }
     // periphery:ignore - read by the AppIntents runtime, never from code.
-    static var description: IntentDescription { "Ta série, tes minutes et tes pas du jour." }
+    static var description: IntentDescription {
+        IntentDescription(
+            "Ta série, tes minutes et tes pas du jour.",
+            categoryName: "Activité",
+            searchKeywords: ["Série", "Pas", "Objectif"]
+        )
+    }
     // periphery:ignore - read by the AppIntents runtime, never from code.
     /// Health figures: Siri does not read them to whoever holds a locked phone.
     static var authenticationPolicy: IntentAuthenticationPolicy { .requiresLocalDeviceAuthentication }
