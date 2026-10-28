@@ -139,13 +139,19 @@
   ],
   "Session": [
     "contrast · ",
+    "contrast · 1,8 km",
+    "contrast · 24 / 0 m",
+    "contrast · 99 kcal",
     "contrast · Arrêter",
     "contrast · Carte",
     "contrast · Connecte ta Watch pour le rythme cardiaque",
+    "contrast · D+ / D−",
     "contrast · DURÉE",
+    "contrast · Distance",
     "contrast · EN COURS",
     "contrast · PAS",
     "contrast · Pause",
+    "contrast · Énergie",
     "dynamicType · 18:24",
     "dynamicType · 2 480",
     "dynamicType · Arrêter",
@@ -165,7 +171,10 @@
   ],
   "Steps statistics": [
     "contrast · ",
+    "contrast · Meilleur jour",
+    "contrast · Moyenne / jour",
     "contrast · STATISTIQUES",
+    "contrast · Total",
     "textClipped · "
   ],
   "Weather": [

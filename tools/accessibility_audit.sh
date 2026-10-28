@@ -17,6 +17,12 @@
 # and in CI — the newest iOS runtime and the newest iPhone it supports, under
 # the name « Foulee Audit » — and the baseline records which one it was. Record
 # on the same pair as CI, or take the file from the CI artifact.
+#
+# Even on the same pair, a few contrast findings differ between a Mac and CI:
+# the slower runner is audited at another moment of the screen's drawing, and
+# the same text is then reported by name rather than as an unnamed element. The
+# baseline is the union of both (issue #602); after a `--record` on a Mac, add
+# what the next CI run's artifact reports on top, rather than replacing it.
 
 set -euo pipefail
 
