@@ -131,8 +131,11 @@ struct RecapDaysView: View {
                     Text(date.weekdayInitial.uppercased())
                         .font(FouleeFont.caption.weight(.semibold))
                         .foregroundStyle(.tertiary)
+                    // Holds the row's height; hidden, or the audit reads an empty
+                    // text with no contrast (issue #658).
                     Text(" ")
                         .font(FouleeFont.caption)
+                        .hidden()
                 }
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity)

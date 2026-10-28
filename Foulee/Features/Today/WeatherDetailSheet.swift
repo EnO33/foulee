@@ -63,8 +63,10 @@ struct WeatherDetailSheet: View {
         HStack(spacing: 8) {
             Image(systemName: FouleeIcon.mixedCardio)
                 .foregroundStyle(FouleeColor.accentMid)
+                .accessibilityHidden(true)
             Text("Conseil : \(weather.advice)")
                 .font(FouleeFont.callout.weight(.medium))
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

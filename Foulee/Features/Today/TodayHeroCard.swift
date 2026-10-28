@@ -230,10 +230,17 @@ struct TodayHeroCard: View {
     private var weatherButton: some View {
         // A `Button` already reads as one element; `.accessibilityElement`
         // here would make it stop reading as a button.
+        //
+        // 44 pt tall to the finger (issue #658), without moving the card: the
+        // line is a footnote, 16 pt high, and the padding inside the button
+        // is taken back outside it.
         Button(action: onWeatherTap) {
             weatherLine
+                .padding(.vertical, 14)
+                .contentShape(.rect)
         }
         .buttonStyle(.pressable)
+        .padding(.vertical, -14)
         .accessibilityLabel("Météo à \(snapshot.walkWindowStart.clockText)")
         .accessibilityValue(
             "\(snapshot.weather.temperatureCelsius) degrés, \(snapshot.weather.condition), \(snapshot.weather.advice)"

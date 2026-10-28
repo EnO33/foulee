@@ -131,7 +131,10 @@ struct HydrationTimeline: View {
                 Text(sample.sourceName)
                     .font(FouleeFont.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    // Wraps rather than truncates: held to one line, the
+                    // audit found « Apple Watch » cut (issue #658).
+                    .multilineTextAlignment(.trailing)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.bottom, isLast ? 0 : 14)
         }
