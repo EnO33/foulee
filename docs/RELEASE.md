@@ -534,6 +534,10 @@ deliberate, manual action:
    set has changed.
 4. **Submit for Review**, by hand: the workflow never submits.
 
+A notable feature also gets a featuring nomination, filed weeks before the
+publish date: see [LAUNCH.md](LAUNCH.md#1-featuring-nominations), with the
+campaign links used to announce it.
+
 ### 10.1 The listing lives in the repository
 
 The listing is versioned in [`fastlane/metadata/`](../fastlane/metadata/)
