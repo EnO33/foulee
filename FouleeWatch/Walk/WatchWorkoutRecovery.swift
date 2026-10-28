@@ -23,7 +23,7 @@ final class WatchAppDelegate: NSObject, WKApplicationDelegate {
     /// the wearer did not choose is permanent (issue #223).
     func handle(_ workoutConfiguration: HKWorkoutConfiguration) {
         guard let activity = SessionActivity(workoutConfiguration.activityType) else { return }
-        Task { @MainActor in WatchPendingStart.shared.request(activity) }
+        Task { @MainActor in WatchPendingStart.shared.request(.start(activity)) }
     }
 }
 

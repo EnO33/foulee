@@ -62,15 +62,15 @@ struct WatchRootView: View {
         .task { await WatchWaterBackgroundDelivery.start() }
         // A session that outlived the app first (issue #554): a start the
         // phone asked for must not open a second one beside it. Then a start
-        // asked for by the phone (issue #283), drained on appear *and*
-        // watched, because both orders happen: the request may have launched
-        // this app, or landed while it was already on screen.
+        // asked for by the phone (issue #283) or by Siri (#607), drained on
+        // appear *and* watched, because both orders happen: the request may
+        // have launched this app, or landed while it was already on screen.
         .task {
             await store.recover()
-            startIfPhoneAsked()
+            startIfAsked()
         }
         .onChange(of: recovery.requests) { _, _ in Task { await store.recover() } }
-        .onChange(of: pendingStart.activity) { _, _ in startIfPhoneAsked() }
+        .onChange(of: pendingStart.intent) { _, _ in startIfAsked() }
     }
 
     /// Home, with nothing in flight here or on the phone.
@@ -85,14 +85,23 @@ struct WatchRootView: View {
         )
     }
 
-    /// Start what the phone asked for, if anything, and if nothing is running.
+    /// Start what the phone or Siri asked for, if anything, and if nothing is
+    /// running.
     ///
     /// The guard is not politeness: the phone can ask while a session is
     /// already in flight — `startWatchApp` does not know what the wrist is
-    /// doing — and starting a second one would strand the first.
-    private func startIfPhoneAsked() {
-        guard case .idle = store.state, let activity = pendingStart.take() else { return }
-        begin(activity)
+    /// doing — and starting a second one would strand the first. A phone
+    /// outing on the wrist wins too: its mirror stays, as the phone's own
+    /// shortcut opens the watch's mirror (#604). The request is taken either
+    /// way, so a refused one does not start a session later, on some
+    /// unrelated relaunch.
+    private func startIfAsked() {
+        let intent = pendingStart.take()
+        guard case .idle = store.state, phoneSession.shown(at: .now) == nil, let intent else { return }
+        switch intent {
+        case .start(let activity): begin(activity)
+        case .ask: isChoosingActivity = true
+        }
     }
 
     /// One place a session begins, whether the activity came from the synced
