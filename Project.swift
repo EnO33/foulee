@@ -182,9 +182,10 @@ let project = Project(
             ]),
             sources: [
                 "FouleeWidget/**",
-                // The intent the app registers too: an App Intent is declared
+                // The intents the app registers too: an App Intent is declared
                 // in each process that runs it, not linked.
                 "Foulee/Shared/LogWaterIntent.swift",
+                "Foulee/Shared/StartOutingIntent.swift",
                 // Shared with « Où j'en suis aujourd'hui » (#605), so Siri
                 // answers with the widgets' own figures.
                 "Foulee/Shared/WidgetLiveMetrics.swift",

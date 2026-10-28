@@ -86,7 +86,7 @@ session that outlived its app rather than finishing it: see
   Watch, post-hoc on the iPhone)
 - **ActivityKit** — Live Activity for the active walk (Dynamic Island + Lock Screen)
 - **WeatherKit** — local weather card
-- **WidgetKit** — iPhone + Watch streak widgets and complications
+- **WidgetKit** — iPhone + Watch streak widgets and complications; Control Center and Action button controls (start an outing, log a glass)
 - **UserNotifications** — pre-walk reminder, weekly and monthly recap, the
   outing just landed
 - **CoreLocation / MapKit** — walk route recording + map
