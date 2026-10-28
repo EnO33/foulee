@@ -10,13 +10,13 @@ import SwiftUI
 ///
 /// **Blue against orange** because it is the pair that stays apart under the
 /// commonest colour-vision deficiencies, where red against green collapses.
-/// System colours, so each one already has its dark-mode variant. And never the
-/// colour alone: every place that paints a sport also names it, with a glyph or
-/// a label.
+/// Bright in dark mode, deeper in light mode so they stay readable on white
+/// (`ReadablePalette`, #599). And never the colour alone: every place that
+/// paints a sport also names it, with a glyph or a label.
 nonisolated enum ActivityPalette {
-    static let walk = Color.cyan
-    static let run = Color.orange
-    static let hike = Color.green
+    static let walk = ReadablePalette.cyan
+    static let run = ReadablePalette.orange
+    static let hike = ReadablePalette.green
     /// A sport Foulée cannot name.
     static let neutral = Color.gray
 }

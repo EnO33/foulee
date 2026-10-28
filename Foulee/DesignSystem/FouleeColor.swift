@@ -2,7 +2,8 @@ import SwiftUI
 
 /// Brand palette and gradients shared across the app.
 ///
-/// Constant colors (accent, success, warning, danger) live here.
+/// Brand colors (accent, success, warning, danger) live here; success and
+/// warning deepen in light mode to stay readable (`ReadablePalette`, #599).
 /// Theme-aware text/background uses SwiftUI's semantic colors directly
 /// (`.primary`, `.secondary`, `Color(.systemBackground)`).
 enum FouleeColor {
@@ -11,8 +12,8 @@ enum FouleeColor {
     static let accentEnd = Color(hex: 0x7C3AED)
     static let accentSecondary = Color(hex: 0x5E5CE6)
 
-    static let success = Color(hex: 0x30D158)
-    static let warning = Color(hex: 0xFF9F0A)
+    static let success = ReadablePalette.green
+    static let warning = ReadablePalette.orange
     static let danger = Color(hex: 0xFF453A)
 
     /// Water — the hydration card, screen, settings and Bilan block. A token
@@ -28,7 +29,10 @@ enum FouleeColor {
     )
 
     static let streakGradient = LinearGradient(
-        colors: [Color(hex: 0xFF9F0A), Color(hex: 0xFF6B00)],
+        colors: [
+            warning,
+            Color.readable(dark: Color(hex: 0xFF6B00), light: 0xC85400, increasedContrast: 0x8F3D00)
+        ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -36,7 +40,11 @@ enum FouleeColor {
     /// Activity (midday-walk minutes) ring — green, distinct from the purple
     /// step ring, echoing the "exercise" colour language.
     static let activityGradient = LinearGradient(
-        colors: [Color(hex: 0x5BE36B), success, Color(hex: 0x1FA845)],
+        colors: [
+            Color.readable(dark: Color(hex: 0x5BE36B), light: 0x239F42, increasedContrast: 0x1C7F35),
+            success,
+            Color.readable(dark: Color(hex: 0x1FA845), light: 0x188A36, increasedContrast: 0x177030)
+        ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )

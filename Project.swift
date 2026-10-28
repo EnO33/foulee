@@ -257,6 +257,8 @@ let project = Project(
                 "Foulee/Shared/ActivityPalette.swift",
                 "Foulee/Shared/SessionActivity+Tint.swift",
                 "Foulee/Shared/MetricPalette.swift",
+                // Their light-mode shades (#599); the watch keeps the dark ones.
+                "Foulee/Shared/ReadablePalette.swift",
                 // The App Store capture seed (issue #239). Only the
                 // Foundation-only half: the watch board and the phone board
                 // must show the same day, and the way to guarantee that is to
