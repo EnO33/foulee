@@ -31,7 +31,7 @@ struct DualProgressRing<Label: View>: View {
                 .trim(from: 0, to: clamped)
                 .stroke(gradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.6), value: clamped)
+                .motionAnimation(.easeOut(duration: 0.6), value: clamped)
         }
     }
 }

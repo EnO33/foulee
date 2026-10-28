@@ -24,7 +24,7 @@ struct HydrationTodayHero: View {
                     .stroke(FouleeColor.water.opacity(0.6), lineWidth: 2)
             }
             .frame(width: 84, height: 112)
-            .animation(.spring(duration: 0.8, bounce: 0.2), value: progress)
+            .motionAnimation(.spring(duration: 0.8, bounce: 0.2), value: progress)
             .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 6) {

@@ -35,6 +35,9 @@ struct RecapScreen: View {
     @State private var pendingOuting: DateInterval?
     /// A sheet presented from a sheet doesn't inherit the theme.
     @Environment(\.colorScheme) private var colorScheme
+    /// A page slides in from the side it was swiped to, or fades in place
+    /// with « Réduire les animations » (issue #598).
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Dependency(\.date) private var date
 
@@ -109,7 +112,7 @@ struct RecapScreen: View {
                             isInProgress: period.isInProgress(at: date.now)
                         )
                         .id(period)
-                        .transition(.push(from: arrival))
+                        .transition(reduceMotion ? .opacity : .push(from: arrival))
                     } else if store.isLoading {
                         ProgressView()
                             .frame(maxWidth: .infinity)
@@ -271,6 +274,8 @@ private struct RecapContent: View {
     /// The day whose outings are laid out: today in the period in progress,
     /// outing or not, else the period's last day (issue #443).
     @State private var selectedDay: Date?
+    /// The rings fill at once, without the reveal (issue #598).
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Dependency(\.date) private var date
 
@@ -307,7 +312,7 @@ private struct RecapContent: View {
         }
         .onAppear {
             selectedDay = OutingDay.initialSelection(among: outings.map(\.day), today: date.now)
-            withAnimation(.easeOut(duration: 0.8).delay(0.15)) { isRevealed = true }
+            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.8).delay(0.15)) { isRevealed = true }
         }
     }
 
