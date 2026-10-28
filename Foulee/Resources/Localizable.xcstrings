@@ -1193,6 +1193,16 @@
         }
       }
     },
+    "Automatique" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        }
+      }
+    },
     "Autorise l'eau dans Santé pour compter tes verres" : {
       "localizations" : {
         "en" : {
@@ -1457,6 +1467,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Get started"
+          }
+        }
+      }
+    },
+    "Commencer une sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start an outing"
           }
         }
       }
@@ -1923,6 +1943,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Garmin FAQ"
+          }
+        }
+      }
+    },
+    "Foulée reconnaît la marche ou la course" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée tells a walk from a run"
           }
         }
       }
@@ -2947,6 +2977,16 @@
         }
       }
     },
+    "Ouvre Foulée et démarre une sortie." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens Foulée and starts an outing."
+          }
+        }
+      }
+    },
     "Ouvre Garmin Connect pour synchroniser" : {
       "localizations" : {
         "en" : {
@@ -3749,6 +3789,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Opens in the browser"
+          }
+        }
+      }
+    },
+    "Sport" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sport"
           }
         }
       }
