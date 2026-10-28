@@ -102,6 +102,10 @@ struct HydrationTimeline: View {
                     row(sample, isLast: index == samples.count - 1)
                 }
             }
+            // Every row keeps its 14 pt below, the last one too: without it the
+            // last glass was the one too small to touch (issue #658). Taken
+            // back here, so the section ends where it did.
+            .padding(.bottom, -14)
         }
     }
 
@@ -136,8 +140,11 @@ struct HydrationTimeline: View {
                     .multilineTextAlignment(.trailing)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.bottom, isLast ? 0 : 14)
+            .padding(.bottom, 14)
         }
+        // The element covers what is drawn: the last row's line is clear, so
+        // without this shape it ended at its text, 19 pt high.
+        .contentShape(.accessibility, .rect)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(sample.date.clockText) : \(sample.milliliters) millilitres, \(sample.sourceName)")
     }

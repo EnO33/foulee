@@ -8,7 +8,9 @@ struct RecapStreakHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 14) {
+            // The flame above the text at the accessibility sizes: beside it,
+            // « SÉRIE ACTUELLE » broke mid-word (issue #658).
+            AdaptiveStack(stacked: VStackLayout(alignment: .leading, spacing: 14), regular: HStackLayout(spacing: 14)) {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(FouleeColor.streakGradient)
                     .frame(width: 56, height: 56)

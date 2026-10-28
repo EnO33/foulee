@@ -18,8 +18,8 @@
     "dynamicType · M",
     "dynamicType · S",
     "dynamicType · V",
-    "textClipped · SÉRIE ACTUELLE",
-    "textClipped · objectifs"
+    "dynamicType · objectifs",
+    "textClipped · SÉRIE ACTUELLE"
   ],
   "Bilan, week": [
     "contrast · 33",
@@ -38,8 +38,8 @@
     "contrast · objectifs",
     "dynamicType · 34",
     "dynamicType · 4/4",
-    "textClipped · SÉRIE ACTUELLE",
-    "textClipped · objectifs"
+    "dynamicType · objectifs",
+    "textClipped · SÉRIE ACTUELLE"
   ],
   "Home": [
     "contrast · / 10 000",
@@ -93,7 +93,6 @@
     "dynamicType · Grand verre",
     "dynamicType · Petit verre",
     "dynamicType · Verre",
-    "hitRegion · 08:10 : 250 millilitres, Foulée",
     "textClipped · Grand verre"
   ],
   "Mirrored outing": [

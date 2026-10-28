@@ -26,6 +26,9 @@ struct RecapHero: View {
                         .font(FouleeFont.caption)
                         .foregroundStyle(.secondary)
                 }
+                // The ring keeps its 104 pt: beyond, « objectifs » overflowed
+                // it (issue #658). VoiceOver says the whole of it.
+                .cappedTextSize()
             }
             .frame(width: 104, height: 104)
             .accessibilityElement(children: .ignore)
