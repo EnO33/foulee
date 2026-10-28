@@ -146,12 +146,42 @@
         }
       }
     },
+    "C'est noté : +%lld ml d'eau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noted: +%lld ml of water."
+          }
+        }
+      }
+    },
+    "Commencer une sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start an outing"
+          }
+        }
+      }
+    },
     "Contrôles" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Controls"
+          }
+        }
+      }
+    },
+    "Course" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run"
           }
         }
       }
@@ -196,12 +226,32 @@
         }
       }
     },
+    "Enregistre un verre d'eau dans Santé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logs a glass of water in Health."
+          }
+        }
+      }
+    },
     "Enregistrement…" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Saving…"
+          }
+        }
+      }
+    },
+    "Foulée n'a pas l'autorisation d'écrire dans Santé. Active l'eau dans Santé > Profil > Apps > Foulée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée isn’t allowed to write to Health. Turn on water in Health > Profile > Apps > Foulée."
           }
         }
       }
@@ -252,6 +302,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Had a glass"
+          }
+        }
+      }
+    },
+    "J'ai bu un verre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I had a glass"
           }
         }
       }
@@ -318,6 +378,16 @@
         }
       }
     },
+    "Marche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walk"
+          }
+        }
+      }
+    },
     "Marche et course" : {
       "localizations" : {
         "en" : {
@@ -344,6 +414,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Music"
+          }
+        }
+      }
+    },
+    "Ouvre d'abord Foulée pour autoriser l'accès à Santé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Foulée first to allow access to Health."
+          }
+        }
+      }
+    },
+    "Ouvre Foulée et démarre une sortie." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens Foulée and starts an outing."
           }
         }
       }
@@ -448,12 +538,32 @@
         }
       }
     },
+    "Sortie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
+          }
+        }
+      }
+    },
     "Sortie non enregistrée dans Santé" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Workout not saved in Health"
+          }
+        }
+      }
+    },
+    "Sport" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sport"
           }
         }
       }
