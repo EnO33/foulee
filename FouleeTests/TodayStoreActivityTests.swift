@@ -55,6 +55,29 @@ struct TodayStoreActivityTests {
         }
     }
 
+    @Test("A shortcut starts the sport it names, else what the home button would")
+    func shortcutStartIntent() async throws {
+        try await withPreferences { preferences in
+            let store = TodayStore()
+            preferences.activityMode = .walking
+            store.apply(preferences: preferences)
+
+            // Issue #604: « Commence une course » from a walker records a run,
+            // and « automatique » leaves the sport to the motion history.
+            #expect(store.startIntent(requested: .running) == .start(.running))
+            #expect(store.startIntent(requested: .both) == .ask)
+            // No sport named: the same as a tap on the home button.
+            #expect(store.startIntent(requested: nil) == .start(.walking))
+        }
+    }
+
+    @Test("« Automatique » in Raccourcis is « les deux »")
+    func outingActivityModes() {
+        #expect(OutingActivity.walking.mode == .walking)
+        #expect(OutingActivity.running.mode == .running)
+        #expect(OutingActivity.automatic.mode == .both)
+    }
+
     @Test("The Watch payload carries the mode, not a default")
     func watchPayloadCarriesTheActivityMode() async throws {
         try await withDependencies {

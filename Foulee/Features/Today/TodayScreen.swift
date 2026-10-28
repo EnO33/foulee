@@ -10,6 +10,10 @@ struct TodayScreen: View {
     @State private var store = TodayStore()
     @State private var hydration = HydrationStore()
     @State private var isWalking = false
+    /// What a shortcut asked to start (issue #604), in place of the store's
+    /// `startIntent` for that one session.
+    @State private var shortcutIntent: ActivityStartIntent?
+    private let sessionStartRouter = SessionStartRouter.shared
     /// The wrist's outing, shown instead of ours (issue #279). The store is not
     /// owned here — `FouleeApp` observes it from process launch, because a
     /// mirror can arrive while no UI is mounted at all.
@@ -49,6 +53,9 @@ struct TodayScreen: View {
                 // `apply` re-derives the snapshot from cached history
                 // so the ring, streak and countdown update immediately.
                 store.apply(preferences: preferences)
+                // Here rather than on appear: a shortcut that cold-launched
+                // the app must find the user's mode already applied.
+                startPendingShortcut()
             }
             // `.task` runs once; re-query whenever the app returns to the
             // foreground so the dashboard isn't stuck on stale (or zero)
@@ -70,6 +77,7 @@ struct TodayScreen: View {
                     onUndo: { await hydration.undo($0) }
                 )
             }
+            .onChange(of: sessionStartRouter.pending) { _, _ in startPendingShortcut() }
             .onOpenURL { url in
                 // foulee://hydration — widget tap lands on the hydration card.
                 if url.host() == "hydration" { scrollToHydration = true }
@@ -93,7 +101,7 @@ struct TodayScreen: View {
                     // and unlike this body it is reachable from a test. In
                     // « les deux » it is `.ask`, and the session screen opens
                     // on the picker.
-                    intent: store.startIntent,
+                    intent: shortcutIntent ?? store.startIntent,
                     onDismiss: { session in
                         isWalking = false
                         Task {
@@ -299,15 +307,25 @@ struct TodayScreen: View {
     ///
     /// Nothing prevented this before the mirror existed — the phone had no way
     /// of knowing.
-    private func startWalk() {
+    ///
+    /// - Parameter intent: a shortcut's choice; `nil` for the home button.
+    private func startWalk(_ intent: ActivityStartIntent? = nil) {
         guard !mirroredSession.isMirroring else {
             isShowingMirroredWalk = true
             return
         }
+        shortcutIntent = intent
         // Capture today's totals now so the post-walk overlay lands on the
         // right baseline (see TodayStore.registerFinishedWalk).
         store.walkWillStart()
         isWalking = true
+    }
+
+    /// Starts what « Commencer une sortie » asked for (issue #604). A session
+    /// already on screen wins.
+    private func startPendingShortcut() {
+        guard let request = sessionStartRouter.take(), !isWalking else { return }
+        startWalk(store.startIntent(requested: request.mode))
     }
 
     /// Only steps + minutes have a daily goal to draw on the stats chart.

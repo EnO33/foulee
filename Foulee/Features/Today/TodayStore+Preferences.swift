@@ -16,6 +16,13 @@ extension TodayStore {
     /// `TodayScreen` only forwards this value to `ActiveWalkScreen`.
     var startIntent: ActivityStartIntent { ActivityStartIntent(mode: activityMode) }
 
+    /// What « Commencer une sortie » starts (issue #604): the sport the
+    /// shortcut names, « automatique » being « les deux » — or, when it names
+    /// none, exactly what the home button would.
+    func startIntent(requested mode: ActivityMode?) -> ActivityStartIntent {
+        mode.map(ActivityStartIntent.init(mode:)) ?? startIntent
+    }
+
     /// The walk window as the mirrored copy stores it — hour and minute only.
     /// Not private: `apply` (in `TodayStore.swift`) stores what it returns and
     /// `hasChanged` compares against it, and they must agree.

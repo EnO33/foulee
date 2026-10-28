@@ -11,6 +11,36 @@
         }
       }
     },
+    "Commence une sortie avec ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start an outing with ${applicationName}"
+          }
+        }
+      }
+    },
+    "Commence une ${activity} avec ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a ${activity} with ${applicationName}"
+          }
+        }
+      }
+    },
+    "Démarre une ${activity} avec ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begin a ${activity} with ${applicationName}"
+          }
+        }
+      }
+    },
     "J'ai bu un verre dans ${applicationName}" : {
       "localizations" : {
         "en" : {
