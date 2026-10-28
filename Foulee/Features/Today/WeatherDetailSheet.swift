@@ -22,10 +22,18 @@ struct WeatherDetailSheet: View {
     private var content: some View {
         if isAvailable {
             // Scrolls only when the text is too large to fit (#597): squeezed
-            // into the screen, the advice was cut to « Conseil : i… ».
-            ViewThatFits(in: .vertical) {
-                forecast
-                ScrollView { forecast }
+            // into the screen, the advice was cut to « Conseil : i… ». At
+            // least the screen's height, so the spacers still centre it.
+            //
+            // One tree at every size, not a `ViewThatFits` between two: the
+            // accessibility audit read every text of the swap as « Dynamic
+            // Type partially unsupported » and the forecast line as clipped
+            // (issue #658).
+            GeometryReader { proxy in
+                ScrollView {
+                    forecast.frame(minHeight: proxy.size.height)
+                }
+                .scrollBounceBehavior(.basedOnSize)
             }
         } else {
             unavailable

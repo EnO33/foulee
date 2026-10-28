@@ -65,18 +65,21 @@ struct HydrationScreen: View {
                 } label: {
                     VStack(spacing: 6) {
                         Image(systemName: serving.systemImage)
-                            .font(.system(size: 20, weight: .semibold))
+                            .scaledSystemFont(size: 20, weight: .semibold)
                             .foregroundStyle(FouleeColor.water)
                         Text("\(serving.milliliters) mL")
                             .font(FouleeFont.footnote.weight(.semibold).monospacedDigit())
                             .foregroundStyle(.primary)
+                        // Wraps rather than shrinks (issue #658): a quarter
+                        // of the width cuts « Grand verre » at large sizes.
                         Text(serving.label)
                             .font(FouleeFont.caption)
                             .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                            .multilineTextAlignment(.center)
                     }
-                    .frame(maxWidth: .infinity)
+                    // The row's height, so the four tiles stay level when
+                    // one label takes two lines.
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.vertical, 12)
                     .fouleeGlass(cornerRadius: 18)
                 }

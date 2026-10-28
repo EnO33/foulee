@@ -12,12 +12,6 @@
     "contrast · objectifs",
     "dynamicType · 10/10",
     "dynamicType · 34",
-    "dynamicType · D",
-    "dynamicType · J",
-    "dynamicType · L",
-    "dynamicType · M",
-    "dynamicType · S",
-    "dynamicType · V",
     "dynamicType · objectifs",
     "textClipped · SÉRIE ACTUELLE"
   ],
@@ -53,20 +47,11 @@
     "contrast · Repartir",
     "contrast · Sortie terminée",
     "contrast · kcal",
-    "dynamicType · / 10 000",
-    "dynamicType · / 30",
     "dynamicType · 34",
     "dynamicType · 386",
     "dynamicType · 42",
     "dynamicType · 6,1 km",
     "dynamicType · 8 240",
-    "dynamicType · Calories",
-    "dynamicType · Distance",
-    "dynamicType · Minutes",
-    "dynamicType · Pas",
-    "dynamicType · kcal",
-    "textClipped · / 10 000",
-    "textClipped · 8 240",
     "textClipped · Bravo, 42 minutes d'activité"
   ],
   "Hydration": [
@@ -84,16 +69,7 @@
     "contrast · HYDRATATION",
     "contrast · Petit verre",
     "contrast · Verre",
-    "dynamicType · 1,5",
-    "dynamicType · 150 mL",
-    "dynamicType · 250 mL",
-    "dynamicType · 400 mL",
-    "dynamicType · 500 mL",
-    "dynamicType · Bouteille",
-    "dynamicType · Grand verre",
-    "dynamicType · Petit verre",
-    "dynamicType · Verre",
-    "textClipped · Grand verre"
+    "dynamicType · 1,5"
   ],
   "Mirrored outing": [
     "contrast · Arrêter la séance",
@@ -173,18 +149,12 @@
     "textClipped · "
   ],
   "Weather": [
+    "contrast · ",
     "contrast · Prévision à 12:00 à ton emplacement",
     "contrast · Sources des données",
     "contrast · ·",
     "contrast ·  Weather",
-    "dynamicType · 21°C",
-    "dynamicType · Conseil : idéal",
-    "dynamicType · Ensoleillé",
-    "dynamicType · Prévision à 12:00 à ton emplacement",
-    "dynamicType · Sources des données",
-    "dynamicType · ·",
-    "dynamicType ·  Weather",
-    "textClipped · Prévision à 12:00 à ton emplacement"
+    "dynamicType · 21°C"
   ],
   "_recordedOn": [
     "iPhone Duo, iOS 27.1"
