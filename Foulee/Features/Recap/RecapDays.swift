@@ -109,7 +109,7 @@ struct RecapDaysView: View {
                 dayButton(day) {
                     VStack(spacing: 6) {
                         RecapDayRing(day: day, goalMinutes: recap.goalMinutes, lineWidth: 4.5, isRevealed: isRevealed)
-                            .animation(.easeOut(duration: 0.6).delay(Double(index) * 0.05), value: isRevealed)
+                            .motionAnimation(.easeOut(duration: 0.6).delay(Double(index) * 0.05), value: isRevealed)
                         Text(day.date.weekdayInitial.uppercased())
                             .font(FouleeFont.caption.weight(.semibold))
                             .foregroundStyle(isSelected ? FouleeColor.accentMid : .secondary)
@@ -166,7 +166,7 @@ struct RecapDaysView: View {
                         .background {
                             Circle().fill(isSelected ? FouleeColor.accentMid.opacity(0.16) : .clear)
                         }
-                        .animation(.easeOut(duration: 0.6).delay(Double(index) * 0.012), value: isRevealed)
+                        .motionAnimation(.easeOut(duration: 0.6).delay(Double(index) * 0.012), value: isRevealed)
                 }
             }
             // The rest of a month in progress (issue #444), like the week's.

@@ -3,7 +3,8 @@ import SwiftUI
 /// Circular progress ring with a gradient stroke and a centred label slot.
 ///
 /// `progress` is clamped to `0...1`. Animates with an `.easeOut(0.6)` curve
-/// so quick HealthKit updates feel snappy without jitter.
+/// so quick HealthKit updates feel snappy without jitter — or not at all with
+/// « Réduire les animations ».
 struct ProgressRing<Label: View>: View {
     var progress: Double
     var lineWidth: CGFloat = 12
@@ -28,7 +29,7 @@ struct ProgressRing<Label: View>: View {
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.6), value: clamped)
+                .motionAnimation(.easeOut(duration: 0.6), value: clamped)
             label()
         }
     }

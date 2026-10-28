@@ -93,7 +93,7 @@ struct HydrationCard: View {
         .fouleeGlass(cornerRadius: 24)
         .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .onTapGesture(perform: onOpen)
-        .animation(.spring(duration: 0.6, bounce: 0.25), value: intakeML)
+        .motionAnimation(.spring(duration: 0.6, bounce: 0.25), value: intakeML)
         .sensoryFeedback(.increase, trigger: intakeML)
     }
 }
