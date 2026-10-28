@@ -401,7 +401,7 @@ private extension ActiveWalkScreen {
         let elevation = Elevation(ascent: session.elevationGainMeters, descent: session.elevationLossMeters)
         let parts = [
             spoken ? spokenDurationText(seconds: session.elapsed) : nil,
-            "\(session.steps.groupedText()) pas",
+            String(localized: "\(session.steps.groupedText()) pas"),
             session.distanceKm.kmText(),
             spoken ? elevation.spokenText : elevation.text
         ]
