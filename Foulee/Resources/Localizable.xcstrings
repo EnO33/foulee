@@ -3037,6 +3037,16 @@
         }
       }
     },
+    "Où j'en suis aujourd'hui" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where I stand today"
+          }
+        }
+      }
+    },
     "PAS" : {
       "localizations" : {
         "en" : {
@@ -4083,6 +4093,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your streak counts all your activities, whatever you choose."
+          }
+        }
+      }
+    },
+    "Ta série, tes minutes et tes pas du jour." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your streak, and today's minutes and steps."
           }
         }
       }
