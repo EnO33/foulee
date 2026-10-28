@@ -27,9 +27,37 @@
         }
       }
     },
+    "%@, %@" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
+    "%lld %%" : {
+      "localizations" : {},
+      "shouldTranslate" : false
+    },
     "%lld%%" : {
       "localizations" : {},
       "shouldTranslate" : false
+    },
+    "Calories indisponibles" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calories unavailable"
+          }
+        }
+      }
+    },
+    "Durée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duration"
+          }
+        }
+      }
     },
     "kcal" : {
       "localizations" : {},

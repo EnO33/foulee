@@ -93,14 +93,22 @@ struct HydrationWidgetView: View {
         }
     }
 
+    /// The button families summarise their figures inside, so the button
+    /// stays its own element; the others are a single one.
     @ViewBuilder private var activeView: some View {
         switch family {
-        case .accessoryCircular: circularView
         case .accessoryRectangular: rectangularView
-        case .accessoryInline: inlineView
         case .systemSmall: smallView
-        default: inlineView
+        case .accessoryCircular: circularView.widgetSummary(summaryLabel, value: spokenIntake)
+        default: inlineView.widgetSummary(summaryLabel, value: spokenIntake)
         }
+    }
+
+    private var summaryLabel: Text { Text("Hydratation") }
+
+    /// « 0,9 litre sur 2,0 »: « 0,9 / 2,0 L » reads its slash (issue #601).
+    private var spokenIntake: String {
+        spokenHydrationText(intakeML: entry.waterML, goalML: entry.goalML)
     }
 
     /// Shown when the user hasn't turned hydration on: a muted drop inviting
@@ -142,12 +150,15 @@ struct HydrationWidgetView: View {
 
     private var rectangularView: some View {
         HStack(spacing: 8) {
-            ring(lineWidth: 4).frame(width: 34, height: 34)
-            VStack(alignment: .leading, spacing: 1) {
-                Label("\(litres(entry.waterML)) / \(litres(entry.goalML)) L", systemImage: "drop.fill")
-                Text("\(Int((progress * 100).rounded())) % de l'objectif")
+            HStack(spacing: 8) {
+                ring(lineWidth: 4).frame(width: 34, height: 34)
+                VStack(alignment: .leading, spacing: 1) {
+                    Label("\(litres(entry.waterML)) / \(litres(entry.goalML)) L", systemImage: "drop.fill")
+                    Text("\(Int((progress * 100).rounded())) % de l'objectif")
+                }
+                .font(.system(size: 12, weight: .semibold))
             }
-            .font(.system(size: 12, weight: .semibold))
+            .widgetSummary(summaryLabel, value: spokenIntake)
             Spacer(minLength: 0)
             rectangularAddButton
         }
@@ -156,7 +167,7 @@ struct HydrationWidgetView: View {
     /// Compact "+1 verre" for the Lock Screen: icon over the glass size, so it
     /// stays legible in the tight rectangular slot.
     private var rectangularAddButton: some View {
-        Button(intent: LogWaterIntent()) {
+        addGlassButton { glassML in
             VStack(spacing: 0) {
                 Image(systemName: "drop.fill").font(.system(size: 11, weight: .bold))
                 Text("+\(glassML)").font(.system(size: 10, weight: .bold, design: .rounded))
@@ -165,7 +176,6 @@ struct HydrationWidgetView: View {
             .padding(.vertical, 4)
             .background(.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 8))
         }
-        .buttonStyle(.plain)
     }
 
     private var inlineView: some View {
@@ -179,6 +189,7 @@ struct HydrationWidgetView: View {
                 Image(systemName: "drop.fill")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(Color(red: 0x5A / 255, green: 0xC8 / 255, blue: 0xFA / 255))
+                    .widgetAccentable()
             }
             .frame(width: 60, height: 60)
             VStack(alignment: .leading, spacing: 2) {
@@ -191,12 +202,13 @@ struct HydrationWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .widgetSummary(summaryLabel, value: spokenIntake)
         .overlay(alignment: .bottomTrailing) { smallAddButton }
         .padding(14)
     }
 
     private var smallAddButton: some View {
-        Button(intent: LogWaterIntent()) {
+        addGlassButton { glassML in
             Label("+\(glassML) ml", systemImage: "drop.fill")
                 .font(.system(size: 11, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
@@ -204,13 +216,20 @@ struct HydrationWidgetView: View {
                 .padding(.vertical, 6)
                 .background(.white.opacity(0.18), in: Capsule())
         }
-        .buttonStyle(.plain)
     }
 
-    /// User's glass size, mirrored into the shared snapshot by the app — the
-    /// widget process can't read the app's `UserDefaults.standard` preferences.
-    private var glassML: Int {
-        WaterGlass.milliliters(from: SharedStore.read())
+    /// The « J'ai bu » button around `label`, which draws the user's glass
+    /// size. That size is mirrored into the shared snapshot by the app — the
+    /// widget process can't read the app's `UserDefaults.standard` — and read
+    /// once for the drawing and VoiceOver: « J'ai bu un verre, 250
+    /// millilitres », where the glyph and « +250 » said neither what the
+    /// button does nor in what unit (issue #601).
+    private func addGlassButton(@ViewBuilder _ label: (Int) -> some View) -> some View {
+        let glassML = WaterGlass.milliliters(from: SharedStore.read())
+        return Button(intent: LogWaterIntent()) { label(glassML) }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text(LogWaterIntent.title))
+            .accessibilityValue(Text(spokenMillilitresText(glassML)))
     }
 
     private func ring(lineWidth: CGFloat) -> some View {
@@ -220,6 +239,9 @@ struct HydrationWidgetView: View {
                 .trim(from: 0, to: progress > 0 ? max(progress, 0.03) : 0)
                 .stroke(HydrationWidget.waterGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
+                // The ring takes the accent colour in the tinted and accented
+                // Home Screen modes, where the teal would turn white (#601).
+                .widgetAccentable()
         }
     }
 }

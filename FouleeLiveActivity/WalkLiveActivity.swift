@@ -38,6 +38,7 @@ struct WalkLiveActivity: Widget {
                         )
                         .font(.system(.title2, design: .rounded, weight: .semibold))
                         .monospacedDigit()
+                        .sessionClockAccessibility(context.state)
                     } icon: {
                         Image(systemName: context.state.isPaused ? "pause.fill" : context.attributes.glyph)
                             .foregroundStyle(.tint)
@@ -48,6 +49,7 @@ struct WalkLiveActivity: Widget {
                         Text(context.state.distanceKm.kmText())
                             .font(.system(.title3, design: .rounded, weight: .semibold))
                             .monospacedDigit()
+                            .accessibilityLabel(WalkMetric.distance.spokenText(context.state.distanceKm))
                         // The climb under the distance, when there is one
                         // (issue #576); never in the compact views.
                         if let elevation = context.state.elevation, let text = elevation.text {
@@ -64,23 +66,27 @@ struct WalkLiveActivity: Widget {
                         statCell(
                             value: context.state.steps.groupedText(),
                             label: "pas",
-                            icon: "shoe"
+                            icon: "shoe",
+                            spoken: Text(WalkMetric.steps.spokenText(Double(context.state.steps)))
                         )
                         statCell(
                             value: context.state.activeCalories.map { "\($0)" } ?? "—",
                             label: "kcal",
-                            icon: "flame.fill"
+                            icon: "flame.fill",
+                            spoken: context.state.activeCalories
+                                .map { Text(WalkMetric.calories.spokenText(Double($0))) }
+                                ?? Text("Calories indisponibles")
                         )
                         statCell(
                             value: "\(context.attributes.goalMinutes)",
                             label: "min objectif",
-                            icon: "target"
+                            icon: "target",
+                            spoken: Text(spokenGoalText(minutes: context.attributes.goalMinutes))
                         )
                     }
                 }
             } compactLeading: {
-                Image(systemName: context.state.isPaused ? "pause.fill" : context.attributes.glyph)
-                    .foregroundStyle(.tint)
+                sessionGlyph(context)
             } compactTrailing: {
                 Text(
                     timerInterval: context.state.timerBasis...Date(timeIntervalSinceNow: 86_400),
@@ -92,14 +98,24 @@ struct WalkLiveActivity: Widget {
                 .monospacedDigit()
                 .foregroundStyle(context.state.isPaused ? .secondary : .primary)
                 .frame(maxWidth: 60)
+                .sessionClockAccessibility(context.state)
             } minimal: {
-                Image(systemName: context.state.isPaused ? "pause.fill" : context.attributes.glyph)
-                    .foregroundStyle(.tint)
+                sessionGlyph(context)
             }
         }
     }
 
-    private func statCell(value: String, label: LocalizedStringResource, icon: String) -> some View {
+    /// The activity's glyph, or pause, named for VoiceOver by the session's
+    /// title: « Ta marche », « Ta course · En pause » (issue #601).
+    private func sessionGlyph(_ context: ActivityViewContext<WalkActivityAttributes>) -> some View {
+        Image(systemName: context.state.isPaused ? "pause.fill" : context.attributes.glyph)
+            .foregroundStyle(.tint)
+            .accessibilityLabel(context.attributes.title(isPaused: context.state.isPaused))
+    }
+
+    /// `spoken` is the whole cell for VoiceOver: « — kcal » would be read
+    /// « tiret k cal » and « 30 min objectif » word by word (issue #601).
+    private func statCell(value: String, label: LocalizedStringResource, icon: String, spoken: Text) -> some View {
         VStack(spacing: 2) {
             Image(systemName: icon)
                 .font(.caption2)
@@ -112,6 +128,8 @@ struct WalkLiveActivity: Widget {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spoken)
     }
 }
 
@@ -148,9 +166,13 @@ struct LockScreenView: View {
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(state.isPaused ? .secondary : .primary)
+                .sessionClockAccessibility(state)
                 Text("\(state.steps.groupedText()) pas · \(state.distanceKm.kmText())")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                    .accessibilityLabel(Text(
+                        "\(WalkMetric.steps.spokenText(Double(state.steps))), \(WalkMetric.distance.spokenText(state.distanceKm))"
+                    ))
                 // Its own line: beside the steps and the distance it would
                 // truncate on a small phone (issue #576).
                 if let elevation = state.elevation, let text = elevation.text {
@@ -163,6 +185,8 @@ struct LockScreenView: View {
             }
             Spacer(minLength: 0)
         }
+        // One element for the whole row, read in the order it is drawn.
+        .accessibilityElement(children: .combine)
     }
 
     private var ring: some View {
@@ -178,5 +202,22 @@ struct LockScreenView: View {
                 .monospacedDigit()
         }
         .frame(width: 62, height: 62)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spokenGoalText(minutes: attributes.goalMinutes))
+        .accessibilityValue(Text("\(Int(progress * 100)) %"))
+    }
+}
+
+private extension View {
+    /// The session clock for VoiceOver (issue #601): « 18:24 » is read as a
+    /// time of day. Running, a `.relative` text the system ticks like the
+    /// timer itself, « 18 min 24 s »; paused, the frozen duration in words.
+    func sessionClockAccessibility(_ state: WalkActivityAttributes.WalkActivityState) -> some View {
+        accessibilityLabel(Text("Durée"))
+            .accessibilityValue(
+                state.isPaused
+                    ? Text(spokenDurationText(seconds: state.elapsed))
+                    : Text(state.timerBasis, style: .relative)
+            )
     }
 }

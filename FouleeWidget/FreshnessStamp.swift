@@ -13,3 +13,22 @@ struct FreshnessStamp: View {
             .lineLimit(1)
     }
 }
+
+extension View {
+    /// The widget's figures as one VoiceOver element (issue #601): « Pas,
+    /// 8 240 pas sur 10 000 pas, mis à jour il y a 3 min » rather than the
+    /// glyph, « 8 240 barre oblique 10 000 » and « MAJ » one by one. A button
+    /// inside the widget stays out of it: apply this to the figures only.
+    /// Without a `value`, the label says it all — « Série de 12 jours ».
+    @ViewBuilder
+    func widgetSummary(_ label: Text, value: String? = nil, fetchedAt: Date? = nil) -> some View {
+        let element = accessibilityElement(children: .ignore).accessibilityLabel(label)
+        if let value {
+            element.accessibilityValue(
+                fetchedAt.map { Text("\(value), mis à jour il y a \($0, style: .relative)") } ?? Text(value)
+            )
+        } else {
+            element
+        }
+    }
+}

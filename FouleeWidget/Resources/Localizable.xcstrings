@@ -51,6 +51,16 @@
         }
       }
     },
+    "%@, mis à jour il y a %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, updated %2$@ ago"
+          }
+        }
+      }
+    },
     "%lld" : {
       "localizations" : {},
       "shouldTranslate" : false
@@ -177,6 +187,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activity"
+          }
+        }
+      }
+    },
+    "Aujourd'hui" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
           }
         }
       }
