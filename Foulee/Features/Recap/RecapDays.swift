@@ -112,7 +112,7 @@ struct RecapDaysView: View {
                             .motionAnimation(.easeOut(duration: 0.6).delay(Double(index) * 0.05), value: isRevealed)
                         Text(day.date.weekdayInitial.uppercased())
                             .font(FouleeFont.caption.weight(.semibold))
-                            .foregroundStyle(isSelected ? FouleeColor.accentMid : .secondary)
+                            .foregroundStyle(isSelected ? ReadablePalette.purpleText : .secondary)
                         Text(day.minutes > 0 ? "\(day.minutes)" : "–")
                             .font(FouleeFont.caption.monospacedDigit())
                             .foregroundStyle(day.minutes > 0 ? .primary : .tertiary)
@@ -163,7 +163,7 @@ struct RecapDaysView: View {
                         .overlay {
                             Text("\(index + 1)")
                                 .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                .foregroundStyle(isSelected ? FouleeColor.accentMid : .secondary)
+                                .foregroundStyle(isSelected ? ReadablePalette.purpleText : .secondary)
                         }
                         .background {
                             Circle().fill(isSelected ? FouleeColor.accentMid.opacity(0.16) : .clear)

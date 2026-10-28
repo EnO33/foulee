@@ -63,7 +63,7 @@ struct RecapShareSheet: View {
                     .font(FouleeFont.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, minHeight: 50)
-                    .background(FouleeColor.accentGradient, in: Capsule())
+                    .background(FouleeColor.buttonGradient, in: Capsule())
                     .shadow(color: FouleeColor.accentMid.opacity(0.35), radius: 12, x: 0, y: 8)
             }
             .buttonStyle(.pressable)

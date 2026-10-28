@@ -24,7 +24,9 @@ struct WeatherAttributionView: View {
                 }
                 sources
             }
-            .foregroundStyle(.secondary)
+            // The system grey, not a shade of the link's accent: that one
+            // fell to 1.7:1 on the sheet (issue #658).
+            .foregroundStyle(Color.secondary)
         }
         .accessibilityLabel("Apple Weather, sources des données")
     }

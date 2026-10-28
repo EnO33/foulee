@@ -159,7 +159,7 @@ struct ActiveWalkScreen: View {
             Chip(
                 label: paused ? "EN PAUSE" : "EN COURS",
                 systemIcon: paused ? FouleeIcon.pause : nil,
-                tint: paused ? FouleeColor.warning : FouleeColor.success,
+                tint: paused ? ReadablePalette.orangeText : ReadablePalette.greenText,
                 fill: (paused ? FouleeColor.warning : FouleeColor.success).opacity(0.16)
             )
             // Names the session's activity (#225) — see `sessionTitle`. No

@@ -40,6 +40,44 @@ struct ReadablePaletteTests {
         }
     }
 
+    /// A card's glass, as the accessibility audit measured it (issue #658).
+    private static let glass: UInt32 = 0xF2EDF4
+
+    private static let textColors: [(String, Color)] = [
+        ("green", ReadablePalette.greenText),
+        ("orange", ReadablePalette.orangeText),
+        ("purple", ReadablePalette.purpleText),
+        ("blue", ReadablePalette.blueText),
+        ("indigo", ReadablePalette.indigoText)
+    ]
+
+    @Test(
+        "Small text in a brand colour reaches 4.5:1 on the glass",
+        arguments: [UIAccessibilityContrast.normal, .high]
+    )
+    func textShades(contrast: UIAccessibilityContrast) throws {
+        let traits = UITraitCollection { traits in
+            traits.userInterfaceStyle = .light
+            traits.accessibilityContrast = contrast
+        }
+        for (name, color) in Self.textColors {
+            for background in Self.lightBackgrounds + [Self.glass] {
+                let ratio = try Self.contrast(color, on: background, traits: traits)
+                #expect(ratio >= 4.5, "\(name) on \(String(background, radix: 16)): \(ratio)")
+            }
+        }
+    }
+
+    @Test("White text reaches 4.5:1 across the button gradient")
+    func buttonGradient() throws {
+        let traits = UITraitCollection(userInterfaceStyle: .light)
+        for stop in [FouleeColor.buttonStart, FouleeColor.accentEnd] {
+            let ratio = try Self.contrast(stop, on: 0xFFFFFF, traits: traits)
+            let hex = Self.hex(try Self.components(stop, traits: traits))
+            #expect(ratio >= 4.5, "white on \(String(hex, radix: 16)): \(ratio)")
+        }
+    }
+
     @Test("Dark mode keeps the bright shades")
     func darkMode() throws {
         let traits = UITraitCollection(userInterfaceStyle: .dark)
