@@ -338,6 +338,25 @@ let project = Project(
                 .target(name: "Foulee")
             ]
         ),
+        // Xcode's accessibility audit on the main screens (issue #602). A UI
+        // test bundle like `FouleeScreenshots`, whose capture mode and
+        // plumbing it reuses so every screen shows the same seeded day; its
+        // own scheme and CI job, so the unit suite stays fast.
+        .target(
+            name: "FouleeAccessibilityAudit",
+            destinations: [.iPhone],
+            product: .uiTests,
+            bundleId: "\(bundleIdBase).accessibilityaudit",
+            deploymentTargets: deploymentTargets,
+            sources: [
+                "FouleeAccessibilityAudit/**",
+                "FouleeScreenshots/ScreenshotCapture.swift"
+            ],
+            resources: ["FouleeAccessibilityAudit/AccessibilityAuditBaseline.json"],
+            dependencies: [
+                .target(name: "Foulee")
+            ]
+        ),
         // The watch half of the capture set (issue #239). Same shape as
         // `FouleeScreenshots`, and absent from the `FouleeWatch` scheme's test
         // action for the same reason: CI's "Test (watchOS)" step runs the unit
@@ -394,6 +413,12 @@ let project = Project(
             buildAction: .buildAction(targets: ["Foulee", "FouleeScreenshots"]),
             testAction: .targets(["FouleeScreenshots"]),
             runAction: .runAction(executable: "Foulee")
+        ),
+        .scheme(
+            name: "FouleeAccessibilityAudit",
+            shared: true,
+            buildAction: .buildAction(targets: ["Foulee", "FouleeAccessibilityAudit"]),
+            testAction: .targets(["FouleeAccessibilityAudit"])
         ),
         .scheme(
             name: "FouleeWatch",

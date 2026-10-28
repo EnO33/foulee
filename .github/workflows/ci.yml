@@ -41,6 +41,7 @@ jobs:
               - .github/actions/prepare-project/**
               - .github/actions/report-test-failure/**
               - Foulee/**
+              - FouleeAccessibilityAudit/**
               - FouleeKit/**
               - FouleeKitTests/**
               - FouleeLiveActivity/**
@@ -316,6 +317,40 @@ jobs:
         with:
           name: ios
 
+  # Xcode's accessibility audit on the iPhone app's main screens (issue #602),
+  # beside the unit tests rather than inside them: it launches the app eleven
+  # times. Fails on a finding FouleeAccessibilityAudit/AccessibilityAuditBaseline.json
+  # does not list; the script creates its own simulator, the same way as on a
+  # Mac, because the findings depend on the screen and the iOS version.
+  accessibility:
+    name: Accessibility audit
+    needs: changes
+    if: needs.changes.outputs.apple == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare-project
+
+      - name: Audit (iOS)
+        run: tools/accessibility_audit.sh
+
+      # What the baseline would be after this run, to refresh it from the CI
+      # simulator once a finding is fixed.
+      - name: Upload the findings
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: accessibility-audit
+          path: build/accessibility/AccessibilityAuditBaseline.json
+          if-no-files-found: ignore
+
+      - uses: ./.github/actions/report-test-failure
+        if: failure()
+        with:
+          name: accessibility
+
   watchos:
     name: watchOS
     needs: changes
@@ -484,12 +519,12 @@ jobs:
     # Every job but `changes` may skip: it runs only when the change touches
     # its side (and the dead-code job only on pull requests).
     name: Build & Test
-    needs: [changes, lint, store, connectiq, connectiq-build, kit, ios, watchos, deadcode]
+    needs: [changes, lint, store, connectiq, connectiq-build, kit, ios, accessibility, watchos, deadcode]
     if: always()
     runs-on: ubuntu-24.04
     steps:
       - name: Every platform passed
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
-          allowed-skips: lint, store, connectiq, connectiq-build, kit, ios, watchos, deadcode
+          allowed-skips: lint, store, connectiq, connectiq-build, kit, ios, accessibility, watchos, deadcode
           jobs: ${{ toJSON(needs) }}
