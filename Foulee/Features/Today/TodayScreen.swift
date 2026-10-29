@@ -129,7 +129,7 @@ struct TodayScreen: View {
             )
             .sheet(isPresented: $isShowingWeather) {
                 if let weather = store.snapshot?.weather {
-                    WeatherDetailSheet(weather: weather, windowStart: store.walkWindowStart) {
+                    WeatherDetailSheet(weather: weather, windowStart: store.walkWindowStart, location: store.locationAccess) {
                         isShowingWeather = false
                     }
                         .preferredColorScheme(preferredScheme)
@@ -207,7 +207,7 @@ struct TodayScreen: View {
                 // HealthKit never tells an app its read access was refused, so
                 // the card could not tell that case from an ordinary empty day.
                 if store.lastError != nil {
-                    TodayErrorBanner()
+                    DegradedBanner(state: .healthUnreadable)
                 } else if store.showsGarminSyncHint {
                     // An unsynced Garmin Connect is a gap with a real fix, so
                     // this hint stays.
@@ -342,27 +342,6 @@ struct TodayScreen: View {
         case .minutes: Double(store.minutesGoal)
         case .distance, .calories: nil
         }
-    }
-}
-
-private struct TodayErrorBanner: View {
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.callout)
-                .foregroundStyle(FouleeColor.warning)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Données partiellement indisponibles")
-                    .font(FouleeFont.footnote.weight(.semibold))
-                Text("Vérifie l'accès à Santé dans Réglages, puis réessaie.")
-                    .font(FouleeFont.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(12)
-        .fouleeGlass(cornerRadius: 16)
-        .accessibilityElement(children: .combine)
     }
 }
 

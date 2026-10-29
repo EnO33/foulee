@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import SwiftUI
 
 /// Gates the hydration card on the home behind the user's preference and wires
@@ -10,7 +11,6 @@ struct HydrationHomeCard: View {
     let preferences: UserPreferences
     let store: HydrationStore
 
-    @Environment(\.openURL) private var openURL
     @Environment(\.colorScheme) private var colorScheme
     @Dependency(\.date) private var date
     @State private var isShowingDetail = false
@@ -19,7 +19,7 @@ struct HydrationHomeCard: View {
         if preferences.hydrationEnabled {
             VStack(spacing: 8) {
                 if store.writeDenied {
-                    deniedBanner
+                    DegradedBanner(state: .waterWriteDenied)
                 } else if store.lastError != nil {
                     failureBanner
                 }
@@ -53,30 +53,6 @@ struct HydrationHomeCard: View {
             window: HydrationPace.Window(start: preferences.hydrationWindowStart, end: preferences.hydrationWindowEnd),
             now: date.now
         )
-    }
-
-    /// Writing water was explicitly denied — "J'ai bu" can't work until the
-    /// user re-enables it in the Health app.
-    private var deniedBanner: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 14))
-                .foregroundStyle(FouleeColor.warning)
-            Text("Autorise l'eau dans Santé pour compter tes verres")
-                .font(FouleeFont.caption)
-                .foregroundStyle(.secondary)
-            Spacer(minLength: 0)
-            Button {
-                if let url = URL(string: "x-apple-health://") { openURL(url) }
-            } label: {
-                Text("Ouvrir Santé")
-                    .font(FouleeFont.caption.weight(.semibold))
-                    .foregroundStyle(FouleeColor.accentMid)
-            }
-            .buttonStyle(.pressable)
-        }
-        .padding(12)
-        .fouleeGlass(cornerRadius: 16)
     }
 
     /// The last "J'ai bu" write failed for another reason — say so instead of

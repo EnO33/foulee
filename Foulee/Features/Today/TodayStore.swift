@@ -29,6 +29,9 @@ final class TodayStore {
     /// "refusées dans Réglages" instead of a lying "activés".
     private(set) var notificationsAuthorizationStatus: UNAuthorizationStatus = .notDetermined
 
+    /// Tells the weather sheet a refused location from a silent WeatherKit (#611).
+    private(set) var locationAccess = Access.unknown
+
     /// Garmin-only setup whose day looks behind — see `GarminFreshness`. The
     /// screen then shows "Ouvre Garmin Connect" instead of Apple-Watch-flavoured
     /// copy, which would be useless advice for this user.
@@ -404,7 +407,12 @@ final class TodayStore {
     }
 
     private func fetchWeatherIfAuthorized() async -> WeatherSnapshot? {
-        guard let coordinate = await location.currentLocation() else { return nil }
+        guard let coordinate = await location.currentLocation() else {
+            // Read only when it matters: a fix already says it is granted.
+            locationAccess = await location.access()
+            return nil
+        }
+        locationAccess = .granted
         // Weather is non-critical and self-evident — its card just hides when
         // unavailable. Don't route a transient WeatherKit failure (rate limits,
         // flaky network) through `lastError`: that raises the Health-data banner

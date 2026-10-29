@@ -1203,26 +1203,6 @@
         }
       }
     },
-    "Autorise l'eau dans Santé pour compter tes verres" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allow water in Health to count your glasses"
-          }
-        }
-      }
-    },
-    "Autorise la localisation pour voir la météo à ton endroit." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allow location to see the weather where you are."
-          }
-        }
-      }
-    },
     "Autoriser" : {
       "localizations" : {
         "en" : {
@@ -1752,16 +1732,6 @@
     "Distance" : {
       "localizations" : {},
       "shouldTranslate" : false
-    },
-    "Données partiellement indisponibles" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Some data unavailable"
-          }
-        }
-      }
     },
     "Durée" : {
       "localizations" : {
@@ -2793,16 +2763,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Average / day"
-          }
-        }
-      }
-    },
-    "Météo indisponible" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Weather unavailable"
           }
         }
       }
@@ -3853,16 +3813,6 @@
         }
       }
     },
-    "Rien n'est enregistré dans Santé sur cette période. Vérifie que Foulée peut lire tes données dans Santé." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nothing is recorded in Health for this period. Check that Foulée can read your data in Health."
-          }
-        }
-      }
-    },
     "Récap" : {
       "localizations" : {
         "en" : {
@@ -4751,16 +4701,6 @@
         }
       }
     },
-    "Vérifie l'accès à Santé dans Réglages, puis réessaie." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Check access to Health in Settings, then try again."
-          }
-        }
-      }
-    },
     "Vérifier ou réparer, côté Santé" : {
       "localizations" : {
         "en" : {
@@ -5143,6 +5083,86 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🔥 New record!"
+          }
+        }
+      }
+    },
+    "%lld refusées" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld denied"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld denied"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld refusée"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld refusées"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Tout est autorisé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything allowed"
+          }
+        }
+      }
+    },
+    "Autorisations" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permissions"
+          }
+        }
+      }
+    },
+    "Foulée a tout ce qu'il lui faut." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée has everything it needs."
+          }
+        }
+      }
+    },
+    "Santé ne dit jamais à Foulée ce que tu partages. Si un chiffre manque, vérifie l'accès de Foulée dans Santé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health never tells Foulée what you share. If a figure is missing, check Foulée's access in Health."
           }
         }
       }

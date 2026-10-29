@@ -16,6 +16,12 @@ struct AppLinksTests {
         #expect(url.host() == "getfoulee.app")
     }
 
+    /// The one link that is not a web page: the remedy of a Santé banner (issue #611).
+    @Test("Santé opens the Health app")
+    func health() {
+        #expect(AppLinks.health.scheme == "x-apple-health")
+    }
+
     @Test("French pages sit at the site's root, every other language's under /en", arguments: [
         ("fr_FR", "/confidentialite", "/assistance", "/assistance/garmin"),
         ("fr_CA", "/confidentialite", "/assistance", "/assistance/garmin"),

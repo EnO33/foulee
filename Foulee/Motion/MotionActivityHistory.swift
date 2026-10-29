@@ -1,4 +1,5 @@
 import Dependencies
+import FouleeKit
 import Foundation
 
 /// CoreMotion's activity **history**, wrapped as a struct-of-closures for DI
@@ -23,6 +24,9 @@ nonisolated struct MotionActivityHistory: Sendable {
     /// way to say the same thing, and a second thing for every caller to
     /// handle.
     var samples: @Sendable (_ from: Date, _ to: Date) async -> [MotionHistorySample]
+    /// What iOS allows under « Mouvements et forme », which also gates the
+    /// pedometer (issue #611). Granted by default so a double says nothing.
+    var access: @Sendable () -> Access = { .granted }
 }
 
 nonisolated extension MotionActivityHistory: DependencyKey {

@@ -43,14 +43,19 @@ struct SettingsNotificationsPage: View {
     private var permissionBanner: some View {
         switch store.permission {
         case .denied:
-            banner(
-                "Les notifications de Foulée sont coupées dans iOS : aucun rappel ne peut arriver.",
+            SettingsBanner(
+                message: "Les notifications de Foulée sont coupées dans iOS : aucun rappel ne peut arriver.",
+                icon: "bell.slash.fill",
                 action: "Ouvrir les réglages"
             ) {
                 if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
             }
         case .notDetermined:
-            banner("Foulée n'a pas encore la permission de t'envoyer des rappels.", action: "Autoriser") {
+            SettingsBanner(
+                message: "Foulée n'a pas encore la permission de t'envoyer des rappels.",
+                icon: "bell.slash.fill",
+                action: "Autoriser"
+            ) {
                 Task { await store.request() }
             }
         case .unknown, .allowed:
@@ -75,25 +80,6 @@ struct SettingsNotificationsPage: View {
                 Label("Régler la plage et la fréquence", systemImage: "slider.horizontal.3")
                     .font(FouleeFont.footnote.weight(.semibold))
                     .foregroundStyle(FouleeColor.water)
-            }
-            .buttonStyle(.pressable)
-        }
-    }
-
-    private func banner(_ message: LocalizedStringResource, action: LocalizedStringResource, perform: @escaping () -> Void) -> some View {
-        GlassSection {
-            Label {
-                Text(message).font(FouleeFont.callout)
-            } icon: {
-                Image(systemName: "bell.slash.fill").foregroundStyle(FouleeColor.warning)
-            }
-            Button(action: perform) {
-                Text(action)
-                    .font(FouleeFont.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(FouleeColor.accentMid.opacity(0.16), in: Capsule())
-                    .foregroundStyle(FouleeColor.accentMid)
             }
             .buttonStyle(.pressable)
         }

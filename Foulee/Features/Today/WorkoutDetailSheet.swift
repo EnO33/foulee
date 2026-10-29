@@ -213,9 +213,7 @@ struct WorkoutDetailSheet: View {
 
     private var healthAppLink: some View {
         Button {
-            if let url = URL(string: "x-apple-health://") {
-                UIApplication.shared.open(url)
-            }
+            UIApplication.shared.open(AppLinks.health)
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "heart.fill")

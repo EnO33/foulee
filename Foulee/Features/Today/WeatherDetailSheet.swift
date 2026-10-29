@@ -1,3 +1,4 @@
+import FouleeKit
 import SwiftUI
 
 /// Quick weather detail, opened by tapping the weather on the hero. Local-only
@@ -6,6 +7,8 @@ struct WeatherDetailSheet: View {
     let weather: WeatherSnapshot
     /// The hour the forecast is for: the start of the outing window.
     var windowStart: DateComponents
+    /// Why there is no forecast, read only when `weather` is unavailable.
+    var location: Access = .unknown
     var onClose: () -> Void
 
     private var isAvailable: Bool { weather.isAvailable }
@@ -82,18 +85,14 @@ struct WeatherDetailSheet: View {
     }
 
     private var unavailable: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             Image(systemName: "cloud.fill")
                 .font(.system(size: 44, weight: .semibold))
                 .foregroundStyle(.secondary)
-            Text("Météo indisponible")
-                .font(FouleeFont.headline)
-            Text("Autorise la localisation pour voir la météo à ton endroit.")
-                .font(FouleeFont.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+                .accessibilityHidden(true)
+            DegradedBanner(state: .weather(location: location))
         }
+        .padding(.horizontal, 28)
     }
 }
 
@@ -109,6 +108,7 @@ struct WeatherDetailSheet: View {
     WeatherDetailSheet(
         weather: WeatherSnapshot(temperatureCelsius: 0, condition: "—", advice: ""),
         windowStart: DateComponents(hour: 12, minute: 30),
+        location: .denied,
         onClose: {}
     )
 }

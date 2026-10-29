@@ -16,6 +16,8 @@ private final class LocationBridge: NSObject, CLLocationManagerDelegate {
         manager.desiredAccuracy = kCLLocationAccuracyKilometer
     }
 
+    var access: Access { manager.authorizationStatus.access }
+
     func currentLocation() async -> Coordinate? {
         guard manager.authorizationStatus.allowsLocation else { return nil }
         return await withCheckedContinuation { continuation in
@@ -67,6 +69,7 @@ nonisolated extension LocationClient {
                 // terminates the recorder's stream and stops the GPS.
                 continuation.onTermination = { _ in forwarding.cancel() }
             }
-        }
+        },
+        access: { await LocationBridge.shared.access }
     )
 }

@@ -1,9 +1,9 @@
 import FouleeKit
 import Foundation
 
-/// Every web page the app links to (issue #396), in one place: fixed https
-/// addresses on the site and the public repository, never built from user
-/// input. What a user reads lives on getfoulee.app; the issue tracker and the
+/// Every page the app links to (issue #396), in one place: fixed https
+/// addresses on the site and the public repository, plus the Santé app, never
+/// built from user input. What a user reads lives on getfoulee.app; the issue tracker and the
 /// code stay on GitHub.
 nonisolated enum AppLinks {
     private static let website = "https://getfoulee.app"
@@ -14,6 +14,8 @@ nonisolated enum AppLinks {
     static let garminFAQ = page(.garminFAQ)
     static let reportIssue = link("\(repository)/issues/new")
     static let sourceCode = link(repository)
+    /// The Santé app, where every HealthKit grant is changed.
+    static let health = link("x-apple-health://")
 
     /// A new issue whose text starts with `body` (issue #610). Encoded by
     /// hand: `URLComponents` leaves `+` alone, and GitHub reads it as a space.

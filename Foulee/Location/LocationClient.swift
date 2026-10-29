@@ -10,6 +10,9 @@ nonisolated struct LocationClient: Sendable {
     var requestWhenInUse: @Sendable () async -> Bool
     var currentLocation: @Sendable () async -> Coordinate?
     var routeUpdates: @Sendable () -> AsyncStream<Coordinate>
+    /// What iOS allows, for the messages that explain a missing route or
+    /// forecast (issue #611). Granted by default so a double says nothing.
+    var access: @Sendable () async -> Access = { .granted }
 }
 
 nonisolated extension LocationClient: DependencyKey {
