@@ -1,6 +1,6 @@
 # Privacy Policy — Foulée
 
-_Last updated: October 26, 2026_
+_Last updated: October 29, 2026_
 
 Foulée is a **local** app. It helps you keep up a streak of outings — walks or
 runs — from your activity data. **No data is sent to any server of ours, and
@@ -181,6 +181,26 @@ iPhone to write it.
 When you **merge two outings**, Foulée remembers on your iPhone which workouts
 make up one, and nothing else: Health is not changed, and the merge does not
 leave your iPhone. Splitting the outings erases that link.
+
+## Diagnostics
+
+On the iPhone, Foulée receives from iOS (MetricKit) the reports of its own
+crashes, hangs and slow launches. It keeps ten at most, for a month at most,
+**on your iPhone**. These reports describe how the app runs — version, device
+model, iOS version, technical traces — and contain **no health data and no
+location**.
+
+**Nothing leaves on its own.** In Settings › About, "Report a problem" shows
+you the summary before anything is sent:
+
+- "Open a report" opens an issue on GitHub, which is **public**, with the
+  summary (version, device, date and type of each incident) if you leave
+  "Attach the summary" on. You review it and send it yourself, from your
+  GitHub account.
+- "Share the full report" opens the iOS share sheet with the summary and the
+  technical traces: you choose whom to send it to, privately.
+
+Uninstalling the app deletes these reports.
 
 ## Apple privacy manifest
 
