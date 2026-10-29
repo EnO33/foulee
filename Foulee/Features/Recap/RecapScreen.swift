@@ -200,9 +200,7 @@ struct RecapScreen: View {
 
     private var healthAppLink: some View {
         Button {
-            if let url = URL(string: "x-apple-health://") {
-                UIApplication.shared.open(url)
-            }
+            UIApplication.shared.open(AppLinks.health)
         } label: {
             Label("Voir dans Santé", systemImage: "heart.fill")
                 .font(FouleeFont.footnote.weight(.semibold))

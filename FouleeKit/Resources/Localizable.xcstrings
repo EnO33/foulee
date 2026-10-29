@@ -858,6 +858,146 @@
           }
         }
       }
+    },
+    "Données partiellement indisponibles" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some data unavailable"
+          }
+        }
+      }
+    },
+    "Eau non autorisée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Water not allowed"
+          }
+        }
+      }
+    },
+    "Localisation refusée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location denied"
+          }
+        }
+      }
+    },
+    "Mouvements refusés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Motion denied"
+          }
+        }
+      }
+    },
+    "Météo indisponible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weather unavailable"
+          }
+        }
+      }
+    },
+    "Pas encore de données" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No data yet"
+          }
+        }
+      }
+    },
+    "Certains chiffres peuvent manquer. Vérifie l'accès de Foulée dans Santé, puis réessaie." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some figures may be missing. Check Foulée's access in Health, then try again."
+          }
+        }
+      }
+    },
+    "Foulée ne peut pas compter tes verres. Autorise l'eau dans Santé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée can't count your glasses. Allow water in Health."
+          }
+        }
+      }
+    },
+    "Pas de météo locale ni de tracé de tes sorties. Autorise la localisation dans Réglages." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No local weather and no route for your outings. Allow location in Settings."
+          }
+        }
+      }
+    },
+    "Pas de pas en direct pendant une sortie, ni de tri marche ou course. Autorise « Mouvements et forme » dans Réglages." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No live steps during an outing, and no telling walks from runs. Allow “Motion & Fitness” in Settings."
+          }
+        }
+      }
+    },
+    "La météo n'a pas répondu. Réessaie dans un moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The weather didn't answer. Try again in a moment."
+          }
+        }
+      }
+    },
+    "Rien n'est enregistré dans Santé sur cette période. Vérifie que Foulée peut lire tes données dans Santé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing is recorded in Health for this period. Check that Foulée can read your data in Health."
+          }
+        }
+      }
+    },
+    "Ouvrir Santé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Health"
+          }
+        }
+      }
+    },
+    "Ouvrir les réglages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Settings"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

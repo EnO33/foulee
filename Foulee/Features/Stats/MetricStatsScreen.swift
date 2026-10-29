@@ -286,9 +286,17 @@ private extension MetricStatsScreen {
         ContentUnavailableView {
             Label("Pas encore de données", systemImage: metric.icon)
         } description: {
-            Text(store.range == .today
-                ? "Rien n'est encore enregistré aujourd'hui. Choisis une autre période pour voir tes jours passés."
-                : "Rien n'est enregistré dans Santé sur cette période. Vérifie que Foulée peut lire tes données dans Santé.")
+            if store.range == .today {
+                Text("Rien n'est encore enregistré aujourd'hui. Choisis une autre période pour voir tes jours passés.")
+            } else {
+                Text(verbatim: DegradedState.noData.message)
+            }
+        } actions: {
+            // A past period with nothing in it is the one hint of a refused
+            // read: HealthKit never says so (issue #611). Today is just early.
+            if store.range != .today, let remedy = DegradedState.noData.remedy {
+                RemedyButton(remedy: remedy)
+            }
         }
         .frame(maxWidth: .infinity, minHeight: 200)
     }

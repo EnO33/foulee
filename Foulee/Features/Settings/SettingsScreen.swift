@@ -11,6 +11,7 @@ struct SettingsScreen: View {
 
     @State private var isShowingGarminGuide = false
     @State private var permission = NotificationPermissionStore()
+    @State private var access = AccessStore()
     @Environment(\.scenePhase) private var scenePhase
 
     /// A sheet presented from a sheet doesn't inherit the theme — resolve it
@@ -48,6 +49,8 @@ struct SettingsScreen: View {
                             blockedByIOS: permission.permission == .denied
                         ))
                         Divider()
+                        link(.access, summary: SettingsSummary.access(refusedCount: access.refused?.count))
+                        Divider()
                         link(.appearance, summary: preferences.themeMode.label)
                     }
                     GlassSection {
@@ -63,18 +66,24 @@ struct SettingsScreen: View {
             .overlay(alignment: .topTrailing) { SheetCloseButton(action: onClose) }
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: SettingsPage.self) { page in
-                SettingsPageView(page: page, preferences: preferences, permission: permission)
+                SettingsPageView(page: page, preferences: preferences, permission: permission, access: access)
             }
         }
-        .task { await permission.refresh() }
-        // Back from iOS Settings: show what the user just changed there.
+        .task { await refresh() }
+        // Back from iOS Settings or Santé: show what the user just changed there.
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await permission.refresh() } }
+            if phase == .active { Task { await refresh() } }
         }
         .sheet(isPresented: $isShowingGarminGuide) {
             GarminSetupSheet { isShowingGarminGuide = false }
                 .preferredColorScheme(preferences.themeMode.colorScheme ?? systemColorScheme)
         }
+    }
+
+    private func refresh() async {
+        async let notifications: Void = permission.refresh()
+        async let others: Void = access.refresh()
+        _ = await (notifications, others)
     }
 
     private func link(_ page: SettingsPage, summary: String) -> some View {

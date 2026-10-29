@@ -7,6 +7,7 @@ enum SettingsPage: Hashable {
     case schedule
     case hydration
     case notifications
+    case access
     case appearance
     case about
 
@@ -16,6 +17,7 @@ enum SettingsPage: Hashable {
         case .schedule: "Planning"
         case .hydration: "Hydratation"
         case .notifications: "Notifications"
+        case .access: "Autorisations"
         case .appearance: "Apparence"
         case .about: "À propos"
         }
@@ -27,6 +29,7 @@ enum SettingsPage: Hashable {
         case .schedule: "calendar"
         case .hydration: "drop.fill"
         case .notifications: FouleeIcon.bell
+        case .access: "hand.raised.fill"
         case .appearance: "circle.lefthalf.filled"
         case .about: "info.circle.fill"
         }
@@ -38,6 +41,7 @@ enum SettingsPage: Hashable {
         case .schedule: FouleeColor.accentSecondary
         case .hydration: FouleeColor.water
         case .notifications: FouleeColor.danger
+        case .access: FouleeColor.warning
         case .appearance: FouleeColor.accentMid
         case .about: .gray
         }
@@ -49,6 +53,7 @@ struct SettingsPageView: View {
     let page: SettingsPage
     @Bindable var preferences: UserPreferences
     let permission: NotificationPermissionStore
+    let access: AccessStore
 
     var body: some View {
         ScrollView {
@@ -73,6 +78,7 @@ struct SettingsPageView: View {
         case .schedule: SettingsSchedulePage(preferences: preferences)
         case .hydration: GlassSection { HydrationSettingsContent(preferences: preferences) }
         case .notifications: SettingsNotificationsPage(preferences: preferences, store: permission)
+        case .access: SettingsAccessPage(store: access)
         case .appearance: SettingsAppearancePage(preferences: preferences)
         case .about: SettingsAboutPage()
         }

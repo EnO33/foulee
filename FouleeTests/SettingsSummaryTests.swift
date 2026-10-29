@@ -69,6 +69,16 @@ struct SettingsSummaryTests {
         #expect(SettingsSummary.notifications(activeCount: 3, blockedByIOS: true) == "Coupées dans iOS")
     }
 
+    @Test("Refused permissions count with the right plural, and say nothing before they are read", arguments: [
+        (nil, ""),
+        (0, "Tout est autorisé"),
+        (1, "1 refusée"),
+        (2, "2 refusées")
+    ] as [(Int?, String)])
+    func access(count: Int?, expected: String) {
+        #expect(SettingsSummary.access(refusedCount: count) == expected)
+    }
+
     /// Water reminders only fire while hydration tracking is on, so they only
     /// count then — the summary must not promise a reminder that never comes.
     @Test("Water reminders count only while hydration is on")

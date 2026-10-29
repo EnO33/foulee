@@ -31,6 +31,14 @@ nonisolated extension MotionActivityHistory {
                     continuation.resume(returning: (activities ?? []).map(MotionHistorySample.init))
                 }
             }
+        },
+        access: {
+            switch CMMotionActivityManager.authorizationStatus() {
+            case .notDetermined: .notDetermined
+            case .denied, .restricted: .denied
+            case .authorized: .granted
+            @unknown default: .unknown
+            }
         }
     )
 }

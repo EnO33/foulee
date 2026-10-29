@@ -142,6 +142,11 @@ struct ActiveWalkScreen: View {
             ScrollView {
                 VStack(spacing: 0) {
                     header(paused: paused)
+                    ForEach(store.degradedStates, id: \.self) { state in
+                        DegradedBanner(state: state)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
+                    }
                     timer(session: session)
                     ring(session: session)
                     heartRatePlaceholder

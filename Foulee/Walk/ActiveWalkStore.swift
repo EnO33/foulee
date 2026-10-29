@@ -29,6 +29,9 @@ final class ActiveWalkStore {
     /// Fixes recorded since the walk started, drawn by the route map. Keeps
     /// recording across pauses — a pause just leaves a straight gap.
     private(set) var route: [Coordinate] = []
+    /// What this outing goes without — a route, live steps — because iOS
+    /// refused it (issue #611). Read once, when it starts.
+    private(set) var degradedStates: [DegradedState] = []
 
     @ObservationIgnored
     @Dependency(\.pedometer) private var pedometer
@@ -196,6 +199,7 @@ final class ActiveWalkStore {
     func reset() {
         cancelObservers()
         routeTask?.cancel()
+        degradedStates = []
         // Normally already ended by stop(), but no path may leak the handle:
         // an unended activity outlives the store on the Lock Screen.
         if let liveActivity {
@@ -285,7 +289,11 @@ final class ActiveWalkStore {
         // Build the stream on the main actor (we're @MainActor here), then
         // drain it off the hot path, appending each fix back on the main actor.
         let updates = location.routeUpdates()
+        let locationAccess = location.access
+        let motionAccess = motionActivityHistory.access
         return Task {
+            let missing = DegradedState.permissions(location: await locationAccess(), motion: motionAccess())
+            await MainActor.run { self.degradedStates = missing }
             for await coordinate in updates {
                 await MainActor.run { self.route.append(coordinate) }
             }

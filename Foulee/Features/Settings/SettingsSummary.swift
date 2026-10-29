@@ -52,6 +52,13 @@ enum SettingsSummary {
         if blockedByIOS { return String(localized: "Coupées dans iOS") }
         return activeCount > 0 ? String(localized: "\(activeCount) rappels actifs") : String(localized: "Aucun rappel")
     }
+
+    /// `nil` before the permissions are read: an empty line rather than a
+    /// guess (issue #611).
+    static func access(refusedCount: Int?) -> String {
+        guard let refusedCount else { return "" }
+        return refusedCount > 0 ? String(localized: "\(refusedCount) refusées") : String(localized: "Tout est autorisé")
+    }
 }
 
 extension UserPreferences {
