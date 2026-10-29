@@ -9,6 +9,7 @@ import SwiftUI
 /// recap notifications with theirs (issue #344).
 struct RootView: View {
     @State private var preferences: UserPreferences
+    private let whatsNew: WhatsNewStore
     private let cloud: SettingsKeyValueStore?
     @Environment(\.scenePhase) private var scenePhase
     private let scheduler = WalkReminderScheduler()
@@ -21,6 +22,7 @@ struct RootView: View {
     /// Gating onboarding is the one thing here no test could reach before.
     init(defaults: UserDefaults = .standard, cloud: SettingsKeyValueStore? = nil) {
         _preferences = State(initialValue: UserPreferences(defaults: defaults, cloud: cloud))
+        whatsNew = WhatsNewStore(defaults: defaults)
         self.cloud = cloud
     }
 
@@ -30,6 +32,9 @@ struct RootView: View {
                 HomeView()
             } else {
                 OnboardingFlow(preferences: preferences) {
+                    // The onboarding presents the app: this version's
+                    // « Nouveautés » would only repeat it (issue #621).
+                    whatsNew.markSeen()
                     preferences.hasCompletedOnboarding = true
                 }
             }

@@ -88,6 +88,10 @@ struct TodayScreen: View {
                 at: store.snapshot.map { ReviewProgress($0, outings: review.outings) },
                 isAllowed: store.lastError == nil
             )
+            .whatsNewPresentation(
+                isAllowed: store.snapshot != nil && !isWalking && !isShowingMirroredWalk,
+                colorScheme: preferredScheme
+            )
             .mirroredWalkCover(
                 store: mirroredSession,
                 isPresented: $isShowingMirroredWalk,

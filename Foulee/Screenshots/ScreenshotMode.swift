@@ -163,6 +163,8 @@ enum ScreenshotMode {
             hasCompletedOnboarding: hasCompletedOnboarding,
             themeMode: themeMode
         )
+        // A capture stages its own screens: no « Nouveautés » over them.
+        WhatsNewStore(defaults: defaults).markSeen()
         return defaults
     }
 }
