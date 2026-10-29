@@ -1,7 +1,8 @@
 name: Release
 
 # Push a tag like `v0.1.0` to build the app, ship it to TestFlight and publish
-# a GitHub release whose notes come from `docs/releases/0.1.0.md` (issue #638).
+# a GitHub release whose notes come from `docs/releases/0.1.0.md` (issue #638),
+# followed by their English translation `0.1.0.en.md` under « ## English ».
 # The same notes fill the build's « What to Test » in TestFlight (issue #622).
 # The marketing version comes from the tag; the build number is the commit
 # count (monotonic). See docs/RELEASE.md for the required secrets.
@@ -42,11 +43,12 @@ jobs:
             echo "::error title=Release::Tag « $GITHUB_REF_NAME » : attendu vX.Y.Z."
             exit 1
           fi
-          notes="docs/releases/$version.md"
-          if [ ! -s "$notes" ]; then
-            echo "::error title=Release::$notes absent du commit tagué. Voir docs/RELEASE.md, § 8."
-            exit 1
-          fi
+          for notes in "docs/releases/$version.md" "docs/releases/$version.en.md"; do
+            if [ ! -s "$notes" ]; then
+              echo "::error title=Release::$notes absent du commit tagué. Voir docs/RELEASE.md, § 8."
+              exit 1
+            fi
+          done
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
   testflight:
@@ -151,7 +153,10 @@ jobs:
           VERSION: ${{ needs.notes.outputs.version }}
         run: |
           set -euo pipefail
-          notes="docs/releases/$VERSION.md"
+          # The website's « Nouveautés » and « What's new » pages split the
+          # body on the « ## English » heading.
+          notes="$RUNNER_TEMP/notes.md"
+          { cat "docs/releases/$VERSION.md"; printf '\n## English\n\n'; cat "docs/releases/$VERSION.en.md"; } > "$notes"
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release edit "$GITHUB_REF_NAME" --title "Foulée $VERSION" --notes-file "$notes"
           else

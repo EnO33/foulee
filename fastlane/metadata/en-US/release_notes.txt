@@ -1,3 +1,0 @@
-Foulée now reads fully with VoiceOver, stays readable up to the largest text sizes and follows Reduce Motion.
-
-Colours and buttons have more contrast in light mode.
