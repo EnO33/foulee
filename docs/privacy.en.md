@@ -6,7 +6,8 @@ Foulée is a **local** app. It helps you keep up a streak of outings — walks o
 runs — from your activity data. **No data is sent to any server of ours, and
 there is no account to create.** Everything stays on your devices: your iPhone,
 your Apple Watch, and your Garmin watch if you install Foulée's Connect IQ app
-on it.
+on it. Only your settings and your outing merges also go through **your
+iCloud**, at Apple, to follow your other iPhones (see "iCloud").
 
 ## Health data (HealthKit)
 
@@ -166,8 +167,8 @@ are kept: they are saved with the session in Health, like its distance.
 
 ## Preferences
 
-Your settings (goal, activity, window, theme, reminders) are stored **locally**
-on your device. Uninstalling the app deletes them.
+Your settings (goal, activity, window, theme, reminders) are stored on your
+device, and follow your other iPhones through your iCloud (see "iCloud").
 
 The **summary** of the last 7 days and of the month is worked out on your
 iPhone, from the Health data Foulée already reads. Its notification is
@@ -179,8 +180,37 @@ read from Health, and schedules the notification itself. Nothing leaves your
 iPhone to write it.
 
 When you **merge two outings**, Foulée remembers on your iPhone which workouts
-make up one, and nothing else: Health is not changed, and the merge does not
-leave your iPhone. Splitting the outings erases that link.
+make up one, and nothing else: Health is not changed. The merge follows your
+other iPhones through your iCloud (see "iCloud"). Splitting the outings erases
+that link, everywhere.
+
+## iCloud
+
+So that a new iPhone, or a reinstall, gets your settings back, Foulée also
+keeps them in **your iCloud**, with Apple's key-value storage. They are at
+**Apple**, in your account, **never with us**: we have no server and cannot
+read them. Only your devices signed in to the same iCloud account receive
+them.
+
+**What goes through iCloud**:
+
+- your **settings**: active days, outing window, step and minute goals, walk or
+  run, theme, notifications (reminders, summary, session) and hydration (on or
+  off, goal, glass size, reminders and their window);
+- your **outing merges**: the identifiers of the Health workouts that make up
+  one, and the outing's start time, used to forget the merge once it is too
+  old.
+
+**What does not**: your health data — steps, distance, heart rate, water,
+workouts, routes — and your location. They stay in Health, which has its own
+iCloud sync, run by Apple and not by Foulée.
+
+**To turn it off**: iOS Settings → your name → iCloud, then turn Foulée off in
+the list of apps using iCloud. Your settings then stay on this iPhone only.
+
+**To erase everything**: Settings › "Reset Foulée" puts every setting back to
+its default and undoes every merge, on this iPhone and, through iCloud, on the
+others. Nothing in Health is touched.
 
 ## Diagnostics
 
@@ -212,19 +242,23 @@ does with your data. Foulée's declares:
 - **no data collected** — nothing leaves your device;
 - a single use of a so-called "required reason" API: **local preferences**
   (UserDefaults), used for your settings and shared between the app and its
-  widgets through an app group, always on your device.
+  widgets through an app group, on your device.
+
+Your settings going through your iCloud is not collection: they go to your
+Apple account, not to us.
 
 ## Your choices
 
-Since everything is local, you stay in control at any time from **iOS
-Settings**:
+You stay in control at any time from **iOS Settings**:
 
 - **Privacy & Security → Health → Foulée** for access to health data;
 - **Privacy & Security → Location Services → Foulée** for location, on the iPhone as on the Apple Watch;
-- **Notifications → Foulée** for reminders.
+- **Notifications → Foulée** for reminders;
+- **your name → iCloud → Foulée** for your settings going through iCloud.
 
-Deleting the app erases all the preferences it stored. The data in the Health
-app remains managed by Health.
+Deleting the app erases the preferences it stored on the device; those kept in
+your iCloud stay there for your next install, unless you first use "Reset
+Foulée". The data in the Health app remains managed by Health.
 
 ## And this website?
 

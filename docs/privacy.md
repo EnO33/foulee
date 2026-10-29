@@ -6,7 +6,9 @@ Foulée est une application **locale**. Elle t'aide à entretenir une série de
 sorties — marche ou course — à partir de tes données d'activité. **Aucune
 donnée n'est envoyée vers un serveur qui nous appartiendrait, et il n'y a aucun
 compte à créer.** Tout reste sur tes appareils : ton iPhone, ton Apple Watch, et ta
-montre Garmin si tu y installes l'app Connect IQ de Foulée.
+montre Garmin si tu y installes l'app Connect IQ de Foulée. Seuls tes réglages
+et tes fusions de sorties passent aussi par **ton iCloud**, chez Apple, pour
+suivre tes autres iPhone (voir « iCloud »).
 
 ## Données de santé (HealthKit)
 
@@ -179,7 +181,8 @@ gardés : ils sont enregistrés avec la séance dans Santé, comme sa distance.
 ## Préférences
 
 Tes réglages (objectif, activité, fenêtre, thème, rappels) sont enregistrés
-**localement** sur ton appareil. Désinstaller l'app les supprime.
+sur ton appareil, et suivent tes autres iPhone par ton iCloud (voir
+« iCloud »).
 
 Le **bilan** des 7 derniers jours et du mois est calculé sur ton iPhone, à partir des
 données Santé que Foulée lit déjà. Sa notification est programmée localement :
@@ -191,8 +194,39 @@ dans Santé, et programme lui-même la notification. Rien ne quitte ton iPhone
 pour l'écrire.
 
 Quand tu **fusionnes deux sorties**, Foulée retient sur ton iPhone quelles
-séances n'en font qu'une, et rien d'autre : Santé n'est pas modifié, et la
-fusion ne quitte pas ton iPhone. Séparer les sorties efface ce lien.
+séances n'en font qu'une, et rien d'autre : Santé n'est pas modifié. La fusion
+suit tes autres iPhone par ton iCloud (voir « iCloud »). Séparer les sorties
+efface ce lien, partout.
+
+## iCloud
+
+Pour qu'un nouvel iPhone, ou une réinstallation, retrouve tes réglages, Foulée
+les range aussi dans **ton iCloud**, avec le stockage clé-valeur d'Apple. Ils
+sont chez **Apple**, dans ton compte, **jamais chez nous** : nous n'avons pas
+de serveur et ne pouvons pas les lire. Seuls tes appareils connectés au même
+compte iCloud les reçoivent.
+
+**Ce qui passe par iCloud** :
+
+- tes **réglages** : jours actifs, créneau de sortie, objectifs de pas et de
+  minutes, marche ou course, thème, notifications (rappels, bilan, séance) et
+  hydratation (activée ou non, objectif, taille d'un verre, rappels et leur
+  créneau) ;
+- tes **fusions de sorties** : les identifiants des séances de Santé qui n'en
+  font qu'une, et l'heure de début de la sortie, qui sert à oublier la fusion
+  quand elle devient trop ancienne.
+
+**Ce qui n'y passe pas** : tes données de santé — pas, distance, fréquence
+cardiaque, eau, séances, parcours — et ta position. Elles restent dans Santé,
+qui a sa propre synchronisation iCloud, gérée par Apple et non par Foulée.
+
+**Pour le désactiver** : Réglages iOS → ton nom → iCloud, puis coupe Foulée
+dans la liste des apps qui utilisent iCloud. Tes réglages restent alors sur
+cet iPhone seulement.
+
+**Pour tout effacer** : Réglages › « Réinitialiser Foulée » remet chaque
+réglage par défaut et défait chaque fusion, sur cet iPhone et, par iCloud, sur
+les autres. Rien n'est touché dans Santé.
 
 ## Diagnostics
 
@@ -224,18 +258,23 @@ déclarer ce qu'une app fait de tes données. Celui de Foulée déclare :
 - **aucune donnée collectée** — rien ne quitte ton appareil ;
 - un seul accès à une API dite « à raison obligatoire » : les **préférences
   locales** (UserDefaults), utilisées pour tes réglages et partagées entre
-  l'app et ses widgets via un groupe d'apps, toujours sur ton appareil.
+  l'app et ses widgets via un groupe d'apps, sur ton appareil.
+
+Le passage de tes réglages par ton iCloud n'est pas une collecte : ils vont
+dans ton compte Apple, pas chez nous.
 
 ## Tes choix
 
-Comme tout est local, tu gardes le contrôle à tout moment via les **Réglages
-iOS** :
+Tu gardes le contrôle à tout moment via les **Réglages iOS** :
 
 - **Confidentialité et sécurité → Santé → Foulée** pour l'accès aux données de santé ;
 - **Confidentialité et sécurité → Service de localisation → Foulée** pour la localisation, sur l'iPhone comme sur l'Apple Watch ;
-- **Notifications → Foulée** pour les rappels.
+- **Notifications → Foulée** pour les rappels ;
+- **ton nom → iCloud → Foulée** pour le passage de tes réglages par iCloud.
 
-Supprimer l'application efface toutes les préférences qu'elle a stockées. Les
+Supprimer l'application efface les préférences qu'elle a stockées sur
+l'appareil ; celles rangées dans ton iCloud y restent pour ta prochaine
+installation, sauf si tu passes d'abord par « Réinitialiser Foulée ». Les
 données dans l'app Santé restent gérées par Santé.
 
 ## Et ce site ?
