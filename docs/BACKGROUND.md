@@ -84,3 +84,19 @@ The type is HealthKit's identifier: `HKQuantityTypeIdentifierStepCount`,
   the wake. If this repeats, the wake is too slow for its budget.
 - **`rafraîchissement : échec` often**: the task runs out of time. The
   Health reads in `refreshWidgetSnapshotFromHealth()` are the place to look.
+
+## The other measurements
+
+The background log is one of three measurements, all kept without a server
+([ADR 0014](adr/0014-fiabilite-et-diagnostics.md), French):
+
+- **Crashes, hangs and slow launches** on a user's iPhone come from MetricKit
+  and stay on the device. They reach the maintainer only when the user sends
+  them from Réglages › À propos › « Signaler un problème ». A failed write of
+  those reports is logged here, as `diagnostics : écriture impossible : …`.
+- **Launch time** is measured in CI by the **Launch time** job, against
+  `FouleeLaunchTime/LaunchTimeBudget.json` (see the README's CI section). It is
+  a Debug launch on CI's simulator, so it only catches regressions; a slow
+  launch on a real phone shows up in MetricKit's reports.
+- **A watch outing stopped on low battery** logs
+  `batterie critique, sortie arrêtée` under the `session` category.
