@@ -16,7 +16,8 @@ nonisolated extension NSUbiquitousKeyValueStore: SettingsKeyValueStore {}
 ///
 /// The settings move as one set, stamped with the time of their last change.
 /// The newer set wins whole: two devices edited apart end with the settings of
-/// the one edited last, never a mix of both.
+/// the one edited last, never a mix of both. Each set has its own stamp key, so
+/// the outing merges (issue #617) never cover the settings, nor the reverse.
 nonisolated public enum CloudSettingsSync {
     /// When the set was last changed by hand, in seconds since 1970, on both
     /// sides. Absent locally until the first change, or the first sync.
@@ -35,10 +36,11 @@ nonisolated public enum CloudSettingsSync {
         _ keys: [String],
         local: SettingsKeyValueStore,
         cloud: SettingsKeyValueStore,
-        now: Date
+        now: Date,
+        stamp: String = modifiedAtKey
     ) {
-        local.set(now.timeIntervalSince1970, forKey: modifiedAtKey)
-        copy(keys, from: local, to: cloud)
+        local.set(now.timeIntervalSince1970, forKey: stamp)
+        copy(keys, stamp: stamp, from: local, to: cloud)
     }
 
     /// Brings both sides to the newer set, at launch and whenever iCloud says
@@ -50,30 +52,32 @@ nonisolated public enum CloudSettingsSync {
     ///   new one, whose untouched defaults must not cover a set iCloud has not
     ///   downloaded yet. A seeded set carries the oldest stamp, so any real
     ///   change beats it.
+    /// - Parameter stamp: the key the set's stamp is kept under.
     public static func reconcile(
         _ keys: [String],
         local: SettingsKeyValueStore,
         cloud: SettingsKeyValueStore,
-        seeds: Bool
+        seeds: Bool,
+        stamp: String = modifiedAtKey
     ) -> Outcome {
-        let localStamp = local.object(forKey: modifiedAtKey) as? Double
-        let cloudStamp = cloud.object(forKey: modifiedAtKey) as? Double
+        let localStamp = local.object(forKey: stamp) as? Double
+        let cloudStamp = cloud.object(forKey: stamp) as? Double
         switch (localStamp, cloudStamp) {
         case (.none, .some):
-            copy(keys, from: cloud, to: local)
+            copy(keys, stamp: stamp, from: cloud, to: local)
             return .pulled
         case let (.some(mine), .some(theirs)) where theirs > mine:
-            copy(keys, from: cloud, to: local)
+            copy(keys, stamp: stamp, from: cloud, to: local)
             return .pulled
         case (.some, .none):
-            copy(keys, from: local, to: cloud)
+            copy(keys, stamp: stamp, from: local, to: cloud)
             return .pushed
         case let (.some(mine), .some(theirs)) where mine > theirs:
-            copy(keys, from: local, to: cloud)
+            copy(keys, stamp: stamp, from: local, to: cloud)
             return .pushed
         case (.none, .none) where seeds:
-            local.set(0.0, forKey: modifiedAtKey)
-            copy(keys, from: local, to: cloud)
+            local.set(0.0, forKey: stamp)
+            copy(keys, stamp: stamp, from: local, to: cloud)
             return .pushed
         default:
             return .unchanged
@@ -84,10 +88,11 @@ nonisolated public enum CloudSettingsSync {
     /// on the other, so a setting back to its default stays at its default.
     private static func copy(
         _ keys: [String],
+        stamp: String,
         from source: SettingsKeyValueStore,
         to destination: SettingsKeyValueStore
     ) {
-        for key in keys + [modifiedAtKey] {
+        for key in keys + [stamp] {
             if let value = source.object(forKey: key) {
                 destination.set(value, forKey: key)
             } else {

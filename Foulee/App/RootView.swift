@@ -9,6 +9,7 @@ import SwiftUI
 /// recap notifications with theirs (issue #344).
 struct RootView: View {
     @State private var preferences: UserPreferences
+    private let cloud: SettingsKeyValueStore?
     @Environment(\.scenePhase) private var scenePhase
     private let scheduler = WalkReminderScheduler()
     private let hydrationScheduler = HydrationReminderScheduler()
@@ -20,6 +21,7 @@ struct RootView: View {
     /// Gating onboarding is the one thing here no test could reach before.
     init(defaults: UserDefaults = .standard, cloud: SettingsKeyValueStore? = nil) {
         _preferences = State(initialValue: UserPreferences(defaults: defaults, cloud: cloud))
+        self.cloud = cloud
     }
 
     var body: some View {
@@ -35,15 +37,15 @@ struct RootView: View {
         .preferredColorScheme(preferences.themeMode.colorScheme)
         .environment(preferences)
         .task(id: scheduleKey) { await syncReminders() }
-        // The settings of the user's other iPhones (issue #616): at launch,
-        // then each time iCloud brings a change. The notification comes on a
-        // background queue.
-        .task { preferences.syncWithCloud() }
+        // The settings and outing merges of the user's other iPhones (issues
+        // #616, #617): at launch, then each time iCloud brings a change. The
+        // notification comes on a background queue.
+        .task { syncWithCloud() }
         .onReceive(
             NotificationCenter.default
                 .publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification)
                 .receive(on: DispatchQueue.main)
-        ) { _ in preferences.syncWithCloud() }
+        ) { _ in syncWithCloud() }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .background:
@@ -65,6 +67,11 @@ struct RootView: View {
                 break
             }
         }
+    }
+
+    private func syncWithCloud() {
+        preferences.syncWithCloud()
+        if let cloud { OutingMergeStore.syncWithCloud(cloud) }
     }
 
     /// Reschedule whenever any input that affects the notification schedule

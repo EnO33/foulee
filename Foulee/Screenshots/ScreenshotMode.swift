@@ -123,6 +123,7 @@ enum ScreenshotMode {
             values.mirroredWorkout = ScreenshotDoubles.mirroredWorkout(outing: wrist == .appleWatch)
             values.pedometer = ScreenshotDoubles.pedometer
             values.altimeter = ScreenshotDoubles.altimeter
+            values.outingMerges = .localValue
         }
     }
 
