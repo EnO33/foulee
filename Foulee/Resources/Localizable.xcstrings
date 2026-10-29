@@ -1253,12 +1253,32 @@
         }
       }
     },
+    "C'est noté" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Got it"
+          }
+        }
+      }
+    },
     "Joindre le résumé" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Attach the summary"
+          }
+        }
+      }
+    },
+    "Nouveautés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What's new"
           }
         }
       }
@@ -1359,6 +1379,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your settings go back to their defaults and your merged outings are split again, on this iPhone and your other devices. Your Health data stays as it is."
+          }
+        }
+      }
+    },
+    "Version %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@"
           }
         }
       }

@@ -1,0 +1,40 @@
+[
+  {
+    "version": "1.59",
+    "items": [
+      {
+        "icon": "icloud",
+        "title": {
+          "fr": "Tes réglages te suivent",
+          "en": "Your settings follow you"
+        },
+        "text": {
+          "fr": "Objectifs, jours, horaires et rappels sont les mêmes sur chacun de tes iPhone, via iCloud.",
+          "en": "Goals, days, times and reminders are the same on each of your iPhones, through iCloud."
+        }
+      },
+      {
+        "icon": "arrow.triangle.merge",
+        "title": {
+          "fr": "Tes sorties fusionnées le restent",
+          "en": "Merged outings stay merged"
+        },
+        "text": {
+          "fr": "Sur un nouvel iPhone ou après une réinstallation, plus de sortie coupée en deux.",
+          "en": "On a new iPhone or after a reinstall, no outing comes back in two halves."
+        }
+      },
+      {
+        "icon": "arrow.counterclockwise",
+        "title": {
+          "fr": "Repartir de zéro",
+          "en": "Start afresh"
+        },
+        "text": {
+          "fr": "Réglages › Réinitialiser Foulée remet tout comme au premier jour, sans toucher à Santé.",
+          "en": "Settings › Reset Foulée puts everything back as on day one, without touching Health."
+        }
+      }
+    ]
+  }
+]
