@@ -1,0 +1,68 @@
+name: Release draft
+
+# Keeps one draft GitHub release, « Prochaine version », listing the titles of
+# the pull requests merged since the last `v*` tag (issue #622). It is the raw
+# material for docs/releases/X.Y.Z.md, which is written for users and becomes
+# the published release, the TestFlight notes and the App Store notes. A draft
+# is visible only to the repository's writers: the website never reads it.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only the newest main matters: a later push rewrites the same draft.
+concurrency:
+  group: release-draft
+  cancel-in-progress: true
+
+permissions:
+  contents: write # create and edit the draft release
+
+jobs:
+  draft:
+    name: Update the draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      # Never pushed as a tag: a draft can name a tag that does not exist, and
+      # « next » cannot trigger the release workflow, which wants `v*`.
+      DRAFT_TAG: next
+      DRAFT_TITLE: Prochaine version
+    steps:
+      - name: Write the merged pull requests into the draft
+        run: |
+          set -euo pipefail
+          # The app's tags only (`vX.Y.Z`): Garmin's are `garmin-v*`.
+          previous=$(gh api "repos/$GH_REPO/git/matching-refs/tags/v" --paginate --jq '.[].ref' \
+            | sed 's|^refs/tags/||' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+          if [ -z "$previous" ]; then
+            echo "::error title=Release draft::Aucun tag vX.Y.Z : rien à comparer."
+            exit 1
+          fi
+
+          # GitHub's own generator: one line per merged pull request, with
+          # .github/release.yml leaving out the dependency bumps. Its « Full
+          # Changelog » link compares with « next », a tag that never exists.
+          changes=$(gh api "repos/$GH_REPO/releases/generate-notes" \
+            -f tag_name="$DRAFT_TAG" -f target_commitish="$GITHUB_SHA" \
+            -f previous_tag_name="$previous" --jq .body | sed '/^\*\*Full Changelog\*\*/d')
+
+          notes=$(mktemp)
+          {
+            echo "Brouillon : les PR fusionnées depuis $previous, pour écrire \`docs/releases/X.Y.Z.md\` avant le tag. Voir \`docs/RELEASE.md\`, § 8."
+            echo
+            echo "$changes"
+          } > "$notes"
+
+          draft=$(gh api "repos/$GH_REPO/releases" --paginate \
+            --jq ".[] | select(.draft and .tag_name == \"$DRAFT_TAG\") | .id" | head -n 1)
+          if [ -n "$draft" ]; then
+            gh api -X PATCH "repos/$GH_REPO/releases/$draft" \
+              -f name="$DRAFT_TITLE" -F body=@"$notes" -f target_commitish="$GITHUB_SHA" >/dev/null
+          else
+            gh api "repos/$GH_REPO/releases" -f tag_name="$DRAFT_TAG" -f name="$DRAFT_TITLE" \
+              -F body=@"$notes" -f target_commitish="$GITHUB_SHA" -F draft=true >/dev/null
+          fi
+          echo "Draft « $DRAFT_TITLE » updated since $previous."

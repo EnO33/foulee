@@ -1,3 +1,0 @@
-Foulée se lit maintenant entièrement avec VoiceOver, reste lisible jusqu'aux plus grandes tailles de texte et suit « Réduire les animations ».
-
-Les couleurs et les boutons gagnent en contraste en mode clair.

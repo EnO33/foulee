@@ -1,0 +1,7 @@
+# Read by GitHub's release-notes generator, which the « Release draft »
+# workflow calls (issue #622): the dependency bumps say nothing to the person
+# who writes the notes for users.
+changelog:
+  exclude:
+    authors:
+      - dependabot[bot]

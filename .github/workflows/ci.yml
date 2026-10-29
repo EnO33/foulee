@@ -72,6 +72,7 @@ jobs:
             store:
               - *workflow
               - fastlane/metadata/**
+              - docs/releases/**
               - tools/check_store_metadata.py
 
   lint:
@@ -110,7 +111,8 @@ jobs:
           exit $failures
 
   store:
-    # The App Store listing in fastlane/metadata (issue #581): every field
+    # The App Store listing in fastlane/metadata (issue #581), and the release
+    # notes the Fastfile reads from docs/releases (issue #622): every field
     # present and within App Store Connect's limits, checked here rather than
     # halfway through the « Store listing » workflow's upload.
     name: Store listing

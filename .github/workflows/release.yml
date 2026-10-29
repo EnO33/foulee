@@ -2,6 +2,7 @@ name: Release
 
 # Push a tag like `v0.1.0` to build the app, ship it to TestFlight and publish
 # a GitHub release whose notes come from `docs/releases/0.1.0.md` (issue #638).
+# The same notes fill the build's « What to Test » in TestFlight (issue #622).
 # The marketing version comes from the tag; the build number is the commit
 # count (monotonic). See docs/RELEASE.md for the required secrets.
 on:

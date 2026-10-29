@@ -3,8 +3,9 @@ name: Store listing
 # Publishes the App Store listing versioned in fastlane/metadata (issue #581)
 # to the version being prepared in App Store Connect: name, subtitle,
 # keywords, description, promotional text, release notes and URLs. No binary,
-# no screenshots, never submitted for review. Run it by hand from Actions,
-# once the release notes in fastlane/metadata are those of that version.
+# no screenshots, never submitted for review. The French release notes are
+# docs/releases/X.Y.0.md (issue #622). Run it by hand from Actions, once the
+# English release notes in fastlane/metadata are those of that version.
 on:
   workflow_dispatch:
     inputs:
