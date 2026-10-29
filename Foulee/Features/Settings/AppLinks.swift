@@ -15,6 +15,15 @@ nonisolated enum AppLinks {
     static let reportIssue = link("\(repository)/issues/new")
     static let sourceCode = link(repository)
 
+    /// A new issue whose text starts with `body` (issue #610). Encoded by
+    /// hand: `URLComponents` leaves `+` alone, and GitHub reads it as a space.
+    static func reportIssue(body: String) -> URL {
+        var allowed = CharacterSet.urlQueryAllowed
+        allowed.remove(charactersIn: "+&=#")
+        let query = body.addingPercentEncoding(withAllowedCharacters: allowed) ?? ""
+        return link("\(reportIssue.absoluteString)?body=\(query)")
+    }
+
     /// A page of the site that exists in each language the app speaks.
     enum Page {
         case privacyPolicy, support, garminFAQ

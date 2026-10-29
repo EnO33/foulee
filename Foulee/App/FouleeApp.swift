@@ -30,6 +30,7 @@ struct FouleeApp: App {
         _ = Self.startGarminConnectIQOnce
         _ = Self.startMirrorObserverOnce
         _ = Self.recordLaunchOnce
+        _ = Self.collectDiagnosticsOnce
     }
 
     var body: some Scene {
@@ -59,6 +60,11 @@ struct FouleeApp: App {
     }
 
     private static let recordLaunchOnce: Void = ReviewPromptStore.shared.recordLaunch()
+
+    // At process start, not on a screen: MetricKit hands over the crashes and
+    // hangs of past launches to the subscribers present, background wakes
+    // included (#610).
+    private static let collectDiagnosticsOnce: Void = DiagnosticsCollector.shared.start()
 
     private static let registerAppRefreshOnce: Void = {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: refreshTaskID, using: nil) { task in

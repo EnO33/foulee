@@ -14,19 +14,19 @@ struct SettingsNotificationsPage: View {
         VStack(spacing: 16) {
             permissionBanner
             GlassSection {
-                reminderToggle(
+                SettingsToggle(
                     "Rappel avant ta sortie",
                     detail: "10 minutes avant ta fenêtre, sur les jours actifs.",
                     isOn: $preferences.notificationsEnabled
                 )
                 Divider()
-                reminderToggle(
+                SettingsToggle(
                     "Récap de la semaine et du mois",
                     detail: "Le dimanche à 19 h, et le 1er du mois à 9 h.",
                     isOn: $preferences.recapNotificationsEnabled
                 )
                 Divider()
-                reminderToggle(
+                SettingsToggle(
                     "Après une séance",
                     detail: "Quand une sortie arrive de ta montre : rythme, records, régularité.",
                     isOn: $preferences.sessionNotificationsEnabled
@@ -62,7 +62,7 @@ struct SettingsNotificationsPage: View {
     /// their window and rhythm stay there, one tap away.
     private var hydrationReminder: some View {
         VStack(alignment: .leading, spacing: 10) {
-            reminderToggle(
+            SettingsToggle(
                 "Rappels d'eau",
                 detail: .verbatim(SettingsSummary.hydrationReminders(
                     start: preferences.hydrationWindowStart,
@@ -97,18 +97,5 @@ struct SettingsNotificationsPage: View {
             }
             .buttonStyle(.pressable)
         }
-    }
-
-    private func reminderToggle(_ title: LocalizedStringResource, detail: LocalizedStringResource, isOn: Binding<Bool>) -> some View {
-        Toggle(isOn: isOn) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(FouleeFont.headline)
-                Text(detail)
-                    .font(FouleeFont.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .tint(FouleeColor.success)
     }
 }

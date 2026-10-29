@@ -1,6 +1,6 @@
 # Politique de confidentialité — Foulée
 
-_Dernière mise à jour : 26 octobre 2026_
+_Dernière mise à jour : 29 octobre 2026_
 
 Foulée est une application **locale**. Elle t'aide à entretenir une série de
 sorties — marche ou course — à partir de tes données d'activité. **Aucune
@@ -193,6 +193,26 @@ pour l'écrire.
 Quand tu **fusionnes deux sorties**, Foulée retient sur ton iPhone quelles
 séances n'en font qu'une, et rien d'autre : Santé n'est pas modifié, et la
 fusion ne quitte pas ton iPhone. Séparer les sorties efface ce lien.
+
+## Diagnostics
+
+Sur l'iPhone, Foulée reçoit d'iOS (MetricKit) les rapports de ses propres
+plantages, gels et lancements trop lents. Elle en garde au plus dix, pas plus
+d'un mois, **sur ton iPhone**. Ces rapports décrivent le fonctionnement de
+l'app — version, modèle d'appareil, version d'iOS, traces techniques — et ne
+contiennent **aucune donnée de santé ni aucune position**.
+
+**Rien ne part tout seul.** Dans Réglages › À propos, « Signaler un problème »
+te montre le résumé avant tout envoi :
+
+- « Ouvrir un signalement » ouvre une issue sur GitHub, **publique**, avec le
+  résumé (version, appareil, date et type de chaque incident) si tu laisses
+  « Joindre le résumé » activé. Tu relis et tu envoies toi-même, depuis ton
+  compte GitHub.
+- « Partager le rapport complet » ouvre la feuille de partage d'iOS avec le
+  résumé et les traces techniques : tu choisis à qui l'envoyer, en privé.
+
+Supprimer l'app efface ces rapports.
 
 ## Manifeste de confidentialité Apple
 
