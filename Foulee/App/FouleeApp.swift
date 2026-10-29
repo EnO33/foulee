@@ -35,7 +35,7 @@ struct FouleeApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView(defaults: Self.preferencesDefaults)
+            RootView(defaults: Self.preferencesDefaults, cloud: Self.preferencesCloud)
                 .onOpenURL(perform: Self.handleGarminDeviceSelection)
         }
     }
@@ -57,6 +57,16 @@ struct FouleeApp: App {
         #else
         .standard
         #endif
+    }
+
+    /// Where the preferences follow the user's other iPhones (issue #616):
+    /// iCloud's key-value store, except during a screenshot capture, whose
+    /// seeded goals must never reach a real account.
+    static var preferencesCloud: SettingsKeyValueStore? {
+        #if DEBUG
+        if ScreenshotMode.preferencesDefaults != nil { return nil }
+        #endif
+        return NSUbiquitousKeyValueStore.default
     }
 
     private static let recordLaunchOnce: Void = ReviewPromptStore.shared.recordLaunch()
