@@ -6,7 +6,8 @@ import Foundation
 /// built from user input. What a user reads lives on getfoulee.app; the issue tracker and the
 /// code stay on GitHub.
 nonisolated enum AppLinks {
-    private static let website = "https://getfoulee.app"
+    private static let siteHost = "getfoulee.app"
+    private static let website = "https://\(siteHost)"
     private static let repository = "https://github.com/getfoulee/foulee"
 
     static let privacyPolicy = page(.privacyPolicy)
@@ -46,6 +47,34 @@ nonisolated enum AppLinks {
         case .privacyPolicy: return link("\(website)/en/privacy")
         case .support: return link("\(website)/en/support")
         case .garminFAQ: return link("\(website)/en/support/garmin")
+        }
+    }
+
+    /// Where a link that opened the app leads (issue #628).
+    enum Destination: Equatable {
+        case home, weekRecap, hydration
+    }
+
+    /// The screen `url` opens: a getfoulee.app universal link — the hosts
+    /// claimed in `Foulee.entitlements` — or the `foulee://hydration` widget
+    /// link. `nil` for any other URL, the Garmin return included, so a foreign
+    /// or unknown link leaves the app where it is.
+    static func destination(of url: URL) -> Destination? {
+        switch url.scheme?.lowercased() {
+        case "foulee":
+            return url.host() == "hydration" ? .hydration : nil
+        case "https":
+            guard let host = url.host()?.lowercased(), [siteHost, "www.\(siteHost)"].contains(host) else { return nil }
+            var path = url.path()
+            if path.count > 1, path.hasSuffix("/") { path.removeLast() }
+            switch path {
+            case "/ouvrir": return .home
+            case "/bilan": return .weekRecap
+            case "/hydratation": return .hydration
+            default: return nil
+            }
+        default:
+            return nil
         }
     }
 

@@ -64,3 +64,38 @@ struct AppLinksTests {
         #expect(AppVersion.text(version: nil, build: nil) == "0")
     }
 }
+
+/// The links that open the app (issue #628).
+@Suite("App link routing")
+struct AppLinkRoutingTests {
+    @Test("A getfoulee.app link opens its screen", arguments: [
+        ("https://getfoulee.app/ouvrir", AppLinks.Destination.home),
+        ("https://getfoulee.app/bilan", .weekRecap),
+        ("https://getfoulee.app/hydratation", .hydration),
+        ("https://www.getfoulee.app/bilan", .weekRecap),
+        ("https://GetFoulee.app/bilan/", .weekRecap),
+        ("https://getfoulee.app/bilan?source=partage", .weekRecap),
+        ("foulee://hydration", .hydration)
+    ])
+    func routes(link: String, destination: AppLinks.Destination) throws {
+        let url = try #require(URL(string: link))
+        #expect(AppLinks.destination(of: url) == destination)
+    }
+
+    /// The Garmin return keeps its own route, and a page the app has no
+    /// screen for leaves it where it is.
+    @Test("Any other link opens nothing", arguments: [
+        "https://getfoulee.app/",
+        "https://getfoulee.app/confidentialite",
+        "https://getfoulee.app/bilan/semaine",
+        "http://getfoulee.app/bilan",
+        "https://getfoulee.app.example.com/bilan",
+        "https://example.com/bilan",
+        "foulee://bilan",
+        "foulee-ciq://device-selection?devices=abc"
+    ])
+    func ignores(link: String) throws {
+        let url = try #require(URL(string: link))
+        #expect(AppLinks.destination(of: url) == nil)
+    }
+}

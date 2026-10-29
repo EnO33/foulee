@@ -80,8 +80,13 @@ struct TodayScreen: View {
             }
             .onChange(of: sessionStartRouter.pending) { _, _ in startPendingShortcut() }
             .onOpenURL { url in
-                // foulee://hydration — widget tap lands on the hydration card.
-                if url.host() == "hydration" { scrollToHydration = true }
+                // A getfoulee.app link or the hydration widget's tap. The home
+                // is already the screen the app opens on.
+                switch AppLinks.destination(of: url) {
+                case .weekRecap: RecapRouter.shared.open(.week)
+                case .hydration: scrollToHydration = true
+                case .home, nil: break
+                }
             }
             .reviewRequest(
                 store: review,
@@ -349,8 +354,8 @@ struct TodayScreen: View {
     }
 }
 
-/// Scrolls the home to the hydration card when the `foulee://hydration` deep
-/// link fires (widget tap). Handles both orders: URL before the content is
+/// Scrolls the home to the hydration card when a hydration link fires (widget
+/// tap, getfoulee.app/hydratation). Handles both orders: URL before the content is
 /// mounted (cold launch → `onAppear`) and after (warm open → `onChange`).
 private struct HydrationDeepLinkScroll: ViewModifier {
     let proxy: ScrollViewProxy
