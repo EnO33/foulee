@@ -31,7 +31,7 @@ register one App ID per bundle id, each with the capabilities it needs:
 
 | Bundle ID | Capabilities to enable |
 |-----------|------------------------|
-| `com.eno33.foulee` | HealthKit, WeatherKit |
+| `com.eno33.foulee` | HealthKit, WeatherKit, Associated Domains |
 | `com.eno33.foulee.widget` | HealthKit |
 | `com.eno33.foulee.liveactivity` | _(none)_ |
 | `com.eno33.foulee.watchkitapp` | HealthKit |
@@ -41,6 +41,12 @@ register one App ID per bundle id, each with the capabilities it needs:
 > WeatherKit. The four extension/Watch IDs probably aren't yet — Xcode can
 > also create them the first time you build with automatic signing, but
 > registering them up front makes the CI build deterministic.
+
+Associated Domains carries the universal links of `getfoulee.app` and
+`www.getfoulee.app`. iOS opens the app only once the site serves
+`/.well-known/apple-app-site-association` listing the app ID
+`<team id>.com.eno33.foulee` and its paths (getfoulee/web); until then the
+links open Safari.
 
 The `FouleeKit` framework needs no App ID: it is signed with the app that
 embeds it. It is embedded twice, in the iPhone app and in the watch app, under
