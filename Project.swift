@@ -361,6 +361,23 @@ let project = Project(
                 .target(name: "Foulee")
             ]
         ),
+        // The cold launch time of the iPhone app (issue #613). A UI test
+        // bundle on the capture mode, like `FouleeAccessibilityAudit`, with
+        // its own scheme and CI job: it launches the app seven times.
+        .target(
+            name: "FouleeLaunchTime",
+            destinations: [.iPhone],
+            product: .uiTests,
+            bundleId: "\(bundleIdBase).launchtime",
+            deploymentTargets: deploymentTargets,
+            sources: [
+                "FouleeLaunchTime/**",
+                "FouleeScreenshots/ScreenshotCapture.swift"
+            ],
+            dependencies: [
+                .target(name: "Foulee")
+            ]
+        ),
         // The watch half of the capture set (issue #239). Same shape as
         // `FouleeScreenshots`, and absent from the `FouleeWatch` scheme's test
         // action for the same reason: CI's "Test (watchOS)" step runs the unit
@@ -423,6 +440,12 @@ let project = Project(
             shared: true,
             buildAction: .buildAction(targets: ["Foulee", "FouleeAccessibilityAudit"]),
             testAction: .targets(["FouleeAccessibilityAudit"])
+        ),
+        .scheme(
+            name: "FouleeLaunchTime",
+            shared: true,
+            buildAction: .buildAction(targets: ["Foulee", "FouleeLaunchTime"]),
+            testAction: .targets(["FouleeLaunchTime"])
         ),
         .scheme(
             name: "FouleeWatch",

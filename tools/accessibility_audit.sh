@@ -13,9 +13,9 @@
 # committing — a line added there is a regression accepted.
 #
 # The audit depends on the screen and the iOS version: a smaller iPhone clips
-# other texts. The simulator is therefore created here, the same way on a Mac
-# and in CI — the newest iOS runtime and the newest iPhone it supports, under
-# the name « Foulee Audit » — and the baseline records which one it was. Record
+# other texts. The simulator is therefore created by
+# tools/newest_iphone_simulator.sh, the same way on a Mac and in CI, under the
+# name « Foulee Audit », and the baseline records which one it was. Record
 # on the same pair as CI, or take the file from the CI artifact.
 #
 # Even on the same pair, a few contrast findings differ between a Mac and CI:
@@ -39,19 +39,7 @@ RESULT_BUNDLE=build/results/accessibility.xcresult
 DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData/FouleeAudit"
 rm -rf "$OUT" "$RESULT_BUNDLE" && mkdir -p "$OUT" build/results
 
-RUNTIME=$(xcrun simctl list runtimes available -j \
-  | jq -c '[.runtimes[] | select(.platform == "iOS")] | sort_by(.version) | last')
-RUNTIME_ID=$(echo "$RUNTIME" | jq -r .identifier)
-DEVICE_TYPE=$(echo "$RUNTIME" | jq -c '[.supportedDeviceTypes[] | select(.productFamily == "iPhone")] | last')
-DEVICE_TYPE_ID=$(echo "$DEVICE_TYPE" | jq -r .identifier)
-DEVICE_ON="$(echo "$DEVICE_TYPE" | jq -r .name), iOS $(echo "$RUNTIME" | jq -r .version)"
-UDID=$(xcrun simctl list devices available -j \
-  | jq -r --arg runtime "$RUNTIME_ID" --arg type "$DEVICE_TYPE_ID" \
-    '.devices[$runtime] // [] | map(select(.name == "Foulee Audit" and .deviceTypeIdentifier == $type)) | first | .udid // empty')
-[ -n "$UDID" ] || UDID=$(xcrun simctl create "Foulee Audit" "$DEVICE_TYPE_ID" "$RUNTIME_ID")
-echo "==> Auditing on $DEVICE_ON ($UDID)"
-# Booted before the run, for the same reason as CI's iOS job (issue #404).
-xcrun simctl bootstatus "$UDID" -b >/dev/null
+source tools/newest_iphone_simulator.sh "Foulee Audit"
 
 # The test status is kept for the end: the findings are exported either way.
 # No diagnostics collection (issue #420): the iOS 27 simulator never answers.
@@ -59,7 +47,7 @@ set +e
 xcodebuild test \
   -workspace Foulee.xcworkspace \
   -scheme FouleeAccessibilityAudit \
-  -destination "platform=iOS Simulator,id=$UDID" \
+  -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
   -configuration Debug \
   -derivedDataPath "$DERIVED_DATA" \
   -resultBundlePath "$RESULT_BUNDLE" \
@@ -72,7 +60,7 @@ xcrun xcresulttool export attachments \
   --path "$RESULT_BUNDLE" \
   --output-path "$OUT/attachments" >/dev/null
 
-python3 - "$OUT/attachments" "$OUT/AccessibilityAuditBaseline.json" "$DEVICE_ON" "$BASELINE" <<'PY'
+python3 - "$OUT/attachments" "$OUT/AccessibilityAuditBaseline.json" "$SIMULATOR_NAME" "$BASELINE" <<'PY'
 import json, os, sys
 
 source, destination, device, baseline = sys.argv[1:5]

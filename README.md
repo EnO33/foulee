@@ -144,6 +144,7 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 │   └── Resources/         # Assets, Info.plist
 ├── FouleeTests/           # Unit tests that need the app
 ├── FouleeAccessibilityAudit/ # Accessibility audit (UI tests) + its baseline
+├── FouleeLaunchTime/      # Launch time (UI test) + its budget
 ├── FouleeConnectIQ/       # Garmin Connect IQ app (Monkey C) — not part of the Tuist build
 ├── .github/actions/       # Shared CI steps (project setup, failure reports)
 └── .github/workflows/     # CI (lint + build)
@@ -154,7 +155,7 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 A first job, **Changes** (`dorny/paths-filter`), sorts the change into the
 app side and the Garmin side, and each job below runs only when its side is
 touched (a change to `ci.yml` itself counts as both). The app side is
-**Lint**, **Kit**, **iOS**, **Accessibility audit**, **watchOS** and **Dead code**; the Garmin side is
+**Lint**, **Kit**, **iOS**, **Accessibility audit**, **Launch time**, **watchOS** and **Dead code**; the Garmin side is
 **Connect IQ** and **Connect IQ build**. **Kit** runs the FouleeKit tests on macOS, with
 no simulator. The two simulator jobs compile once each (`build-for-testing`,
 then `test-without-building`). **Dead code** builds the three schemes for their
@@ -172,6 +173,16 @@ finding, `tools/accessibility_audit.sh --record` rewrites it — or take the
 `accessibility-audit` artifact of the CI run, recorded on CI's simulator; read
 the diff before committing, since a line added there is a regression accepted.
 `tools/accessibility_audit.sh` alone runs the same check as CI.
+
+**Launch time** launches the iPhone app seven times, cold and in capture mode,
+and measures each launch until the app answers a touch. It fails when the
+median is more than `tolerancePercent` above the one
+`FouleeLaunchTime/LaunchTimeBudget.json` records. Capture mode exists only in
+Debug, so the figure is a Debug launch, meaningful only against itself. After
+a change that is slower on purpose, take the `launch-time` artifact of the CI
+run — recorded on CI's simulator, not on a faster Mac — or run
+`tools/launch_time.sh --record`; `tools/launch_time.sh` alone runs the same
+check as CI.
 
 Dependencies update themselves: Dependabot for the GitHub Actions, and the
 **Swift packages** workflow for the packages in `Project.swift` — every Monday,
