@@ -60,12 +60,6 @@ nonisolated public struct WhatsNewItem: Decodable, Equatable, Sendable {
     public var title: [String: String]
     public var text: [String: String]
 
-    public init(icon: String, title: [String: String], text: [String: String]) {
-        self.icon = icon
-        self.title = title
-        self.text = text
-    }
-
     /// The title in `language`, French when it has none in that language.
     public func title(in language: String) -> String {
         Self.localized(title, in: language)
