@@ -220,6 +220,25 @@ demands. Captions live in the script's `shots` table. Neither the raws nor
 the boards are versioned — the capture and upload procedure is, in
 [`docs/RELEASE.md`](docs/RELEASE.md#9-screenshots).
 
+## Shortcuts and Siri
+
+Three App Intents carry the gestures made without looking at the screen.
+Each one only calls the existing stores ([ADR 0013](docs/adr/0013-raccourcis-et-siri.md)).
+
+| Intent | Does | Appears in | Code |
+|---|---|---|---|
+| « Commencer une sortie » | Opens Foulée and starts an outing (walking, running or automatic) | Siri, Raccourcis, Spotlight, Control Center, Lock Screen, Action button (iPhone and Apple Watch Ultra), Siri on the watch | `Foulee/Shared/StartOutingIntent.swift`, `FouleeWatch/App/StartOutingIntent.swift` |
+| « Où j'en suis aujourd'hui » | Answers with the streak, minutes and steps, without opening the app; unlocked iPhone only | Siri, Raccourcis, Spotlight | `Foulee/App/TodayStatusIntent.swift` |
+| « J'ai bu un verre » | Logs a glass of water to Santé, without opening the app | Siri, Raccourcis, Spotlight, hydration widget, Control Center, Action button, Siri on the watch | `Foulee/Shared/LogWaterIntent.swift`, `FouleeWatch/Health/LogWaterIntent.swift` |
+
+- Siri phrases and Raccourcis tiles: `Foulee/App/FouleeShortcuts.swift`
+  and `FouleeWatch/App/FouleeWatchShortcuts.swift`.
+- Control Center and Action button controls:
+  `FouleeWidget/FouleeControls.swift`.
+- A start asked for by a shortcut is parked in `SessionStartRouter`
+  (iPhone) or `WatchPendingStart` (watch); the home takes it and starts the
+  session as its own button does.
+
 ## Localization
 
 Strings are localized via **String Catalogs** (`.xcstrings`) — one per target:
