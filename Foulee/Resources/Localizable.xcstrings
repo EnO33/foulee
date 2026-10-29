@@ -1303,6 +1303,66 @@
         }
       }
     },
+    "Réglages et fusions, ici et sur iCloud" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings and merges, here and on iCloud"
+          }
+        }
+      }
+    },
+    "Réinitialiser" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        }
+      }
+    },
+    "Réinitialiser Foulée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Foulée"
+          }
+        }
+      }
+    },
+    "Réinitialiser Foulée ?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Foulée?"
+          }
+        }
+      }
+    },
+    "Tes données Santé ne sont pas touchées." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your Health data is not touched."
+          }
+        }
+      }
+    },
+    "Tes réglages reviennent à zéro et tes sorties fusionnées sont séparées, sur cet iPhone et tes autres appareils. Tes données Santé restent intactes." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your settings go back to their defaults and your merged outings are split again, on this iPhone and your other devices. Your Health data stays as it is."
+          }
+        }
+      }
+    },
     "Version, appareil et derniers incidents" : {
       "localizations" : {
         "en" : {

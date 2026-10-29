@@ -180,6 +180,34 @@ struct UserPreferencesTests {
         #expect(cloud.object(forKey: CloudSettingsSync.modifiedAtKey) as? Double == 2_000)
     }
 
+    /// Issue #618: Réglages › Réinitialiser.
+    @Test("A reset brings back a new install's settings, undoes the merges and sends the reset to iCloud")
+    func resetClearsEverything() {
+        let cloud = cleanDefaults()
+        let written = LockedRef<[OutingMerge]?>(nil)
+        let prefs = withDependencies {
+            $0.date.now = Date(timeIntervalSince1970: 1_000)
+            $0.outingMerges = OutingMergeClient(read: { [] }, write: { written.set($0) })
+        } operation: {
+            UserPreferences(defaults: cleanDefaults(), cloud: cloud)
+        }
+        prefs.hasCompletedOnboarding = true
+        prefs.minutesGoal = 35
+        prefs.themeMode = .dark
+        prefs.hydrationEnabled = false
+
+        prefs.reset()
+
+        #expect(prefs.hasCompletedOnboarding == false)
+        #expect(prefs.minutesGoal == 20)
+        #expect(prefs.themeMode == .system)
+        #expect(prefs.hydrationEnabled)
+        #expect(written.value == [])
+        #expect(cloud.object(forKey: "preferences.minutesGoal") == nil)
+        #expect(cloud.object(forKey: "preferences.themeMode") == nil)
+        #expect(cloud.object(forKey: CloudSettingsSync.modifiedAtKey) as? Double == 1_000)
+    }
+
     private func cleanDefaults() -> UserDefaults {
         let suiteName = "foulee-tests-\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

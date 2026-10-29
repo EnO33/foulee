@@ -10,6 +10,7 @@ struct SettingsScreen: View {
     var onClose: () -> Void
 
     @State private var isShowingGarminGuide = false
+    @State private var isConfirmingReset = false
     @State private var permission = NotificationPermissionStore()
     @State private var access = AccessStore()
     @Environment(\.scenePhase) private var scenePhase
@@ -58,6 +59,9 @@ struct SettingsScreen: View {
                         Divider()
                         link(.about, summary: "Version \(AppVersion.current)")
                     }
+                    GlassSection(footer: "Tes données Santé ne sont pas touchées.") {
+                        resetRow
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 28)
@@ -73,6 +77,19 @@ struct SettingsScreen: View {
         // Back from iOS Settings or Santé: show what the user just changed there.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await refresh() } }
+        }
+        .confirmationDialog(
+            "Réinitialiser Foulée ?",
+            isPresented: $isConfirmingReset,
+            titleVisibility: .visible
+        ) {
+            Button("Réinitialiser", role: .destructive) {
+                preferences.reset()
+                onClose()
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text(Self.resetMessage)
         }
         .sheet(isPresented: $isShowingGarminGuide) {
             GarminSetupSheet { isShowingGarminGuide = false }
@@ -103,6 +120,25 @@ struct SettingsScreen: View {
                 tint: FouleeColor.accentEnd,
                 title: "Montre Garmin",
                 summary: String(localized: "Relier la montre, synchro vers Santé")
+            )
+        }
+        .buttonStyle(.pressable)
+    }
+
+    private static let resetMessage: LocalizedStringResource = """
+        Tes réglages reviennent à zéro et tes sorties fusionnées sont séparées, \
+        sur cet iPhone et tes autres appareils. Tes données Santé restent intactes.
+        """
+
+    /// Réglages and outing merges back to zero, everywhere iCloud carries
+    /// them, then the onboarding again (issue #618).
+    private var resetRow: some View {
+        Button { isConfirmingReset = true } label: {
+            SettingsRow(
+                icon: "arrow.counterclockwise",
+                tint: FouleeColor.danger,
+                title: "Réinitialiser Foulée",
+                summary: String(localized: "Réglages et fusions, ici et sur iCloud")
             )
         }
         .buttonStyle(.pressable)
