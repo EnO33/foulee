@@ -59,6 +59,14 @@ merge is kept on the iPhone and can be undone. The watch now picks up a
 session that outlived its app rather than finishing it: see
 [ADR 0011](docs/adr/0011-fusion-de-sorties.md) (French).
 
+When something is **missing** — Santé unreadable, location or motion refused,
+no weather — the screen says what is missing and how to fix it, with
+« Ouvrir Santé » or « Ouvrir les réglages ». A watch outing under 5 % battery
+stops itself and is saved rather than lost. Réglages › À propos ›
+« Signaler un problème » opens a report with a summary of the crashes and
+hangs the iPhone kept, only if you choose to attach it: see
+[ADR 0014](docs/adr/0014-fiabilite-et-diagnostics.md) (French).
+
 ## Compatible watches
 
 - **Apple Watch** — native support (companion app, complications, live workouts).
@@ -238,6 +246,23 @@ Each one only calls the existing stores ([ADR 0013](docs/adr/0013-raccourcis-et-
 - A start asked for by a shortcut is parked in `SessionStartRouter`
   (iPhone) or `WatchPendingStart` (watch); the home takes it and starts the
   session as its own button does.
+
+## Reliability and diagnostics
+
+There is no server, so nothing is collected unless the user sends it
+([ADR 0014](docs/adr/0014-fiabilite-et-diagnostics.md)). What is measured, and
+where to read it:
+
+| What | Where it is kept | How to read it |
+|---|---|---|
+| Crashes, hangs, slow launches, CPU and disk-write exceptions (MetricKit, iPhone only) | On the iPhone, ten payloads and a month at most (`Foulee/Diagnostics/DiagnosticsCollector.swift`) | Réglages › À propos › « Signaler un problème »: the summary in a GitHub issue, or the full report through the share sheet |
+| Background wakes (Health observers, app refresh, Garmin snapshot, watch water observer) | Unified log, `background` category | Console.app or `log stream`: see [docs/BACKGROUND.md](docs/BACKGROUND.md) |
+| Launch time | CI, **Launch time** job, `launch-time` artifact | Fails `Build & Test` when the fastest of seven launches exceeds `FouleeLaunchTime/LaunchTimeBudget.json` by more than its tolerance (see [CI](#ci)) |
+| Watch outing stopped on low battery | Unified log, `session` category | « batterie critique, sortie arrêtée » |
+
+- Every degraded state is a case of `DegradedState` (`FouleeKit`), shown by
+  `DegradedBanner`; Réglages › « Autorisations » lists the refused ones.
+- No log line and no report holds a health value or a position.
 
 ## Localization
 
