@@ -176,8 +176,9 @@ the diff before committing, since a line added there is a regression accepted.
 
 **Launch time** launches the iPhone app seven times, cold and in capture mode,
 and measures each launch until its home is on screen. It fails when the
-median is more than `tolerancePercent` above the one
-`FouleeLaunchTime/LaunchTimeBudget.json` records. Capture mode exists only in
+fastest launch is more than `tolerancePercent` above the one
+`FouleeLaunchTime/LaunchTimeBudget.json` records (the fastest, because a busy
+runner only adds time). Capture mode exists only in
 Debug, so the figure is a Debug launch, meaningful only against itself. After
 a change that is slower on purpose, take the `launch-time` artifact of the CI
 run — recorded on CI's simulator, not on a faster Mac — or run

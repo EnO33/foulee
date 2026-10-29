@@ -354,7 +354,7 @@ jobs:
 
   # The iPhone app's cold launch time (issue #613), in its own job for the
   # same reason as the audit: it launches the app seven times. Fails when the
-  # median launch is more than FouleeLaunchTime/LaunchTimeBudget.json allows.
+  # fastest launch is more than FouleeLaunchTime/LaunchTimeBudget.json allows.
   launch:
     name: Launch time
     needs: changes

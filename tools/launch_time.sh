@@ -6,11 +6,12 @@
 #
 # Runs the FouleeLaunchTime scheme, which launches the app seven times in
 # capture mode and measures each launch until its home is on screen. The
-# median of those launches is compared with
+# fastest of those launches is compared with
 # FouleeLaunchTime/LaunchTimeBudget.json: more than `tolerancePercent` above
-# the recorded median fails. The tolerance absorbs a slower CI runner; a real
-# regression — a heavy query or a synchronous load moved onto the launch path —
-# costs far more.
+# the recorded one fails. The fastest rather than the median: a busy CI runner
+# only ever adds time, up to twice as much on one launch out of seven, while a
+# real regression — a heavy query or a synchronous load moved onto the launch
+# path — slows every launch.
 #
 # Capture mode exists only in Debug, so this is a Debug launch: slower than
 # what a user sees, and only meaningful compared with itself.
@@ -18,7 +19,7 @@
 # Each run writes what the budget would be after it to
 # build/launch/LaunchTimeBudget.json; CI keeps it as an artifact. The time
 # depends on the machine: record on CI's simulator — take the artifact — rather
-# than on a Mac, and read the diff before committing, since a higher median is
+# than on a Mac, and read the diff before committing, since a higher time is
 # a slowdown accepted.
 
 set -euo pipefail
@@ -51,7 +52,7 @@ xcodebuild test \
 xcrun xcresulttool get test-results metrics --path "$RESULT_BUNDLE" > "$OUT/metrics.json"
 
 python3 - "$OUT/metrics.json" "$OUT/LaunchTimeBudget.json" "$SIMULATOR_NAME" "$BUDGET" "$RECORD" <<'PY'
-import json, statistics, sys
+import json, sys
 
 metrics, destination, device, budget_path, record = sys.argv[1:6]
 with open(metrics) as handle:
@@ -66,21 +67,21 @@ measurements = [
 ]
 if not measurements:
     sys.exit(f"No launch measurement found in the result bundle:\n{json.dumps(tests, indent=2)}")
-median = round(statistics.median(measurements), 3)
+fastest = round(min(measurements), 3)
 
 with open(budget_path) as handle:
     budget = json.load(handle)
 with open(destination, "w") as handle:
-    json.dump(budget | {"medianSeconds": median, "recordedOn": device}, handle, indent=2, sort_keys=True)
+    json.dump(budget | {"fastestSeconds": fastest, "recordedOn": device}, handle, indent=2, sort_keys=True)
     handle.write("\n")
 
-limit = budget["medianSeconds"] * (1 + budget["tolerancePercent"] / 100)
-print(f"Launch: median {median:.3f} s over {len(measurements)} launches, "
-      f"budget {budget['medianSeconds']:.3f} s + {budget['tolerancePercent']} % = {limit:.3f} s")
+limit = budget["fastestSeconds"] * (1 + budget["tolerancePercent"] / 100)
+print(f"Launch: fastest {fastest:.3f} s over {len(measurements)} launches, "
+      f"budget {budget['fastestSeconds']:.3f} s + {budget['tolerancePercent']} % = {limit:.3f} s")
 if budget["recordedOn"] != device:
     print(f"warning: the budget was recorded on {budget['recordedOn']}, this run is on {device}")
-if record == "0" and median > limit:
-    sys.exit(f"error: the launch takes {median:.3f} s, over its budget of {limit:.3f} s")
+if record == "0" and fastest > limit:
+    sys.exit(f"error: the launch takes {fastest:.3f} s, over its budget of {limit:.3f} s")
 PY
 
 if [ "$RECORD" = 1 ]; then

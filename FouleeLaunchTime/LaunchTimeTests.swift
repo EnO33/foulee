@@ -6,7 +6,7 @@ import XCTest
 /// The app runs in capture mode (`ScreenshotCapture`), so every launch opens on
 /// the same seeded home rather than on whatever the simulator's Health store
 /// holds. XCTest keeps no baseline here: `tools/launch_time.sh` reads the
-/// measurements out of the result bundle and compares their median with
+/// measurements out of the result bundle and compares the fastest with
 /// `LaunchTimeBudget.json`, the same way on a Mac and in CI.
 ///
 /// A wall clock rather than `XCTApplicationLaunchMetric`: on CI's virtual
