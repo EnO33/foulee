@@ -1,7 +1,7 @@
 # ADR 0003 — Séance partagée entre l'iPhone et l'Apple Watch
 
 - **Statut** : acceptée (2026-10)
-- **Issues** : [#272](https://github.com/getfoulee/foulee/issues/272) (épic), #277, #278, #279, #282, #283, [#334](https://github.com/getfoulee/foulee/issues/334), [#342](https://github.com/getfoulee/foulee/issues/342), [#458](https://github.com/getfoulee/foulee/issues/458)
+- **Issues** : [#272](https://github.com/getfoulee/foulee/issues/272) (épic), #277, #278, #279, #282, #283, [#334](https://github.com/getfoulee/foulee/issues/334), [#342](https://github.com/getfoulee/foulee/issues/342), [#458](https://github.com/getfoulee/foulee/issues/458), [#614](https://github.com/getfoulee/foulee/issues/614)
 
 ## Contexte
 
@@ -79,7 +79,17 @@ Le pendant de D1 dans l'autre sens : pour une séance lancée sur l'iPhone, **l'
 - **Plus de `TimelineView` pour le chrono.** Sur une Apple Watch SE, elle ne se rafraîchissait pas : le chrono restait à 00:00 alors que les bpm bougeaient et que la Live Activity, nourrie du même `timerBasis`, comptait juste. Le texte minuté du système n'a pas de timeline à entretenir.
 - **Le format est celui du système** (« 5:12 », « 1:06:31 »), le même que la Live Activity, au lieu de `walkClockText` (« 05:12 ») tant que le chrono tourne.
 
+### D9 — Une sortie de la montre s'arrête avant la batterie (#614)
+
+- **Une montre qui s'éteint ne termine rien.** Le builder ne devient un entraînement dans Santé qu'à `finishWorkout()` ; une montre à plat n'y arrive jamais, et la sortie est perdue.
+- **Sous 5 %, hors charge, la sortie s'arrête d'elle-même** par `stop()`, le seul chemin qui termine une sortie : portion fermée, iPhone prévenu, enregistrement, « Réessayer » en cas d'échec. Le résumé dit pourquoi : « Batterie presque vide : ta sortie est arrêtée et enregistrée. » Un niveau inconnu (-1) n'arrête jamais rien.
+- **Vérifié à chaque relevé HealthKit**, comme le miroir (D2) : pas de minuterie à elle.
+- **Le mode basse consommation ne demande rien.** watchOS garde la séance et espace seulement les mesures cardiaques et GPS.
+
 ## Ce qui reste non mesuré
+
+- **Le seuil de 5 %** (`BatteryReading.criticalLevel`) n'a jamais été vu au poignet. Une sortie perdue malgré lui dit de le relever ; le journal `session` écrit « batterie critique, sortie arrêtée ».
+- **Une sortie en pause** n'est vérifiée que si HealthKit livre encore des relevés pendant la pause.
 
 - **La taille maximale d'un envoi** par `sendToRemoteWorkoutSession(data:)` n'est pas documentée. 1 500 points compacts font environ 30 Ko ; le plafond est le réglage à baisser si un envoi échoue (le journal `session` le dira : « snapshot non transmis »).
 - **L'arrivée du signal de fin** (D6) : le snapshot final et la fin de la session miroir ne sont promis par aucune doc à une app iPhone en arrière-plan. Si l'activité restait encore affichée, le journal le dira (`log stream --predicate 'subsystem == "com.eno33.foulee" AND category == "live-activity"' --info`) : sans « miroir : Live Activity terminée », le signal n'est pas arrivé, et un `WCSession.sendMessage` de la montre, qui réveille l'iPhone, deviendrait la voie de fin.

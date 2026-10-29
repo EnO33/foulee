@@ -136,6 +136,16 @@
         }
       }
     },
+    "Batterie presque vide : ta sortie est arrêtée et enregistrée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Battery almost empty: your workout was stopped and saved."
+          }
+        }
+      }
+    },
     "Bravo" : {
       "localizations" : {
         "en" : {

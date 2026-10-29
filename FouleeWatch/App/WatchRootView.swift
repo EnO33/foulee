@@ -52,6 +52,7 @@ struct WatchRootView: View {
                     // failure is (issue #256). It used to reach only the home
                     // screen, which `reset()` clears on the way there.
                     errorMessage: store.lastError,
+                    endedOnLowBattery: store.endedOnLowBattery,
                     onRetry: { Task { await store.retrySave() } },
                     onDone: { store.reset() }
                 )
