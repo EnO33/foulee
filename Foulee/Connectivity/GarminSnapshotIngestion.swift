@@ -150,7 +150,11 @@ nonisolated enum GarminSnapshotIngestion {
             countersMoved: before?.counters != after?.counters,
             lastReloadAt: lastReloadAt(now: now),
             now: now
-        ) else { return }
+        ) else {
+            FouleeLog.background.notice("Garmin : instantané reçu, widgets non rechargés")
+            return
+        }
+        FouleeLog.background.notice("Garmin : instantané reçu, widgets rechargés")
         markReloaded(at: now)
         for kind in WidgetKind.counters {
             WidgetCenter.shared.reloadTimelines(ofKind: kind)

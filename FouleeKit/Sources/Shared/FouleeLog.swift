@@ -44,4 +44,11 @@ nonisolated public enum FouleeLog {
     /// only explainable from the readings that produced it, on the outing that
     /// produced it.
     public static let detection = Logger(subsystem: subsystem, category: "detection")
+
+    /// Every background wake (issue #612): the app-refresh task and each
+    /// Health observer, when it ran, how long it took, whether it finished.
+    /// The widgets' freshness rests on wakes iOS grants as it sees fit; this is
+    /// what tells "iOS never woke us" from "the wake ran and changed nothing".
+    /// How to read it: docs/BACKGROUND.md.
+    public static let background = Logger(subsystem: subsystem, category: "background")
 }
