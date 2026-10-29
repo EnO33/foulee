@@ -37,12 +37,21 @@ enum WatchWaterBackgroundDelivery {
         let store = HKHealthStore()
         Self.store = store
         let waterType = HKQuantityType(.dietaryWater)
-        try? await store.enableBackgroundDelivery(for: waterType, frequency: .immediate)
+        let label = "observateur eau (montre)"
+        do {
+            try await store.enableBackgroundDelivery(for: waterType, frequency: .immediate)
+        } catch {
+            FouleeLog.background.error("\(label, privacy: .public) : livraison refusée : \(error.localizedDescription, privacy: .public)")
+        }
         let query = HKObserverQuery(sampleType: waterType, predicate: nil) { _, completionHandler, error in
             // watchOS throttles background delivery if the handler isn't
             // called — `defer` guarantees it on every exit.
             defer { completionHandler() }
-            guard error == nil else { return }
+            if let error {
+                FouleeLog.background.error("\(label, privacy: .public) : erreur : \(error.localizedDescription, privacy: .public)")
+                return
+            }
+            FouleeLog.background.notice("\(label, privacy: .public) : réveil, complication rechargée")
             WidgetCenter.shared.reloadTimelines(ofKind: WatchComplicationKind.hydration)
         }
         store.execute(query)

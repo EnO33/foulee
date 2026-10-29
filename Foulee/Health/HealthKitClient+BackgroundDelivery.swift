@@ -35,31 +35,61 @@ nonisolated func healthBackgroundDeliveryClosure(store: HKHealthStore) -> @Senda
             (HKWorkoutType.workoutType(), .immediate)
         ]
         for (type, frequency) in deliveries {
-            try? await store.enableBackgroundDelivery(for: type, frequency: frequency)
-            let isWater = type == HKQuantityType(.dietaryWater)
-            // A workout delivery is the one wake that can have repaired a past
-            // day for a Garmin user — see `BackgroundStreakRefresh`.
-            let wake: BackgroundStreakRefresh.Wake = type == HKWorkoutType.workoutType() ? .workout : .other
-            let query = HKObserverQuery(sampleType: type, predicate: nil) { _, completionHandler, error in
-                let done = UncheckedSendableBox(completionHandler)
-                guard error == nil else { done.value(); return }
-                Task {
-                    // iOS throttles/stops background delivery if the handler
-                    // isn't called — `defer` guarantees it on every exit,
-                    // including task cancellation when the budget runs out.
-                    defer { done.value() }
-                    await refreshSnapshotMetrics(store: store, wake: wake)
-                    WidgetCenter.shared.reloadAllTimelines()
-                    // An outing that just landed in Santé: announce it (#529).
-                    if wake == .workout {
-                        await SessionNotifier().outingsChanged()
-                    }
-                    if isWater {
-                        await reshiftHydrationRemindersIfWaterIncreased(store: store)
-                    }
-                }
+            do {
+                try await store.enableBackgroundDelivery(for: type, frequency: frequency)
+            } catch {
+                FouleeLog.background.error("""
+                    observateur \(type.identifier, privacy: .public) : \
+                    livraison refusée : \(error.localizedDescription, privacy: .public)
+                    """)
             }
-            store.execute(query)
+            store.execute(backgroundObserver(for: type, store: store))
+        }
+        FouleeLog.background.info("observateurs Santé enregistrés")
+    }
+}
+
+/// The observer behind one delivered type: on each wake, refresh the snapshot
+/// and reload the widgets, then whatever that type adds (#529, the water
+/// reshift). Every wake is logged under `FouleeLog.background` (#612).
+nonisolated private func backgroundObserver(for type: HKSampleType, store: HKHealthStore) -> HKObserverQuery {
+    // The type identifier only: never a value, never a sample.
+    let name = type.identifier
+    let isWater = type == HKQuantityType(.dietaryWater)
+    // A workout delivery is the one wake that can have repaired a past
+    // day for a Garmin user — see `BackgroundStreakRefresh`.
+    let wake: BackgroundStreakRefresh.Wake = type == HKWorkoutType.workoutType() ? .workout : .other
+    return HKObserverQuery(sampleType: type, predicate: nil) { _, completionHandler, error in
+        let done = UncheckedSendableBox(completionHandler)
+        if let error {
+            FouleeLog.background.error(
+                "observateur \(name, privacy: .public) : erreur : \(error.localizedDescription, privacy: .public)"
+            )
+            done.value()
+            return
+        }
+        FouleeLog.background.notice("observateur \(name, privacy: .public) : réveil")
+        let start = Date.now
+        Task {
+            // iOS throttles/stops background delivery if the handler
+            // isn't called — `defer` guarantees it on every exit,
+            // including task cancellation when the budget runs out.
+            defer {
+                let seconds = Date.now.timeIntervalSince(start)
+                FouleeLog.background.notice(
+                    "observateur \(name, privacy: .public) : terminé en \(seconds, format: .fixed(precision: 1), privacy: .public) s"
+                )
+                done.value()
+            }
+            await refreshSnapshotMetrics(store: store, wake: wake)
+            WidgetCenter.shared.reloadAllTimelines()
+            // An outing that just landed in Santé: announce it (#529).
+            if wake == .workout {
+                await SessionNotifier().outingsChanged()
+            }
+            if isWater {
+                await reshiftHydrationRemindersIfWaterIncreased(store: store)
+            }
         }
     }
 }

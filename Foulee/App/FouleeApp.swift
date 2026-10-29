@@ -1,6 +1,7 @@
 @preconcurrency import ActivityKit
 @preconcurrency import BackgroundTasks
 import Dependencies
+import FouleeKit
 import SwiftUI
 import WidgetKit
 
@@ -62,7 +63,9 @@ struct FouleeApp: App {
     private static let registerAppRefreshOnce: Void = {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: refreshTaskID, using: nil) { task in
             guard let task = task as? BGAppRefreshTask else { return }
+            FouleeLog.background.notice("rafraîchissement : réveil")
             scheduleAppRefresh() // chain the next wake
+            let start = Date.now
             let work = Task {
                 await refreshWidgetSnapshotFromHealth()
                 WidgetCenter.shared.reloadAllTimelines()
@@ -70,10 +73,19 @@ struct FouleeApp: App {
             // Set the handler before awaiting the result, and complete the
             // task on every path — including expiration — so iOS doesn't
             // penalise future background grants for an un-completed task.
-            task.expirationHandler = { work.cancel() }
+            task.expirationHandler = {
+                FouleeLog.background.error("rafraîchissement : temps écoulé, tâche annulée")
+                work.cancel()
+            }
             Task {
                 _ = await work.value
-                task.setTaskCompleted(success: !work.isCancelled)
+                let success = !work.isCancelled
+                let outcome = success ? "succès" : "échec"
+                let seconds = Date.now.timeIntervalSince(start)
+                FouleeLog.background.notice(
+                    "rafraîchissement : \(outcome, privacy: .public) en \(seconds, format: .fixed(precision: 1), privacy: .public) s"
+                )
+                task.setTaskCompleted(success: success)
             }
         }
     }()
@@ -174,6 +186,15 @@ struct FouleeApp: App {
     static func scheduleAppRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: refreshTaskID)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 2 * 60 * 60)
-        try? BGTaskScheduler.shared.submit(request)
+        do {
+            try BGTaskScheduler.shared.submit(request)
+            FouleeLog.background.info("rafraîchissement : prochain réveil demandé")
+        } catch {
+            // Refused on the simulator, or when « Actualisation en arrière-plan »
+            // is off: no refresh task will ever run, and this is the only trace.
+            FouleeLog.background.error(
+                "rafraîchissement : demande refusée : \(error.localizedDescription, privacy: .public)"
+            )
+        }
     }
 }
