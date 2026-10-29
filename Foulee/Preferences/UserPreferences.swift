@@ -1,3 +1,4 @@
+import Dependencies
 import FouleeKit
 import Foundation
 import Observation
@@ -8,31 +9,34 @@ import Observation
 ///
 /// Initialiser takes an injectable `UserDefaults` so previews and tests
 /// can use a clean suite without polluting the real defaults database.
+///
+/// With a `cloud` store, every setting but the onboarding flag follows the
+/// user's other iPhones through iCloud (issue #616, `CloudSettingsSync`).
 @Observable
 final class UserPreferences {
     var activeDays: Set<Weekday> {
-        didSet { defaults.set(activeDays.bitmask, forKey: Keys.activeDays) }
+        didSet { save(activeDays.bitmask, forKey: Keys.activeDays) }
     }
     var walkWindowStart: TimeOfDay {
-        didSet { defaults.set(walkWindowStart.rawMinutes, forKey: Keys.walkWindowStart) }
+        didSet { save(walkWindowStart.rawMinutes, forKey: Keys.walkWindowStart) }
     }
     var walkWindowEnd: TimeOfDay {
-        didSet { defaults.set(walkWindowEnd.rawMinutes, forKey: Keys.walkWindowEnd) }
+        didSet { save(walkWindowEnd.rawMinutes, forKey: Keys.walkWindowEnd) }
     }
     var minutesGoal: Int {
-        didSet { defaults.set(minutesGoal, forKey: Keys.minutesGoal) }
+        didSet { save(minutesGoal, forKey: Keys.minutesGoal) }
     }
     var stepsGoal: Int {
-        didSet { defaults.set(stepsGoal, forKey: Keys.stepsGoal) }
+        didSet { save(stepsGoal, forKey: Keys.stepsGoal) }
     }
     var hasCompletedOnboarding: Bool {
         didSet { defaults.set(hasCompletedOnboarding, forKey: Keys.hasCompletedOnboarding) }
     }
     var notificationsEnabled: Bool {
-        didSet { defaults.set(notificationsEnabled, forKey: Keys.notificationsEnabled) }
+        didSet { save(notificationsEnabled, forKey: Keys.notificationsEnabled) }
     }
     var themeMode: ThemeMode {
-        didSet { defaults.set(themeMode.rawValue, forKey: Keys.themeMode) }
+        didSet { save(themeMode.rawValue, forKey: Keys.themeMode) }
     }
     /// Hydration tracking. Intake is stored in Apple Health (`dietaryWater`);
     /// these only hold the goal and glass size.
@@ -40,50 +44,59 @@ final class UserPreferences {
     /// **On for a new install, untouched for an existing one** (issue #329).
     /// See `init` for how the two are told apart. Reminders stay opt-in.
     var hydrationEnabled: Bool {
-        didSet { defaults.set(hydrationEnabled, forKey: Keys.hydrationEnabled) }
+        didSet { save(hydrationEnabled, forKey: Keys.hydrationEnabled) }
     }
     var hydrationGoalML: Int {
-        didSet { defaults.set(hydrationGoalML, forKey: Keys.hydrationGoalML) }
+        didSet { save(hydrationGoalML, forKey: Keys.hydrationGoalML) }
     }
     var hydrationGlassML: Int {
-        didSet { defaults.set(hydrationGlassML, forKey: Keys.hydrationGlassML) }
+        didSet { save(hydrationGlassML, forKey: Keys.hydrationGlassML) }
     }
     var hydrationRemindersEnabled: Bool {
-        didSet { defaults.set(hydrationRemindersEnabled, forKey: Keys.hydrationRemindersEnabled) }
+        didSet { save(hydrationRemindersEnabled, forKey: Keys.hydrationRemindersEnabled) }
     }
     var hydrationWindowStart: TimeOfDay {
-        didSet { defaults.set(hydrationWindowStart.rawMinutes, forKey: Keys.hydrationWindowStart) }
+        didSet { save(hydrationWindowStart.rawMinutes, forKey: Keys.hydrationWindowStart) }
     }
     var hydrationWindowEnd: TimeOfDay {
-        didSet { defaults.set(hydrationWindowEnd.rawMinutes, forKey: Keys.hydrationWindowEnd) }
+        didSet { save(hydrationWindowEnd.rawMinutes, forKey: Keys.hydrationWindowEnd) }
     }
     var hydrationIntervalMinutes: Int {
-        didSet { defaults.set(hydrationIntervalMinutes, forKey: Keys.hydrationIntervalMinutes) }
+        didSet { save(hydrationIntervalMinutes, forKey: Keys.hydrationIntervalMinutes) }
     }
     var hydrationSnoozeMinutes: Int {
-        didSet { defaults.set(hydrationSnoozeMinutes, forKey: Keys.hydrationSnoozeMinutes) }
+        didSet { save(hydrationSnoozeMinutes, forKey: Keys.hydrationSnoozeMinutes) }
     }
     /// Which activity the app supports. Defaults to walking so existing
     /// installs — which never wrote this key — stay exactly where they are.
     var activityMode: ActivityMode {
-        didSet { defaults.set(activityMode.rawValue, forKey: Keys.activityMode) }
+        didSet { save(activityMode.rawValue, forKey: Keys.activityMode) }
     }
     /// The Monday and 1st-of-the-month recap notifications (issue #344). On
     /// unless turned off: the recap is the point of having one.
     var recapNotificationsEnabled: Bool {
-        didSet { defaults.set(recapNotificationsEnabled, forKey: Keys.recapNotificationsEnabled) }
+        didSet { save(recapNotificationsEnabled, forKey: Keys.recapNotificationsEnabled) }
     }
     /// The notification of an outing that landed from a watch or another
     /// app (issue #529). On unless turned off.
     var sessionNotificationsEnabled: Bool {
-        didSet { defaults.set(sessionNotificationsEnabled, forKey: Keys.sessionNotificationsEnabled) }
+        didSet { save(sessionNotificationsEnabled, forKey: Keys.sessionNotificationsEnabled) }
     }
 
     @ObservationIgnored
     private let defaults: UserDefaults
+    @ObservationIgnored
+    private let cloud: SettingsKeyValueStore?
+    /// Set while a set pulled from iCloud is applied, so that applying it is
+    /// not taken for a change made here and sent back with a newer stamp.
+    @ObservationIgnored
+    private var isApplyingCloud = false
+    @ObservationIgnored
+    @Dependency(\.date) private var date
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, cloud: SettingsKeyValueStore? = nil) {
         self.defaults = defaults
+        self.cloud = cloud
         let rawDays = defaults.object(forKey: Keys.activeDays) as? Int
         self.activeDays = rawDays.map(Set<Weekday>.init(bitmask:)) ?? Weekday.workWeek
         let rawStart = defaults.object(forKey: Keys.walkWindowStart) as? Int
@@ -138,6 +151,52 @@ final class UserPreferences {
 }
 
 extension UserPreferences {
+    /// Brings in what another iPhone changed: at launch and each time iCloud
+    /// reports a change. Sends this one's settings instead when they are the
+    /// newer.
+    func syncWithCloud() {
+        guard let cloud else { return }
+        let outcome = CloudSettingsSync.reconcile(
+            Keys.synced,
+            local: defaults,
+            cloud: cloud,
+            seeds: hasCompletedOnboarding
+        )
+        if outcome == .pulled { reload() }
+    }
+
+    private func save(_ value: Any, forKey key: String) {
+        defaults.set(value, forKey: key)
+        guard let cloud, !isApplyingCloud else { return }
+        CloudSettingsSync.localDidChange(Keys.synced, local: defaults, cloud: cloud, now: date.now)
+    }
+
+    /// Reads the synced settings back from the defaults, through `init` so
+    /// that the fallbacks and repairs are the same as at launch.
+    private func reload() {
+        isApplyingCloud = true
+        defer { isApplyingCloud = false }
+        let fresh = UserPreferences(defaults: defaults)
+        activeDays = fresh.activeDays
+        walkWindowStart = fresh.walkWindowStart
+        walkWindowEnd = fresh.walkWindowEnd
+        minutesGoal = fresh.minutesGoal
+        stepsGoal = fresh.stepsGoal
+        notificationsEnabled = fresh.notificationsEnabled
+        themeMode = fresh.themeMode
+        hydrationEnabled = fresh.hydrationEnabled
+        hydrationGoalML = fresh.hydrationGoalML
+        hydrationGlassML = fresh.hydrationGlassML
+        hydrationRemindersEnabled = fresh.hydrationRemindersEnabled
+        hydrationWindowStart = fresh.hydrationWindowStart
+        hydrationWindowEnd = fresh.hydrationWindowEnd
+        hydrationIntervalMinutes = fresh.hydrationIntervalMinutes
+        hydrationSnoozeMinutes = fresh.hydrationSnoozeMinutes
+        activityMode = fresh.activityMode
+        recapNotificationsEnabled = fresh.recapNotificationsEnabled
+        sessionNotificationsEnabled = fresh.sessionNotificationsEnabled
+    }
+
     /// A stored window end, corrected when it falls before its start (#395) —
     /// a value written before the pickers were bounded. The fix is written
     /// back, so the reminder schedulers, which read the defaults directly,
@@ -174,4 +233,14 @@ private enum Keys {
     static let activityMode = "preferences.activityMode"
     static let recapNotificationsEnabled = "preferences.recapNotificationsEnabled"
     static let sessionNotificationsEnabled = SessionNotifier.enabledKey
+
+    /// Everything iCloud carries: all but the onboarding flag, which says
+    /// what this iPhone has been through, not what its owner chose.
+    static let synced = [
+        activeDays, walkWindowStart, walkWindowEnd, minutesGoal, stepsGoal,
+        notificationsEnabled, themeMode, hydrationEnabled, hydrationGoalML,
+        hydrationGlassML, hydrationRemindersEnabled, hydrationWindowStart,
+        hydrationWindowEnd, hydrationIntervalMinutes, hydrationSnoozeMinutes,
+        activityMode, recapNotificationsEnabled, sessionNotificationsEnabled,
+    ]
 }

@@ -1,3 +1,5 @@
+import Combine
+import FouleeKit
 import SwiftUI
 
 /// Top-level container. Gates onboarding, shows the home screen once the user
@@ -16,8 +18,8 @@ struct RootView: View {
     /// a test can seed an install — one that finished the pre-#221 flow, say —
     /// in a clean suite and check which branch this view actually renders.
     /// Gating onboarding is the one thing here no test could reach before.
-    init(defaults: UserDefaults = .standard) {
-        _preferences = State(initialValue: UserPreferences(defaults: defaults))
+    init(defaults: UserDefaults = .standard, cloud: SettingsKeyValueStore? = nil) {
+        _preferences = State(initialValue: UserPreferences(defaults: defaults, cloud: cloud))
     }
 
     var body: some View {
@@ -33,6 +35,15 @@ struct RootView: View {
         .preferredColorScheme(preferences.themeMode.colorScheme)
         .environment(preferences)
         .task(id: scheduleKey) { await syncReminders() }
+        // The settings of the user's other iPhones (issue #616): at launch,
+        // then each time iCloud brings a change. The notification comes on a
+        // background queue.
+        .task { preferences.syncWithCloud() }
+        .onReceive(
+            NotificationCenter.default
+                .publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification)
+                .receive(on: DispatchQueue.main)
+        ) { _ in preferences.syncWithCloud() }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .background:

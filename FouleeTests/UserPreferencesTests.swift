@@ -1,3 +1,4 @@
+import Dependencies
 import FouleeKit
 import Foundation
 import Testing
@@ -138,6 +139,45 @@ struct UserPreferencesTests {
         #expect(TimeOfDay.validEnd(TimeOfDay(hour: 11, minute: 34), after: start) == TimeOfDay(hour: 12, minute: 30))
         let late = TimeOfDay(hour: 23, minute: 30)
         #expect(TimeOfDay.validEnd(TimeOfDay(hour: 8, minute: 0), after: late) == TimeOfDay(hour: 23, minute: 59))
+    }
+
+    /// Issue #616: a change goes to iCloud stamped, the onboarding flag stays.
+    @Test("A change is sent to iCloud with its time, the onboarding flag is not")
+    func changeReachesCloud() {
+        let cloud = cleanDefaults()
+        let prefs = withDependencies {
+            $0.date.now = Date(timeIntervalSince1970: 1_000)
+        } operation: {
+            UserPreferences(defaults: cleanDefaults(), cloud: cloud)
+        }
+        prefs.hasCompletedOnboarding = true
+        #expect(cloud.object(forKey: CloudSettingsSync.modifiedAtKey) == nil)
+
+        prefs.minutesGoal = 35
+
+        #expect(cloud.object(forKey: "preferences.minutesGoal") as? Int == 35)
+        #expect(cloud.object(forKey: CloudSettingsSync.modifiedAtKey) as? Double == 1_000)
+        #expect(cloud.object(forKey: "preferences.hasCompletedOnboarding") == nil)
+    }
+
+    @Test("Settings changed on another iPhone show here, and are not sent back")
+    func cloudChangeApplied() {
+        let cloud = cleanDefaults()
+        let prefs = withDependencies {
+            $0.date.now = Date(timeIntervalSince1970: 1_000)
+        } operation: {
+            UserPreferences(defaults: cleanDefaults(), cloud: cloud)
+        }
+        prefs.minutesGoal = 35
+        cloud.set(45, forKey: "preferences.minutesGoal")
+        cloud.set(ThemeMode.dark.rawValue, forKey: "preferences.themeMode")
+        cloud.set(2_000.0, forKey: CloudSettingsSync.modifiedAtKey)
+
+        prefs.syncWithCloud()
+
+        #expect(prefs.minutesGoal == 45)
+        #expect(prefs.themeMode == .dark)
+        #expect(cloud.object(forKey: CloudSettingsSync.modifiedAtKey) as? Double == 2_000)
     }
 
     private func cleanDefaults() -> UserDefaults {
