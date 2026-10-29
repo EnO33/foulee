@@ -175,7 +175,7 @@ the diff before committing, since a line added there is a regression accepted.
 `tools/accessibility_audit.sh` alone runs the same check as CI.
 
 **Launch time** launches the iPhone app seven times, cold and in capture mode,
-and measures each launch until the app answers a touch. It fails when the
+and measures each launch until its home is on screen. It fails when the
 median is more than `tolerancePercent` above the one
 `FouleeLaunchTime/LaunchTimeBudget.json` records. Capture mode exists only in
 Debug, so the figure is a Debug launch, meaningful only against itself. After

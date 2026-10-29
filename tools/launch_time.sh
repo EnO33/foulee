@@ -5,7 +5,7 @@
 #   tools/launch_time.sh --record   # rewrites the budget from this run
 #
 # Runs the FouleeLaunchTime scheme, which launches the app seven times in
-# capture mode and measures each launch until the app answers a touch. The
+# capture mode and measures each launch until its home is on screen. The
 # median of those launches is compared with
 # FouleeLaunchTime/LaunchTimeBudget.json: more than `tolerancePercent` above
 # the recorded median fails. The tolerance absorbs a slower CI runner; a real
@@ -61,7 +61,7 @@ measurements = [
     for test in tests
     for run in test["testRuns"]
     for metric in run["metrics"]
-    if metric["identifier"].startswith("com.apple.dt.XCTMetric_ApplicationLaunch")
+    if metric["identifier"].startswith("com.apple.dt.XCTMetric_Clock")
     for value in metric["measurements"]
 ]
 if not measurements:
