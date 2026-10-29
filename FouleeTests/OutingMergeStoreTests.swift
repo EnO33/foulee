@@ -42,4 +42,51 @@ struct OutingMergeStoreTests {
             #expect(OutingMergeStore.read(now: Self.noon, from: defaults).isEmpty)
         }
     }
+
+    /// A second throwaway suite standing for iCloud's store.
+    private func withCloud(_ body: (UserDefaults, UserDefaults) throws -> Void) throws {
+        let suiteName = "OutingMergeStoreTests-cloud-\(UUID().uuidString)"
+        let cloud = try #require(UserDefaults(suiteName: suiteName))
+        defer { cloud.removePersistentDomain(forName: suiteName) }
+        try withDefaults { defaults in try body(defaults, cloud) }
+    }
+
+    @Test("A merge made here reaches a new iPhone, and so does its separation")
+    func mergeAndSeparationTravel() throws {
+        try withCloud { here, cloud in
+            let merge = OutingMerge(workoutIDs: [UUID(), UUID()], startedAt: Self.noon)
+            OutingMergeStore.write([merge], to: here, cloud: cloud, now: Self.noon)
+
+            try withDefaults { newPhone in
+                #expect(OutingMergeStore.syncWithCloud(cloud, defaults: newPhone) == .pulled)
+                #expect(OutingMergeStore.read(now: Self.noon, from: newPhone) == [merge])
+
+                OutingMergeStore.write([], to: here, cloud: cloud, now: Self.noon.addingTimeInterval(60))
+                #expect(OutingMergeStore.syncWithCloud(cloud, defaults: newPhone) == .pulled)
+                #expect(OutingMergeStore.read(now: Self.noon, from: newPhone).isEmpty)
+            }
+        }
+    }
+
+    @Test("An install that never merged sends nothing to iCloud")
+    func emptyInstallDoesNotSeed() throws {
+        try withCloud { defaults, cloud in
+            #expect(OutingMergeStore.syncWithCloud(cloud, defaults: defaults) == .unchanged)
+            #expect(cloud.dictionaryRepresentation().keys.contains { $0.hasPrefix("outings.") } == false)
+        }
+    }
+
+    @Test("Merges kept before the sync fill an empty iCloud")
+    func existingMergesSeed() throws {
+        try withCloud { defaults, cloud in
+            let merge = OutingMerge(workoutIDs: [UUID()], startedAt: Self.noon)
+            OutingMergeStore.write([merge], to: defaults)
+
+            #expect(OutingMergeStore.syncWithCloud(cloud, defaults: defaults) == .pushed)
+            try withDefaults { newPhone in
+                OutingMergeStore.syncWithCloud(cloud, defaults: newPhone)
+                #expect(OutingMergeStore.read(now: Self.noon, from: newPhone) == [merge])
+            }
+        }
+    }
 }

@@ -115,4 +115,24 @@ struct CloudSettingsSyncTests {
             #expect(local.object(forKey: stamp) == nil)
         }
     }
+
+    @Test("A set under its own stamp never moves the settings' stamp")
+    func separateStamp() throws {
+        try withStores { local, cloud in
+            let merges = ["outings.merges"]
+            let mergesStamp = "outings.merges.modifiedAt"
+            local.set(50.0, forKey: stamp)
+            cloud.set(10.0, forKey: stamp)
+            cloud.set(20.0, forKey: mergesStamp)
+            cloud.set(Data([1]), forKey: "outings.merges")
+
+            let outcome = CloudSettingsSync.reconcile(merges, local: local, cloud: cloud, seeds: false, stamp: mergesStamp)
+
+            #expect(outcome == .pulled)
+            #expect(local.object(forKey: "outings.merges") as? Data == Data([1]))
+            #expect(local.object(forKey: mergesStamp) as? Double == 20)
+            #expect(local.object(forKey: stamp) as? Double == 50)
+            #expect(cloud.object(forKey: stamp) as? Double == 10)
+        }
+    }
 }
