@@ -26,6 +26,28 @@ def release_notes(version)
       .join("\n\n")
 end
 
+# What the metadata and submit lanes send to the `version` of App Store
+# Connect: the listing of fastlane/metadata, with no binary and no
+# screenshots (those go through the release and the screenshots lane). The
+# French « What's New » is the version's docs/releases notes (issue #622); the
+# English one stays in en-US/release_notes.txt until those notes have a
+# translation. deliver creates the version when App Store Connect has none to
+# edit yet.
+def listing(version)
+  {
+    api_key: asc_api_key,
+    app_version: version,
+    release_notes: { "fr-FR" => release_notes(version) },
+    skip_binary_upload: true,
+    skip_screenshots: true,
+    # With an API key, precheck fails outright on in-app purchases, after the
+    # upload; tools/check_store_metadata.py checks the listing instead.
+    run_precheck_before_submit: false,
+    # No HTML preview to confirm on CI.
+    force: true
+  }
+end
+
 # Foulée ships from CI only: `git tag v1.2.3 && git push --tags` runs the
 # release workflow, which calls `fastlane release`. Everything is driven by
 # environment variables set in .github/workflows/release.yml — see
@@ -97,28 +119,29 @@ platform :ios do
   end
 
   # The store listing is versioned in fastlane/metadata (issue #581) and
-  # published by the « Store listing » workflow: no binary, no screenshots,
-  # never submitted for review. The version is the one being prepared; deliver
-  # creates it when App Store Connect has none to edit yet. The French « What's
-  # New » is the version's docs/releases notes (issue #622); the English one
-  # stays in en-US/release_notes.txt until those notes have a translation.
+  # published by the « Store listing » workflow, never submitted for review.
   desc "Publish the App Store listing in fastlane/metadata to the version being prepared"
   lane :metadata do
-    api_key = asc_api_key
-    version = ENV.fetch("FOULEE_MARKETING_VERSION")
+    deliver(**listing(ENV.fetch("FOULEE_MARKETING_VERSION")), submit_for_review: false)
+  end
 
+  # The « App Store submission » workflow (issue #624), behind the approval of
+  # the `app-store` environment: the listing as the metadata lane writes it,
+  # the tag's build, then the review. Once Apple approves, the version goes
+  # out on its own as a 7-day phased release, which App Store Connect can
+  # still pause. The build is the one the release workflow sent to TestFlight
+  # for the same tag; it has to be processed first.
+  desc "Submit the tagged build to App Store review, with its listing, as a phased release"
+  lane :submit do
     deliver(
-      api_key: api_key,
-      app_version: version,
-      release_notes: { "fr-FR" => release_notes(version) },
-      skip_binary_upload: true,
-      skip_screenshots: true,
-      submit_for_review: false,
-      # Precheck guards a submission, and this lane never submits; with an API
-      # key it also fails outright on in-app purchases, after the upload.
-      run_precheck_before_submit: false,
-      # No HTML preview to confirm on CI.
-      force: true
+      **listing(ENV.fetch("FOULEE_MARKETING_VERSION")),
+      build_number: ENV.fetch("FOULEE_BUILD_NUMBER"),
+      submit_for_review: true,
+      automatic_release: true,
+      phased_release: true,
+      # Export compliance is answered by ITSAppUsesNonExemptEncryption in the
+      # Info.plist; Foulée shows no ads and reads no advertising identifier.
+      submission_information: { add_id_info_uses_idfa: false }
     )
   end
 

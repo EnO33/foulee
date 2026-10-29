@@ -524,25 +524,48 @@ most: the composer refuses an eleventh. On CI the watch boards show the
 runner's hour (UTC) in the corner, where watchOS draws its clock.
 Screenshots are only needed at promotion (step 10), never for TestFlight.
 
-## 10. Promote to the public App Store (manual, when you're ready)
+## 10. Promote to the public App Store
 
-TestFlight is the CI's final step on purpose — promotion to the store stays a
-deliberate, manual action:
+TestFlight is the release's final step on purpose: the store gets a build only
+when you run the submission and approve it.
 
 1. Update `fastlane/metadata/en-US/release_notes.txt` for this version (a PR,
    like any change: CI checks the listing). The French notes are already
-   written: the workflow takes them from `docs/releases/X.Y.0.md`, as plain
-   text, and stops when that file is missing.
-2. **Actions → Store listing → Run workflow**, with the version string
-   (e.g. `1.55`). It creates the version in App Store Connect when there is
-   none to edit yet, and writes the listing (§ 10.1) to it.
-3. Attach the processed build. Upload the **screenshots** (step 9.3) when the
-   set has changed.
-4. **Submit for Review**, by hand: the workflow never submits.
+   written: the workflows take them from `docs/releases/X.Y.Z.md`, as plain
+   text, and stop when that file is missing.
+2. Upload the **screenshots** (step 9.3) when the set has changed.
+3. Wait until TestFlight has processed the tag's build.
+4. **Actions → App Store submission → Run workflow**, with the tag (e.g.
+   `v1.55.0`). The run waits for the approval of the `app-store` environment;
+   approve it from the run page. It then writes the listing (§ 10.1) as it is
+   on `main`, attaches the tag's build (the same commit count as the release)
+   and submits the version for review.
+5. Once Apple approves, the version goes out by itself as a **phased release**
+   over 7 days (1 %, 2 %, 5 %, 10 %, 20 %, 50 %, 100 % of the users with
+   automatic updates; anyone can update by hand from the first day). Pause it,
+   or release to everyone, in **App Store Connect → Distribution → Phased
+   Release** when something goes wrong or right.
+
+The **Store listing** workflow still writes the listing alone, without
+submitting, to prepare a version ahead of its build.
 
 A notable feature also gets a featuring nomination, filed weeks before the
 publish date: see [LAUNCH.md](LAUNCH.md#1-featuring-nominations), with the
 campaign links used to announce it.
+
+### 10.0 The `app-store` environment (once)
+
+**Settings → Environments → New environment**, named `app-store`:
+
+- **Required reviewers**: yourself. Without one, GitHub creates the
+  environment on the first run with no protection, and the submission starts
+  without approval.
+- **Deployment branches and tags**: *Selected branches and tags*, with the
+  branch rule `main`, so that the run uses the reviewed workflow. The tag
+  to submit is the input, not the branch the run starts from.
+
+The secrets stay those of the repository (step 7): the environment only gates
+the job.
 
 ### 10.1 The listing lives in the repository
 
@@ -580,9 +603,10 @@ touches the listing, and again before the workflow uploads anything:
 tools/check_store_metadata.py
 ```
 
-The workflow (`.github/workflows/store-listing.yml`, lane `metadata`) uses the
-same App Store Connect key as the release (step 6), with no binary and no
-screenshots: those go through the release and step 9.3.
+The workflows (`.github/workflows/store-listing.yml`, lane `metadata`, and
+`.github/workflows/app-store.yml`, lane `submit`) use the same App Store Connect
+key as the release (step 6), with no binary and no screenshots: those go
+through the release and step 9.3.
 
 ## 11. The Garmin watch app (separate store, separate cadence)
 

@@ -1,0 +1,83 @@
+name: App Store submission
+
+# Submits a tagged build to App Store review (issue #624): the listing of
+# fastlane/metadata, the build the release workflow sent to TestFlight for
+# that tag, and a 7-day phased release once Apple approves. The job runs in
+# the `app-store` environment, whose required reviewer approves it before any
+# secret is read. Run it by hand from Actions once TestFlight has processed
+# the build. See docs/RELEASE.md, § 10.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag already on TestFlight (e.g. v1.55.0)
+        required: true
+        type: string
+
+concurrency:
+  group: app-store
+  cancel-in-progress: false
+
+# Reads the repo and talks to App Store Connect with its own key only.
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    name: Submit for review
+    runs-on: xcode-27
+    environment: app-store
+    steps:
+      # Passed through the environment, never interpolated into the script:
+      # the input is free text typed in the Actions form.
+      - name: Check the tag
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::« $TAG » is not a release tag like v1.55.0"
+            exit 1
+          fi
+
+      # The branch the run starts from (main), not the tag: the English
+      # release notes are written there after the tag is cut (§ 10, step 1).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the tag, and the commit count up to it
+
+      - name: Check the listing
+        run: tools/check_store_metadata.py
+
+      - name: Derive version + build number
+        id: ver
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if ! git rev-parse --verify --quiet "refs/tags/$TAG" >/dev/null; then
+            echo "::error::No tag « $TAG »: cut the release first (docs/RELEASE.md, § 8)"
+            exit 1
+          fi
+          # The build number the release workflow gave the tag's build.
+          echo "marketing=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "build=$(git rev-list --count "refs/tags/$TAG")" >> "$GITHUB_OUTPUT"
+
+      - name: Materialise the App Store Connect key
+        env:
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          set -euo pipefail
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > fastlane/asc_key.p8
+
+      - name: Submit with deliver
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_PATH: ${{ github.workspace }}/fastlane/asc_key.p8
+          FOULEE_MARKETING_VERSION: ${{ steps.ver.outputs.marketing }}
+          FOULEE_BUILD_NUMBER: ${{ steps.ver.outputs.build }}
+        run: fastlane submit
+
+      - name: Tidy the key
+        if: always()
+        run: rm -f fastlane/asc_key.p8
