@@ -106,4 +106,26 @@ extension WatchWorkoutStore {
         guard let id else { return true }
         return id == sessionHandle?.builderID
     }
+
+    /// Cut the outing here, if a queued change has held long enough.
+    ///
+    /// Called from `ingest`, so it runs at HealthKit's own pace rather than on
+    /// a timer of its own — there is nothing to decide between two batches.
+    /// Internal so a test can drive it with an explicit clock — `ingest` takes
+    /// an `HKLiveWorkoutBuilder`, which no test can build.
+    func splitIfDue(at now: Date) async {
+        guard case .active = state,
+              let pending = pendingSplit,
+              // From the decision, never from the back-dated boundary: a
+              // switch noticed late would otherwise be cut on arrival, before
+              // any reading could contradict it (issue #331).
+              now.timeIntervalSince(pending.confirmedAt) >= Self.minimumLegDuration(becoming: pending.activity)
+        else { return }
+        pendingSplit = nil
+        // A run at a walking pace is not one (issue #390): the leg stays whole.
+        guard pending.activity != .running || isPlausibleRun(since: pending.date, until: now) else {
+            return dropImplausibleRun(at: now)
+        }
+        await splitLeg(to: pending.activity, at: pending.date)
+    }
 }

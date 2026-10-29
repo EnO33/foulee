@@ -79,6 +79,9 @@ final class WorkoutHealthKitStub {
     /// The time the store reads (issue #406). It stands still until a test
     /// moves it, so every date the store writes is one the test can name.
     let clock = ManualClock()
+    /// The watch's charge as the store reads it (issue #614): full and
+    /// unplugged until a test drains it.
+    var battery = BatteryReading(level: 1, isCharging: false)
     /// A session left running by an app that died (issue #554), handed out
     /// once by `recoverSession`.
     var recoverable: RecoverableSession?
@@ -125,7 +128,7 @@ final class WorkoutHealthKitStub {
                 self.savedLegsAsked.append(outingID)
                 return self.savedLegs
             }
-        ), detection: detection, route: route, climb: climb, clock: clock.read)
+        ), detection: detection, route: route, climb: climb, battery: { self.battery }, clock: clock.read)
     }
 
     private func makeHandle() -> WatchWorkoutSessionHandle {

@@ -96,18 +96,24 @@ final class WatchWorkoutStore: NSObject {
     @ObservationIgnored let route: WatchRouteStore
     /// The outing's climb, stamped on each leg as it is saved (issue #535).
     @ObservationIgnored let climb: WatchClimbStore
+    /// The watch's charge, read at every batch (issue #614).
+    @ObservationIgnored let battery: @MainActor () -> BatteryReading
+    /// The outing was stopped before the battery could stop it (issue #614).
+    var endedOnLowBattery = false
 
     init(
         healthKit: WatchWorkoutHealthKit = .live,
         detection: WatchActivityDetection = WatchActivityDetection(),
         route: WatchRouteStore = WatchRouteStore(),
         climb: WatchClimbStore = WatchClimbStore(),
+        battery: @escaping @MainActor () -> BatteryReading = BatteryReading.watch,
         clock: @escaping @MainActor () -> Date = { .now }
     ) {
         self.healthKit = healthKit
         self.detection = detection
         self.route = route
         self.climb = climb
+        self.battery = battery
         self.clock = clock
         legStartedAt = clock()
         super.init()
@@ -222,6 +228,7 @@ final class WatchWorkoutStore: NSObject {
         finishedLegs = []
         pendingSplit = nil
         resetPause()
+        endedOnLowBattery = false
         state = .idle
         lastError = nil
     }
@@ -308,6 +315,7 @@ final class WatchWorkoutStore: NSObject {
         Task {
             await self.splitIfDue(at: now)
             await self.mirrorIfDue(at: now)
+            await self.endIfBatteryCritical()
         }
     }
 
@@ -421,28 +429,6 @@ extension WatchWorkoutStore {
         )
     }
 
-    /// Cut the outing here, if a queued change has held long enough.
-    ///
-    /// Called from `ingest`, so it runs at HealthKit's own pace rather than on
-    /// a timer of its own — there is nothing to decide between two batches.
-    /// Internal so a test can drive it with an explicit clock — `ingest` takes
-    /// an `HKLiveWorkoutBuilder`, which no test can build.
-    func splitIfDue(at now: Date) async {
-        guard case .active = state,
-              let pending = pendingSplit,
-              // From the decision, never from the back-dated boundary: a
-              // switch noticed late would otherwise be cut on arrival, before
-              // any reading could contradict it (issue #331).
-              now.timeIntervalSince(pending.confirmedAt) >= Self.minimumLegDuration(becoming: pending.activity)
-        else { return }
-        pendingSplit = nil
-        // A run at a walking pace is not one (issue #390): the leg stays whole.
-        guard pending.activity != .running || isPlausibleRun(since: pending.date, until: now) else {
-            return dropImplausibleRun(at: now)
-        }
-        await splitLeg(to: pending.activity, at: pending.date)
-    }
-
     /// Close the leg in flight and open the next one at the same instant.
     ///
     /// This is what Forme does when you tap « + » mid-outing, and the only
@@ -453,7 +439,8 @@ extension WatchWorkoutStore {
     /// already its own saved workout. If the next leg cannot be opened the
     /// outing ends, with the reason on screen — which is a smaller loss than a
     /// session that keeps running while recording nothing.
-    private func splitLeg(to activity: SessionActivity, at boundary: Date) async {
+    /// Internal for `splitIfDue`, in `WatchWorkoutStore+Legs`.
+    func splitLeg(to activity: SessionActivity, at boundary: Date) async {
         guard let handle = sessionHandle else { return }
         await stampClimb(on: handle, from: legStartedAt, to: boundary)
         let closed = await runOrTrap("fermeture de la jambe") {

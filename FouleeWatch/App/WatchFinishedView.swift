@@ -32,6 +32,8 @@ struct WatchFinishedView: View {
     /// outdoors on `v1.38` and the one sentence that would have explained why
     /// was produced and thrown away.
     var errorMessage: String?
+    /// The outing ended itself before the battery could (issue #614).
+    var endedOnLowBattery = false
     var onRetry: () -> Void
     var onDone: () -> Void
 
@@ -91,7 +93,10 @@ struct WatchFinishedView: View {
     /// failure. A success that printed a stale error would be worse than one
     /// that printed nothing — and `lastError` outlives the failure that set it,
     /// so the guard is load-bearing, not decorative.
-    var reasonText: String? { saveFailed ? errorMessage : nil }
+    var reasonText: String? {
+        if saveFailed { return errorMessage }
+        return endedOnLowBattery ? String(localized: "Batterie presque vide : ta sortie est arrêtée et enregistrée.") : nil
+    }
 
     /// « 3 100 pas · 2,40 km · ↑ 120 m · ↓ 115 m »: the climb and the
     /// descent when the barometer measured them (issues #535, #565).
