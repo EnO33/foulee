@@ -4,9 +4,12 @@
 App Store Connect rejects a field over its limit only once `deliver` is
 halfway through an upload (issue #581). This catches it on the pull request:
 every field present and within its limit, keywords without spaces or words the
-name and subtitle already index, URLs on https.
+name and subtitle already index, URLs on https. The French « What's New » is
+not in fastlane/metadata: the Fastfile takes it from docs/releases/X.Y.Z.md
+(issue #622), so those notes are held to the same limit.
 
-Usage: tools/check_store_metadata.py [metadata_dir]   (default fastlane/metadata)
+Usage: tools/check_store_metadata.py [metadata_dir] [releases_dir]
+       (default fastlane/metadata docs/releases)
 """
 
 import re
@@ -26,6 +29,8 @@ LIMITS = {
 KEYWORDS_BYTES = 100
 URLS = ("support_url", "privacy_url", "marketing_url")
 REQUIRED = (*LIMITS, "keywords", *URLS)
+# The locale whose release notes come from docs/releases.
+NOTES_LOCALE = "fr-FR"
 
 
 def words(text: str) -> set[str]:
@@ -36,6 +41,8 @@ def check_locale(locale: Path) -> list[str]:
     fields = {}
     errors = []
     for field in REQUIRED:
+        if field == "release_notes" and locale.name == NOTES_LOCALE:
+            continue
         path = locale / f"{field}.txt"
         value = path.read_text(encoding="utf-8").strip() if path.exists() else ""
         if not value:
@@ -43,7 +50,7 @@ def check_locale(locale: Path) -> list[str]:
         fields[field] = value
 
     for field, limit in LIMITS.items():
-        if len(fields[field]) > limit:
+        if field in fields and len(fields[field]) > limit:
             errors.append(f"{locale.name}/{field}.txt: {len(fields[field])} characters, limit {limit}")
 
     keywords = fields["keywords"]
@@ -63,13 +70,26 @@ def check_locale(locale: Path) -> list[str]:
     return errors
 
 
+def check_release_notes(releases: Path) -> list[str]:
+    # The Fastfile drops the Markdown and puts a blank line between items: the
+    # file's length plus one per line bounds the text the store receives.
+    errors = []
+    for notes in sorted(releases.glob("[0-9]*.md")):
+        text = notes.read_text(encoding="utf-8").strip()
+        length = len(text) + text.count("\n") + 1
+        if length > LIMITS["release_notes"]:
+            errors.append(f"{notes}: up to {length} characters on the store, limit {LIMITS['release_notes']}")
+    return errors
+
+
 def main() -> int:
     root = Path(sys.argv[1] if len(sys.argv) > 1 else "fastlane/metadata")
+    releases = Path(sys.argv[2] if len(sys.argv) > 2 else "docs/releases")
     locales = sorted(p for p in root.iterdir() if p.is_dir() and p.name not in {"review_information", "trade_representative_contact_information"})
     if not locales:
         print(f"{root}: no locale folder", file=sys.stderr)
         return 1
-    errors = [e for locale in locales for e in check_locale(locale)]
+    errors = [e for locale in locales for e in check_locale(locale)] + check_release_notes(releases)
     for error in errors:
         print(f"::error::{error}")
     if not errors:

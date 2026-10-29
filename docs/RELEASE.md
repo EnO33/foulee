@@ -158,7 +158,12 @@ this material is ever committed (see `.gitignore`).
 
 First write the release notes in `docs/releases/X.Y.Z.md` and merge them to
 `main` (issue #638): they become the GitHub release that the website's
-« Nouveautés » page reads. They are for users, in French, addressing them as
+« Nouveautés » page reads, the « What to Test » text of the TestFlight build,
+and the French « What's New » of the App Store (issue #622). Start from the
+draft release « Prochaine version » under **Releases**: the « Release draft »
+workflow rewrites it on every push to `main` with the titles of the pull
+requests merged since the last `v*` tag. It is a list for you, not for users:
+only the repository's writers see a draft, and the tag never publishes it. They are for users, in French, addressing them as
 « tu », 2 to 5 highlights, with no issue numbers
 ([`docs/releases/README.md`](releases/README.md)). The release workflow stops in
 its first seconds when the tagged commit has no notes for its version; add
@@ -524,9 +529,10 @@ Screenshots are only needed at promotion (step 10), never for TestFlight.
 TestFlight is the CI's final step on purpose — promotion to the store stays a
 deliberate, manual action:
 
-1. Update `fastlane/metadata/fr-FR/release_notes.txt` and its English twin
-   `en-US/release_notes.txt` for this version (a PR, like any change: CI
-   checks the listing).
+1. Update `fastlane/metadata/en-US/release_notes.txt` for this version (a PR,
+   like any change: CI checks the listing). The French notes are already
+   written: the workflow takes them from `docs/releases/X.Y.0.md`, as plain
+   text, and stops when that file is missing.
 2. **Actions → Store listing → Run workflow**, with the version string
    (e.g. `1.55`). It creates the version in App Store Connect when there is
    none to edit yet, and writes the listing (§ 10.1) to it.
@@ -552,7 +558,7 @@ the next time the workflow runs.
 | `keywords.txt` | Keywords, comma-separated, no spaces | 100 bytes |
 | `promotional_text.txt` | Promotional text | 170 characters |
 | `description.txt` | Description | 4000 characters |
-| `release_notes.txt` | What's New | 4000 characters |
+| `release_notes.txt` (`en-US/` only) | What's New | 4000 characters |
 | `support_url.txt`, `privacy_url.txt`, `marketing_url.txt` | URLs (getfoulee.app) | https |
 
 `en-US/` holds the same files in English (issue #592), written for the US
