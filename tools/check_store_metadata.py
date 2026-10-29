@@ -4,9 +4,10 @@
 App Store Connect rejects a field over its limit only once `deliver` is
 halfway through an upload (issue #581). This catches it on the pull request:
 every field present and within its limit, keywords without spaces or words the
-name and subtitle already index, URLs on https. The French « What's New » is
-not in fastlane/metadata: the Fastfile takes it from docs/releases/X.Y.Z.md
-(issue #622), so those notes are held to the same limit.
+name and subtitle already index, URLs on https. The « What's New » is not in
+fastlane/metadata: the Fastfile takes it from docs/releases/X.Y.Z.md and its
+English translation X.Y.Z.en.md (issue #622), so those notes are held to the
+same limit, and every version has both.
 
 Usage: tools/check_store_metadata.py [metadata_dir] [releases_dir]
        (default fastlane/metadata docs/releases)
@@ -29,8 +30,6 @@ LIMITS = {
 KEYWORDS_BYTES = 100
 URLS = ("support_url", "privacy_url", "marketing_url")
 REQUIRED = (*LIMITS, "keywords", *URLS)
-# The locale whose release notes come from docs/releases.
-NOTES_LOCALE = "fr-FR"
 
 
 def words(text: str) -> set[str]:
@@ -41,7 +40,7 @@ def check_locale(locale: Path) -> list[str]:
     fields = {}
     errors = []
     for field in REQUIRED:
-        if field == "release_notes" and locale.name == NOTES_LOCALE:
+        if field == "release_notes":
             continue
         path = locale / f"{field}.txt"
         value = path.read_text(encoding="utf-8").strip() if path.exists() else ""
@@ -79,6 +78,8 @@ def check_release_notes(releases: Path) -> list[str]:
         length = len(text) + text.count("\n") + 1
         if length > LIMITS["release_notes"]:
             errors.append(f"{notes}: up to {length} characters on the store, limit {LIMITS['release_notes']}")
+        if not notes.name.endswith(".en.md") and not notes.with_suffix(".en.md").exists():
+            errors.append(f"{notes}: no English translation {notes.with_suffix('.en.md').name}")
     return errors
 
 

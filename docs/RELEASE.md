@@ -162,15 +162,17 @@ this material is ever committed (see `.gitignore`).
 
 ## 8. Cut a release
 
-First write the release notes in `docs/releases/X.Y.Z.md` and merge them to
-`main` (issue #638): they become the GitHub release that the website's
-« Nouveautés » page reads, the « What to Test » text of the TestFlight build,
-and the French « What's New » of the App Store (issue #622). Start from the
+First write the release notes in `docs/releases/X.Y.Z.md`, and their English
+translation in `X.Y.Z.en.md`, and merge them to `main` (issue #638): they
+become the GitHub release that the website's « Nouveautés » and « What's new »
+pages read (the English notes under a « ## English » heading), the French
+« What to Test » text of the TestFlight build, and the App Store's « What's
+New » in each language (issue #622). Start from the
 draft release « Prochaine version » under **Releases**: the « Release draft »
 workflow rewrites it on every push to `main` with the titles of the pull
 requests merged since the last `v*` tag. It is a list for you, not for users:
-only the repository's writers see a draft, and the tag never publishes it. They are for users, in French, addressing them as
-« tu », 2 to 5 highlights, with no issue numbers
+only the repository's writers see a draft, and the tag never publishes it. They are for users, addressing them as « tu »
+(« you » in English), 2 to 5 highlights, with no issue numbers
 ([`docs/releases/README.md`](releases/README.md)). The release workflow stops in
 its first seconds when the tagged commit has no notes for its version; add
 them, then move the tag to the new commit.
@@ -535,10 +537,9 @@ Screenshots are only needed at promotion (step 10), never for TestFlight.
 TestFlight is the release's final step on purpose: the store gets a build only
 when you run the submission and approve it.
 
-1. Update `fastlane/metadata/en-US/release_notes.txt` for this version (a PR,
-   like any change: CI checks the listing). The French notes are already
-   written: the workflows take them from `docs/releases/X.Y.Z.md`, as plain
-   text, and stop when that file is missing.
+1. Nothing to write for « What's New »: the workflows take it, as plain
+   text, from the notes the release needed, `docs/releases/X.Y.Z.md` in
+   French and `X.Y.Z.en.md` in English, and stop when either is missing.
 2. Upload the **screenshots** (step 9.3) when the set has changed.
 3. Wait until TestFlight has processed the tag's build.
 4. **Actions → App Store submission → Run workflow**, with the tag (e.g.
@@ -587,7 +588,6 @@ the next time the workflow runs.
 | `keywords.txt` | Keywords, comma-separated, no spaces | 100 bytes |
 | `promotional_text.txt` | Promotional text | 170 characters |
 | `description.txt` | Description | 4000 characters |
-| `release_notes.txt` (`en-US/` only) | What's New | 4000 characters |
 | `support_url.txt`, `privacy_url.txt`, `marketing_url.txt` | URLs (getfoulee.app) | https |
 
 `en-US/` holds the same files in English (issue #592), written for the US

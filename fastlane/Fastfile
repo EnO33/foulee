@@ -10,14 +10,16 @@ def asc_api_key
   )
 end
 
-# The user-facing notes of docs/releases/X.Y.Z.md (issue #622), as the plain
-# text TestFlight and the App Store show: no Markdown, one bullet per item,
-# a blank line between them. `version` may be X.Y, as the « Store listing »
-# workflow takes it; the tags are X.Y.Z. Missing notes stop the lane.
-def release_notes(version)
+# The user-facing notes of docs/releases/X.Y.Z.md (issue #622), or of their
+# English translation X.Y.Z.en.md, as the plain text TestFlight and the App
+# Store show: no Markdown, one bullet per item, a blank line between them.
+# `version` may be X.Y, as the « Store listing » workflow takes it; the tags
+# are X.Y.Z. Missing notes stop the lane.
+def release_notes(version, suffix = "")
   version = "#{version}.0" if version.count(".") == 1
-  path = File.expand_path("../docs/releases/#{version}.md", __dir__)
-  UI.user_error!("No release notes in docs/releases/#{version}.md: write them first") unless File.exist?(path)
+  file = "docs/releases/#{version}#{suffix}.md"
+  path = File.expand_path("../#{file}", __dir__)
+  UI.user_error!("No release notes in #{file}: write them first") unless File.exist?(path)
   File.read(path)
       .gsub(/\[([^\]]+)\]\([^)]+\)/, '\\1') # links keep their text
       .gsub("**", "")
@@ -29,15 +31,14 @@ end
 # What the metadata and submit lanes send to the `version` of App Store
 # Connect: the listing of fastlane/metadata, with no binary and no
 # screenshots (those go through the release and the screenshots lane). The
-# French « What's New » is the version's docs/releases notes (issue #622); the
-# English one stays in en-US/release_notes.txt until those notes have a
-# translation. deliver creates the version when App Store Connect has none to
+# « What's New » in each language is the version's docs/releases notes
+# (issue #622). deliver creates the version when App Store Connect has none to
 # edit yet.
 def listing(version)
   {
     api_key: asc_api_key,
     app_version: version,
-    release_notes: { "fr-FR" => release_notes(version) },
+    release_notes: { "fr-FR" => release_notes(version), "en-US" => release_notes(version, ".en") },
     skip_binary_upload: true,
     skip_screenshots: true,
     # With an API key, precheck fails outright on in-app purchases, after the
