@@ -43,6 +43,21 @@ nonisolated public enum CloudSettingsSync {
         copy(keys, stamp: stamp, from: local, to: cloud)
     }
 
+    /// Brings the set back to its defaults, here and on the other devices
+    /// (issue #618): the keys are removed and the empty set goes up with a
+    /// fresh stamp, so the next sync of every device pulls the removal rather
+    /// than sending its own set back.
+    public static func reset(
+        _ keys: [String],
+        local: SettingsKeyValueStore,
+        cloud: SettingsKeyValueStore,
+        now: Date,
+        stamp: String = modifiedAtKey
+    ) {
+        for key in keys { local.removeObject(forKey: key) }
+        localDidChange(keys, local: local, cloud: cloud, now: now, stamp: stamp)
+    }
+
     /// Brings both sides to the newer set, at launch and whenever iCloud says
     /// another device changed something.
     ///

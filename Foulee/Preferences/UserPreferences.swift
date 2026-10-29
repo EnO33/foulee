@@ -93,6 +93,8 @@ final class UserPreferences {
     private var isApplyingCloud = false
     @ObservationIgnored
     @Dependency(\.date) private var date
+    @ObservationIgnored
+    @Dependency(\.outingMerges) private var outingMerges
 
     init(defaults: UserDefaults = .standard, cloud: SettingsKeyValueStore? = nil) {
         self.defaults = defaults
@@ -163,6 +165,23 @@ extension UserPreferences {
             seeds: hasCompletedOnboarding
         )
         if outcome == .pulled { reload() }
+    }
+
+    /// Réglages › Réinitialiser (issue #618): every setting back to its
+    /// default and every outing merge undone, on this iPhone and, through
+    /// iCloud, on the others; then the onboarding again, on this iPhone only.
+    /// Nothing in Santé is touched.
+    func reset() {
+        if let cloud {
+            CloudSettingsSync.reset(Keys.synced, local: defaults, cloud: cloud, now: date.now)
+        } else {
+            for key in Keys.synced { defaults.removeObject(forKey: key) }
+        }
+        outingMerges.write([])
+        // Before the reload: a new install's defaults, hydration on included.
+        defaults.removeObject(forKey: Keys.hasCompletedOnboarding)
+        reload()
+        hasCompletedOnboarding = false
     }
 
     private func save(_ value: Any, forKey key: String) {

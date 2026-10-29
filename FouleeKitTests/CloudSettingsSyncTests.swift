@@ -135,4 +135,27 @@ struct CloudSettingsSyncTests {
             #expect(cloud.object(forKey: stamp) as? Double == 10)
         }
     }
+
+    @Test("A reset empties both sides, and another device pulls it instead of pushing its set")
+    func resetReachesOtherDevices() throws {
+        try withStores { local, cloud in
+            local.set(30, forKey: "preferences.minutesGoal")
+            local.set("dark", forKey: "preferences.themeMode")
+            CloudSettingsSync.localDidChange(keys, local: local, cloud: cloud, now: Date(timeIntervalSince1970: 100))
+            let otherName = "cloud-sync-other-\(UUID().uuidString)"
+            let other = try #require(UserDefaults(suiteName: otherName))
+            defer { other.removePersistentDomain(forName: otherName) }
+            #expect(CloudSettingsSync.reconcile(keys, local: other, cloud: cloud, seeds: true) == .pulled)
+
+            CloudSettingsSync.reset(keys, local: local, cloud: cloud, now: Date(timeIntervalSince1970: 200))
+
+            #expect(local.object(forKey: "preferences.minutesGoal") == nil)
+            #expect(cloud.object(forKey: "preferences.minutesGoal") == nil)
+            #expect(cloud.object(forKey: "preferences.themeMode") == nil)
+            #expect(cloud.object(forKey: stamp) as? Double == 200)
+            #expect(CloudSettingsSync.reconcile(keys, local: other, cloud: cloud, seeds: true) == .pulled)
+            #expect(other.object(forKey: "preferences.minutesGoal") == nil)
+            #expect(other.object(forKey: stamp) as? Double == 200)
+        }
+    }
 }
