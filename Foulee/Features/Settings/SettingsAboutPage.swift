@@ -1,9 +1,13 @@
+import FouleeKit
 import SwiftUI
 
 /// À propos (issue #396): which build this is — what a bug report needs —
-/// and where to read the policy, get help, or see the code.
+/// and where to read the policy, get help, or see the code. A report can
+/// carry the device's diagnostics, only if the user chooses (issue #610).
 struct SettingsAboutPage: View {
     private let version = AppVersion.current
+    @State private var report: ProblemReport?
+    @State private var attachesSummary = true
 
     var body: some View {
         GlassSection(footer: "Appui long sur la version pour la copier.") {
@@ -25,10 +29,44 @@ struct SettingsAboutPage: View {
             Divider()
             link("FAQ Garmin", icon: "questionmark.circle.fill", url: AppLinks.garminFAQ)
             Divider()
-            link("Signaler un problème", icon: "exclamationmark.bubble.fill", url: AppLinks.reportIssue)
-            Divider()
             link("Code source", icon: "chevron.left.forwardslash.chevron.right", url: AppLinks.sourceCode)
         }
+        GlassSection(
+            "Signaler un problème",
+            footer: "Rien ne part sans toi. Le résumé ne contient ni donnée de santé ni position."
+        ) {
+            SettingsToggle(
+                "Joindre le résumé",
+                detail: "Version, appareil et derniers incidents",
+                isOn: $attachesSummary
+            )
+            if let report {
+                DisclosureGroup("Voir le résumé") {
+                    Text(verbatim: report.summary)
+                        .font(FouleeFont.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
+                }
+                .font(FouleeFont.body)
+            }
+            Divider()
+            link("Ouvrir un signalement", icon: "exclamationmark.bubble.fill", url: issueURL)
+            if let report {
+                Divider()
+                ShareLink(item: report.fullReport, preview: SharePreview("Rapport de diagnostic Foulée")) {
+                    label("Partager le rapport complet", icon: "square.and.arrow.up", trailing: "chevron.right")
+                }
+                .buttonStyle(.pressable)
+                .accessibilityHint("Avec les traces techniques, pour un envoi privé")
+            }
+        }
+        .task { report = await DiagnosticsCollector.shared.report() }
+    }
+
+    private var issueURL: URL {
+        guard attachesSummary, let report else { return AppLinks.reportIssue }
+        return AppLinks.reportIssue(body: report.issueBody)
     }
 
     private func row(label: LocalizedStringResource, value: String) -> some View {
@@ -45,23 +83,27 @@ struct SettingsAboutPage: View {
     /// shows it outside the app.
     private func link(_ title: LocalizedStringResource, icon: String, url: URL) -> some View {
         Link(destination: url) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundStyle(FouleeColor.accentMid)
-                    .frame(width: 24)
-                    .accessibilityHidden(true)
-                Text(title)
-                    .font(FouleeFont.body)
-                    .foregroundStyle(.primary)
-                Spacer(minLength: 0)
-                Image(systemName: "arrow.up.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.tertiary)
-                    .accessibilityHidden(true)
-            }
-            .contentShape(Rectangle())
+            label(title, icon: icon, trailing: "arrow.up.right")
         }
         .buttonStyle(.pressable)
         .accessibilityHint("S'ouvre dans le navigateur")
+    }
+
+    private func label(_ title: LocalizedStringResource, icon: String, trailing: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(FouleeColor.accentMid)
+                .frame(width: 24)
+                .accessibilityHidden(true)
+            Text(title)
+                .font(FouleeFont.body)
+                .foregroundStyle(.primary)
+            Spacer(minLength: 0)
+            Image(systemName: trailing)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
+        }
+        .contentShape(Rectangle())
     }
 }

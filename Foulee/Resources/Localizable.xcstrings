@@ -1253,12 +1253,92 @@
         }
       }
     },
+    "Avec les traces techniques, pour un envoi privé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With the technical traces, to send privately"
+          }
+        }
+      }
+    },
     "Balade" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stroll"
+          }
+        }
+      }
+    },
+    "Joindre le résumé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attach the summary"
+          }
+        }
+      }
+    },
+    "Ouvrir un signalement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open a report"
+          }
+        }
+      }
+    },
+    "Partager le rapport complet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share the full report"
+          }
+        }
+      }
+    },
+    "Rapport de diagnostic Foulée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foulée diagnostic report"
+          }
+        }
+      }
+    },
+    "Rien ne part sans toi. Le résumé ne contient ni donnée de santé ni position." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing leaves without you. The summary holds no health data and no location."
+          }
+        }
+      }
+    },
+    "Version, appareil et derniers incidents" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version, device and latest incidents"
+          }
+        }
+      }
+    },
+    "Voir le résumé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show the summary"
           }
         }
       }

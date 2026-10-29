@@ -39,6 +39,17 @@ struct AppLinksTests {
         #expect(url.path().hasPrefix("/getfoulee/foulee"))
     }
 
+    @Test("A report's text rides in the new issue's body, every reserved character escaped")
+    func reportIssueBody() throws {
+        let body = "a+b & c=d #1\n```"
+        let url = AppLinks.reportIssue(body: body)
+        #expect(url.path() == AppLinks.reportIssue.path())
+        let query = try #require(url.query(percentEncoded: true))
+        #expect(!query.dropFirst("body=".count).contains(where: { "+&=# \n`".contains($0) }))
+        let items = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
+        #expect(items == [URLQueryItem(name: "body", value: body)])
+    }
+
     @Test("The version carries its build when there is one")
     func version() {
         #expect(AppVersion.text(version: "1.52", build: "123") == "1.52 (123)")
