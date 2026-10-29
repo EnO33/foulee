@@ -65,7 +65,7 @@ measurements = [
     for value in metric["measurements"]
 ]
 if not measurements:
-    sys.exit("No launch measurement found in the result bundle")
+    sys.exit(f"No launch measurement found in the result bundle:\n{json.dumps(tests, indent=2)}")
 median = round(statistics.median(measurements), 3)
 
 with open(budget_path) as handle:
