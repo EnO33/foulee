@@ -105,7 +105,7 @@ hangs the iPhone kept, only if you choose to attach it: see
 
 ## Prerequisites
 
-- macOS Tahoe 26.6+ on Apple silicon, with Xcode 27+ (Swift 6.4)
+- macOS Tahoe 26.6+ on Apple silicon, with Xcode 27.1+ (Swift 6.4, iOS 27.1 SDK)
 - [Tuist](https://tuist.dev) (`brew install --cask tuist`)
 - [SwiftLint](https://github.com/realm/SwiftLint) (`brew install swiftlint`)
 

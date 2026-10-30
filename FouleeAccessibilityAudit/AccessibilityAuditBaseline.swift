@@ -23,6 +23,7 @@ enum AccessibilityAuditBaseline {
 
     /// « contrast · J'ai bu »: the kind, then the element's identifier, or its
     /// label when it has none.
+    @MainActor
     static func finding(_ issue: XCUIAccessibilityAuditIssue) -> String {
         let element = issue.element.map { $0.identifier.isEmpty ? $0.label : $0.identifier } ?? ""
         return "\(name(of: issue.auditType)) · \(element)"

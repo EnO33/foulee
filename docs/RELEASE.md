@@ -189,13 +189,16 @@ Add it to an internal testing group to install via the TestFlight app. The
 last job publishes the GitHub release « Foulée 0.1.0 » with the notes; it
 runs only once TestFlight has the build, and re-running it rewrites the notes.
 
-The release runs on GitHub's `xcode-27` image with the **latest stable Xcode**
-it ships (`setup-xcode` with `latest-stable`: no beta; a Release Candidate
-counts as stable). CI, the release and the Swift packages job all select it the
-same way (issue #404), so the build that ships is the one the tests ran
-against, and nothing needs bumping when the image gains a newer Xcode (issue
-#462). The version each run used is printed by the « Show Xcode version »
-step. It therefore links the **iOS 27 / watchOS 27 SDK**: system
+The release runs on GitHub's `xcode-27` image with the **newest stable Xcode
+27.x from 27.1 on** it ships (`setup-xcode` with `'^27.1'`: no beta). 27.1 is
+the floor because its SDK lays the app out on the iPhone Duo inner screen
+instead of compatibility mode, and App Store Connect refuses builds made with
+an older SDK from April 2027 (issue #660). CI, the release and the Swift
+packages job all select it the same way (issue #404), so the build that ships
+is the one the tests ran against, and a newer 27.x on the image needs no bump
+(issue #462); moving to Xcode 28 is a deliberate change of the three pins. The
+version each run used is printed by the « Show Xcode version »
+step. It therefore links the **iOS 27.1 / watchOS 27 SDK**: system
 controls take the iOS 27 look even where no code changed. Review the screens
 and recapture the screenshots on the iOS 27 runtime before promoting a build to
 the store (issue #408).

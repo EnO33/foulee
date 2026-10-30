@@ -14,6 +14,7 @@ import XCTest
 /// `ScreenshotSeed`, served by `WatchScreenshotMode`; nothing here reads Santé,
 /// and the session's elapsed clock is a seeded constant rather than a running
 /// timer, so the shutter can fire whenever it likes.
+@MainActor
 final class WatchScreenshotCaptureTests: XCTestCase {
     /// Enough turns of the crown to reach the bottom of the home's scroll view
     /// on any watch in the set. Overshooting is free — the end clamps, and a

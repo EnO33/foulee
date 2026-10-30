@@ -10,7 +10,7 @@ struct ActiveWalkStoreTests {
     @Test("start transitions idle → active and assigns the start date")
     func startTransitions() async {
         let frozen = Date(timeIntervalSince1970: 1_700_000_000)
-        await withDependencies {
+        withDependencies {
             $0.date = .constant(frozen)
             $0.pedometer = .testValue
             $0.healthKit = .testValue
@@ -26,7 +26,7 @@ struct ActiveWalkStoreTests {
     @Test("start is a no-op when a session is already active")
     func startIsIdempotent() async {
         let frozen = Date(timeIntervalSince1970: 1_700_000_000)
-        await withDependencies {
+        withDependencies {
             $0.date = .constant(frozen)
             $0.pedometer = .testValue
             $0.healthKit = .testValue
@@ -106,7 +106,7 @@ struct ActiveWalkStoreTests {
 
     @Test("The Live Activity is handed the activity the session was started with")
     func liveActivityCarriesTheStartedActivity() async {
-        await withDependencies {
+        withDependencies {
             $0.date = .constant(Date(timeIntervalSince1970: 1_700_000_000))
             $0.pedometer = .testValue
             $0.healthKit = .testValue
