@@ -8,7 +8,7 @@ import SwiftUI
 struct ScreenColumn: ViewModifier {
     /// Wide enough for the stats grid and the Bilan's rings side by side,
     /// narrow enough that a line of text stays readable.
-    static let maxWidth: CGFloat = 640
+    nonisolated static let maxWidth: CGFloat = 640
 
     var gutter: CGFloat
 
