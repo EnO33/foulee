@@ -120,6 +120,7 @@ enum ScreenshotCapture {
     static let timeout: TimeInterval = 30
 }
 
+@MainActor
 extension XCUIElementQuery {
     /// The element showing `label`: that exact label, or under the
     /// pseudo-language one that contains it (`ScreenshotCapture.isPseudo`).
@@ -129,6 +130,7 @@ extension XCUIElementQuery {
     }
 }
 
+@MainActor
 extension XCTestCase {
     /// Launch the app in capture mode. `onboarding` seeds the preferences as a
     /// fresh install so `RootView` renders the onboarding flow instead of the

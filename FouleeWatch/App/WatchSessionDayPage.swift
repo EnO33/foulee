@@ -115,7 +115,7 @@ struct WatchSessionDayPage: View {
     ///
     /// Static and internal so the two edge cases are asserted rather than
     /// eyeballed — a `View`'s body is not somewhere a test can reach.
-    static func fraction(_ value: Int, of goal: Int) -> Double {
+    nonisolated static func fraction(_ value: Int, of goal: Int) -> Double {
         guard goal > 0 else { return 0 }
         return min(1, Double(value) / Double(goal))
     }

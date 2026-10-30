@@ -72,6 +72,7 @@ enum WatchScreenshotCapture {
     }
 }
 
+@MainActor
 extension XCUIElementQuery {
     /// The element showing `label`: that exact label, or under the
     /// pseudo-language one that contains it (`WatchScreenshotCapture.isPseudo`).
@@ -81,6 +82,7 @@ extension XCUIElementQuery {
     }
 }
 
+@MainActor
 extension XCTestCase {
     /// Launch the watch app in capture mode.
     @discardableResult

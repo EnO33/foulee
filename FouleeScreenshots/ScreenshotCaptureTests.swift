@@ -13,6 +13,7 @@ import XCTest
 /// Determinism does not depend on that order: every number on screen comes from
 /// `ScreenshotSeed`, and the one clock move the run performs (starting a
 /// session) is a fixed offset inside the same hour of the same pinned day.
+@MainActor
 final class ScreenshotCaptureTests: XCTestCase {
     /// Enough swipes to hit either end of the home's scroll view on any iPhone
     /// in the set. Overshooting is free — both ends clamp.

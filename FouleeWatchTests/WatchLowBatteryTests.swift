@@ -20,7 +20,7 @@ struct WatchLowBatteryTests {
         await store.start(activity: .walking)
         stub.battery = BatteryReading(level: 0.04, isCharging: false)
         await store.endIfBatteryCritical()
-        let saveFailed = try #require(savedFlag(store))
+        let saveFailed = try #require(savedFlag(store) as Bool?)
         #expect(!saveFailed)
         #expect(store.endedOnLowBattery)
         #expect(stub.endCollectionCalls == 1)
