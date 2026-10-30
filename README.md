@@ -153,6 +153,7 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 ├── FouleeTests/           # Unit tests that need the app
 ├── FouleeAccessibilityAudit/ # Accessibility audit (UI tests) + its baseline
 ├── FouleeLaunchTime/      # Launch time (UI test) + its budget
+├── FouleeSmoke/           # Walk through the app on the iPhone Duo (UI tests)
 ├── FouleeConnectIQ/       # Garmin Connect IQ app (Monkey C) — not part of the Tuist build
 ├── .github/actions/       # Shared CI steps (project setup, failure reports)
 └── .github/workflows/     # CI (lint + build)
@@ -163,7 +164,8 @@ For the first WeatherKit build to succeed you also need the App ID `com.eno33.fo
 A first job, **Changes** (`dorny/paths-filter`), sorts the change into the
 app side and the Garmin side, and each job below runs only when its side is
 touched (a change to `ci.yml` itself counts as both). The app side is
-**Lint**, **Kit**, **iOS**, **Accessibility audit**, **Launch time**, **watchOS** and **Dead code**; the Garmin side is
+**Lint**, **Kit**, **iOS**, **Accessibility audit**, **Launch time**, **iPhone Duo**, **watchOS** and **Dead code**
+(**iPhone Duo** only when the iPhone app itself changes); the Garmin side is
 **Connect IQ** and **Connect IQ build**. **Kit** runs the FouleeKit tests on macOS, with
 no simulator. The two simulator jobs compile once each (`build-for-testing`,
 then `test-without-building`). **Dead code** builds the three schemes for their
@@ -192,6 +194,13 @@ a change that is slower on purpose, take the `launch-time` artifact of the CI
 run — recorded on CI's simulator, not on a faster Mac — or run
 `tools/launch_time.sh --record`; `tools/launch_time.sh` alone runs the same
 check as CI.
+
+**iPhone Duo** walks through the iPhone app on the iPhone Duo simulator's
+inner screen, in capture mode: the home, the Bilan, the settings and back, then
+an outing started and ended. A button out of reach in one posture is a
+rejection under Guideline 2.1(a). Neither `simctl` nor XCTest can fold the
+simulator, so the outer screen is checked by hand. `tools/smoke_test.sh` runs
+the same test as CI.
 
 Dependencies update themselves: Dependabot for the GitHub Actions, and the
 **Swift packages** workflow for the packages in `Project.swift` — every Monday,

@@ -75,6 +75,7 @@ enum ScreenshotCapture {
         let start, heroWatch, heroGarmin, currentStreak, seeInHealth, stopSession: String
         let statistics, drankGlass, hydration, glassByGlass, seeSummary: String
         let walkAndRun, portions, settings, inProgress, goAgain, close: String
+        let stop, outingFinished, finish: String
         /// The weather sheet's heading up to the hour: the rest is « 12:00 »
         /// in French and « 12:00 PM » in the US, with a narrow no-break space.
         let forecastAtNoon: String
@@ -86,7 +87,8 @@ enum ScreenshotCapture {
             statistics: "STATISTIQUES", drankGlass: "J'ai bu un verre", hydration: "Hydratation",
             glassByGlass: "Verre par verre", seeSummary: "Voir le bilan", walkAndRun: "Marche et course",
             portions: "PORTIONS", settings: "Réglages", inProgress: "EN COURS", goAgain: "Repartir",
-            close: "Fermer", forecastAtNoon: "Prévision à 12:00 "
+            close: "Fermer", stop: "Arrêter", outingFinished: "Sortie terminée", finish: "Terminer",
+            forecastAtNoon: "Prévision à 12:00 "
         )
 
         static let english = Labels(
@@ -96,7 +98,8 @@ enum ScreenshotCapture {
             statistics: "STATISTICS", drankGlass: "I had a glass", hydration: "Hydration",
             glassByGlass: "Glass by glass", seeSummary: "See the recap", walkAndRun: "Walk and run",
             portions: "PARTS", settings: "Settings", inProgress: "IN PROGRESS", goAgain: "Go again",
-            close: "Close", forecastAtNoon: "Forecast at 12:00"
+            close: "Close", stop: "Stop", outingFinished: "Workout finished", finish: "Finish",
+            forecastAtNoon: "Forecast at 12:00"
         )
     }
 
@@ -171,6 +174,11 @@ extension XCTestCase {
             "\(description) never appeared"
         )
         element.tap()
+    }
+
+    /// Close the sheet or screen on top with its « Fermer » button.
+    func close(_ app: XCUIApplication) {
+        tapWhenReady(app.buttons.labeled(ScreenshotCapture.label.close).firstMatch, "Close button")
     }
 
     /// Swipe until `element` can be tapped: down the screen first, then back

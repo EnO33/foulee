@@ -160,8 +160,4 @@ final class ScreenshotCaptureTests: XCTestCase {
         waitForScreen(app.staticTexts.labeled(ScreenshotCapture.label.inProgress), "Session in progress")
         capture("07_session")
     }
-
-    private func close(_ app: XCUIApplication) {
-        tapWhenReady(app.buttons.labeled(ScreenshotCapture.label.close).firstMatch, "Close button")
-    }
 }

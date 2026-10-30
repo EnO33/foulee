@@ -26,6 +26,7 @@ jobs:
     outputs:
       apple: ${{ steps.filter.outputs.apple }}
       garmin: ${{ steps.filter.outputs.garmin }}
+      iphone: ${{ steps.filter.outputs.iphone }}
       store: ${{ steps.filter.outputs.store }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -47,6 +48,7 @@ jobs:
               - FouleeLaunchTime/**
               - FouleeLiveActivity/**
               - FouleeScreenshots/**
+              - FouleeSmoke/**
               - FouleeTests/**
               - FouleeWatch/**
               - FouleeWatchScreenshots/**
@@ -63,6 +65,23 @@ jobs:
               - .swift-format
               - .periphery.yml
               - .periphery.baseline.json
+            # The iPhone app alone, for the iPhone Duo walk: a watch-only
+            # change cannot move a phone screen.
+            iphone:
+              - *workflow
+              - .github/actions/prepare-project/**
+              - .github/actions/report-test-failure/**
+              - Foulee/**
+              - FouleeKit/**
+              - FouleeScreenshots/ScreenshotCapture.swift
+              - FouleeSmoke/**
+              - Tuist/**
+              - tools/newest_iphone_simulator.sh
+              - tools/smoke_test.sh
+              - Project.swift
+              - Tuist.swift
+              - mise.toml
+              - .package.resolved
             garmin:
               - *workflow
               - .github/actions/prepare-connectiq/**
@@ -386,6 +405,29 @@ jobs:
         with:
           name: launch
 
+  # A walk through the iPhone app on the iPhone Duo's inner screen (issue
+  # #665): main screens and their way back, an outing started and ended. A
+  # button out of reach in one posture is a rejection under Guideline 2.1(a).
+  # The simulator cannot be folded, so the outer screen is not covered here.
+  duo:
+    name: iPhone Duo
+    needs: changes
+    if: needs.changes.outputs.iphone == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare-project
+
+      - name: Smoke test (iPhone Duo)
+        run: tools/smoke_test.sh
+
+      - uses: ./.github/actions/report-test-failure
+        if: failure()
+        with:
+          name: smoke
+
   watchos:
     name: watchOS
     needs: changes
@@ -554,12 +596,12 @@ jobs:
     # Every job but `changes` may skip: it runs only when the change touches
     # its side (and the dead-code job only on pull requests).
     name: Build & Test
-    needs: [changes, lint, store, connectiq, connectiq-build, kit, ios, accessibility, launch, watchos, deadcode]
+    needs: [changes, lint, store, connectiq, connectiq-build, kit, ios, accessibility, launch, duo, watchos, deadcode]
     if: always()
     runs-on: ubuntu-24.04
     steps:
       - name: Every platform passed
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
-          allowed-skips: lint, store, connectiq, connectiq-build, kit, ios, accessibility, launch, watchos, deadcode
+          allowed-skips: lint, store, connectiq, connectiq-build, kit, ios, accessibility, launch, duo, watchos, deadcode
           jobs: ${{ toJSON(needs) }}
