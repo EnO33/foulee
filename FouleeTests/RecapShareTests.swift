@@ -43,7 +43,7 @@ struct RecapShareTests {
         #expect(card.stats.map(\.label) == ["Distance", "Pas", "Sorties"])
         #expect(card.stats.map(\.value) == ["70,9 km", 82_594.groupedText(), "12"])
         #expect(card.bestDay == "Lundi 5 Oct. · 2 h 06")
-        #expect(card.message == "Ma semaine sur Foulée : 8 h 30 d'activité, objectif tenu 4 jours sur 5.")
+        #expect(card.summary == "Ma semaine sur Foulée : 8 h 30 d'activité, objectif tenu 4 jours sur 5.")
     }
 
     /// Only when the period climbed: a source that writes no climb must not
@@ -64,7 +64,7 @@ struct RecapShareTests {
         let card = RecapShareCard(recap: recap)
         #expect(card.heading == "Mon mois")
         #expect(card.periodTitle == "Septembre 2026")
-        #expect(card.message.hasPrefix("Mon mois sur Foulée : "))
+        #expect(card.summary.hasPrefix("Mon mois sur Foulée : "))
     }
 
     @Test("« jour » stays singular below two, and no planned day means no goal line")
@@ -84,7 +84,15 @@ struct RecapShareTests {
         recap.goalDaysMet = 0
         let card = RecapShareCard(recap: recap)
         #expect(card.goalLine == nil)
-        #expect(card.message == "Ma semaine sur Foulée : 8 h 30 d'activité.")
+        #expect(card.summary == "Ma semaine sur Foulée : 8 h 30 d'activité.")
+    }
+
+    /// The link is what lets a friend open Foulée, or find it (#629).
+    @Test("The message ends with the getfoulee.app link to the Bilan")
+    func messageLink() {
+        let card = RecapShareCard(recap: week())
+        #expect(card.message == "\(card.summary)\nhttps://getfoulee.app/bilan")
+        #expect(AppLinks.destination(of: AppLinks.bilan) == .weekRecap)
     }
 
     @Test("One outing is « Sortie », and no minutes means no best day")

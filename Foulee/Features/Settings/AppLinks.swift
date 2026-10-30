@@ -13,6 +13,9 @@ nonisolated enum AppLinks {
     static let privacyPolicy = page(.privacyPolicy)
     static let support = page(.support)
     static let garminFAQ = page(.garminFAQ)
+    /// The Bilan, as a universal link: French only, the site has no English
+    /// copy of its fallback pages.
+    static let bilan = link("\(website)/bilan")
     static let reportIssue = link("\(repository)/issues/new")
     static let sourceCode = link(repository)
     /// The Santé app, where every HealthKit grant is changed.

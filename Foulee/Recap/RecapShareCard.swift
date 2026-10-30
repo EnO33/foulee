@@ -31,8 +31,16 @@ struct RecapShareCard: Equatable, Sendable {
     var stats: [Stat]
     /// « Lundi 5 oct. · 2 h 06 », or `nil` for a period without minutes.
     var bestDay: String?
-    /// The text sent along with the image.
-    var message: String
+    /// « Ma semaine sur Foulée : 8 h 30 d'activité. », the sentence the
+    /// message opens with.
+    var summary: String
+
+    /// The text sent along with the image: the summary, then the site's
+    /// Bilan page (issue #629), which opens Foulée where it is installed and
+    /// offers the App Store where it is not.
+    var message: String {
+        "\(summary)\n\(AppLinks.bilan.absoluteString)"
+    }
 
     init(recap: Recap) {
         let isWeek = recap.period.kind == .week
@@ -68,9 +76,9 @@ struct RecapShareCard: Equatable, Sendable {
         }
         let (met, planned) = (recap.goalDaysMet, recap.goalDaysPlanned)
         if planned > 0 {
-            message = String(localized: "\(heading) sur Foulée : \(minutes) d'activité, objectif tenu \(met) jours sur \(planned).")
+            summary = String(localized: "\(heading) sur Foulée : \(minutes) d'activité, objectif tenu \(met) jours sur \(planned).")
         } else {
-            message = String(localized: "\(heading) sur Foulée : \(minutes) d'activité.")
+            summary = String(localized: "\(heading) sur Foulée : \(minutes) d'activité.")
         }
     }
 

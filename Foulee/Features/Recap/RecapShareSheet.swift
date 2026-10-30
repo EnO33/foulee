@@ -43,7 +43,7 @@ struct RecapShareSheet: View {
                 .scaledToFit()
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 .shadow(color: .black.opacity(0.18), radius: 16, y: 8)
-                .accessibilityLabel("Aperçu de l'image partagée : \(card.message)")
+                .accessibilityLabel("Aperçu de l'image partagée : \(card.summary)")
         } else {
             ProgressView()
         }
