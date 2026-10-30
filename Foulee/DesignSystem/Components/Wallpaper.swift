@@ -7,6 +7,20 @@ import SwiftUI
 struct Wallpaper: View {
     @Environment(\.colorScheme) private var colorScheme
 
+    /// The widest phone's full screen: the space the blobs were drawn for.
+    nonisolated static let referenceSize = CGSize(width: 440, height: 956)
+
+    /// How far the blobs spread in `size` (#663): drawn for a phone, they
+    /// stretch to fill a wider or taller window — the iPhone Duo's inner
+    /// screen — rather than leave its edges bare. Never below 1, so a phone
+    /// keeps the backdrop it always had.
+    nonisolated static func spread(in size: CGSize) -> CGSize {
+        CGSize(
+            width: max(size.width / referenceSize.width, 1),
+            height: max(size.height / referenceSize.height, 1)
+        )
+    }
+
     var body: some View {
         ZStack {
             Color(.systemBackground)
@@ -18,6 +32,12 @@ struct Wallpaper: View {
                     .offset(blob.offset)
                     .opacity(blob.opacity)
             }
+        }
+        // Stretched at render time rather than laid out in a GeometryReader:
+        // the backdrop is on screen at launch, and a layout pass more there
+        // cost the launch its budget.
+        .visualEffect { content, proxy in
+            content.scaleEffect(Self.spread(in: proxy.size))
         }
         .ignoresSafeArea()
         // No `.drawingGroup()` here: rasterising the blur into a Metal texture
