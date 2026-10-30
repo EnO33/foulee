@@ -16,16 +16,20 @@ nonisolated struct LiveWalkLayout: Equatable {
     static let maxScale: CGFloat = 1.4
     /// Between the figures and the map.
     static let spacing: CGFloat = 24
+    /// The narrowest phone: beside the map, a narrower pane would cut the
+    /// 232 pt ring, so a short and narrow window keeps the stacked layout.
+    static let minPaneWidth: CGFloat = 320
 
     let isSideBySide: Bool
     /// What the ring and the figure inside it are multiplied by, from 1.
     let scale: CGFloat
 
     init(size: CGSize) {
-        isSideBySide = size.width > size.height
+        let halfWidth = (size.width - Self.spacing) / 2
+        isSideBySide = size.width > size.height && halfWidth >= Self.minPaneWidth
         // The figures get half the width beside the map, and never more than
         // the reading column (#661).
-        let paneWidth = isSideBySide ? (size.width - Self.spacing) / 2 : size.width
+        let paneWidth = isSideBySide ? halfWidth : size.width
         let pane = CGSize(width: min(paneWidth, ScreenColumn.maxWidth), height: size.height)
         let fit = min(pane.width / Self.referenceSize.width, pane.height / Self.referenceSize.height)
         scale = min(max(fit, 1), Self.maxScale)
