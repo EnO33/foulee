@@ -24,8 +24,7 @@ struct WalkRouteMapView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            WalkRouteMap(strokes: strokes)
-                .ignoresSafeArea()
+            WalkRouteMap(strokes: strokes, isFullBleed: true)
             SheetCloseButton(accessibilityLabel: "Fermer la carte", action: onClose)
         }
     }
@@ -36,6 +35,9 @@ struct WalkRouteMapView: View {
 /// tall (#662).
 struct WalkRouteMap: View {
     let strokes: [RouteLines.Stroke]
+    /// The map runs under the bars and the screen's margins; the wait stays
+    /// in the safe area, clear of the camera and the hinge (#663).
+    var isFullBleed = false
 
     /// The live route is a single stroke; its identity never changes.
     private static let strokeID = UUID()
@@ -53,6 +55,7 @@ struct WalkRouteMap: View {
     var body: some View {
         if isDrawable {
             map
+                .ignoresSafeArea(edges: isFullBleed ? .all : [])
         } else {
             emptyState
         }

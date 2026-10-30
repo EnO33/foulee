@@ -188,12 +188,15 @@ struct WorkoutDetailRouteMap: View {
                     )
             }
             .ignoresSafeArea()
-            .overlay(alignment: .bottom) {
-                selectionCard
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 24)
-            }
             SheetCloseButton(accessibilityLabel: "Fermer la carte") { isExpanded = false }
+        }
+        // On the screen's safe area, not the map's full-bleed frame: the card
+        // keeps clear of the home indicator, and of the camera and hinge
+        // margins on the iPhone Duo's inner screen (#663).
+        .overlay(alignment: .bottom) {
+            selectionCard
+                .screenColumn(gutter: 16)
+                .padding(.bottom, 12)
         }
     }
 }
