@@ -22,21 +22,22 @@ struct Wallpaper: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            let spread = Self.spread(in: proxy.size)
-            let growth = max(spread.width, spread.height)
-            ZStack {
-                Color(.systemBackground)
-                ForEach(Array(blobs.enumerated()), id: \.offset) { _, blob in
-                    Circle()
-                        .fill(blob.color)
-                        .frame(width: blob.size * growth, height: blob.size * growth)
-                        .blur(radius: 70 * growth)
-                        .offset(x: blob.offset.width * spread.width, y: blob.offset.height * spread.height)
-                        .opacity(blob.opacity)
-                }
+        ZStack {
+            Color(.systemBackground)
+            ForEach(Array(blobs.enumerated()), id: \.offset) { _, blob in
+                Circle()
+                    .fill(blob.color)
+                    .frame(width: blob.size, height: blob.size)
+                    .blur(radius: 70)
+                    .offset(blob.offset)
+                    .opacity(blob.opacity)
             }
-            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+        // Stretched at render time rather than laid out in a GeometryReader:
+        // the backdrop is on screen at launch, and a layout pass more there
+        // cost the launch its budget.
+        .visualEffect { content, proxy in
+            content.scaleEffect(Self.spread(in: proxy.size))
         }
         .ignoresSafeArea()
         // No `.drawingGroup()` here: rasterising the blur into a Metal texture
