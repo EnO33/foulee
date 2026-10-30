@@ -378,6 +378,24 @@ let project = Project(
                 .target(name: "Foulee")
             ]
         ),
+        // A walk through the iPhone app on the iPhone Duo's inner screen
+        // (issue #665): main screens, then an outing started and ended. A UI
+        // test bundle on the capture mode, like `FouleeLaunchTime`, with its
+        // own scheme and CI job.
+        .target(
+            name: "FouleeSmoke",
+            destinations: [.iPhone],
+            product: .uiTests,
+            bundleId: "\(bundleIdBase).smoke",
+            deploymentTargets: deploymentTargets,
+            sources: [
+                "FouleeSmoke/**",
+                "FouleeScreenshots/ScreenshotCapture.swift"
+            ],
+            dependencies: [
+                .target(name: "Foulee")
+            ]
+        ),
         // The watch half of the capture set (issue #239). Same shape as
         // `FouleeScreenshots`, and absent from the `FouleeWatch` scheme's test
         // action for the same reason: CI's "Test (watchOS)" step runs the unit
@@ -446,6 +464,12 @@ let project = Project(
             shared: true,
             buildAction: .buildAction(targets: ["Foulee", "FouleeLaunchTime"]),
             testAction: .targets(["FouleeLaunchTime"])
+        ),
+        .scheme(
+            name: "FouleeSmoke",
+            shared: true,
+            buildAction: .buildAction(targets: ["Foulee", "FouleeSmoke"]),
+            testAction: .targets(["FouleeSmoke"])
         ),
         .scheme(
             name: "FouleeWatch",

@@ -4,6 +4,10 @@
 # Mac and in CI — the newest iOS runtime and the newest iPhone it supports.
 #
 #   source tools/newest_iphone_simulator.sh "Foulee Audit"
+#   source tools/newest_iphone_simulator.sh "Foulee Duo" com.apple.CoreSimulator.SimDeviceType.iPhone-Duo
+#
+# The second argument asks for that iPhone rather than the newest one, still on
+# the newest runtime, which must support it.
 #
 # Sets SIMULATOR_UDID, created under that name if missing and booted, and
 # SIMULATOR_NAME, « <iPhone>, iOS <version> », which the scripts record beside
@@ -12,7 +16,12 @@
 RUNTIME=$(xcrun simctl list runtimes available -j \
   | jq -c '[.runtimes[] | select(.platform == "iOS")] | sort_by(.version) | last')
 RUNTIME_ID=$(echo "$RUNTIME" | jq -r .identifier)
-DEVICE_TYPE=$(echo "$RUNTIME" | jq -c '[.supportedDeviceTypes[] | select(.productFamily == "iPhone")] | last')
+DEVICE_TYPE=$(echo "$RUNTIME" | jq -c --arg type "${2:-}" \
+  '[.supportedDeviceTypes[] | select(.productFamily == "iPhone") | select($type == "" or .identifier == $type)] | last')
+if [ "$DEVICE_TYPE" = "null" ]; then
+  echo "error: $(echo "$RUNTIME" | jq -r .identifier) has no $2 simulator" >&2
+  exit 1
+fi
 DEVICE_TYPE_ID=$(echo "$DEVICE_TYPE" | jq -r .identifier)
 SIMULATOR_NAME="$(echo "$DEVICE_TYPE" | jq -r .name), iOS $(echo "$RUNTIME" | jq -r .version)"
 SIMULATOR_UDID=$(xcrun simctl list devices available -j \
