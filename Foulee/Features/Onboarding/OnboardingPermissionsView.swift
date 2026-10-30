@@ -35,13 +35,13 @@ struct OnboardingPermissionsView: View {
                     heading
                     rows
                 }
-                .padding(.horizontal, 24)
+                .screenColumn(gutter: 24)
                 .padding(.top, 70)
                 .padding(.bottom, 8)
             }
             .scrollBounceBehavior(.basedOnSize)
             footer
-                .padding(.horizontal, 24)
+                .screenColumn(gutter: 24)
                 .padding(.bottom, 36)
         }
         .sheet(isPresented: $isShowingGarminGuide) {

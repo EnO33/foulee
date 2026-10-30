@@ -74,7 +74,7 @@ struct WorkoutDetailSheet: View {
                             .padding(.horizontal, 32)
                     }
                 }
-                .padding(.horizontal, 20)
+                .screenColumn()
                 .padding(.vertical, 16)
             }
         } else {

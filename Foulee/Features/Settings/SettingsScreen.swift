@@ -63,7 +63,7 @@ struct SettingsScreen: View {
                         resetRow
                     }
                 }
-                .padding(.horizontal, 20)
+                .screenColumn()
                 .padding(.top, 28)
                 .padding(.bottom, 40)
             }

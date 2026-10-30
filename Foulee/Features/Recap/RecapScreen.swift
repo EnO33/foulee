@@ -131,7 +131,7 @@ struct RecapScreen: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .padding(.horizontal, 20)
+                .screenColumn()
                 .padding(.top, 28)
                 .padding(.bottom, 40)
                 // Alongside the vertical scroll, never instead of it: only a

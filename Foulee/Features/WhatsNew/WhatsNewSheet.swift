@@ -55,7 +55,7 @@ struct WhatsNewSheet: View {
             PrimaryButton(title: "C'est noté", action: onClose)
                 .padding(.bottom, 8)
         }
-        .padding(.horizontal, 24)
+        .screenColumn(gutter: 24)
     }
 
     private func row(_ item: WhatsNewItem) -> some View {
