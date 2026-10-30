@@ -23,6 +23,24 @@ struct LiveWalkLayoutTests {
         #expect(LiveWalkLayout(size: CGSize(width: 1000, height: 760)).isSideBySide)
     }
 
+    @Test("A short window too narrow for two panes keeps the stacked layout", arguments: [
+        CGSize(width: 440, height: 400),
+        CGSize(width: 663, height: 500)
+    ])
+    func narrowWindowStaysStacked(size: CGSize) {
+        let layout = LiveWalkLayout(size: size)
+        #expect(!layout.isSideBySide)
+        #expect(layout.scale == 1)
+    }
+
+    @Test("Resized, the layout follows the new size")
+    func layoutFollowsTheResize() {
+        let inner = CGSize(width: 1000, height: 760)
+        let outer = CGSize(width: 393, height: 852)
+        #expect(LiveWalkLayout(size: inner) != LiveWalkLayout(size: outer))
+        #expect(LiveWalkLayout(size: outer) == LiveWalkLayout(size: CGSize(width: 393, height: 852)))
+    }
+
     @Test("Tall and wide, the ring grows with the height it has")
     func ringGrowsWithTheRoom() {
         let layout = LiveWalkLayout(size: CGSize(width: 760, height: 1032))
