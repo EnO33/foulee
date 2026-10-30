@@ -20,6 +20,9 @@ struct ActiveWalkScreen: View {
 
     @State private var store: ActiveWalkStore
     @State private var showRoute = false
+    /// Measured, never guessed from the device (#662): the phone's layout
+    /// until the first measure says otherwise.
+    @State private var layout = LiveWalkLayout(size: LiveWalkLayout.referenceSize)
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// The store is a defaulted parameter for the same reason `WatchIdleScreen`
@@ -136,25 +139,38 @@ struct ActiveWalkScreen: View {
 
     private func walkBody(session: WalkSession, paused: Bool) -> some View {
         VStack(spacing: 0) {
-            // Scrolls above the controls once the text is too large for the
-            // screen (#597): it used to push the title under the status bar
-            // and the controls' labels off the bottom.
-            ScrollView {
-                VStack(spacing: 0) {
-                    header(paused: paused)
-                    ForEach(store.degradedStates, id: \.self) { state in
-                        DegradedBanner(state: state)
-                            .padding(.horizontal, 20)
-                            .padding(.top, 12)
+            HStack(spacing: LiveWalkLayout.spacing) {
+                // Scrolls above the controls once the text is too large for the
+                // screen (#597): it used to push the title under the status bar
+                // and the controls' labels off the bottom.
+                ScrollView {
+                    VStack(spacing: 0) {
+                        header(paused: paused)
+                        ForEach(store.degradedStates, id: \.self) { state in
+                            DegradedBanner(state: state)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 12)
+                        }
+                        timer(session: session)
+                        ring(session: session)
+                        heartRatePlaceholder
                     }
-                    timer(session: session)
-                    ring(session: session)
-                    heartRatePlaceholder
+                    .screenColumn(gutter: 0)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                // Wider than tall, the route sits beside the figures rather
+                // than behind the « Carte » button (#662).
+                if layout.isSideBySide {
+                    WalkRouteMap(strokes: WalkRouteMap.strokes(route: store.route))
+                        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                        .padding(.trailing, 20)
                 }
             }
-            .scrollBounceBehavior(.basedOnSize)
             controls(paused: paused)
         }
+        // The whole space the walk is given, inside the safe area: on the
+        // inner screen the hinge and the camera take their margins from it.
+        .onGeometryChange(for: LiveWalkLayout.self) { LiveWalkLayout(size: $0.size) } action: { layout = $0 }
         .padding(.top, 60)
         .padding(.bottom, 56)
     }
@@ -200,13 +216,13 @@ struct ActiveWalkScreen: View {
         let goalSeconds = TimeInterval(minutesGoal * 60)
         let progress = goalSeconds > 0 ? session.elapsed / goalSeconds : 0
         // The three figures leave the ring at the accessibility sizes: the
-        // ring is a fixed 232 pt, and in it they were cut to « Dis… ».
+        // ring is 232 pt on a phone, and in it they were cut to « Dis… ».
         let isAccessibilitySize = dynamicTypeSize.isAccessibilitySize
         return VStack(spacing: 16) {
             ProgressRing(progress: progress, lineWidth: 16) {
                 VStack(spacing: 4) {
                     Text(session.steps.groupedText())
-                        .scaledNumericFont(size: 56)
+                        .scaledNumericFont(size: 56 * layout.scale)
                         .minimumScaleFactor(0.6)
                         .lineLimit(1)
                     Text("PAS")
@@ -218,7 +234,8 @@ struct ActiveWalkScreen: View {
                     }
                 }
             }
-            .frame(width: 232, height: 232)
+            // Grown with the room on the inner screen (#662).
+            .frame(width: 232 * layout.scale, height: 232 * layout.scale)
             if isAccessibilitySize {
                 ringFigures(session: session)
             }
@@ -278,8 +295,12 @@ struct ActiveWalkScreen: View {
         .padding(.horizontal, 20)
         .padding(.top, 32)
     }
+}
 
-    private func controls(paused: Bool) -> some View {
+/// The control row. In an extension so the screen's own type body stays
+/// inside the length budget.
+private extension ActiveWalkScreen {
+    func controls(paused: Bool) -> some View {
         HStack(spacing: 28) {
             controlButton(icon: FouleeIcon.stop, color: FouleeColor.danger, label: "Arrêter") {
                 Task { await store.stop() }
@@ -293,14 +314,17 @@ struct ActiveWalkScreen: View {
                     Task { await store.pause() }
                 }
             }
-            controlButton(icon: FouleeIcon.location, color: Color(hex: 0x0A84FF), label: "Carte") {
-                showRoute = true
+            // The map is already on screen beside the figures.
+            if !layout.isSideBySide {
+                controlButton(icon: FouleeIcon.location, color: Color(hex: 0x0A84FF), label: "Carte") {
+                    showRoute = true
+                }
             }
         }
         .padding(.bottom, 40)
     }
 
-    private func controlButton(
+    func controlButton(
         icon: String,
         color: Color,
         label: LocalizedStringResource,
@@ -339,7 +363,6 @@ struct ActiveWalkScreen: View {
                 .accessibilityHidden(true)
         }
     }
-
 }
 
 /// The end-of-session presentation. In an extension so the screen's own

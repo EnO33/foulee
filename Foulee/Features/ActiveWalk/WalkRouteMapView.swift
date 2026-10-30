@@ -12,19 +12,8 @@ struct WalkRouteMapView: View {
     let strokes: [RouteLines.Stroke]
     var onClose: () -> Void
 
-    /// The live route is a single stroke; its identity never changes.
-    private static let strokeID = UUID()
-
-    /// The phone's own walk: one stroke, in the accent colour — the phone
-    /// cannot tell a walk from a run while it records (issue #246).
     init(route: [Coordinate], onClose: @escaping () -> Void) {
-        self.strokes = [
-            RouteLines.Stroke(
-                id: Self.strokeID,
-                coordinates: route.map(\.locationCoordinate),
-                tint: FouleeColor.accentMid
-            )
-        ]
+        self.strokes = WalkRouteMap.strokes(route: route)
         self.onClose = onClose
     }
 
@@ -33,18 +22,39 @@ struct WalkRouteMapView: View {
         self.onClose = onClose
     }
 
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            WalkRouteMap(strokes: strokes)
+                .ignoresSafeArea()
+            SheetCloseButton(accessibilityLabel: "Fermer la carte", action: onClose)
+        }
+    }
+}
+
+/// The route itself, or a friendly wait until there is a line to draw: the
+/// sheet's content, and the map beside the figures on a screen wider than
+/// tall (#662).
+struct WalkRouteMap: View {
+    let strokes: [RouteLines.Stroke]
+
+    /// The live route is a single stroke; its identity never changes.
+    private static let strokeID = UUID()
+
+    /// The phone's own walk: one stroke, in the accent colour — the phone
+    /// cannot tell a walk from a run while it records (issue #246).
+    static func strokes(route: [Coordinate]) -> [RouteLines.Stroke] {
+        [RouteLines.Stroke(id: strokeID, coordinates: route.map(\.locationCoordinate), tint: FouleeColor.accentMid)]
+    }
+
     private var isDrawable: Bool {
         strokes.contains { $0.coordinates.count >= 2 }
     }
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            if isDrawable {
-                map
-            } else {
-                emptyState
-            }
-            SheetCloseButton(accessibilityLabel: "Fermer la carte", action: onClose)
+        if isDrawable {
+            map
+        } else {
+            emptyState
         }
     }
 
@@ -64,7 +74,6 @@ struct WalkRouteMapView: View {
                 }
             }
         }
-        .ignoresSafeArea()
     }
 
     private var emptyState: some View {
