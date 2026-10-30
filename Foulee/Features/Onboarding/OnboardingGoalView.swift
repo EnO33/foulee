@@ -22,13 +22,13 @@ struct OnboardingGoalView: View {
                     windowSection
                     goalSection
                 }
-                .padding(.horizontal, 24)
+                .screenColumn(gutter: 24)
                 .padding(.top, 70)
                 .padding(.bottom, 8)
             }
             .scrollBounceBehavior(.basedOnSize)
             PrimaryButton(title: "Continuer", systemIcon: nil, action: onContinue)
-                .padding(.horizontal, 24)
+                .screenColumn(gutter: 24)
                 .padding(.bottom, 36)
         }
     }

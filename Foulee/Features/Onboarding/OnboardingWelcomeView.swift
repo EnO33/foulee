@@ -45,7 +45,7 @@ struct OnboardingWelcomeView: View {
             footer
                 .padding(.top, 16)
         }
-        .padding(.horizontal, 24)
+        .screenColumn(gutter: 24)
         .padding(.bottom, 32)
     }
 

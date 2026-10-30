@@ -237,7 +237,7 @@ struct TodayScreen: View {
                     WeatherAttributionView()
                 }
             }
-            .padding(.horizontal, 20)
+            .screenColumn()
             .padding(.bottom, 40)
         }
         .refreshable { await store.refresh() }

@@ -43,7 +43,7 @@ struct HydrationScreen: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(.horizontal, 20)
+            .screenColumn()
             .padding(.top, 28)
             .padding(.bottom, 40)
         }

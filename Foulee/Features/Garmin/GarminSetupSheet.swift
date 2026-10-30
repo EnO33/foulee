@@ -42,7 +42,7 @@ struct GarminSetupSheet: View {
                     caveatsCard
                     labelsNote
                 }
-                .padding(.horizontal, 20)
+                .screenColumn()
                 .padding(.top, 24)
                 .padding(.bottom, 40)
             }

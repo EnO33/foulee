@@ -27,7 +27,7 @@ struct RecapShareSheet: View {
                 .frame(maxHeight: .infinity)
             shareButton
         }
-        .padding(.horizontal, 20)
+        .screenColumn()
         .padding(.top, 28)
         .padding(.bottom, 20)
         .overlay(alignment: .topTrailing) { SheetCloseButton(action: onClose) }

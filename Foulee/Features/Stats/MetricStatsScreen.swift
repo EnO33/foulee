@@ -34,7 +34,7 @@ struct MetricStatsScreen: View {
                         summaryCard
                     }
                 }
-                .padding(.horizontal, 20)
+                .screenColumn()
                 .padding(.top, 24)
                 .padding(.bottom, 40)
             }

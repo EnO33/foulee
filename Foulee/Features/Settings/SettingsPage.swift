@@ -60,7 +60,7 @@ struct SettingsPageView: View {
             VStack(spacing: 16) {
                 content
             }
-            .padding(.horizontal, 20)
+            .screenColumn()
             .padding(.top, 12)
             .padding(.bottom, 40)
         }
